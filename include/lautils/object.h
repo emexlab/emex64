@@ -27,6 +27,8 @@
 
 #include <stdint.h>
 
+/**** HEADER MACROS ****/
+
 #define LAO_MAGIC        0xFADEBACE
 
 #define LAO_VERSION_NEWEST      0x0 /* TODO: create support check macros for the version field */
@@ -43,6 +45,7 @@
 #define LAO_TYPE_NONE           0b000000000
 #define LAO_TYPE_OBJECT         0b000000001
 #define LAO_TYPE_EXECUTABLE     0b000000010
+#define LAO_TYPE_LIBRARY        (LAO_TYPE_OBJECT | LAO_TYPE_EXECUTABLE) /* aka shared object */
 
 #define LAO_BASE_HEADER_MAGIC_VALID(header) (header->magic == LAO_MAGIC)
 #define LAO_BASE_HEADER_VERSION_VALID(header) (header->version == LAO_VERSION_NEWEST)
@@ -52,19 +55,76 @@
 
 #define LAO_BASE_HEADER_VALID(header) (LAO_BASE_HEADER_MAGIC_VALID(header) && LAO_BASE_HEADER_VERSION_VALID(header) && LAO_BASE_HEADER_ARCH_VALID(header) && LAO_BASE_HEADER_ABI_VALID(header))
 
+/**** SECTION MACROS ****/
+
+#define LAO_SECTION_TYPE_NONE    0x0
+#define LAO_SECTION_TYPE_DATA    0x1        /* is a data section for all kinds of data, executable, ro, and so on */
+#define LAO_SECTION_TYPE_BSS     0x2        /* is aways writable and got no offset cuz its a stack allocated region of memory */
+
+#define LAO_SECTION_PROT_NONE    0b00000000
+#define LAO_SECTION_PROT_READ    0b00000001
+#define LAO_SECTION_PROT_WRITE   0b00000010
+#define LAO_SECTION_PROT_EXEC    0b00000100 /* for example for executable memory a section would be data and executable */
+#define LAO_SECTION_PROT_USER    0b00001000 /* for kernels */
+#define LAO_SECTION_PROT_KTRR    0b00010000 /* Kernel Text Read-Only Region (a comming soon features of LA64) */
+#define LAO_SECTION_PROT_ALL     0b00011111 /* for validity checks */
+
+/**** STRUCTURES ****/
+
+/* MARK: symbol table */
+
+typedef struct __attribute__((packed)) lao_symbol_entry {
+    uint64_t name_offset;
+    uint64_t symbol_offset;
+} lao_symbol_entry_t;
+
+typedef struct __attribute__((packed)) lao_symbol_table {
+    uint32_t count;
+    /* symbol entrie's start right after */
+} lao_symbol_table_t;
+
+/* MARK: reloc table */
+
+typedef struct __attribute__((packed)) lao_reloc_table_entry {
+    uint32_t symbol_index;
+    uint32_t placeholder_offset;
+} lao_reloc_table_entry_t;
+
+typedef struct __attribute__((packed)) lao_reloc_table {
+    uint32_t count;
+    /* reloc entrie's start right after */
+} lao_reloc_table_t;
+
+/* MARK: section table */
+
+typedef struct __attribute__((packed)) lao_section_table_entry {
+    uint8_t type;
+    uint8_t prot;
+    uint64_t size;
+} lao_section_table_entry_t;
+
+typedef struct __attribute__((packed)) lao_section_table {
+    uint32_t count;
+    /* section entrie's start right after */
+} lao_section_table_t;
+
+/* MARK: header */
+
 typedef struct __attribute__((packed)) lao_base_header {
     uint32_t magic;
     uint8_t version;
     uint8_t arch;
     uint8_t abi;
     uint8_t type;
+    /* header starts right after */
 } lao_base_header_t;
 
 typedef struct __attribute__((packed)) lao_header64 {
     uint64_t string_table_offset;
     uint64_t symbol_table_offset;
     uint64_t section_table_offset;
-    uint64_t start_offset;
+    uint64_t reloc_table_offset;
+    uint64_t start_offset;          /* in executables that is the CPU's "I jump there" offset */
 } lao_header64_t;
 
 #endif /* LAUTILS_OBJECT_H */
