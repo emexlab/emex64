@@ -1,4 +1,4 @@
-syntax "la64" "\.l64$"
+syntax "emex64" "\.e64$"
 
 # NUMBERS
 color red "\b(0x|0b)[0-9A-Fa-f]+\b"
