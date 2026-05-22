@@ -1,0 +1,325 @@
+;
+; MIT License
+;
+; Copyright (c) 2026 cr4zyengineer
+;
+; Permission is hereby granted, free of charge, to any person obtaining a copy
+; of this software and associated documentation files (the "Software"), to deal
+; in the Software without restriction, including without limitation the rights
+; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+; copies of the Software, and to permit persons to whom the Software is
+; furnished to do so, subject to the following conditions:
+;
+; The above copyright notice and this permission notice shall be included in all
+; copies or substantial portions of the Software.
+;
+; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+; SOFTWARE.
+;
+
+%define% PAGE_MASK              0xFFFFFFFFFFFFE000
+%define% SLAB_META_SIZE         64                              ; size of slab metadata
+
+%define% SLAB_OFF_BASE          0x00
+%define% SLAB_OFF_CACHE         0x08
+%define% SLAB_OFF_NEXT          0x10
+%define% SLAB_OFF_INUSE         0x18
+%define% SLAB_OFF_BITMAP        0x20
+
+%define% CACHE_OFF_SIZE         0x00
+%define% CACHE_OFF_OBJS         0x08
+%define% CACHE_OFF_PARTIAL      0x10
+%define% CACHE_OFF_FULL         0x18
+%define% CACHE_OFF_EMPTY        0x20
+%define% CACHE_STRUCT_SIZE      40
+
+%define% NUM_SIZE_CLASSES       7
+%define% NUM_SIZE_CLASSES_START 32
+
+section .bss
+    size_caches db 320
+
+_get_size_class:
+    mov rr, NUM_SIZE_CLASSES_START
+    cmp r0, NUM_SIZE_CLASSES
+    bge .done
+    bz r0, .done
+.start:
+    mul rr, 2
+    cmp r0, 0
+    dec r0
+    bne .start
+.done:
+    ret
+
+_get_objs_per_class:
+    mov rr, 0b11111110
+    shr rr, r0
+    ret
+
+_slab_init:
+    clr r0
+    mov r1, size_caches
+.loop:
+    cmp r0, NUM_SIZE_CLASSES                                    ; checking if r0 is greater than the number of size classes which means all size classes have been initilized
+    bge .done
+    bl _get_size_class, r0                                      ; getting size class from programatic symbol    
+    mov r4, rr                                                  ; moving size result into the appropriate register
+    stq r1, r4                                                  ; storing size class into size chache slot
+    bl _get_objs_per_class, r0                                  ; getting objects count for class
+    mov r4, rr
+    add r5, r1, CACHE_OFF_OBJS                                  ; get the address of the cache objects value in structure
+    stq r5, r4                                                  ; storing objects count into objects
+    add r5, r1, CACHE_OFF_PARTIAL
+    stq r5, 0
+    add r5, r1, CACHE_OFF_FULL
+    stq r5, 0
+    add r5, r1, CACHE_OFF_EMPTY
+    stq r5, 0
+    inc r0
+    add r1, CACHE_STRUCT_SIZE
+    b .loop
+.done:
+    ret
+
+_find_size_class:
+    clr r1
+.loop:
+    cmp r1, NUM_SIZE_CLASSES                                    ; same as above, the classes count comparison
+    bge .too_large
+    bl _get_size_class, r1                                      ; getting size class
+    cmp r0, rr                                                  ; checking if we found the appropriate size class
+    ble .found
+    inc r1                                                      ; incrementing return
+    b .loop                                                     ; loop till we found what were looking for
+.found:
+    mov rr, r1                                                  ; found appropriate size class so now we multiplacate with the size of one cache structure entry
+    mul rr, CACHE_STRUCT_SIZE                                   ; seeee
+    add rr, size_caches                                         ; adding offset to caches
+    ret
+.too_large:
+    clr rr
+    ret
+
+_create_slab:
+    mov r5, r0
+    bl _pmm_alloc
+    bz rr, .fail
+    mov r6, rr
+    add r7, r6, PAGE_SIZE
+    sub r7, SLAB_META_SIZE
+    stq r7, r6
+    add r8, r7, SLAB_OFF_CACHE
+    stq r8, r5
+    add r8, r7, SLAB_OFF_NEXT
+    stq r8, 0
+    add r8, r7, SLAB_OFF_INUSE
+    stq r8, 0
+    add r8, r5, CACHE_OFF_OBJS
+    ldq r8, r8
+    mov r9, 1
+    shl r9, r8
+    sub r9, 1
+    add r8, r7, SLAB_OFF_BITMAP
+    stq r8, r9
+    add r8, 8
+    stq r8, 0
+    add r8, 8
+    stq r8, 0
+    add r8, 8
+    stq r8, 0
+    mov rr, r7
+    ret
+.fail:
+    clr rr
+    ret
+
+_find_free_bit:
+    bz r0, .none
+    clr rr
+.loop:
+    mov r1, r0
+    and r1, 1
+    bnz r1, .found
+    shr r0, 1
+    add rr, 1
+    cmp rr, 64
+    blt .loop
+.none:
+    mov rr, 64
+.found:
+    ret
+
+_kmalloc:
+    bz r0, .fail
+    bl _find_size_class
+    bz rr, .alloc_pages
+    mov r1, rr
+    add r4, r1, CACHE_OFF_PARTIAL
+    ldq r2, r4
+    bnz r2, .have_slab
+    add r4, r1, CACHE_OFF_EMPTY
+    ldq r2, r4
+    bz r2, .need_new_slab
+    add r5, r2, SLAB_OFF_NEXT
+    ldq r3, r5
+    add r4, r1, CACHE_OFF_EMPTY
+    stq r4, r3
+    add r4, r1, CACHE_OFF_PARTIAL
+    ldq r3, r4
+    add r5, r2, SLAB_OFF_NEXT
+    stq r5, r3
+    stq r4, r2
+    b .have_slab
+.need_new_slab:
+    mov r0, r1
+    bl _create_slab
+    bz rr, .fail
+    mov r2, rr
+    add r4, r1, CACHE_OFF_PARTIAL
+    ldq r3, r4
+    add r5, r2, SLAB_OFF_NEXT
+    stq r5, r3
+    stq r4, r2
+    
+.have_slab:
+    add r4, r2, SLAB_OFF_BITMAP
+    ldq r0, r4
+    bl _find_free_bit
+    cmp rr, 64
+    bge .fail
+    mov r3, rr
+    mov r4, 1
+    shl r4, r3
+    not r4
+    add r5, r2, SLAB_OFF_BITMAP
+    ldq r6, r5
+    and r6, r4
+    stq r5, r6
+    add r5, r2, SLAB_OFF_INUSE
+    ldq r4, r5
+    add r4, 1
+    stq r5, r4
+    add r5, r1, CACHE_OFF_OBJS
+    ldq r5, r5
+    cmp r4, r5
+    bne .calc_addr
+    add r5, r2, SLAB_OFF_NEXT
+    ldq r6, r5
+    add r5, r1, CACHE_OFF_PARTIAL
+    stq r5, r6
+    add r5, r1, CACHE_OFF_FULL
+    ldq r6, r5
+    add r7, r2, SLAB_OFF_NEXT
+    stq r7, r6
+    stq r5, r2
+.calc_addr:
+    ldq r4, r2
+    add r5, r1, CACHE_OFF_SIZE
+    ldq r5, r5
+    mul r3, r5
+    add rr, r4, r3
+    ret
+.alloc_pages:
+    bl _pmm_alloc
+    ret
+.fail:
+    clr rr
+    ret
+
+_kfree:
+    bz r0, .done                                                ; null pointer checking r0
+    mov r1, r0
+    and r0, PAGE_MASK
+    add r2, r0, PAGE_SIZE
+    sub r2, SLAB_META_SIZE
+    add r3, r2, SLAB_OFF_CACHE
+    ldq r3, r3
+    bz r3, .free_page
+    ldq r4, r2
+    sub r1, r4
+    add r5, r3, CACHE_OFF_SIZE
+    ldq r5, r5
+    div r1, r5
+    add r6, r2, SLAB_OFF_BITMAP
+    ldq r6, r6
+    mov r7, 1
+    shl r7, r1
+    mov r8, r6
+    and r8, r7
+    bnz r8, .done
+    or r6, r7
+    add r8, r2, SLAB_OFF_BITMAP
+    stq r8, r6
+    add r8, r2, SLAB_OFF_INUSE
+    ldq r8, r8
+    add r9, r3, CACHE_OFF_OBJS
+    ldq r9, r9
+    mov r10, r8
+    sub r8, 1
+    add r11, r2, SLAB_OFF_INUSE
+    stq r11, r8
+    cmp r10, r9
+    bne .check_empty
+    add r11, r3, CACHE_OFF_FULL
+.search_full:
+    ldq r12, r11
+    bz r12, .check_empty
+    cmp r12, r2
+    be .found_full
+    add r11, r12, SLAB_OFF_NEXT
+    b .search_full
+.found_full:
+    add r13, r2, SLAB_OFF_NEXT
+    ldq r12, r13
+    stq r11, r12
+    add r13, r3, CACHE_OFF_PARTIAL
+    ldq r12, r13
+    add r14, r2, SLAB_OFF_NEXT
+    stq r14, r12
+    stq r13, r2
+    b .done
+.check_empty:
+    bnz r8, .done
+    add r11, r3, CACHE_OFF_PARTIAL
+.search_partial:
+    ldq r12, r11
+    bz r12, .done
+    cmp r12, r2
+    be .found_partial
+    add r11, r12, SLAB_OFF_NEXT
+    b .search_partial
+.found_partial:
+    add r13, r2, SLAB_OFF_NEXT
+    ldq r12, r13
+    stq r11, r12
+    add r12, r3, CACHE_OFF_EMPTY
+    ldq r13, r12
+    bnz r13, .destroy_slab
+    add r13, r2, SLAB_OFF_NEXT
+    stq r13, 0
+    stq r12, r2
+    b .done
+.destroy_slab:
+    ldq r0, r2
+    bl _pmm_free
+    b .done
+.free_page:
+    and r0, r1, PAGE_MASK
+    bl _pmm_free
+.done:
+    ret
+
+_kcalloc:
+    mul r0, r1                                                  ; calculating final memory allocation size
+    bl _kmalloc, r0                                             ; allocating size
+    mov r1, rr                                                  ; keeping return value at a safe place
+    bz rr, .null_exception                                      ; handling null pointer
+    bl _memset, r1, 0, r0                                       ; nullifying the memory
+.null_exception:
+    ret

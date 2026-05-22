@@ -1,0 +1,69 @@
+;
+; MIT License
+;
+; Copyright (c) 2026 cr4zyengineer
+;
+; Permission is hereby granted, free of charge, to any person obtaining a copy
+; of this software and associated documentation files (the "Software"), to deal
+; in the Software without restriction, including without limitation the rights
+; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+; copies of the Software, and to permit persons to whom the Software is
+; furnished to do so, subject to the following conditions:
+;
+; The above copyright notice and this permission notice shall be included in all
+; copies or substantial portions of the Software.
+;
+; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+; SOFTWARE.
+;
+
+%define% RTC_SECONDS    0x1FE00200
+%define% RTC_MINUTES    0x1FE00204
+%define% RTC_HOURS      0x1FE00208
+%define% RTC_DAY        0x1FE0020C
+%define% RTC_MONTH      0x1FE00210
+%define% RTC_YEAR       0x1FE00214
+%define% RTC_WEEKDAY    0x1FE00218
+%define% RTC_UNIX       0x1FE00220
+
+section .data
+    time db "Date: \0"
+
+_rtc_2putbase:
+    cmp r0, 10
+    bge .end
+    bl _putc, '0'
+.end:
+    bl _putbase, r0, 10
+    ret
+
+_print_time:
+    mov r1, RTC_DAY
+    bl _puts, time
+.loop:
+    ldd r0, r1
+    bl _rtc_2putbase, r0
+    add r1, 4
+    cmp r1, RTC_YEAR
+    bgt .loop_2_entry
+    bl _putc, '.'
+    b .loop
+.loop_2_entry:
+    sub r1, 16
+    bl _putc, ' '
+.loop_2:
+    ldd r0, r1
+    bl _rtc_2putbase, r0
+    sub r1, 4
+    cmp r1, RTC_SECONDS
+    blt .end
+    bl _putc, ':'
+    b .loop_2
+.end:
+    bl _putc, '\n'
+    ret

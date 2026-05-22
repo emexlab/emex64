@@ -1,0 +1,143 @@
+;
+; MIT License
+;
+; Copyright (c) 2026 cr4zyengineer
+;
+; Permission is hereby granted, free of charge, to any person obtaining a copy
+; of this software and associated documentation files (the "Software"), to deal
+; in the Software without restriction, including without limitation the rights
+; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+; copies of the Software, and to permit persons to whom the Software is
+; furnished to do so, subject to the following conditions:
+;
+; The above copyright notice and this permission notice shall be included in all
+; copies or substantial portions of the Software.
+;
+; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+; SOFTWARE.
+;
+
+section .bss
+    pmm_init_once db 1                              ; once initilizer boolean
+    pmm_master_ptr dq 1                             ; address that points at the main page
+    pmm_max_pages dq 1                              ; count of pages
+
+%define% PAGE_SIZE 0x2000                           ; 8K pages
+
+_pmm_page_addr:
+    mul rr, r0, PAGE_SIZE                           ; page number by size equals address
+    ret
+
+_pmm_addr_page:
+    clr r0                                          ; clearing return register to return NULL on failure
+    bz r0, .end
+    div rr, r0, PAGE_SIZE                           ; page number by size equals address
+.end:
+    ret
+
+_pmm_page_get:
+    clr r1, r2
+    bz r0, .do_get
+.page_not_null:
+    div r1, r0, 8                                   ; byte index
+    mod r2, r0, 8                                   ; bit index
+.do_get:
+    ldq r4, pmm_master_ptr
+    add r1, r4
+    ldb r3, r1
+    shr r3, r2
+    and rr, r3, 1
+    ret
+
+_pmm_page_set:
+    clr r2, r3
+    bz r0, .do_set
+.page_not_null:
+    div r2, r0, 8                                   ; byte index
+    mod r3, r0, 8                                   ; bit index
+.do_set:
+    ldq r6, pmm_master_ptr
+    add r2, r6
+    ldb r4, r2
+    mov r5, 1
+    shl r5, r3
+    not r5
+    and r4, r5
+    shl r1, r3
+    or r4, r1
+    stb r2, r4
+    ret
+
+_pmm_alloc:
+    ; preparing for loop
+    mov r0, 0
+    ldq r1, pmm_max_pages
+
+    ; trying to find free page
+.loop:
+    bl _pmm_page_get, r0
+    bz rr, .got_page
+    cmp r0, r1
+    bgt .no_free_pages
+    inc r0
+    b .loop
+.got_page:
+    bl _pmm_page_set, r0, 0x1
+    bl _pmm_page_addr, r0
+    ret
+.no_free_pages:
+    mov rr, 0
+    ret
+
+_pmm_free:
+    ; getting page from address
+    bl _pmm_addr_page
+    ldq r0, pmm_max_pages
+    cmp rr, r0
+
+    ; making sure page is not bigger than max pages
+    bgt .end
+    bl _pmm_page_set, rr, 0
+.end:
+    ret
+
+_pmm_init:
+    ; sanity checks to make sure page memory manager is only initilized once in kernel lifetime
+    ldb r0, pmm_init_once
+    bnz r0, .return                                 ; early return to end
+
+    ; getting memory size
+    bl _mc_get_mem_size                             ; asking memory controller nicely to say how large it is
+    mov r0, rr                                      ; moving result to safe location
+
+    ; dividing through page size to get count of pages that fit into the memory space
+    div r0, PAGE_SIZE
+    stq pmm_max_pages, r0                           ; store count of maximum pages
+
+    ; getting the count of pages in use by the kernel image
+    mov r1, __la64_exec_img_end
+    add r1, 0x1FFF                                  ; add constants math (PAGE_SIZE - 1) to the assembler FRIDAAA!!! ahhh
+    div r1, PAGE_SIZE                               ; get the number of pages the image is sized
+
+    ; getting the end address of image but in the logic of our page math
+    bl _pmm_page_addr, r1                           ; get end address of image
+    stq pmm_master_ptr, rr                          ; store address 
+
+    ; prepare for loop
+    div r3, r0, 8                                   ; calculating memory size but in pages
+    add r3, rr                                      ; adding master page pointer to offset
+    add r3, 0x1FFF                                  ; adding page size - 1 (FRIDA ADD MATH OPS FOR CONSTANTS AT ASSEMBLING TIME)
+    div r3, PAGE_SIZE                               ; do ceiling calculating
+.loop:
+    dec r3
+    bl _pmm_page_set, r3, 0x1                       ; mark page as used
+    bnz r3, .loop
+.end:
+    stb pmm_init_once, 1                            ; mark as initilized
+.return:
+    ret
