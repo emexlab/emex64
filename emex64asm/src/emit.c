@@ -353,7 +353,10 @@ bool la64_compiler_emit(compiler_line_t *cl)
     /* checking for deprecation */
     if(opce->dnstr != NULL)
     {
-        diag_warn(&(cl->token[cl->token_cnt - 1]), "opcode \"%s\" is deprecated: %s\n", opce->name, opce->dnstr);
+        if(cl->ci->warning_deprecated)
+        {
+            diag_warn(&(cl->token[cl->token_cnt - 1]), "opcode \"%s\" is deprecated: %s\n", opce->name, opce->dnstr);
+        }
     }
 
     /* checking argument count */

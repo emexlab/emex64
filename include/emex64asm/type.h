@@ -95,6 +95,8 @@ typedef struct compiler_invocation {
     /* options */
     bool page_align;                        /* default: true */
     const char *start_entry_name;           /* default: _start */
+    bool warning_error;                     /* default: false */
+    bool warning_deprecated;                /* default: true */
 } compiler_invocation_t;
 
 #endif /* EMEX64ASM_TYPE_H */

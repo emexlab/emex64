@@ -40,10 +40,12 @@ int main(int argc, char *argv[])
     const char *output_path = NULL;
     int file_count = 0;
     char **files = calloc(argc, sizeof(char *));
-    const char *start_entry_name = "_start";
 
     /* invocation settings */
+    const char *start_entry_name = "_start";
     bool page_align = true;
+    bool warning_error = false;
+    bool warning_deprecated = true;
 
     /* parse arguments */
     for(int i = 1; i < argc; i++)
@@ -79,6 +81,43 @@ int main(int argc, char *argv[])
             else
             {
                 diag_error(NULL, "unknown feature flag '%s'\n", flag);
+            }
+        }
+        else if(strncmp(argv[i], "-W", 2) == 0)
+        {
+            const char *flag;
+            if(argv[i][2] != '\0')
+            {
+                flag = argv[i] + 2;
+            }
+            else if(i + 1 < argc)
+            {
+                flag = argv[++i];
+            }
+            else
+            {
+                diag_error(NULL, "missing argument to '-W'\n");
+            }
+
+            if(strcmp(flag, "error") == 0)
+            {
+                warning_error = true;
+            }
+            else if(strcmp(flag, "no_error") == 0)
+            {
+                warning_error = false;
+            }
+            else if(strcmp(flag, "deprecated") == 0)
+            {
+                warning_deprecated = true;
+            }
+            else if(strcmp(flag, "no_deprecated") == 0)
+            {
+                warning_deprecated = false;
+            }
+            else
+            {
+                diag_error(NULL, "unknown warning flag '%s'\n", flag);
             }
         }
         else if(strncmp(argv[i], "-e", 2) == 0)
@@ -126,6 +165,8 @@ int main(int argc, char *argv[])
 
     ci->page_align = page_align;
     ci->start_entry_name = start_entry_name;
+    ci->warning_error = warning_error;
+    ci->warning_deprecated = warning_deprecated;
 
     /* remaining arguments are input files */
     if(file_count <= 0)
