@@ -235,25 +235,16 @@ static void la64_core_decode_instruction_at_pc(la64_core_t *core)
                 break;
             }
             case LA64_PARAMETER_CODING_IMM8:
-                core->op.imm[core->op.param_cnt] = (uint8_t)bitwalker_read(&bw, 8);
-                core->op.param[core->op.param_cnt] = &(core->op.imm[core->op.param_cnt]);
-                core->op.param_cnt++;
-                break;
             case LA64_PARAMETER_CODING_IMM16:
-                core->op.imm[core->op.param_cnt] = (uint16_t)bitwalker_read(&bw, 16);
-                core->op.param[core->op.param_cnt] = &(core->op.imm[core->op.param_cnt]);
-                core->op.param_cnt++;
-                break;
             case LA64_PARAMETER_CODING_IMM32:
-                core->op.imm[core->op.param_cnt] = (uint32_t)bitwalker_read(&bw, 32);
-                core->op.param[core->op.param_cnt] = &(core->op.imm[core->op.param_cnt]);
-                core->op.param_cnt++;
-                break;
             case LA64_PARAMETER_CODING_IMM64:
-                core->op.imm[core->op.param_cnt] = (uint64_t)bitwalker_read(&bw, 64);
+            {
+                uint8_t bits = 1u << (((mode - LA64_PARAMETER_CODING_IMM8) + 1) + 2);
+                core->op.imm[core->op.param_cnt] = (uint64_t)bitwalker_read(&bw, bits);
                 core->op.param[core->op.param_cnt] = &(core->op.imm[core->op.param_cnt]);
                 core->op.param_cnt++;
                 break;
+            }
             default:
                 core->rl[LA64_REGISTER_CR2] = LA64_EXCEPTION_BAD_INSTRUCTION;
                 reached_end = true;
