@@ -46,118 +46,63 @@
 #include <CoreFoundation/CFRunLoop.h>
 #endif /* __APPLE__ */
 
-la64_opfunc_t opfunc_table[] = {
+emex64_opfunc_entry_t opfunc_table[] = {
     /* core operations */
-    [LA64_OPCODE_HLT] = la64_op_hlt,
-    [LA64_OPCODE_NOP] = la64_op_nop,
+    [LA64_OPCODE_HLT] = { .func = la64_op_hlt, .maxargs = 0 },
+    [LA64_OPCODE_NOP] = { .func = la64_op_nop, .maxargs = 0 },
 
     /* data operations */
-    [LA64_OPCODE_MOV] = la64_op_mov,
-    [LA64_OPCODE_SWP] = la64_op_swp,
-    [LA64_OPCODE_SWPZ] = la64_op_swpz,
-    [LA64_OPCODE_PUSH] = la64_op_push,
-    [LA64_OPCODE_POP] = la64_op_pop,
-    [LA64_OPCODE_LDB] = la64_op_ldb,
-    [LA64_OPCODE_LDW] = la64_op_ldw,
-    [LA64_OPCODE_LDD] = la64_op_ldd,
-    [LA64_OPCODE_LDQ] = la64_op_ldq,
-    [LA64_OPCODE_STB] = la64_op_stb,
-    [LA64_OPCODE_STW] = la64_op_stw,
-    [LA64_OPCODE_STD] = la64_op_std,
-    [LA64_OPCODE_STQ] = la64_op_stq,
+    [LA64_OPCODE_MOV] = { .func = la64_op_mov, .maxargs = 2 },
+    [LA64_OPCODE_SWP] = { .func = la64_op_swp, .maxargs = 2 },
+    [LA64_OPCODE_SWPZ] = { .func = la64_op_swpz, .maxargs = 2 },
+    [LA64_OPCODE_PUSH] = { .func = la64_op_push, .maxargs = 32 },
+    [LA64_OPCODE_POP] = { .func = la64_op_pop, .maxargs = 32 },
+    [LA64_OPCODE_LDB] = { .func = la64_op_ldb, .maxargs = 2 },
+    [LA64_OPCODE_LDW] = { .func = la64_op_ldw, .maxargs = 2 },
+    [LA64_OPCODE_LDD] = { .func = la64_op_ldd, .maxargs = 2 },
+    [LA64_OPCODE_LDQ] = { .func = la64_op_ldq, .maxargs = 2 },
+    [LA64_OPCODE_STB] = { .func = la64_op_stb, .maxargs = 2 },
+    [LA64_OPCODE_STW] = { .func = la64_op_stw, .maxargs = 2 },
+    [LA64_OPCODE_STD] = { .func = la64_op_std, .maxargs = 2 },
+    [LA64_OPCODE_STQ] = { .func = la64_op_stq, .maxargs = 2 },
 
     /* arithmetic operations */
-    [LA64_OPCODE_ADD] = la64_op_add,
-    [LA64_OPCODE_SUB] = la64_op_sub,
-    [LA64_OPCODE_MUL] = la64_op_mul,
-    [LA64_OPCODE_DIV] = la64_op_div,
-    [LA64_OPCODE_IDIV] = la64_op_idiv,
-    [LA64_OPCODE_MOD] = la64_op_mod,
-    [LA64_OPCODE_NOT] = la64_op_not,
-    [LA64_OPCODE_NEG] = la64_op_neg,
-    [LA64_OPCODE_AND] = la64_op_and,
-    [LA64_OPCODE_OR] = la64_op_or,
-    [LA64_OPCODE_XOR] = la64_op_xor,
-    [LA64_OPCODE_SHR] = la64_op_shr,
-    [LA64_OPCODE_SHL] = la64_op_shl,
-    [LA64_OPCODE_SAR] = la64_op_sar,
-    [LA64_OPCODE_ROR] = la64_op_ror,
-    [LA64_OPCODE_ROL] = la64_op_rol,
-    [LA64_OPCODE_PDEP] = la64_op_pdep,
-    [LA64_OPCODE_PEXT] = la64_op_pext,
-    [LA64_OPCODE_BSWAPW] = la64_op_bswapw,
-    [LA64_OPCODE_BSWAPD] = la64_op_bswapd,
-    [LA64_OPCODE_BSWAPQ] = la64_op_bswapq,
+    [LA64_OPCODE_ADD] = { .func = la64_op_add, .maxargs = 3 },
+    [LA64_OPCODE_SUB] = { .func = la64_op_sub, .maxargs = 3 },
+    [LA64_OPCODE_MUL] = { .func = la64_op_mul, .maxargs = 3 },
+    [LA64_OPCODE_DIV] = { .func = la64_op_div, .maxargs = 3 },
+    [LA64_OPCODE_IDIV] = { .func = la64_op_idiv, .maxargs = 3 },
+    [LA64_OPCODE_MOD] = { .func = la64_op_mod, .maxargs = 3 },
+    [LA64_OPCODE_NOT] = { .func = la64_op_not, .maxargs = 32 },
+    [LA64_OPCODE_NEG] = { .func = la64_op_neg, .maxargs = 32 },
+    [LA64_OPCODE_AND] = { .func = la64_op_and, .maxargs = 3 },
+    [LA64_OPCODE_OR] = { .func = la64_op_or, .maxargs = 3 },
+    [LA64_OPCODE_XOR] = { .func = la64_op_xor, .maxargs = 3 },
+    [LA64_OPCODE_SHR] = { .func = la64_op_shr, .maxargs = 3 },
+    [LA64_OPCODE_SHL] = { .func = la64_op_shl, .maxargs = 3 },
+    [LA64_OPCODE_SAR] = { .func = la64_op_sar, .maxargs = 3 },
+    [LA64_OPCODE_ROR] = { .func = la64_op_ror, .maxargs = 3 },
+    [LA64_OPCODE_ROL] = { .func = la64_op_rol, .maxargs = 3 },
+    [LA64_OPCODE_PDEP] = { .func = la64_op_pdep, .maxargs = 3 },
+    [LA64_OPCODE_PEXT] = { .func = la64_op_pext, .maxargs = 3 },
+    [LA64_OPCODE_BSWAPW] = { .func = la64_op_bswapw, .maxargs = 1 },
+    [LA64_OPCODE_BSWAPD] = { .func = la64_op_bswapd, .maxargs = 1 },
+    [LA64_OPCODE_BSWAPQ] = { .func = la64_op_bswapq, .maxargs = 1 },
 
     /* control flow operations */
-    [LA64_OPCODE_B] = la64_op_b,
-    [LA64_OPCODE_CMP] = la64_op_cmp,
-    [LA64_OPCODE_BE] = la64_op_be,
-    [LA64_OPCODE_BNE] = la64_op_bne,
-    [LA64_OPCODE_BLT] = la64_op_blt,
-    [LA64_OPCODE_BGT] = la64_op_bgt,
-    [LA64_OPCODE_BLE] = la64_op_ble,
-    [LA64_OPCODE_BGE] = la64_op_bge,
-    [LA64_OPCODE_BZ] = la64_op_bz,
-    [LA64_OPCODE_BNZ] = la64_op_bnz,
-    [LA64_OPCODE_BL] = la64_op_bl,
-    [LA64_OPCODE_RET] = la64_op_ret,
-    [LA64_OPCODE_IRET] = la64_op_iret
-};
-
-static const uint8_t opcode_maxargs[256] = {
-    [LA64_OPCODE_HLT] = 0,
-    [LA64_OPCODE_NOP] = 0,
-
-    [LA64_OPCODE_MOV] = 2,
-    [LA64_OPCODE_SWP] = 2,
-    [LA64_OPCODE_SWPZ] = 2,
-    [LA64_OPCODE_PUSH] = 32,
-    [LA64_OPCODE_POP] = 32,
-    [LA64_OPCODE_LDB] = 2,
-    [LA64_OPCODE_LDW] = 2,
-    [LA64_OPCODE_LDD] = 2,
-    [LA64_OPCODE_LDQ] = 2,
-    [LA64_OPCODE_STB] = 2,
-    [LA64_OPCODE_STW] = 2,
-    [LA64_OPCODE_STD] = 2,
-    [LA64_OPCODE_STQ] = 2,
-
-    [LA64_OPCODE_ADD] = 3,
-    [LA64_OPCODE_SUB] = 3,
-    [LA64_OPCODE_MUL] = 3,
-    [LA64_OPCODE_DIV] = 3,
-    [LA64_OPCODE_IDIV] = 3,
-    [LA64_OPCODE_MOD] = 3,
-    [LA64_OPCODE_NOT] = 32,
-    [LA64_OPCODE_NEG] = 32,
-    [LA64_OPCODE_AND] = 3,
-    [LA64_OPCODE_OR] = 3,
-    [LA64_OPCODE_XOR] = 3,
-    [LA64_OPCODE_SHR] = 3,
-    [LA64_OPCODE_SHL] = 3,
-    [LA64_OPCODE_SAR] = 3,
-    [LA64_OPCODE_ROR] = 3,
-    [LA64_OPCODE_ROL] = 3,
-    [LA64_OPCODE_PDEP] = 3,
-    [LA64_OPCODE_PEXT] = 3,
-    [LA64_OPCODE_BSWAPW] = 1,
-    [LA64_OPCODE_BSWAPD] = 1,
-    [LA64_OPCODE_BSWAPQ] = 1,
-
-    [LA64_OPCODE_B] = 1,
-    [LA64_OPCODE_CMP] = 2,
-    [LA64_OPCODE_BE] = 1,
-    [LA64_OPCODE_BNE] = 1,
-    [LA64_OPCODE_BLT] = 1,
-    [LA64_OPCODE_BGT] = 1,
-    [LA64_OPCODE_BLE] = 1,
-    [LA64_OPCODE_BGE] = 1,
-    [LA64_OPCODE_BZ] = 2,
-    [LA64_OPCODE_BNZ] = 2,
-    [LA64_OPCODE_BL] = 32,
-    [LA64_OPCODE_RET] = 0,
-    [LA64_OPCODE_IRET] = 0,
+    [LA64_OPCODE_B] = { .func = la64_op_b, .maxargs = 1 },
+    [LA64_OPCODE_CMP] = { .func = la64_op_cmp, .maxargs = 2 },
+    [LA64_OPCODE_BE] = { .func = la64_op_be, .maxargs = 1 },
+    [LA64_OPCODE_BNE] = { .func = la64_op_bne, .maxargs = 1 },
+    [LA64_OPCODE_BLT] = { .func = la64_op_blt, .maxargs = 1 },
+    [LA64_OPCODE_BGT] = { .func = la64_op_bgt, .maxargs = 1 },
+    [LA64_OPCODE_BLE] = { .func = la64_op_ble, .maxargs = 1 },
+    [LA64_OPCODE_BGE] = { .func = la64_op_bge, .maxargs = 1 },
+    [LA64_OPCODE_BZ] = { .func = la64_op_bz, .maxargs = 2 },
+    [LA64_OPCODE_BNZ] = { .func = la64_op_bnz, .maxargs = 2 },
+    [LA64_OPCODE_BL] = { .func = la64_op_bl, .maxargs = 32 },
+    [LA64_OPCODE_RET] = { .func = la64_op_ret, .maxargs = 0 },
+    [LA64_OPCODE_IRET] = { .func = la64_op_iret, .maxargs = 0 },
 };
 
 la64_core_t *la64_core_alloc()
@@ -188,8 +133,6 @@ static void la64_core_decode_instruction_at_pc(la64_core_t *core)
 
     /* accessing memory */
     void *iptr = la64_memory_access(core, core->rl[LA64_REGISTER_PC], 100);
-
-    /* null pointer check */
     if(iptr == NULL)
     {
         core->rl[LA64_REGISTER_CR2] = LA64_EXCEPTION_BAD_ACCESS;
@@ -201,13 +144,18 @@ static void la64_core_decode_instruction_at_pc(la64_core_t *core)
     bitwalker_init_read(&bw, iptr, 256, BW_LITTLE_ENDIAN);
 
     /* getting opcode */
-    core->op.op = (uint8_t)bitwalker_read(&bw, 8);
+    core->op.opcode = (uint8_t)bitwalker_read(&bw, 8);
+    if(core->op.opcode > LA64_OPCODE_MAX)
+    {
+        core->rl[LA64_REGISTER_CR2] = LA64_EXCEPTION_BAD_ACCESS;
+        return;
+    }
 
-    uint8_t maxargs = opcode_maxargs[core->op.op];
+    core->op.op = opfunc_table[core->op.opcode];
 
     /* parsing loop */
     bool reached_end = false;
-    for(uint8_t i = 0; i < maxargs && !reached_end; i++)
+    for(uint8_t i = 0; i < core->op.op.maxargs && !reached_end; i++)
     {
         /* next mode */
         uint8_t mode = (uint8_t)bitwalker_read(&bw, 3);
@@ -294,9 +242,7 @@ static void *la64_core_execute_thread(void *arg)
         la64_core_decode_instruction_at_pc(core);
 
         /* sanity check */
-        if((core->rl[LA64_REGISTER_CR2] != LA64_EXCEPTION_NONE ||
-            core->op.op > LA64_OPCODE_MAX ||
-            opfunc_table[core->op.op] == NULL) &&
+        if((core->rl[LA64_REGISTER_CR2] != LA64_EXCEPTION_NONE) &&
            !core->in_interrupt)
         {
             core->rl[LA64_REGISTER_CR2] = LA64_EXCEPTION_BAD_INSTRUCTION;
@@ -304,7 +250,7 @@ static void *la64_core_execute_thread(void *arg)
         }
 
         /* executing instruction */
-        opfunc_table[core->op.op](core);
+        core->op.op.func(core);
 
         /* incrementing program counter by instruction size */
         core->rl[LA64_REGISTER_PC] += core->op.ilen;
@@ -319,7 +265,7 @@ static void *la64_core_execute_thread(void *arg)
          * interrupt handler in the interrupt vector table.
          */
         if(core->in_interrupt ||
-           core->op.op == LA64_OPCODE_IRET)
+           core->op.opcode == LA64_OPCODE_IRET)
         {
             goto tick_timer;
         }

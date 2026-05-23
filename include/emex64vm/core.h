@@ -250,8 +250,18 @@
  */
 #define LA64_EXCEPTION_BAD_ARITHMETIC    0b100
 
+typedef struct la64_core la64_core_t;
+
+/* definition of the handler of each operation */
+typedef void (*la64_opfunc_t)(la64_core_t *core);
+
 typedef struct la64_machine la64_machine_t;
 typedef struct la64_operation la64_operation_t;
+
+typedef struct emex64_opfunc_entry {
+    la64_opfunc_t func;
+    uint8_t maxargs;
+} emex64_opfunc_entry_t;
 
 typedef struct la64_core {
 
@@ -274,7 +284,8 @@ typedef struct la64_core {
          * the opcode it self, so the cpu knows what to
          * execute.
          */
-        uint8_t op;
+        uint8_t opcode;
+        emex64_opfunc_entry_t op;
 
         /*
          * a array of intermediate values that can go from
@@ -318,9 +329,6 @@ typedef struct la64_core {
     la64_machine_t *machine;
 
 } la64_core_t;
-
-/* definition of the handler of each operation */
-typedef void (*la64_opfunc_t)(la64_core_t *core);
 
 la64_core_t *la64_core_alloc(void);
 void la64_core_dealloc(la64_core_t *core);
