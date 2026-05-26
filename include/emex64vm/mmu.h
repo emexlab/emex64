@@ -43,15 +43,10 @@
 #define LA64_MMU_MASK_FLAGS         0b0000000000000000000000000000000000000000000000000000000011111111
 #define LA64_MMU_MASK_PFN           0b1111111111111111111111111111111111111111111111111111111100000000
 
-/* entry helper types */
-typedef uint64_t la64_mmu_entry_t;
-typedef uint8_t la64_mmu_flag_t;
-typedef uint64_t la64_mmu_pfn_t;
-
 /* access types */
-#define LA64_MMU_ACC_READ           0b00
-#define LA64_MMU_ACC_WRITE          0b01
-#define LA64_MMU_ACC_EXEC           0b10
+#define LA64_MMU_ACC_READ           LA64_MMU_PT_READ
+#define LA64_MMU_ACC_WRITE          LA64_MMU_PT_WRITE
+#define LA64_MMU_ACC_EXEC           LA64_MMU_PT_EXEC
 
 bool la64_mmu_access(la64_core_t *core, uint64_t vaddr, uint8_t acc, uint64_t *paddr);
 

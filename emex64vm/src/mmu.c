@@ -28,13 +28,13 @@
 #include <stdio.h>
 
 typedef struct la64_mmu_entry_lookup {
-    bool oob_fail;
-    la64_mmu_entry_t entry;
+    bool fail;
+    uint64_t pte;
 } la64_mmu_entry_lookup_t;
 
-static la64_mmu_entry_lookup_t la64_mmu_get_entry(la64_core_t *core,
-                                                  uint64_t ptbase,
-                                                  uint16_t idx)
+static la64_mmu_entry_lookup_t la64_mmu_lookup_pte(la64_core_t *core,
+                                                   uint64_t pt_addr,
+                                                   uint16_t idx)
 {
     la64_mmu_entry_lookup_t lookup = {};
 
@@ -42,16 +42,23 @@ static la64_mmu_entry_lookup_t la64_mmu_get_entry(la64_core_t *core,
      * bounds check ptbase and check if it
      * can be even a table.
      */
-    ptbase = LA64_PAGE_ROUND_DOWN(ptbase);
-    if(!LA64_IN_PHYS_MEMORY(ptbase, LA64_PAGE_SIZE, core->machine->memory->memory, core->machine->memory->memory_size))
+    pt_addr = LA64_PAGE_ROUND_DOWN(pt_addr);
+    if(!LA64_IN_PHYS_MEMORY(pt_addr, LA64_PAGE_SIZE, core->machine->memory->memory, core->machine->memory->memory_size))
     {
-        lookup.oob_fail = true;
+        lookup.fail = true;
         return lookup;
     }
 
     /* now access the table and check its entry too */
-    la64_mmu_entry_t *table = (la64_mmu_entry_t *)&core->machine->memory->memory[ptbase];
-    lookup.entry = table[idx];
+    uint64_t *pt = (uint64_t*)&core->machine->memory->memory[pt_addr];
+    lookup.pte = pt[idx];
+
+    if(!((lookup.pte & LA64_MMU_MASK_FLAGS) & LA64_MMU_PT_PRESENT))
+    {
+        lookup.fail = true;
+        return lookup;
+    }
+
     return lookup;
 }
 
@@ -60,15 +67,20 @@ static bool la64_mmu_access_ctable(la64_core_t *core,
                                    uint16_t idx,
                                    uint64_t *oaddr)
 {
-    la64_mmu_entry_lookup_t lookup = la64_mmu_get_entry(core, ptbase, idx);
-    if(lookup.oob_fail || !((lookup.entry & LA64_MMU_MASK_FLAGS) & LA64_MMU_PT_PRESENT))
+    la64_mmu_entry_lookup_t lookup = la64_mmu_lookup_pte(core, ptbase, idx);
+    if(lookup.fail)
     {
         return false;
     }
 
-    la64_mmu_pfn_t pfn = (lookup.entry & LA64_MMU_MASK_PFN) >> 8;
+    uint64_t pfn = (lookup.pte & LA64_MMU_MASK_PFN) >> 8;
+    uint64_t physaddr = LA64_PAGE_ROUND_DOWN(pfn << 13);
+    if(!LA64_IN_PHYS_MEMORY(physaddr, LA64_PAGE_SIZE, core->machine->memory->memory, core->machine->memory->memory_size))
+    {
+        return false;
+    }
 
-    *oaddr = pfn << 13;
+    *oaddr = physaddr;
 
     return true;
 }
@@ -79,51 +91,39 @@ static bool la64_mmu_access_l1(la64_core_t *core,
                                uint8_t acc,
                                uint64_t *oaddr)
 {
-    la64_mmu_entry_lookup_t lookup = la64_mmu_get_entry(core, ptbase, idx);
-    if(lookup.oob_fail || !((lookup.entry & LA64_MMU_MASK_FLAGS) & LA64_MMU_PT_PRESENT))
+    la64_mmu_entry_lookup_t lookup = la64_mmu_lookup_pte(core, ptbase, idx);
+    if(lookup.fail)
     {
         return false;
     }
 
-    la64_mmu_flag_t checkflg = 0;
+    uint8_t checkflg = acc;
 
-    /* permission switch */
-    switch(acc)
-    {
-        case LA64_MMU_ACC_READ:
-            checkflg = LA64_MMU_PT_READ;
-            break;
-        case LA64_MMU_ACC_WRITE:
-            checkflg = LA64_MMU_PT_WRITE;
-            break;
-        case LA64_MMU_ACC_EXEC:
-            checkflg = LA64_MMU_PT_EXEC;
-            break;
-        default:
-            /* TODO: cause pagefault */
-            return false;
-    }
-
-    checkflg |= LA64_MMU_PT_PRESENT;
-
-    /* if CR0 is user then we need to add user check too */
+    /*
+     * if CR0 is user then we need to add user
+     * check too, otherwise the user program will
+     * be able to access kernel memory.
+     */
     if(core->rl[LA64_REGISTER_CR0] < LA64_ELEVATION_KERNEL)
     {
         checkflg |= LA64_MMU_PT_USER;
     }
 
-    /* action permission check */
-    if(((lookup.entry & LA64_MMU_MASK_FLAGS) & checkflg) != checkflg)
+    /* initial flag check */
+    if(((lookup.pte & LA64_MMU_MASK_FLAGS) & checkflg) != checkflg)
     {
         /* TODO: cause page fault */
         return false;
     }
 
-    la64_mmu_pfn_t pfn = (lookup.entry & LA64_MMU_MASK_PFN) >> 8;
+    uint64_t pfn = (lookup.pte & LA64_MMU_MASK_PFN) >> 8;
+    uint64_t physaddr = LA64_PAGE_ROUND_DOWN(pfn << 13);
+    if(!LA64_IN_PHYS_MEMORY(physaddr, LA64_PAGE_SIZE, core->machine->memory->memory, core->machine->memory->memory_size))
+    {
+        return false;
+    }
 
-    *oaddr = pfn << 13;
-
-    /* still many missing bounds checks */
+    *oaddr = physaddr;
 
     return true;
 }
@@ -147,13 +147,8 @@ bool la64_mmu_access(la64_core_t *core,
      * we read it as if it was a 5th level entry, but its just a
      * control register.. for simplicity we do that hahaha.
      */
-    la64_mmu_entry_t l5_entry = core->rl[LA64_REGISTER_CR4];
-
-    /* gather its flag and check if paging is enabled */
-    la64_mmu_flag_t l5_flag = l5_entry & LA64_MMU_MASK_FLAGS;
-
-    if(!(l5_flag & LA64_MMU_PT_PRESENT) ||
-       core->in_interrupt)
+    uint64_t cr_pte = core->rl[LA64_REGISTER_CR4];
+    if(!((cr_pte & LA64_MMU_MASK_FLAGS) & LA64_MMU_PT_PRESENT) || core->in_interrupt)
     {
         /* incase paging is disabled virtual addresses are physical ones */
         *paddr = vaddr;
@@ -161,7 +156,7 @@ bool la64_mmu_access(la64_core_t *core,
     }
 
     /* get pfn of control register */
-    la64_mmu_pfn_t l5_pfn = (l5_entry & LA64_MMU_MASK_PFN) >> 8;
+    uint64_t cr_pfn = (cr_pte & LA64_MMU_MASK_PFN) >> 8;
 
     /* precalculating all indexes */
     uint16_t offset =  vaddr        & 0x1FFF;      /* 13bit offset (addressing within a page) */
@@ -174,7 +169,7 @@ bool la64_mmu_access(la64_core_t *core,
     uint64_t l1_addr = 0;
     uint64_t l2_addr = 0;
     uint64_t l3_addr = 0;
-    uint64_t l4_addr = l5_pfn << 13;
+    uint64_t l4_addr = cr_pfn << 13;
 
     /* now access each table */
     if(!la64_mmu_access_ctable(core, l4_addr, l4_idx, &l3_addr) ||
