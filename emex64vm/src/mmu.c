@@ -37,7 +37,7 @@ static la64_mmu_entry_lookup_t la64_mmu_lookup_pte(la64_core_t *core,
                                                    uint16_t idx)
 {
     /*
-     * bounds check ptbase and check if it
+     * bounds check pt_addr and check if it
      * can be even a table.
      */
     pt_addr = LA64_PAGE_ROUND_DOWN(pt_addr);
@@ -58,12 +58,12 @@ static la64_mmu_entry_lookup_t la64_mmu_lookup_pte(la64_core_t *core,
     return (la64_mmu_entry_lookup_t){ .fail = false, .pte = pte };
 }
 
-static bool la64_mmu_access_ctable(la64_core_t *core,
-                                   uint64_t ptbase,
-                                   uint16_t idx,
-                                   uint64_t *oaddr)
+static bool la64_mmu_access_pxd(la64_core_t *core,
+                                uint64_t pt_addr,
+                                uint16_t idx,
+                                uint64_t *oaddr)
 {
-    la64_mmu_entry_lookup_t lookup = la64_mmu_lookup_pte(core, ptbase, idx);
+    la64_mmu_entry_lookup_t lookup = la64_mmu_lookup_pte(core, pt_addr, idx);
     if(lookup.fail)
     {
         return false;
@@ -81,11 +81,11 @@ static bool la64_mmu_access_ctable(la64_core_t *core,
     return true;
 }
 
-static bool la64_mmu_access_l1(la64_core_t *core,
-                               uint64_t ptbase,
-                               uint16_t idx,
-                               uint8_t acc,
-                               uint64_t *oaddr)
+static bool la64_mmu_access_pte(la64_core_t *core,
+                                uint64_t ptbase,
+                                uint16_t idx,
+                                uint8_t acc,
+                                uint64_t *oaddr)
 {
     la64_mmu_entry_lookup_t lookup = la64_mmu_lookup_pte(core, ptbase, idx);
     if(lookup.fail)
@@ -166,10 +166,10 @@ bool la64_mmu_access(la64_core_t *core,
     uint64_t pud_addr, pmd_addr, pte_addr, physaddr;
 
     /* now access each table */
-    if(!la64_mmu_access_ctable(core, pgd_addr, pgd_index, &pud_addr) ||
-       !la64_mmu_access_ctable(core, pud_addr, pud_index, &pmd_addr) ||
-       !la64_mmu_access_ctable(core, pmd_addr, pmd_index, &pte_addr) ||
-       !la64_mmu_access_l1(core, pte_addr, pte_index, acc, &physaddr))
+    if(!la64_mmu_access_pxd(core, pgd_addr, pgd_index, &pud_addr) ||
+       !la64_mmu_access_pxd(core, pud_addr, pud_index, &pmd_addr) ||
+       !la64_mmu_access_pxd(core, pmd_addr, pmd_index, &pte_addr) ||
+       !la64_mmu_access_pte(core, pte_addr, pte_index, acc, &physaddr))
     {
         return false;
     }
