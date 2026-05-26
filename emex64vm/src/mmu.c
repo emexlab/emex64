@@ -60,56 +60,36 @@ static la64_mmu_entry_lookup_t la64_mmu_lookup_pte(la64_core_t *core,
 
 static bool la64_mmu_access_pxd(la64_core_t *core,
                                 uint64_t pt_addr,
-                                uint16_t idx,
-                                uint64_t *oaddr)
-{
-    la64_mmu_entry_lookup_t lookup = la64_mmu_lookup_pte(core, pt_addr, idx);
-    if(lookup.fail)
-    {
-        return false;
-    }
-
-    uint64_t pfn = (lookup.pte & LA64_MMU_MASK_PFN) >> 8;
-    uint64_t physaddr = LA64_PAGE_ROUND_DOWN(pfn << 13);
-    if(!LA64_IN_PHYS_MEMORY(physaddr, LA64_PAGE_SIZE, core->machine->memory->memory, core->machine->memory->memory_size))
-    {
-        return false;
-    }
-
-    *oaddr = physaddr;
-
-    return true;
-}
-
-static bool la64_mmu_access_pte(la64_core_t *core,
-                                uint64_t ptbase,
-                                uint16_t idx,
+                                uint16_t pxd_idx,
                                 uint8_t acc,
                                 uint64_t *oaddr)
 {
-    la64_mmu_entry_lookup_t lookup = la64_mmu_lookup_pte(core, ptbase, idx);
+    la64_mmu_entry_lookup_t lookup = la64_mmu_lookup_pte(core, pt_addr, pxd_idx);
     if(lookup.fail)
     {
         return false;
     }
 
-    uint8_t checkflg = acc;
-
-    /*
-     * if CR0 is user then we need to add user
-     * check too, otherwise the user program will
-     * be able to access kernel memory.
-     */
-    if(core->rl[LA64_REGISTER_CR0] < LA64_ELEVATION_KERNEL)
+    if(acc != LA64_MMU_ACC_NONE)
     {
-        checkflg |= LA64_MMU_PT_USER;
-    }
+        uint8_t checkflg = acc;
 
-    /* initial flag check */
-    if(((lookup.pte & LA64_MMU_MASK_FLAGS) & checkflg) != checkflg)
-    {
-        /* TODO: cause page fault */
-        return false;
+        /*
+         * if CR0 is user then we need to add user
+         * check too, otherwise the user program will
+         * be able to access kernel memory.
+         */
+        if(core->rl[LA64_REGISTER_CR0] < LA64_ELEVATION_KERNEL)
+        {
+            checkflg |= LA64_MMU_PT_USER;
+        }
+
+        /* initial flag check */
+        if(((lookup.pte & LA64_MMU_MASK_FLAGS) & checkflg) != checkflg)
+        {
+            /* TODO: cause page fault */
+            return false;
+        }
     }
 
     uint64_t pfn = (lookup.pte & LA64_MMU_MASK_PFN) >> 8;
@@ -166,10 +146,10 @@ bool la64_mmu_access(la64_core_t *core,
     uint64_t pud_addr, pmd_addr, pte_addr, physaddr;
 
     /* now access each table */
-    if(!la64_mmu_access_pxd(core, pgd_addr, pgd_index, &pud_addr) ||
-       !la64_mmu_access_pxd(core, pud_addr, pud_index, &pmd_addr) ||
-       !la64_mmu_access_pxd(core, pmd_addr, pmd_index, &pte_addr) ||
-       !la64_mmu_access_pte(core, pte_addr, pte_index, acc, &physaddr))
+    if(!la64_mmu_access_pxd(core, pgd_addr, pgd_index, LA64_MMU_ACC_NONE, &pud_addr) ||
+       !la64_mmu_access_pxd(core, pud_addr, pud_index, LA64_MMU_ACC_NONE, &pmd_addr) ||
+       !la64_mmu_access_pxd(core, pmd_addr, pmd_index, LA64_MMU_ACC_NONE, &pte_addr) ||
+       !la64_mmu_access_pxd(core, pte_addr, pte_index, acc, &physaddr))
     {
         return false;
     }
