@@ -70,7 +70,7 @@ static bool la64_mmu_access_pxd(la64_core_t *core,
         return false;
     }
 
-    if(acc != LA64_MMU_ACC_NONE)
+    if(acc != LA64_MMU_ACC_PXD)
     {
         uint8_t checkflg = acc;
 
@@ -146,9 +146,9 @@ bool la64_mmu_access(la64_core_t *core,
     uint64_t pud_addr, pmd_addr, pte_addr, physaddr;
 
     /* now access each table */
-    if(!la64_mmu_access_pxd(core, pgd_addr, pgd_index, LA64_MMU_ACC_NONE, &pud_addr) ||
-       !la64_mmu_access_pxd(core, pud_addr, pud_index, LA64_MMU_ACC_NONE, &pmd_addr) ||
-       !la64_mmu_access_pxd(core, pmd_addr, pmd_index, LA64_MMU_ACC_NONE, &pte_addr) ||
+    if(!la64_mmu_access_pxd(core, pgd_addr, pgd_index, LA64_MMU_ACC_PXD, &pud_addr) ||
+       !la64_mmu_access_pxd(core, pud_addr, pud_index, LA64_MMU_ACC_PXD, &pmd_addr) ||
+       !la64_mmu_access_pxd(core, pmd_addr, pmd_index, LA64_MMU_ACC_PXD, &pte_addr) ||
        !la64_mmu_access_pxd(core, pte_addr, pte_index, acc, &physaddr))
     {
         return false;

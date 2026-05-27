@@ -42,14 +42,17 @@ int main(int argc, char *argv[])
 
     /* creating new la16 virtual machine */
     la64_machine_t *machine = la64_machine_alloc(0x20000000);
-
     if(machine == NULL)
     {
         fprintf(stderr, "[!] failed to allocated machine\n");
         return 1;
     }
 
-    /* load boot image */
+    /*
+     * load boot image, maybe use a dirty private
+     * mapping and open the image it self as memory,
+     * just size it.
+     */
     if(!la64_memory_load_image(machine->memory, argv[1]))
     {
         goto usage;
@@ -62,11 +65,7 @@ int main(int argc, char *argv[])
     bitwalker_t bw;
     bitwalker_init_read(&bw, machine->memory->memory, 8, BW_LITTLE_ENDIAN);
     machine->core->rl[LA64_REGISTER_PC] = bitwalker_read(&bw, 64);
-
-    /* setting stack pointer of  */
     machine->core->rl[LA64_REGISTER_SP] = machine->memory->memory_size - 8;
-
-    /* setting elevation to system monitor */
     machine->core->rl[LA64_REGISTER_CR0] = LA64_ELEVATION_SECURE_MONITOR;
 
     /* executing virtual machines 1st core TODO: Implement threading */

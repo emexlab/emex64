@@ -53,8 +53,6 @@ la64_memory_t *la64_memory_alloc(uint64_t size)
     /* allocate raw memory (using mmap for larger sizes, better than heap in this case) */
     memory->memory_size = LA64_PAGE_ROUND_UP(size);
     memory->memory = mmap(NULL, memory->memory_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-
-    /* null pointer and sanity check */
     if(memory->memory == MAP_FAILED)
     {
         free(memory);
@@ -126,13 +124,12 @@ void *la64_memory_access(la64_core_t *core,
 {
     assert(size != 0);
 
-    /* get end of access address  */
     uint64_t addr_end = addr + size;
-
-    /* wrap around check */
+    
     if(addr >= addr_end ||
        core->machine->memory->memory_size < addr_end)
     {
+        /* attempt to access memory is OOB. */
         return NULL;
     }
 
