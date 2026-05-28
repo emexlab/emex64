@@ -29,8 +29,8 @@
 
 #include <emex64lib/asm/type.h>
 
-#include <emex64lib/parser.h>
-#include <emex64lib/bitwalker.h>
+#include <emex64lib/support/parser.h>
+#include <emex64lib/support/bitwalker.h>
 
 #include <stdint.h>
 #include <stdbool.h>

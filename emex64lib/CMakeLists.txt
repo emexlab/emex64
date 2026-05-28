@@ -8,9 +8,9 @@ project(emex64lib
 add_library(emex64lib STATIC
     # Support
 
-    src/bitwalker.c
-    src/parser.c
-    src/fdwalker.c
+    src/support/bitwalker.c
+    src/support/parser.c
+    src/support/fdwalker.c
 
     # Virtual Machine
 

@@ -30,7 +30,7 @@
 #include <pthread.h>
 #include <stdatomic.h>
 
-#include <emex64lib/bitwalker.h>
+#include <emex64lib/support/bitwalker.h>
 
 #include <emex64lib/vm/machine.h>
 #include <emex64lib/vm/device/display.h>
@@ -365,7 +365,7 @@ void la64_fb_write(la64_core_t *core,
                    int size)
 {
     (void)core;
-    
+
     la64_display_t *display = (la64_display_t*)device;
 
     if(offset >= LA64_FB_FRAMEBUFFER)

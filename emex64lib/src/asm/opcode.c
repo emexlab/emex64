@@ -22,10 +22,11 @@
  * SOFTWARE.
  */
 
-#include <emex64lib/asm/opcode.h>
-#include <emex64lib/asm/emit.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <emex64lib/asm/opcode.h>
+#include <emex64lib/asm/emit.h>
 
 const opcode_entry_t opcode_table[] = {
     /* core operations */

@@ -31,7 +31,7 @@
 #include <emex64lib/vm/machine.h>
 #include <emex64lib/vm/device/display.h>
 
-#include <emex64lib/bitwalker.h>
+#include <emex64lib/support/bitwalker.h>
 
 int main(int argc, char *argv[])
 {

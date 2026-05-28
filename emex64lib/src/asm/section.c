@@ -27,8 +27,8 @@
 #include <string.h>
 #include <ctype.h>
 
-#include <emex64lib/parser.h>
-#include <emex64lib/bitwalker.h>
+#include <emex64lib/support/parser.h>
+#include <emex64lib/support/bitwalker.h>
 
 #include <emex64lib/asm/section.h>
 #include <emex64lib/asm/code.h>

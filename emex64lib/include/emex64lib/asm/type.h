@@ -29,7 +29,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include <emex64lib/fdwalker.h>
+#include <emex64lib/support/fdwalker.h>
 
 #define ASSEMBLER_LINE_TYPE_NONE                 0b0000
 #define ASSEMBLER_LINE_TYPE_ASM                  0b0001

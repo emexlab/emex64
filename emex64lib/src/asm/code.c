@@ -22,9 +22,6 @@
  * SOFTWARE.
  */
 
-#include <emex64lib/asm/code.h>
-#include <emex64lib/asm/cmptok.h>
-#include <emex64lib/asm/diag.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -34,6 +31,10 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <limits.h>
+
+#include <emex64lib/asm/code.h>
+#include <emex64lib/asm/cmptok.h>
+#include <emex64lib/asm/diag.h>
 
 void code_tokengen(compiler_invocation_t *ci,
                    const char **filev,

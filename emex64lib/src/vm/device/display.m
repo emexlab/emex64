@@ -34,7 +34,7 @@
 #include <pthread.h>
 #include <stdatomic.h>
 
-#include <emex64lib/bitwalker.h>
+#include <emex64lib/support/bitwalker.h>
 #include <emex64lib/vm/device/display.h>
 #include <emex64lib/vm/core.h>
 

@@ -22,9 +22,10 @@
  * SOFTWARE.
  */
 
-#include <emex64lib/fdwalker.h>
 #include <unistd.h>
 #include <assert.h>
+
+#include <emex64lib/support/fdwalker.h>
 
 void fdwalker_init(fdwalker_t *fw,
                    int fd,

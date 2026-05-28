@@ -32,7 +32,7 @@
 #include <emex64lib/asm/opcode.h>
 #include <stdbool.h>
 
-#include <emex64lib/fdwalker.h>
+#include <emex64lib/support/fdwalker.h>
 
 /* opcode emit */
 void la64_compiler_emit_opcode(fdwalker_t *fw, uint8_t op);

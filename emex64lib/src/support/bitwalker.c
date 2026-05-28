@@ -22,7 +22,7 @@
  * SOFTWARE.
  */
 
-#include <emex64lib/bitwalker.h>
+#include <emex64lib/support/bitwalker.h>
 
 #if defined(__BYTE_ORDER__) && __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
 #error "bitwalker requires a little-endian host"

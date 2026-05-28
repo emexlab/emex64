@@ -30,8 +30,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <emex64lib/parser.h>
-#include <emex64lib/fdwalker.h>
+#include <emex64lib/support/parser.h>
+#include <emex64lib/support/fdwalker.h>
 
 #include <emex64lib/asm/compiler.h>
 #include <emex64lib/asm/diag.h>

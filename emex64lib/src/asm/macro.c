@@ -22,10 +22,11 @@
  * SOFTWARE.
  */
 
-#include <emex64lib/asm/macro.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+
+#include <emex64lib/asm/macro.h>
 
 typedef struct {
     const char *name;

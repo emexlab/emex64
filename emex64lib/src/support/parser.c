@@ -27,7 +27,8 @@
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
-#include <emex64lib/parser.h>
+
+#include <emex64lib/support/parser.h>
 
 static bool parse_type_is_hex(const char *line,
                               uint64_t *num)

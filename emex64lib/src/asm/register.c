@@ -22,9 +22,10 @@
  * SOFTWARE.
  */
 
-#include <emex64lib/asm/register.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <emex64lib/asm/register.h>
 
 register_entry_t register_table[] = {
     /* special purpose register */

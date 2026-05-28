@@ -24,6 +24,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+
 #include <emex64lib/asm/compiler.h>
 #include <emex64lib/asm/code.h>
 #include <emex64lib/asm/label.h>
@@ -31,8 +34,6 @@
 #include <emex64lib/asm/section.h>
 #include <emex64lib/asm/macro.h>
 #include <emex64lib/asm/diag.h>
-#include <fcntl.h>
-#include <unistd.h>
 
 compiler_invocation_t *compiler_invocation_alloc(const char *output_path)
 {

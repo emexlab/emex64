@@ -22,12 +22,12 @@
  * SOFTWARE.
  */
 
-#include <emex64lib/asm/diag.h>
-
 #include <unistd.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdint.h>
+
+#include <emex64lib/asm/diag.h>
 
 _Thread_local bool warning_error = false;
 
