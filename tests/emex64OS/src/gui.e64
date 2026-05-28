@@ -28,7 +28,7 @@
 
 _draw_char:
 
-    cmp r0, r1
+    cmp r0, 0
 
     blt .end
 
