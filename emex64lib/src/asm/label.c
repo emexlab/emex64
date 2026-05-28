@@ -35,7 +35,7 @@ void code_token_label(compiler_invocation_t *ci)
 {
     /* counting labels caught at token parsing */
     ci->label_cnt = 1;
-    for(int i = 0; i < ci->line_cnt; i++)
+    for(uint64_t i = 0; i < ci->line_cnt; i++)
     {
         if(ci->line[i].type == ASSEMBLER_LINE_TYPE_GLOBAL_LABEL ||
            ci->line[i].type == ASSEMBLER_LINE_TYPE_LOCAL_LABEL ||
@@ -56,7 +56,7 @@ compiler_label_t *label_lookup(compiler_invocation_t *ci,
                                const char *name)
 {
     /* iterating through all labels */
-    for(int i = 0; i < ci->label_cnt; i++)
+    for(uint64_t i = 0; i < ci->label_cnt; i++)
     {
         /* checking if request name matches */
         if(strcmp(ci->label[i].name, name) == 0)

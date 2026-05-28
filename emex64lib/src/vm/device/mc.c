@@ -32,6 +32,11 @@ uint64_t la64_mc_read(la64_core_t *core,
                       uint64_t offset,
                       int size)
 {
+    (void)core;
+    (void)device;
+    (void)offset;
+    (void)size;
+
     /* returning memory size */
     return core->machine->memory->memory_size;
 }

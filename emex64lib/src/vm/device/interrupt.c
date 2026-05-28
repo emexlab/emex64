@@ -200,6 +200,9 @@ bool la64_serve_interrupt_if_needed(la64_core_t *core)
 
 uint64_t la64_intc_read(la64_core_t *core, void *device, uint64_t offset, int size)
 {
+    (void)core;
+    (void)size;
+
     la64_intc_t *intc = (la64_intc_t *)device;
 
     switch(offset)
@@ -221,6 +224,11 @@ uint64_t la64_intc_read(la64_core_t *core, void *device, uint64_t offset, int si
 
 void la64_intc_write(la64_core_t *core, void *device, uint64_t offset, uint64_t value, int size)
 {
+    (void)core;
+    (void)offset;
+    (void)value;
+    (void)size;
+
     la64_intc_t *intc = (la64_intc_t *)device;
     
     switch (offset) {

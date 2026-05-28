@@ -197,7 +197,6 @@ static inline void diag_helper(const char *msg,
 
     /* starting to parse arguments */
     int i = 0;
-    int count = 0;
 
     /* handling format */
     while(msg[i])
@@ -205,11 +204,11 @@ static inline void diag_helper(const char *msg,
         if(msg[i] == '%' && msg[i + 1])
         {
             i++;
-            count += handle_format(msg, &i, args);
+            handle_format(msg, &i, args);
         }
         else
         {
-            count += putchar_c(msg[i]);
+            putchar_c(msg[i]);
         }
         i++;
     }
@@ -228,18 +227,10 @@ void diag_note(compiler_token_t *ct,
     /* initial debug print */
     printf("\x1b[1m\033[35mnote:\033[0m\x1b[0m ");
 
-    /* starting to parse arguments */
+    /* formatting handling */
     va_list args;
-    int i = 0;
-    int count = 0;
-
-    /* starting to parse */
     va_start(args, msg);
-
-    /* invoking helper */
     diag_helper(msg, &args);
-
-    /* ending the parse */
     va_end(args);
 }
 

@@ -109,7 +109,6 @@ la64_machine_t *la64_machine_alloc(uint64_t memory_size)
 
     /* much more compact error handling */
 #if defined(__linux__)  || defined(__APPLE__)
-out_release_display:
     la64_display_dealloc(machine->display);
 #endif /* __linux__ */
 out_release_uart:

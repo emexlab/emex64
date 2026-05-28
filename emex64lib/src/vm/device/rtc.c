@@ -31,6 +31,10 @@ uint64_t la64_rtc_read(la64_core_t *core,
                        uint64_t offset,
                        int size)
 {
+    (void)core;
+    (void)device;
+    (void)size;
+
     /* get current time */
     time_t now = time(NULL);
     struct tm *t = localtime(&now);

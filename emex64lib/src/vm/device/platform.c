@@ -34,6 +34,10 @@
 
 uint64_t la64_platform_read(la64_core_t *core, void *device, uint64_t offset, int size)
 {
+    (void)core;
+    (void)device;
+    (void)offset;
+    (void)size;
     return 1;
 }
 

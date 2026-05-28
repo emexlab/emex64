@@ -192,6 +192,9 @@ void la64_uart_dealloc(la64_uart_t *u)
 
 uint64_t la64_uart_read(la64_core_t *core, void *device, uint64_t offset, int size)
 {
+    (void)core;
+    (void)size;
+
     /* getting uart */
     la64_uart_t *u = (la64_uart_t *)device;
 
@@ -230,6 +233,9 @@ uint64_t la64_uart_read(la64_core_t *core, void *device, uint64_t offset, int si
 
 void la64_uart_write(la64_core_t *core, void *device, uint64_t offset, uint64_t value, int size)
 {
+    (void)core;
+    (void)size;
+
     /* getting uart */
     la64_uart_t *u = (la64_uart_t *)device;
 

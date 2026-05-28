@@ -332,6 +332,8 @@ uint64_t la64_fb_read(la64_core_t *core,
                       uint64_t offset,
                       int size)
 {
+    (void)core;
+
     la64_display_t *display = (la64_display_t*)device;
 
     if(offset >= LA64_FB_FRAMEBUFFER)
@@ -362,6 +364,8 @@ void la64_fb_write(la64_core_t *core,
                    uint64_t value,
                    int size)
 {
+    (void)core;
+    
     la64_display_t *display = (la64_display_t*)device;
 
     if(offset >= LA64_FB_FRAMEBUFFER)

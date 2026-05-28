@@ -128,8 +128,6 @@ void code_token_section(compiler_invocation_t *ci)
                         }
                         else
                         {
-                            bitwalker_t bw;
-
                             /* storing value */
                             fdwalker_write(ci->fdwalker, pr.value, dbs);
                         }
