@@ -1,0 +1,23 @@
+%define% PLATFORM_PWR   0x1FE00500
+
+%define% UART_DATA            0x1FE00300
+%define% UART_STATUS          0x1FE00304
+%define% UART_STATUS_TX_EMPTY 0x02
+
+section .data
+    msg db "hello, emex64!\r\n\0"
+
+_start:
+    mov r0, msg
+.loop:
+    ldb r1, r0
+    bz r1, .end
+.uart_not_ready:
+    ldd r2, UART_STATUS
+    and r2, UART_STATUS_TX_EMPTY
+    bz r2, .uart_not_ready
+    std UART_DATA, r1
+    inc r0
+    b .loop
+.end:
+    stb PLATFORM_PWR, 0

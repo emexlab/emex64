@@ -1,0 +1,41 @@
+syntax "emex64" "\.e64$"
+
+# NUMBERS
+color red "\b(0x|0b)[0-9A-Fa-f]+\b"
+color red "\b[0-9]+\b"
+
+# INSTRUCTIONS
+color brightgreen "\b(hlt|nop|mov|swp|swpz|push|pop|ldb|ldw|ldd|ldq|stb|stw|std|stq|add|sub|mul|div|idiv|mod|inc|dec|not|and|or|xor|shr|shl|ror|rol|pdep|pext|bswapw|bswapd|bswapq|b|cmp|be|bne|blt|bgt|ble|bge|bz|bnz|bl|ret|iret|clr)\b"
+
+# LEGACY INSTRUCTIONS
+color brightgreen "\b(jmp|je|jne|jlt|jgt|jle|jge|jz|jnz)\b"
+
+# DIRECTIVES
+color magenta "\b(db|dw|dd|dq|section)\b"
+color magenta "\.(data|bss)\b"
+
+# MACROS
+color brightmagenta "%[A-Za-z_][A-Za-z0-9_]*%"
+
+# REGISTERS
+color cyan "\b(r([0-9]|1[0-7])|cr([0-9]|[12][0-9]|3[01])|rr|pc|sp|fp|cf|cr(el|ksp|exc|vec|ptb))\b"
+
+# CONSTANTS
+color brightyellow "\b[A-Z][A-Z0-9_]+\b"
+
+# LABEL REFERENCES
+color brightmagenta "\b_[A-Za-z0-9_.]+\b"
+color brightmagenta "\.[A-Za-z_][A-Za-z0-9_]*"
+
+# LABEL DEFINITIONS
+color brightmagenta "^[[:space:]]*\.?[_A-Za-z][_A-Za-z0-9]*:[[:space:]]*"
+
+# STRINGS
+color brightred "\"([^\"\\]|\\.)*\""
+color red "'([^'\\]|\\.)*'"
+
+# COMMENTS
+color blue "//.*"
+color blue "#.*"
+color blue ";.*"
+color blue "/\*.*\*/"

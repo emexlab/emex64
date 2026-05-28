@@ -1,0 +1,84 @@
+;
+; MIT License
+;
+; Copyright (c) 2026 cr4zyengineer
+;
+; Permission is hereby granted, free of charge, to any person obtaining a copy
+; of this software and associated documentation files (the "Software"), to deal
+; in the Software without restriction, including without limitation the rights
+; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+; copies of the Software, and to permit persons to whom the Software is
+; furnished to do so, subject to the following conditions:
+;
+; The above copyright notice and this permission notice shall be included in all
+; copies or substantial portions of the Software.
+;
+; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+; SOFTWARE.
+;
+
+%define% FB_ENABLED 0x1FE00700
+%define% FB_PALLETE 0x1FE00701
+%define% FB_FRAMEBUFFER 0x1FE00A01
+%define% FRAMEBUFFER_SIZE 0x10000
+
+%define% PLATFORM_PWR 0x1FE00500
+
+%define% VIDEO_BASE __la64_exec_img_end
+
+%define% TIMER_CTRL    0x1FE00100
+%define% TIMER_COUNT   0x1FE00108
+%define% TIMER_COMPARE 0x1FE00110
+%define% TIMER_STATUS  0x1FE00118
+%define% TIMER_FREQ    0x1FE00120
+
+_timer_handler:
+    iret
+
+_badmain:
+    bl _interrupt_register_handler, IRQ_TIMER, _timer_handler
+
+    ldq r0, TIMER_FREQ
+    div r0, 60
+    stq TIMER_COMPARE, r0
+
+    stb FB_ENABLED, 1                   ; enables the framebuffer
+.video_entry:
+    add r1, FB_FRAMEBUFFER, 0x10000     ; calculating the framebuffer end
+    mov r2, VIDEO_BASE
+.video_rereloop:
+    mov r2, VIDEO_BASE
+    mov r5, 0
+.video_reloop:
+    stq TIMER_CTRL, 0x7
+    hlt
+    stq TIMER_CTRL, 0x0
+    stq TIMER_COUNT, 0
+    cmp r5, 6520
+    bgt .video_rereloop
+    mov r0, FB_FRAMEBUFFER
+.video_loop:
+    ldb r3, r2
+    pdep r4, r3, 0x0101010101010101     ; spread bits to byte
+    mul  r4, r4, 0xFF                   ; expand to bytes
+    bswapq r4
+    stq r0, r4
+    add r0, 8
+    inc r2
+    cmp r0, r1
+    blt .video_loop
+    inc r5
+    b .video_reloop
+.end:
+    ret
+
+_badstart:
+    bl _pmm_init
+    bl _interrupt_init
+    bl _badmain
+    stb PLATFORM_PWR, 0
