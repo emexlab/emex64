@@ -127,7 +127,7 @@ uint64_t label_lookup(compiler_invocation_t *ci,
 {
     /* using internal implementation of the symbol */
     compiler_label_t *label = label_lookup_internal(ci, name);
-    return (label == NULL) ? COMPILER_LABEL_NOT_FOUND : label->addr;
+    return (label == NULL) ? 0x0 : label->addr;
 }
 
 void code_token_label_insert_start(compiler_invocation_t *ci)
@@ -135,7 +135,7 @@ void code_token_label_insert_start(compiler_invocation_t *ci)
     /* finding start label */
     uint64_t addr = label_lookup(ci, ci->start_entry_name);
 
-    if(addr == COMPILER_LABEL_NOT_FOUND)
+    if(addr == 0x0)
     {
         diag_error(NULL, "\"%s\" label not found, cannot produce boot image\n", ci->start_entry_name);
     }

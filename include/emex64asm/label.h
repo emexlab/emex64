@@ -25,8 +25,6 @@
 #ifndef EMEX64ASM_LABEL_H
 #define EMEX64ASM_LABEL_H
 
-#define COMPILER_LABEL_NOT_FOUND 0x0
-
 #include <emex64asm/type.h>
 
 void code_token_label(compiler_invocation_t *ci);

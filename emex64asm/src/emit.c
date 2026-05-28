@@ -404,7 +404,7 @@ bool la64_compiler_emit_all(compiler_invocation_t *ci)
     {
         uint64_t addr = label_lookup(ci, rtbe->name);
 
-        if(addr != COMPILER_LABEL_NOT_FOUND)
+        if(addr != 0x0)
         {
             fdwalker_seek(ci->fdwalker, rtbe->byte_pos, rtbe->bit_idx);
             fdwalker_write(ci->fdwalker, addr, 64);
