@@ -364,13 +364,13 @@ bool la64_compiler_emit_all(compiler_invocation_t *ci)
     for(uint64_t i = 0; i < ci->line_cnt; i++)
     {
         /* checking for label */
-        if(ci->line[i].type == COMPILER_LINE_TYPE_GLOBAL_LABEL ||
-           ci->line[i].type == COMPILER_LINE_TYPE_LOCAL_LABEL)
+        if(ci->line[i].type == ASSEMBLER_LINE_TYPE_GLOBAL_LABEL ||
+           ci->line[i].type == ASSEMBLER_LINE_TYPE_LOCAL_LABEL)
         {
             /* insert into labels */
             code_token_label_append(&(ci->line[i].token[0]));
         }
-        else if(ci->line[i].type == COMPILER_LINE_TYPE_ASM)
+        else if(ci->line[i].type == ASSEMBLER_LINE_TYPE_ASM)
         {
             if(!la64_compiler_emit(&(ci->line[i])))
             {

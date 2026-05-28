@@ -38,7 +38,7 @@ void code_token_macro(compiler_invocation_t *ci)
     uint64_t c = 0;
     for(uint64_t i = 0; i < ci->line_cnt; i++)
     {
-        if(ci->line[i].type == COMPILER_LINE_TYPE_MACRODEF)
+        if(ci->line[i].type == ASSEMBLER_LINE_TYPE_MACRODEF)
         {
             c++;
         }
@@ -51,7 +51,7 @@ void code_token_macro(compiler_invocation_t *ci)
     c = 0;
     for(uint64_t i = 0; i < ci->line_cnt; i++)
     {
-        if(ci->line[i].type == COMPILER_LINE_TYPE_MACRODEF)
+        if(ci->line[i].type == ASSEMBLER_LINE_TYPE_MACRODEF)
         {
             cm[c].name = ci->line[i].token[1].str;
             cm[c].value = ci->line[i].token[2].str;
@@ -62,7 +62,7 @@ void code_token_macro(compiler_invocation_t *ci)
     /* now replacing */
     for(uint64_t i = 0; i < ci->line_cnt; i++)
     {
-        if(ci->line[i].type == COMPILER_LINE_TYPE_ASM)
+        if(ci->line[i].type == ASSEMBLER_LINE_TYPE_ASM)
         {
             for(uint64_t a = 0; a < ci->line[i].token_cnt; a++)
             {

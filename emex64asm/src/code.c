@@ -209,10 +209,10 @@ void code_tokengen(compiler_invocation_t *ci,
                 switch(ci->line[i].token[0].str[0])
                 {
                     case '_':
-                        ci->line[i].type = COMPILER_LINE_TYPE_GLOBAL_LABEL;
+                        ci->line[i].type = ASSEMBLER_LINE_TYPE_GLOBAL_LABEL;
                         break;
                     case '.':
-                        ci->line[i].type = COMPILER_LINE_TYPE_LOCAL_LABEL;
+                        ci->line[i].type = ASSEMBLER_LINE_TYPE_LOCAL_LABEL;
                         break;
                     default:
                         diag_error(&(ci->line[i].token[0]), "illegal label definition \"%s\"\n", ci->line[i].token[0].str);
@@ -225,13 +225,13 @@ void code_tokengen(compiler_invocation_t *ci,
         else if(ci->line[i].token_cnt < 3 && strcmp(ci->line[i].token[0].str, "section") == 0)
         {
             section_mode = true;
-            ci->line[i].type = COMPILER_LINE_TYPE_SECTION;
+            ci->line[i].type = ASSEMBLER_LINE_TYPE_SECTION;
             continue;
         }
         else if(strcmp(ci->line[i].token[0].str, "%define%") == 0)
         {
             section_mode = false;
-            ci->line[i].type = COMPILER_LINE_TYPE_MACRODEF;
+            ci->line[i].type = ASSEMBLER_LINE_TYPE_MACRODEF;
             continue;
         }
 
@@ -240,7 +240,7 @@ void code_tokengen(compiler_invocation_t *ci,
          * assembly, this is a very important
          * differentiation. 
          */
-        ci->line[i].type = section_mode ? COMPILER_LINE_TYPE_SECTION_DATA : COMPILER_LINE_TYPE_ASM;
+        ci->line[i].type = section_mode ? ASSEMBLER_LINE_TYPE_SECTION_DATA : ASSEMBLER_LINE_TYPE_ASM;
     }
 
     /*

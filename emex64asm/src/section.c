@@ -42,13 +42,13 @@ void code_token_section(compiler_invocation_t *ci)
     /* iterating for section token type and creating data section */
     for(unsigned long i = 0; i < ci->line_cnt; i++)
     {
-        if(ci->line[i].type == COMPILER_LINE_TYPE_SECTION)
+        if(ci->line[i].type == ASSEMBLER_LINE_TYPE_SECTION)
         {
             if(strcmp(ci->line[i].token[1].str, ".data") == 0)
             {
                 /* iterating till section data is over */
                 i++;
-                for(; i < ci->line_cnt && ci->line[i].type == COMPILER_LINE_TYPE_SECTION_DATA; i++)
+                for(; i < ci->line_cnt && ci->line[i].type == ASSEMBLER_LINE_TYPE_SECTION_DATA; i++)
                 {
                     /* checking count */
                     if(ci->line[i].token_cnt < 3)
@@ -147,13 +147,13 @@ void code_token_section(compiler_invocation_t *ci)
     /* iterating for section token type and creating bss section */
     for(unsigned long i = 0; i < ci->line_cnt; i++)
     {
-        if(ci->line[i].type == COMPILER_LINE_TYPE_SECTION)
+        if(ci->line[i].type == ASSEMBLER_LINE_TYPE_SECTION)
         {
             if(strcmp(ci->line[i].token[1].str, ".bss") == 0)
             {
                 /* finding variable type */
                 i++;
-                for(; i < ci->line_cnt && ci->line[i].type == COMPILER_LINE_TYPE_SECTION_DATA; i++)
+                for(; i < ci->line_cnt && ci->line[i].type == ASSEMBLER_LINE_TYPE_SECTION_DATA; i++)
                 {
                     /* checking count */
                     if(ci->line[i].token_cnt != 3)

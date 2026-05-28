@@ -31,13 +31,13 @@
 
 #include <emexutils/fdwalker.h>
 
-#define COMPILER_LINE_TYPE_NONE                 0b0000
-#define COMPILER_LINE_TYPE_ASM                  0b0001
-#define COMPILER_LINE_TYPE_GLOBAL_LABEL         0b0010
-#define COMPILER_LINE_TYPE_LOCAL_LABEL          0b0011
-#define COMPILER_LINE_TYPE_SECTION              0b0100
-#define COMPILER_LINE_TYPE_SECTION_DATA         0b0101
-#define COMPILER_LINE_TYPE_MACRODEF             0b0110
+#define ASSEMBLER_LINE_TYPE_NONE                 0b0000
+#define ASSEMBLER_LINE_TYPE_ASM                  0b0001
+#define ASSEMBLER_LINE_TYPE_GLOBAL_LABEL         0b0010
+#define ASSEMBLER_LINE_TYPE_LOCAL_LABEL          0b0011
+#define ASSEMBLER_LINE_TYPE_SECTION              0b0100
+#define ASSEMBLER_LINE_TYPE_SECTION_DATA         0b0101
+#define ASSEMBLER_LINE_TYPE_MACRODEF             0b0110
 
 typedef unsigned char compiler_line_type_t;
 typedef struct compiler_invocation compiler_invocation_t;
