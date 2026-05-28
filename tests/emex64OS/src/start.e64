@@ -23,6 +23,7 @@
 ;
 
 %define% PLATFORM_PWR   0x1FE00500
+%define% FB_ENABLED     0x1FE00700
 
 %define% PT_PRESENT     0b00000001
 %define% PT_USER        0b00000010
@@ -36,6 +37,8 @@
 section .data
     exception_msg db "[!] panic because of exception code: 0x\0"
     hello_msg db "hello world!\r\n\0"
+    gui_hello_msg db "hello from emexOS on emex64\r\n\0 ABCDEFGHIJKLMNOPQRSTUVWXYZ \r\n\0 abcdefghijklmnopqrstuvwxyz \r\n\0 01234567890 \r\n\0 @#%^&*()!<>?:;\r\n\0"
+    ; ik that it runs out of line lol
 
 ; exception handler
 _exception_handler:
@@ -145,7 +148,14 @@ _main:
     ; say hello
     bl _puts, hello_msg
 
-    ret
+; TODO:
+; screen system
+    stb FB_ENABLED, 1
+    bl _draw_string, gui_hello_msg, 20, 20, 255
+
+.gui_loop:
+    hlt
+    b .gui_loop
 
 ; main setup routine
 _start:
