@@ -1,0 +1,99 @@
+;
+; MIT License
+;
+; Copyright (c) 2026 emex
+;
+; Permission is hereby granted, free of charge, to any person obtaining a copy
+; of this software and associated documentation files (the "Software"), to deal
+; in the Software without restriction, including without limitation the rights
+; to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+; copies of the Software, and to permit persons to whom the Software is
+; furnished to do so, subject to the following conditions:
+;
+; The above copyright notice and this permission notice shall be included in all
+; copies or substantial portions of the Software.
+;
+; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+; IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+; AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+; LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+; OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+; SOFTWARE.
+;
+
+%define% FB_ENABLED 0x1FE00700
+
+%define% FB_FRAMEBUFFER 0x1FE00A01
+
+_draw_char:
+
+    cmp r0, 0
+
+    blt .end
+
+    cmp r0, 127
+    bgt .end
+
+    mov r4, _font_data
+    mul r5, r0, 8
+    add r4, r5
+
+    clr r5
+.row_loop:
+    add r7, r4, r5
+    ldb r6, r7
+
+    clr r8
+
+.col_loop:
+    mov r9, 7
+    sub r9, r8
+    shr r10, r6, r9
+
+    and r10, 1
+    bz r10, .skip_pixel
+
+    add r11, r2, r5
+    cmp r11, 0
+
+    blt .skip_pixel
+
+    cmp r11, 256
+    bge .skip_pixel
+
+    add r12, r1, r8
+    cmp r12, 0
+
+    blt .skip_pixel
+    cmp r12, 256
+    bge .skip_pixel
+
+
+    shl r11, 8
+    add r11, r12
+    add r11, FB_FRAMEBUFFER
+    stb r11, r3
+
+.skip_pixel:
+    inc r8
+    cmp r8, 8
+    blt .col_loop
+
+    inc r5
+    cmp r5, 8
+    blt .row_loop
+
+.end:
+    ret
+
+_draw_string:
+.loop:
+    ldb r4, r0
+    bz r4, .end
+    bl _draw_char, r4, r1, r2, r3
+    add r1, 8
+    inc r0
+    b .loop
+.end:
+    ret

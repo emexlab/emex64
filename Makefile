@@ -4,7 +4,7 @@ all: compile
 
 # Prepares the build directory
 build/.build:
-	mkdir build
+	mkdir -p build
 	cd build; \
 		cmake .. -G Ninja
 	touch build/.build
