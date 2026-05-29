@@ -19,7 +19,19 @@ if(EMEX64VM_DEVICE_DISPLAY)
     endif()
 endif()
 
-add_library(emex64lib SHARED
+if(APPLE)
+    option(EMEX64LIB_STATIC "Link statically against emex64lib" OFF)
+else()
+    option(EMEX64LIB_STATIC "Link statically against emex64lib" ON)
+endif()
+
+if(EMEX64LIB_STATIC)
+    set(LIB_TYPE STATIC)
+else()
+    set(LIB_TYPE SHARED)
+endif()
+
+add_library(emex64lib ${LIB_TYPE}
     # Support
 
     src/support/bitwalker.c
