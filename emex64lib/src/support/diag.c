@@ -27,7 +27,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 
-#include <emex64lib/asm/diag.h>
+#include <emex64lib/support/diag.h>
 #include <emex64lib/asm/invocation.h>
 
 _Thread_local bool warning_error = false;

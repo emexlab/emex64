@@ -33,7 +33,6 @@
 #include <emex64lib/asm/emit.h>
 #include <emex64lib/asm/section.h>
 #include <emex64lib/asm/macro.h>
-#include <emex64lib/asm/diag.h>
 
 assembler_invocation_t *assembler_invocation_alloc(const char *output_path,
                                                    assembler_options_t options)

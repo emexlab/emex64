@@ -32,9 +32,10 @@
 #include <sys/mman.h>
 #include <limits.h>
 
+#include <emex64lib/support/diag.h>
+
 #include <emex64lib/asm/code.h>
 #include <emex64lib/asm/cmptok.h>
-#include <emex64lib/asm/diag.h>
 
 void assembler_code_parse(assembler_invocation_t *inv,
                           const char **filev,

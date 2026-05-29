@@ -29,10 +29,10 @@
 
 #include <emex64lib/support/parser.h>
 #include <emex64lib/support/bitwalker.h>
+#include <emex64lib/support/diag.h>
 
 #include <emex64lib/asm/section.h>
 #include <emex64lib/asm/code.h>
-#include <emex64lib/asm/diag.h>
 
 static inline unsigned long align_up(unsigned long v, unsigned long a)
 {

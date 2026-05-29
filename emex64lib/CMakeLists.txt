@@ -39,6 +39,7 @@ add_library(emex64lib ${LIB_TYPE}
     src/support/bitwalker.c
     src/support/parser.c
     src/support/fdwalker.c
+    src/support/diag.c
 
     # Virtual Machine
 
@@ -73,7 +74,6 @@ add_library(emex64lib ${LIB_TYPE}
     src/asm/register.c
     src/asm/section.c
     src/asm/macro.c
-    src/asm/diag.c
 )
 
 target_compile_definitions(emex64lib PRIVATE

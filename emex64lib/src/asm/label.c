@@ -29,8 +29,9 @@
 #include <ctype.h>
 #include <unistd.h>
 
+#include <emex64lib/support/diag.h>
+
 #include <emex64lib/asm/label.h>
-#include <emex64lib/asm/diag.h>
 
 void assembler_label_prealloc(assembler_invocation_t *inv)
 {

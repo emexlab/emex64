@@ -32,9 +32,9 @@
 
 #include <emex64lib/support/parser.h>
 #include <emex64lib/support/fdwalker.h>
+#include <emex64lib/support/diag.h>
 
 #include <emex64lib/asm/invocation.h>
-#include <emex64lib/asm/diag.h>
 #include <emex64lib/asm/opcode.h>
 #include <emex64lib/asm/register.h>
 #include <emex64lib/asm/label.h>
