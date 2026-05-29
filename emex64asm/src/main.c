@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
     }
 
     /* generating tokens,labels,sections out of the code */
-    code_tokengen(inv, (const char **)files, file_count);
+    assembler_code_parse(inv, (const char **)files, file_count);
 
     /* doing parsing acrobatic */
     assembler_label_prealloc(inv);
