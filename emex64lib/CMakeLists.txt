@@ -5,6 +5,16 @@ project(emex64lib
     LANGUAGES C
 )
 
+find_package(OpenGL REQUIRED)
+
+if(UNIX AND NOT APPLE)
+    find_package(glfw3 REQUIRED)
+    find_package(GLEW REQUIRED)
+elseif(APPLE)
+    find_library(COCOA_FRAMEWORK Cocoa REQUIRED)
+    find_library(OPENGL_FRAMEWORK OpenGL REQUIRED)
+endif()
+
 add_library(emex64lib SHARED
     # Support
 
@@ -64,9 +74,10 @@ endif()
 
 if(UNIX AND NOT APPLE)
     target_link_libraries(emex64lib
-        PRIVATE glfw
-        PRIVATE GLEW
-        PRIVATE GL
+        PRIVATE
+            glfw
+            GLEW::GLEW
+            OpenGL::GL
     )
 elseif(APPLE)
     target_sources(emex64lib
@@ -90,4 +101,5 @@ endif()
 
 install(TARGETS emex64lib
     LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
 )
