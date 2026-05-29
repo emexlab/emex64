@@ -5,7 +5,7 @@ project(emex64lib
     LANGUAGES C
 )
 
-add_library(emex64lib STATIC
+add_library(emex64lib SHARED
     # Support
 
     src/support/bitwalker.c
@@ -87,3 +87,7 @@ elseif(APPLE)
         COMPILE_FLAGS "-fobjc-arc"
     )
 endif()
+
+install(TARGETS emex64lib
+    LIBRARY DESTINATION lib
+)
