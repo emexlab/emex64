@@ -337,7 +337,7 @@ bool assembler_emit_line(compiler_line_t *cl)
     }
 
     /* checking for deprecation */
-    if(opce->dnstr != NULL && cl->ci->warning_deprecated)
+    if(opce->dnstr != NULL && cl->ci->options.warning_deprecated)
     {
         diag_warn(&(cl->token[cl->token_cnt - 1]), "opcode \"%s\" is deprecated: %s\n", opce->name, opce->dnstr);
     }

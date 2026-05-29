@@ -154,17 +154,19 @@ int main(int argc, char *argv[])
         output_path = "a.out";
     }
 
+    assembler_options_t options = {
+        .page_align = page_align,
+        .start_entry_name = start_entry_name,
+        .warning_error = warning_error,
+        .warning_deprecated = warning_deprecated
+    };
+
     /* allocating compiler invocation */
-    assembler_invocation_t *inv = assembler_invocation_alloc(output_path);
+    assembler_invocation_t *inv = assembler_invocation_alloc(output_path, options);
     if(inv == NULL)
     {
         diag_error(NULL, "something went terribly wrong\n");
     }
-
-    inv->page_align = page_align;
-    inv->start_entry_name = start_entry_name;
-    inv->warning_error = warning_error;
-    inv->warning_deprecated = warning_deprecated;
 
     /* remaining arguments are input files */
     if(file_count <= 0)

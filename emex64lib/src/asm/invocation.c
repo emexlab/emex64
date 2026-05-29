@@ -35,7 +35,8 @@
 #include <emex64lib/asm/macro.h>
 #include <emex64lib/asm/diag.h>
 
-assembler_invocation_t *assembler_invocation_alloc(const char *output_path)
+assembler_invocation_t *assembler_invocation_alloc(const char *output_path,
+                                                   assembler_options_t options)
 {
     /* open file */
     int fd = open(output_path, O_RDWR | O_CREAT | O_TRUNC, 0777);
@@ -64,10 +65,7 @@ assembler_invocation_t *assembler_invocation_alloc(const char *output_path)
     fdwalker_seek(inv->fdwalker, 8, 0);
 
     /* setting default values */
-    inv->page_align = true;  /* default value */
-    inv->start_entry_name = "_start";
-    inv->warning_error = false;
-    inv->warning_deprecated = true;
+    inv->options = options;
     
     return inv;
 }

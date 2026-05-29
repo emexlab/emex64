@@ -127,10 +127,10 @@ void assembler_label_append(compiler_token_t *ct)
 void assembler_label_insert_start_entry(assembler_invocation_t *inv)
 {
     /* finding start label */
-    compiler_label_t *label = assembler_label_lookup(inv, inv->start_entry_name);
+    compiler_label_t *label = assembler_label_lookup(inv, inv->options.start_entry_name);
     if(label == NULL)
     {
-        diag_error(NULL, "\"%s\" label not found, cannot produce boot image\n", inv->start_entry_name);
+        diag_error(NULL, "\"%s\" label not found, cannot produce boot image\n", inv->options.start_entry_name);
     }
 
     /* writing start address into the start of the image */

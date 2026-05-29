@@ -138,7 +138,7 @@ void assembler_section_parse(assembler_invocation_t *inv)
         }
     }
 
-    if(inv->page_align)
+    if(inv->options.page_align)
     {
         inv->fdwalker->byte_pos = align_up(inv->fdwalker->byte_pos, 0x2000);
         inv->fdwalker->bit_idx = 0;
@@ -201,7 +201,7 @@ void assembler_section_parse(assembler_invocation_t *inv)
         }
     }
 
-    if(inv->page_align)
+    if(inv->options.page_align)
     {
         inv->fdwalker->byte_pos = align_up(inv->fdwalker->byte_pos, 0x2000);
         inv->fdwalker->bit_idx = 0;

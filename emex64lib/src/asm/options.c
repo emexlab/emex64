@@ -22,27 +22,14 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64ASM_INVOCATION_H
-#define EMEX64ASM_INVOCATION_H
-
-#include <emex64lib/asm/type.h>
 #include <emex64lib/asm/options.h>
 
-typedef struct assembler_invocation {
-    compiler_file_t *file;                  /* code files */
-    size_t file_cnt;                        /* count of files */
-    compiler_line_t *line;                  /* token array */
-    uint64_t line_cnt;                      /* count of tokens */
-    char *label_scope;                      /* current resolved label scope */
-    compiler_label_t *label;                /* label array */
-    uint64_t label_cnt;                     /* count of labels */
-    reloc_table_entry_t *rtbe;              /* relocation table root entry */
-    fdwalker_t *fdwalker;
-
-    assembler_options_t options;
-} assembler_invocation_t;
-
-assembler_invocation_t *assembler_invocation_alloc(const char *output_path, assembler_options_t options);
-void assembler_invocation_dealloc(assembler_invocation_t *inv);
-
-#endif /* EMEX64ASM_INVOCATION_H */
+assembler_options_t assembler_options_default(void)
+{
+    return (assembler_options_t){
+        .page_align = true,
+        .start_entry_name = "_start",
+        .warning_error = false,
+        .warning_deprecated = true
+    };
+}
