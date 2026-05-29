@@ -28,10 +28,11 @@
 #include <string.h>
 #include <pthread.h>
 
+#include <emex64lib/support/bitwalker.h>
+#include <emex64lib/support/diag.h>
+
 #include <emex64lib/vm/machine.h>
 #include <emex64lib/vm/device/display.h>
-
-#include <emex64lib/support/bitwalker.h>
 
 int main(int argc, char *argv[])
 {
@@ -44,7 +45,7 @@ int main(int argc, char *argv[])
     la64_machine_t *machine = la64_machine_alloc(0x20000000);
     if(machine == NULL)
     {
-        fprintf(stderr, "[!] failed to allocated machine\n");
+        diag_error(NULL, "failed to allocated machine\n");
         return 1;
     }
 

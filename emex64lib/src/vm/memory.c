@@ -22,12 +22,6 @@
  * SOFTWARE.
  */
 
-#include <emex64lib/vm/memory.h>
-#include <emex64lib/vm/core.h>
-#include <emex64lib/vm/machine.h>
-#include <emex64lib/vm/mmio.h>
-#include <emex64lib/vm/mmu.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,6 +30,14 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <assert.h>
+
+#include <emex64lib/support/diag.h>
+
+#include <emex64lib/vm/memory.h>
+#include <emex64lib/vm/core.h>
+#include <emex64lib/vm/machine.h>
+#include <emex64lib/vm/mmio.h>
+#include <emex64lib/vm/mmu.h>
 
 la64_memory_t *la64_memory_alloc(uint64_t size)
 {
@@ -80,29 +82,25 @@ bool la64_memory_load_image(la64_memory_t *memory,
     int fd = open(image_path, O_RDONLY);
     if(fd == -1)
     {
-
-        printf("[vm] failed to open boot image at path %s\n", image_path);
-        return false;
+        diag_error(NULL, "failed to open boot image at path \"%s\"\n", image_path);
     }
 
     /* gather size of bios image */
     struct stat image_stat;
     if(fstat(fd, &image_stat) != 0)
     {
-        printf("[vm] failed to gather size of file at path %s\n", image_path);
-        return false;
+        diag_error(NULL, "failed to gather size of file at path \"%s\"\n", image_path);
     }
 
     size_t image_size = image_stat.st_size;
     if(image_size > memory->memory_size)
     {
-        printf("[vm] error: boot image is too large\n");
-        return false;
+        diag_error(NULL, "boot image is too large\n");
     }
-    
+
     if(read(fd, memory->memory, image_size) <= 0)
     {
-        printf("[boot] error: reading boot image failed\n");
+        diag_error(NULL, "reading boot image failed\n");
         return false;
     }
 
