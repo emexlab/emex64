@@ -215,27 +215,8 @@ static inline void diag_helper(const char *msg,
     }
 }
 
-void diag_note(compiler_token_t *ct,
-               const char *msg,
-               ...)
-{
-    /* handling compiler token if passed */
-    if(ct != NULL)
-    {
-        printf("%s:%zu:%zu: ", ct->cl->ci->file[ct->cl->file_idx]->path, ct->cl->line_num, ct->column_num);
-    }
-
-    /* initial debug print */
-    printf("\x1b[1m\033[35mnote:\033[0m\x1b[0m ");
-
-    /* formatting handling */
-    va_list args;
-    va_start(args, msg);
-    diag_helper(msg, &args);
-    va_end(args);
-}
-
 typedef enum {
+    DIAG_NOTE,
     DIAG_WARN,
     DIAG_ERROR
 } diag_level_t;
@@ -257,15 +238,30 @@ static void diag_vemit(diag_level_t level,
 
     switch(level)
     {
+        case DIAG_NOTE:
+            printf("\x1b[1m\033[35mnote:");
+            break;
         case DIAG_WARN:
-            printf("\x1b[1m\033[33mwarning:\033[0m\x1b[0m ");
+            printf("\x1b[1m\033[33mwarning:");
             break;
         case DIAG_ERROR:
-            printf("\x1b[1m\033[31merror:\033[0m\x1b[0m ");
+            printf("\x1b[1m\033[31merror:");
             break;
     }
+    printf("\033[0m\x1b[0m ");
 
     diag_helper(msg, (va_list*)&args);
+}
+
+void diag_note(compiler_token_t *ct,
+               const char *msg,
+               ...)
+{
+    va_list args;
+
+    va_start(args, msg);
+    diag_vemit(DIAG_NOTE, ct, msg, args);
+    va_end(args);
 }
 
 void diag_warn(compiler_token_t *ct,
