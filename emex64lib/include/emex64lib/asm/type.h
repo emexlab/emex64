@@ -41,13 +41,10 @@ typedef enum assemblerLineType {
     kAssemblerLineTypeMacroDef
 } assembler_line_type_t;
 
-typedef struct assembler_invocation assembler_invocation_t;
-typedef struct assembler_line assembler_line_t;
-
 typedef struct {
     char *str;
     size_t column_num;                      /* start offset of column */
-    assembler_line_t *al;                   /* pointer back to compiler line */
+    struct assembler_line *al;              /* pointer back to compiler line */
 } compiler_token_t;
 
 typedef struct assembler_line {
@@ -57,7 +54,7 @@ typedef struct assembler_line {
     uint64_t token_cnt;                     /* count of subtokens */
     size_t line_num;                        /* line number in file */   
     size_t file_idx;                        /* index of file in compiler invocation */
-    assembler_invocation_t *inv;            /* pointer back to compiler invocation */
+    struct assembler_invocation *inv;       /* pointer back to compiler invocation */
 } assembler_line_t;
 
 typedef struct {

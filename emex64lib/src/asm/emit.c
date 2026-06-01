@@ -109,7 +109,7 @@ void assembler_emit_end(assembler_invocation_t *inv)
 }
 
 bool assembler_emit_instruction_inc(const opcode_entry_t *opce,
-                                    assembler_line_t *cl)
+                                    assembler_line_t *al)
 {
     /*
      * background is this was a native instruction, but
@@ -121,31 +121,31 @@ bool assembler_emit_instruction_inc(const opcode_entry_t *opce,
      * actually used the multiargument feature of it.
      */
     
-    for(uint64_t i = 1; i < cl->token_cnt; i++)
+    for(uint64_t i = 1; i < al->token_cnt; i++)
     {
         /* increment means each parameter, one opcode */
-        assembler_emit_opcode(cl->inv, LA64_OPCODE_ADD);
+        assembler_emit_opcode(al->inv, LA64_OPCODE_ADD);
 
         /* it must be a register */
-        register_entry_t *reg = register_from_string(cl->token[i].str);
+        register_entry_t *reg = register_from_string(al->token[i].str);
         if(reg == NULL)
         {
-            diag_error(&(cl->token[i]), "expected register, got intermediate or label \"%s\"\n", cl->token[i].str);
+            diag_error(&(al->token[i]), "expected register, got intermediate or label \"%s\"\n", al->token[i].str);
             return false;
         }
 
         /* emit parameters */
-        assembler_emit_register(cl->inv, reg->reg);
-        assembler_emit_imm8(cl->inv, 1);
-        assembler_emit_end(cl->inv);
-        fdwalker_align_byte(cl->inv->fdwalker);
+        assembler_emit_register(al->inv, reg->reg);
+        assembler_emit_imm8(al->inv, 1);
+        assembler_emit_end(al->inv);
+        fdwalker_align_byte(al->inv->fdwalker);
     }
 
     return true;
 }
 
 bool assembler_emit_instruction_dec(const opcode_entry_t *opce,
-                                    assembler_line_t *cl)
+                                    assembler_line_t *al)
 {
     /*
      * background is this was a native instruction, but
@@ -156,32 +156,32 @@ bool assembler_emit_instruction_dec(const opcode_entry_t *opce,
      * 1 byte more for the end marker, plus.. nobody
      * actually used the multiargument feature of it.
      */
-    for(uint64_t i = 1; i < cl->token_cnt; i++)
+    for(uint64_t i = 1; i < al->token_cnt; i++)
     {
         /* increment means each parameter, one opcode */
-        assembler_emit_opcode(cl->inv, LA64_OPCODE_SUB);
+        assembler_emit_opcode(al->inv, LA64_OPCODE_SUB);
 
         /* it must be a register */
-        register_entry_t *reg = register_from_string(cl->token[i].str);
+        register_entry_t *reg = register_from_string(al->token[i].str);
 
         if(reg == NULL)
         {
-            diag_error(&(cl->token[i]), "expected register, got intermediate or label \"%s\"\n", cl->token[i].str);
+            diag_error(&(al->token[i]), "expected register, got intermediate or label \"%s\"\n", al->token[i].str);
             return false;
         }
 
         /* emit parameters */
-        assembler_emit_register(cl->inv, reg->reg);
-        assembler_emit_imm8(cl->inv, 1);
-        assembler_emit_end(cl->inv);
-        fdwalker_align_byte(cl->inv->fdwalker);
+        assembler_emit_register(al->inv, reg->reg);
+        assembler_emit_imm8(al->inv, 1);
+        assembler_emit_end(al->inv);
+        fdwalker_align_byte(al->inv->fdwalker);
     }
 
     return true;
 }
 
 bool assembler_emit_instruction_clr(const opcode_entry_t *opce,
-                                    assembler_line_t *cl)
+                                    assembler_line_t *al)
 {
     /*
      * people would argue to emit XOR but XOR 
@@ -197,52 +197,52 @@ bool assembler_emit_instruction_clr(const opcode_entry_t *opce,
      * XOR REG, REG, END
      *
      */
-    for(uint64_t i = 1; i < cl->token_cnt; i++)
+    for(uint64_t i = 1; i < al->token_cnt; i++)
     {
         /* increment means each parameter, one opcode */
-        assembler_emit_opcode(cl->inv, LA64_OPCODE_MOV);
+        assembler_emit_opcode(al->inv, LA64_OPCODE_MOV);
 
         /* it must be a register */
-        register_entry_t *reg = register_from_string(cl->token[i].str);
+        register_entry_t *reg = register_from_string(al->token[i].str);
 
         if(reg == NULL)
         {
-            diag_error(&(cl->token[i]), "expected register, got intermediate or label \"%s\"\n", cl->token[i].str);
+            diag_error(&(al->token[i]), "expected register, got intermediate or label \"%s\"\n", al->token[i].str);
             return false;
         }
 
         /* emit parameters */
-        assembler_emit_register(cl->inv, reg->reg);
-        assembler_emit_imm8(cl->inv, 0);
-        fdwalker_align_byte(cl->inv->fdwalker);
+        assembler_emit_register(al->inv, reg->reg);
+        assembler_emit_imm8(al->inv, 0);
+        fdwalker_align_byte(al->inv->fdwalker);
     }
 
     return true;
 }
 
 bool assembler_emit_instruction_generic(const opcode_entry_t *opce,
-                                        assembler_line_t *cl)
+                                        assembler_line_t *al)
 {
     /*
      * every instruction starts with a
      * opcode. so we emit one.
      */
-    assembler_emit_opcode(cl->inv, opce->opcode);
+    assembler_emit_opcode(al->inv, opce->opcode);
 
-    for(uint64_t i = 1; i < cl->token_cnt; i++)
+    for(uint64_t i = 1; i < al->token_cnt; i++)
     {
-        register_entry_t *reg = register_from_string(cl->token[i].str);
+        register_entry_t *reg = register_from_string(al->token[i].str);
         if(reg != NULL)
         {
             /* registers are always allowed so far */
-            assembler_emit_register(cl->inv, reg->reg);
+            assembler_emit_register(al->inv, reg->reg);
             continue;
         }
 
         /* checking if allowed to be something else than a register */
         if(opcode_arg_accepts_reg_only(opce,  i - 1))
         {
-            diag_error(&(cl->token[i]), "expected register, got intermediate or label \"%s\"\n", cl->token[i].str);
+            diag_error(&(al->token[i]), "expected register, got intermediate or label \"%s\"\n", al->token[i].str);
             return false;
         }
 
@@ -256,21 +256,21 @@ bool assembler_emit_instruction_generic(const opcode_entry_t *opce,
          *       are going to use later on, so the
          *       relocations work perfectly fine.
          */
-        parser_return_t pr = parse_value_from_string(cl->token[i].str);
+        parser_return_t pr = parse_value_from_string(al->token[i].str);
 
         if(pr.type == emexParserValueTypeString)
         {
-            fdwalker_write(cl->inv->fdwalker, LA64_PARAMETER_CODING_IMM64, 3);
+            fdwalker_write(al->inv->fdwalker, LA64_PARAMETER_CODING_IMM64, 3);
 
             /* the label is either local or global */
             char *label = NULL;
-            if(cl->token[i].str[0] == '.')
+            if(al->token[i].str[0] == '.')
             {
-                asprintf(&label, "%s%s", cl->inv->label_scope, cl->token[i].str);
+                asprintf(&label, "%s%s", al->inv->label_scope, al->token[i].str);
             }
             else
             {
-                label = strdup(cl->token[i].str);
+                label = strdup(al->token[i].str);
             }
 
             /*
@@ -278,16 +278,16 @@ bool assembler_emit_instruction_generic(const opcode_entry_t *opce,
              * table.
              */
             reloc_table_entry_t *rtbe = malloc(sizeof(reloc_table_entry_t));
-            if(cl->inv->rtbe != NULL)
+            if(al->inv->rtbe != NULL)
             {
-                rtbe->next = cl->inv->rtbe;
+                rtbe->next = al->inv->rtbe;
             }
-            cl->inv->rtbe = rtbe;
+            al->inv->rtbe = rtbe;
 
             rtbe->name = label;
-            rtbe->byte_pos = cl->inv->fdwalker->byte_pos;
-            rtbe->bit_idx = cl->inv->fdwalker->bit_idx;
-            rtbe->ctlink = &(cl->token[i]);
+            rtbe->byte_pos = al->inv->fdwalker->byte_pos;
+            rtbe->bit_idx = al->inv->fdwalker->bit_idx;
+            rtbe->ctlink = &(al->token[i]);
 
             /*
              * skip the 64bit the label occupies
@@ -295,68 +295,68 @@ bool assembler_emit_instruction_generic(const opcode_entry_t *opce,
              * already. the relocation table later will
              * fill this space with the address.
              */
-            fdwalker_skip(cl->inv->fdwalker, 64);
+            fdwalker_skip(al->inv->fdwalker, 64);
         }
         else
         {
             /* its a intermediate */
-            assembler_emit_imm(cl->inv, pr.value);
+            assembler_emit_imm(al->inv, pr.value);
         }
     }
 
-    if(opce->maxargs == 32 || opce->maxargs != (cl->token_cnt - 1))
+    if(opce->maxargs == 32 || opce->maxargs != (al->token_cnt - 1))
     {
-        assembler_emit_end(cl->inv);
+        assembler_emit_end(al->inv);
     }
 
-    fdwalker_align_byte(cl->inv->fdwalker);
+    fdwalker_align_byte(al->inv->fdwalker);
 
     return true;
 }
 
-bool assembler_emit_line(assembler_line_t *cl)
+bool assembler_emit_line(assembler_line_t *al)
 {
     /* parameter count check */
-    if(cl->token_cnt <= 0)
+    if(al->token_cnt <= 0)
     {
-        diag_error(&(cl->token[0]), "insufficient operands\n");
+        diag_error(&(al->token[0]), "insufficient operands\n");
         return false;
     }
-    else if(cl->token_cnt > 32)
+    else if(al->token_cnt > 32)
     {
-        diag_error(&(cl->token[0]), "holy smokes, why soo many operands, maximum is 32 operands in 64bit lightweight architecture\n");
+        diag_error(&(al->token[0]), "holy smokes, why soo many operands, maximum is 32 operands in 64bit lightweight architecture\n");
         return false;
     }
 
     /* getting opcode entry if it exists */
-    const opcode_entry_t *opce = opcode_from_string(cl->token[0].str);
+    const opcode_entry_t *opce = opcode_from_string(al->token[0].str);
     if(opce == NULL)
     {
-        diag_error(&(cl->token[0]), "illegal opcode \"%s\"\n", cl->token[0].str);
+        diag_error(&(al->token[0]), "illegal opcode \"%s\"\n", al->token[0].str);
         return false;
     }
 
     /* checking for deprecation */
-    if(opce->dnstr != NULL && cl->inv->options.warning_deprecated)
+    if(opce->dnstr != NULL && al->inv->options.warning_deprecated)
     {
-        diag_warn(&(cl->token[cl->token_cnt - 1]), "opcode \"%s\" is deprecated: %s\n", opce->name, opce->dnstr);
+        diag_warn(&(al->token[al->token_cnt - 1]), "opcode \"%s\" is deprecated: %s\n", opce->name, opce->dnstr);
     }
 
     /* checking argument count */
-    if((cl->token_cnt - 1) > opce->maxargs)
+    if((al->token_cnt - 1) > opce->maxargs)
     {
-        diag_error(&(cl->token[cl->token_cnt - 1]), "too many operands for opcode \"%s\", expected %d operands, but got %d operands\n", opce->name, opce->maxargs, cl->token_cnt - 1);
+        diag_error(&(al->token[al->token_cnt - 1]), "too many operands for opcode \"%s\", expected %d operands, but got %d operands\n", opce->name, opce->maxargs, al->token_cnt - 1);
         return false;
     }
-    else if((cl->token_cnt - 1) < opce->minargs)
+    else if((al->token_cnt - 1) < opce->minargs)
     {
-        diag_error(&(cl->token[cl->token_cnt - 1]), "too few operands for opcode \"%s\", expected %d operands, but got %d operands\n", opce->name, opce->minargs, cl->token_cnt - 1);
+        diag_error(&(al->token[al->token_cnt - 1]), "too few operands for opcode \"%s\", expected %d operands, but got %d operands\n", opce->name, opce->minargs, al->token_cnt - 1);
         return false;
     }
 
     assert(opce->handler != NULL);
 
-    return opce->handler(opce, cl);
+    return opce->handler(opce, al);
 }
 
 bool assembler_emit(assembler_invocation_t *inv)
