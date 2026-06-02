@@ -25,9 +25,11 @@
 #ifndef EMEX64ASM_MACRO_H
 #define EMEX64ASM_MACRO_H
 
+#include <stdlib.h>
+
 #include <emex64lib/asm/type.h>
 #include <emex64lib/asm/invocation.h>
 
-void assembler_macro_expand(assembler_invocation_t *inv);
+bool assembler_macro_expand(assembler_invocation_t *inv);
 
 #endif /* EMEX64ASM_MACRO_H */

@@ -103,12 +103,11 @@ bool assembler_invocation_emit(assembler_invocation_t *inv,
     /* generating tokens,labels,sections out of the code */
     if(!assembler_code_parse(inv, (const char **)filev, filec) ||
        !assembler_label_prealloc(inv) ||
-       !assembler_section_parse(inv))
+       !assembler_section_parse(inv) ||
+       !assembler_macro_expand(inv))
     {
         return false;
     }
-
-    assembler_macro_expand(inv);
 
     /* finally compiling it to machine code */
     if(!assembler_emit(inv))

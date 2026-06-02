@@ -26,14 +26,16 @@
 #include <string.h>
 #include <stdint.h>
 
+#include <emex64lib/support/diag.h>
+
 #include <emex64lib/asm/macro.h>
 
 typedef struct {
-    const char *name;
-    const char *value;
+    const char *match;
+    const char *replacement;
 } compiler_macro_t;
 
-void assembler_macro_expand(assembler_invocation_t *inv)
+bool assembler_macro_expand(assembler_invocation_t *inv)
 {
     /* count the amount of macros */
     uint64_t c = 0;
@@ -47,6 +49,11 @@ void assembler_macro_expand(assembler_invocation_t *inv)
 
     /* allocating */
     compiler_macro_t *cm = calloc(c, sizeof(compiler_macro_t));
+    if(cm == NULL)
+    {
+        diag_error(NULL, "something terrible has happened\n");
+        return false;
+    }
 
     /* adding stuff */
     c = 0;
@@ -54,8 +61,8 @@ void assembler_macro_expand(assembler_invocation_t *inv)
     {
         if(inv->line[i].type == kAssemblerLineTypeMacroDef)
         {
-            cm[c].name = inv->line[i].token[1].str;
-            cm[c].value = inv->line[i].token[2].str;
+            cm[c].match = inv->line[i].token[1].str;
+            cm[c].replacement = inv->line[i].token[2].str;
             c++;
         }
     }
@@ -69,13 +76,25 @@ void assembler_macro_expand(assembler_invocation_t *inv)
             {
                 for(uint64_t b = 0; b < c; b++)
                 {
-                    if(strcmp(inv->line[i].token[a].str, cm[b].name) == 0)
+                    if(strcmp(inv->line[i].token[a].str, cm[b].match) == 0)
                     {
+                        char *copy_replacement = strdup(cm[b].replacement);
+                        if(copy_replacement == NULL)
+                        {
+                            diag_error(NULL, "something terrible has happened\n");
+                            free(cm);
+                            return false;
+                        }
+
                         free(inv->line[i].token[a].str);
-                        inv->line[i].token[a].str = strdup(cm[b].value);
+                        inv->line[i].token[a].str = copy_replacement;
                     }
                 }
             }
         }
     }
+
+    free(cm);
+
+    return true;
 }
