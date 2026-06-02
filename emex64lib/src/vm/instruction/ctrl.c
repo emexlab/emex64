@@ -42,14 +42,14 @@ void la64_op_cmp(la64_core_t *core)
     int64_t a = (int64_t)*(core->op.param[0]);
     int64_t b = (int64_t)*(core->op.param[1]);
     
-    core->rl[kEmex64RegisterCF] = (a == b) * LA64_CMP_Z | (a <  b) * LA64_CMP_L | (a >  b) * LA64_CMP_G;
+    core->rl[kEmex64RegisterCF] = (a == b) * kEmex64CompareFlagZ | (a <  b) * kEmex64CompareFlagL | (a >  b) * kEmex64CompareFlagG;
 }
 
 void la64_op_be(la64_core_t *core)
 {
     la64_instr_termcond(core->op.param_cnt != 1);
     
-    if(core->rl[kEmex64RegisterCF] & LA64_CMP_Z)
+    if(core->rl[kEmex64RegisterCF] & kEmex64CompareFlagZ)
     {
         la64_op_b(core);
     }
@@ -59,7 +59,7 @@ void la64_op_bne(la64_core_t *core)
 {
     la64_instr_termcond(core->op.param_cnt != 1);
     
-    if(!(core->rl[kEmex64RegisterCF] & LA64_CMP_Z))
+    if(!(core->rl[kEmex64RegisterCF] & kEmex64CompareFlagZ))
     {
         la64_op_b(core);
     }
@@ -69,7 +69,7 @@ void la64_op_blt(la64_core_t *core)
 {
     la64_instr_termcond(core->op.param_cnt != 1);
     
-    if(core->rl[kEmex64RegisterCF] & LA64_CMP_L)
+    if(core->rl[kEmex64RegisterCF] & kEmex64CompareFlagL)
     {
         la64_op_b(core);
     }
@@ -79,7 +79,7 @@ void la64_op_bgt(la64_core_t *core)
 {
     la64_instr_termcond(core->op.param_cnt != 1);
     
-    if(core->rl[kEmex64RegisterCF] & LA64_CMP_G)
+    if(core->rl[kEmex64RegisterCF] & kEmex64CompareFlagG)
     {
         la64_op_b(core);
     }
@@ -89,7 +89,7 @@ void la64_op_ble(la64_core_t *core)
 {
     la64_instr_termcond(core->op.param_cnt != 1);
     
-    if(core->rl[kEmex64RegisterCF] & LA64_CMP_L || core->rl[kEmex64RegisterCF] & LA64_CMP_Z)
+    if(core->rl[kEmex64RegisterCF] & (kEmex64CompareFlagL | kEmex64CompareFlagZ))
     {
         la64_op_b(core);
     }
@@ -99,7 +99,7 @@ void la64_op_bge(la64_core_t *core)
 {
     la64_instr_termcond(core->op.param_cnt != 1);
     
-    if(core->rl[kEmex64RegisterCF] & LA64_CMP_G || core->rl[kEmex64RegisterCF] & LA64_CMP_Z)
+    if(core->rl[kEmex64RegisterCF] & (kEmex64CompareFlagG | kEmex64CompareFlagZ))
     {
         la64_op_b(core);
     }

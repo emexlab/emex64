@@ -191,17 +191,14 @@ enum kEmex64Register: uint8_t {
     kEmex64RegisterMAX = kEmex64RegisterCR9
 };
 
-/* elevation levels */
 enum kEmex64ElevationLevel: uint8_t {
     kEmex64ElevationLevelUser =             0b00,
     kEmex64ElevationLevelKernel =           0b01,
     kEmex64ElevationLevelSecureMonitor =    0b10    /* used for software kernel secure mechanism like the apples PPL */
 };
 
-/* compare flags */
-
 /*
- * these flags is what CF contains of, yk we talked
+ * these flags is what the CF register contains of, yk we talked
  * about the control flag, those flags here are set
  * by cmp, when you compare two values or registers
  * with eachother, in this case the compare flag
@@ -212,9 +209,12 @@ enum kEmex64ElevationLevel: uint8_t {
  * G = GREATER
  *
  */
-#define LA64_CMP_Z  0x1
-#define LA64_CMP_L  0x2
-#define LA64_CMP_G  0x4
+enum kEmex64CompareFlag: uint8_t {
+
+    kEmex64CompareFlagZ =   0x1,
+    kEmex64CompareFlagL =   0x2,
+    kEmex64CompareFlagG =   0x4
+};
 
 /* exception flags */
 

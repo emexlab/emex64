@@ -40,8 +40,8 @@
 _timer_handler:
     iret
 
-_badmain:
-    bl _interrupt_register_handler, IRQ_TIMER, _timer_handler
+_main:
+    ;bl _interrupt_register_handler, IRQ_TIMER, _timer_handler
 
     ldq r0, TIMER_FREQ
     div r0, 60
@@ -56,7 +56,7 @@ _badmain:
     mov r5, 0
 .video_reloop:
     stq TIMER_CTRL, 0x7
-    hlt
+    ;hlt
     stq TIMER_CTRL, 0x0
     stq TIMER_COUNT, 0
     cmp r5, 6520
@@ -77,8 +77,8 @@ _badmain:
 .end:
     ret
 
-_badstart:
-    bl _pmm_init
-    bl _interrupt_init
-    bl _badmain
+_start:
+    ;bl _pmm_init
+    ;bl _interrupt_init
+    bl _main
     stb PLATFORM_PWR, 0
