@@ -164,17 +164,13 @@ static void la64_core_decode_instruction_at_pc(la64_core_t *core)
             case kEmex64ParameterCodingReg:
             {
                 uint8_t rcnt = (uint8_t)bitwalker_read(&bw, 5);
-
-                if(rcnt > kEmex64RegisterRR &&
-                   core->rl[kEmex64RegisterCR0] < kEmex64ElevationLevelKernel)
+                if(rcnt > kEmex64RegisterRR && core->rl[kEmex64RegisterCR0] < kEmex64ElevationLevelKernel)
                 {
                     core->rl[kEmex64RegisterCR2] = kEmex64ExceptionBadInstruction;
                     return;
                 }
 
-                core->op.param[core->op.param_cnt] = &(core->rl[rcnt]);
-                core->op.param_cnt++;
-
+                core->op.param[core->op.param_cnt++] = &(core->rl[rcnt]);
                 break;
             }
             case kEmex64ParameterCodingImm8:
@@ -183,7 +179,7 @@ static void la64_core_decode_instruction_at_pc(la64_core_t *core)
             case kEmex64ParameterCodingImm64:
             {
                 uint8_t bits = 1u << (((mode - kEmex64ParameterCodingImm8) + 1) + 2);
-                core->op.imm[core->op.param_cnt] = (uint64_t)bitwalker_read(&bw, bits);
+                core->op.imm[core->op.param_cnt] = bitwalker_read(&bw, bits);
                 core->op.param[core->op.param_cnt] = &(core->op.imm[core->op.param_cnt]);
                 core->op.param_cnt++;
                 break;
