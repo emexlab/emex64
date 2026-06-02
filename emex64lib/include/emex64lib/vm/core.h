@@ -192,9 +192,11 @@ enum kEmex64Register: uint8_t {
 };
 
 /* elevation levels */
-#define LA64_ELEVATION_USER             0b00
-#define LA64_ELEVATION_KERNEL           0b01
-#define LA64_ELEVATION_SECURE_MONITOR   0b10    /* used for software kernel secure mechanism like the apples PPL */
+enum kEmex64ElevationLevel: uint8_t {
+    kEmex64ElevationLevelUser =             0b00,
+    kEmex64ElevationLevelKernel =           0b01,
+    kEmex64ElevationLevelSecureMonitor =    0b10    /* used for software kernel secure mechanism like the apples PPL */
+};
 
 /* compare flags */
 

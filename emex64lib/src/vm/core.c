@@ -171,7 +171,7 @@ static void la64_core_decode_instruction_at_pc(la64_core_t *core)
                 uint8_t rcnt = (uint8_t)bitwalker_read(&bw, 5);
 
                 if(rcnt > kEmex64RegisterRR &&
-                   core->rl[kEmex64RegisterCR0] < LA64_ELEVATION_KERNEL)
+                   core->rl[kEmex64RegisterCR0] < kEmex64ElevationLevelKernel)
                 {
                     core->rl[kEmex64RegisterCR2] = LA64_EXCEPTION_BAD_INSTRUCTION;
                     return;

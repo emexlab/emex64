@@ -159,7 +159,7 @@ bool la64_serve_interrupt_if_needed(la64_core_t *core)
     uint64_t oldsp = core->rl[kEmex64RegisterSP];
     uint64_t oldel = core->rl[kEmex64RegisterCR0];
 
-    core->rl[kEmex64RegisterCR0] = LA64_ELEVATION_KERNEL;
+    core->rl[kEmex64RegisterCR0] = kEmex64ElevationLevelKernel;
     core->rl[kEmex64RegisterSP] = core->rl[kEmex64RegisterCR1];
 
     /* creating interrupt stack frame */

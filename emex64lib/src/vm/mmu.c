@@ -79,7 +79,7 @@ static inline bool la64_mmu_access_pxd(la64_core_t *core,
          * check too, otherwise the user program will
          * be able to access kernel memory.
          */
-        if(core->rl[kEmex64RegisterCR0] < LA64_ELEVATION_KERNEL)
+        if(core->rl[kEmex64RegisterCR0] < kEmex64ElevationLevelKernel)
         {
             checkflg |= LA64_MMU_PT_USER;
         }
