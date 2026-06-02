@@ -51,7 +51,8 @@ typedef struct assembler_invocation {
 
 assembler_invocation_t *assembler_invocation_alloc(const char *output_path);
 assembler_invocation_t *assembler_invocation_alloc_with_options(const char *output_path, assembler_options_t options);
-bool assembler_invocation_emit(assembler_invocation_t *inv, int filec, char **filev);
 void assembler_invocation_dealloc(assembler_invocation_t *inv);
+
+bool assembler_invocation_emit(assembler_invocation_t *inv, int filec, char **filev);
 
 #endif /* EMEX64ASM_INVOCATION_H */

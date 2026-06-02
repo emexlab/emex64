@@ -84,6 +84,12 @@ assembler_invocation_t *assembler_invocation_alloc_with_options(const char *outp
     return inv;
 }
 
+void assembler_invocation_dealloc(assembler_invocation_t *inv)
+{
+    /* todo: this must be redone from scratch */
+    diag_warn(NULL, "deallocation of assembler invocation is not implemented in this version of emex64lib\n");
+}
+
 bool assembler_invocation_emit(assembler_invocation_t *inv,
                                int filec,
                                char **filev)
@@ -117,10 +123,4 @@ bool assembler_invocation_emit(assembler_invocation_t *inv,
     }
 
     return true;
-}
-
-void assembler_invocation_dealloc(assembler_invocation_t *inv)
-{
-    /* todo: this must be redone from scratch */
-    diag_warn(NULL, "deallocation of assembler invocation is not implemented in this version of emex64lib\n");
 }

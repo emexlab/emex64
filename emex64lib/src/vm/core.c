@@ -108,8 +108,7 @@ emex64_opfunc_entry_t opfunc_table[] = {
 la64_core_t *la64_core_alloc()
 {
     /* allocate a brand new core */
-    la64_core_t *core = malloc(sizeof(la64_core_t));
-
+    la64_core_t *core = calloc(1, sizeof(la64_core_t));
     if(core == NULL)
     {
         return NULL;
@@ -128,9 +127,6 @@ void la64_core_dealloc(la64_core_t *core)
 
 static void la64_core_decode_instruction_at_pc(la64_core_t *core)
 {
-    /* reset operation structure */
-    memset(&(core->op), 0, sizeof(la64_operation_t));
-
     /* accessing memory */
     void *iptr = la64_memory_access(core, core->rl[kEmex64RegisterPC], 100);
     if(iptr == NULL)
@@ -154,13 +150,12 @@ static void la64_core_decode_instruction_at_pc(la64_core_t *core)
     core->op.op = opfunc_table[core->op.opcode];
 
     /* parsing loop */
+    core->op.param_cnt = 0;
     bool reached_end = false;
     for(uint8_t i = 0; i < core->op.op.maxargs && !reached_end; i++)
     {
-        /* next mode */
-        uint8_t mode = (uint8_t)bitwalker_read(&bw, 3);
-
         /* switch through modes */
+        uint8_t mode = (uint8_t)bitwalker_read(&bw, 3);
         switch(mode)
         {
             case kEmex64ParameterCodingEnd:

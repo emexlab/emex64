@@ -258,7 +258,6 @@ typedef struct la64_core la64_core_t;
 typedef void (*la64_opfunc_t)(la64_core_t *core);
 
 typedef struct la64_machine la64_machine_t;
-typedef struct la64_operation la64_operation_t;
 
 typedef struct emex64_opfunc_entry {
     la64_opfunc_t func;
