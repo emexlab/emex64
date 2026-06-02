@@ -79,7 +79,7 @@ static inline bool la64_mmu_access_pxd(la64_core_t *core,
          * check too, otherwise the user program will
          * be able to access kernel memory.
          */
-        if(core->rl[LA64_REGISTER_CR0] < LA64_ELEVATION_KERNEL)
+        if(core->rl[kEmex64RegisterCR0] < LA64_ELEVATION_KERNEL)
         {
             checkflg |= LA64_MMU_PT_USER;
         }
@@ -123,7 +123,7 @@ bool la64_mmu_access(la64_core_t *core,
      * we read it as if it was a 5th level entry, but its just a
      * control register.. for simplicity we do that hahaha.
      */
-    uint64_t cr_pte = core->rl[LA64_REGISTER_CR4];
+    uint64_t cr_pte = core->rl[kEmex64RegisterCR4];
     if(!((cr_pte & LA64_MMU_MASK_FLAGS) & LA64_MMU_PT_PRESENT) || core->in_interrupt)
     {
         /* incase paging is disabled virtual addresses are physical ones */

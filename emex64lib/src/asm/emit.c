@@ -48,7 +48,7 @@ void assembler_emit_opcode(assembler_invocation_t *inv,
 void assembler_emit_register(assembler_invocation_t *inv,
                              uint8_t reg)
 {
-    assert(reg < LA64_REGISTER_MAX);
+    assert(reg < kEmex64RegisterMAX);
 
     fdwalker_write(inv->fdwalker, kEmex64ParameterCodingReg, 3);
     fdwalker_write(inv->fdwalker, reg, 5);

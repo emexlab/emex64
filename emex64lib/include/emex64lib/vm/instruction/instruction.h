@@ -28,7 +28,7 @@
 #define la64_instr_termcond(case)                                               \
     if(case)                                                                    \
     {                                                                           \
-        core->rl[LA64_REGISTER_CR2] = LA64_EXCEPTION_BAD_ACCESS;                \
+        core->rl[kEmex64RegisterCR2] = LA64_EXCEPTION_BAD_ACCESS;               \
         return;                                                                 \
     }    
 

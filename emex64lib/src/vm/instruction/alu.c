@@ -39,7 +39,7 @@
     uint64_t *operand[2] = { core->op.param[core->op.param_cnt - 2], core->op.param[core->op.param_cnt - 1] };                          \
     if(*operand[1] == 0)                                                                                                                \
     {                                                                                                                                   \
-        core->rl[LA64_REGISTER_CR2] = LA64_EXCEPTION_BAD_ARITHMETIC;                                                                    \
+        core->rl[kEmex64RegisterCR2] = LA64_EXCEPTION_BAD_ARITHMETIC;                                                                   \
         return;                                                                                                                         \
     }                                                                                                                                   \
     *(core->op.param[0]) = *operand[0] act *operand[1];
@@ -48,7 +48,7 @@
     uint64_t *operand[2] = { core->op.param[core->op.param_cnt - 2], core->op.param[core->op.param_cnt - 1] };                          \
     if(*operand[1] == 0)                                                                                                                \
     {                                                                                                                                   \
-        core->rl[LA64_REGISTER_CR2] = LA64_EXCEPTION_BAD_ARITHMETIC;                                                                    \
+        core->rl[kEmex64RegisterCR2] = LA64_EXCEPTION_BAD_ARITHMETIC;                                                                   \
         return;                                                                                                                         \
     }                                                                                                                                   \
     *(core->op.param[0]) = (int64_t)*operand[0] act (int64_t)*operand[1];

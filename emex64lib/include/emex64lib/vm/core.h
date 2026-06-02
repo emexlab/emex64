@@ -100,96 +100,96 @@ enum kEmex64ParameterCoding: uint8_t {
     /* leaving 0b110 and 0b111 open for later additions */
 };
 
-/* registers */
+enum kEmex64Register: uint8_t {
+    /*
+     * program counter: it points to the current address at
+     * which the CPU currently is, it increments by the
+     * lenght of the instruction when the CPU is done
+     * executing the instruction at which PC points to at
+     * that time.
+     */
+    kEmex64RegisterPC =     0b00000,
 
-/*
- * program counter: it points to the current address at
- * which the CPU currently is, it increments by the
- * lenght of the instruction when the CPU is done
- * executing the instruction at which PC points to at
- * that time.
- */
-#define LA64_REGISTER_PC    0b00000
+    /*
+     * stack pointer: it points to the current address at
+     * which the stack lives, stack grows downwards on
+     * allocation and upwards on deallocation.
+     *
+     * stack allocation is meant to be done for small
+     * things, as heap allocation is way more expensive,
+     * than a simple register decrement.
+     */
+    kEmex64RegisterSP =     0b00001,
 
-/*
- * stack pointer: it points to the current address at
- * which the stack lives, stack grows downwards on
- * allocation and upwards on deallocation.
- *
- * stack allocation is meant to be done for small
- * things, as heap allocation is way more expensive,
- * than a simple register decrement.
- */
-#define LA64_REGISTER_SP    0b00001
+    /*
+     * frame pointer: it points to the address at which the
+     * stack frame of the last function call lives,
+     * basically empowering you to branch and link and
+     * return back without destroying values stored
+     * in registers previously.
+     *
+     * a stack frame on the LA64 architecture is a full
+     * backup of all registers stored onto stack memory
+     * that is expensive(256 bytes per frame) but its also
+     * simplistic, for now that will be the soulution,
+     * cannot be guranteed that this ABI choice wont change.
+     */
+    kEmex64RegisterFP =     0b00010,
 
-/*
- * frame pointer: it points to the address at which the
- * stack frame of the last function call lives,
- * basically empowering you to branch and link and
- * return back without destroying values stored
- * in registers previously.
- *
- * a stack frame on the LA64 architecture is a full
- * backup of all registers stored onto stack memory
- * that is expensive(256 bytes per frame) but its also
- * simplistic, for now that will be the soulution,
- * cannot be guranteed that this ABI choice wont change.
- */
-#define LA64_REGISTER_FP    0b00010
+    /*
+     * control flag: used by control flow instructions like
+     * cmp, je, jne.. basically used for if else statements.
+     */
+    kEmex64RegisterCF =     0b00011,
 
-/*
- * control flag: used by control flow instructions like
- * cmp, je, jne.. basically used for if else statements.
- */
-#define LA64_REGISTER_CF    0b00011
+    /*
+     * general purpose registers: these registers arent used
+     * for anything other than the software, these registers
+     * can be used for any purpose, thats why they are called
+     * general purpose registers, because they got no fixed
+     * purpose like pc, sp, fp, cf.
+     */
+    kEmex64RegisterR0 =     0b00100,
+    kEmex64RegisterR1 =     0b00101,
+    kEmex64RegisterR2 =     0b00110,
+    kEmex64RegisterR3 =     0b00111,
+    kEmex64RegisterR4 =     0b01000,
+    kEmex64RegisterR5 =     0b01001,
+    kEmex64RegisterR6 =     0b01010,
+    kEmex64RegisterR7 =     0b01011,
+    kEmex64RegisterR8 =     0b01100,
+    kEmex64RegisterR9 =     0b01101,
+    kEmex64RegisterR10 =    0b01110,
+    kEmex64RegisterR11 =    0b01111,
+    kEmex64RegisterR12 =    0b10000,
+    kEmex64RegisterR13 =    0b10001,
+    kEmex64RegisterR14 =    0b10010,
+    kEmex64RegisterR15 =    0b10011,
+    kEmex64RegisterR16 =    0b10100,
 
-/*
- * general purpose registers: these registers arent used
- * for anything other than the software, these registers
- * can be used for any purpose, thats why they are called
- * general purpose registers, because they got no fixed
- * purpose like pc, sp, fp, cf.
- */
-#define LA64_REGISTER_R0    0b00100
-#define LA64_REGISTER_R1    0b00101
-#define LA64_REGISTER_R2    0b00110
-#define LA64_REGISTER_R3    0b00111
-#define LA64_REGISTER_R4    0b01000
-#define LA64_REGISTER_R5    0b01001
-#define LA64_REGISTER_R6    0b01010
-#define LA64_REGISTER_R7    0b01011
-#define LA64_REGISTER_R8    0b01100
-#define LA64_REGISTER_R9    0b01101
-#define LA64_REGISTER_R10   0b01110
-#define LA64_REGISTER_R11   0b01111
-#define LA64_REGISTER_R12   0b10000
-#define LA64_REGISTER_R13   0b10001
-#define LA64_REGISTER_R14   0b10010
-#define LA64_REGISTER_R15   0b10011
-#define LA64_REGISTER_R16   0b10100
+    /*
+     * return register: also a general purpose register but
+     * it is not affected by bl and ret, this register
+     * has the purpose of a called symbol to be able to
+     * return without any crazy memory math a value for
+     * example.
+     */
+    kEmex64RegisterRR =     0b10101,
 
-/*
- * return register: also a general purpose register but
- * it is not affected by bl and ret, this register
- * has the purpose of a called symbol to be able to
- * return without any crazy memory math a value for
- * example.
- */
-#define LA64_REGISTER_RR    0b10101
+    /* control registers */
+    kEmex64RegisterCR0 =    0b10110,    /* CREL:    elevation control register */
+    kEmex64RegisterCR1 =    0b10111,    /* CRKSP:   kernel stack pointer (the stack pointer the interrupt controller will use when receiving interrupt) */
+    kEmex64RegisterCR2 =    0b11000,    /* CREXC:   exception register (first 3bits for the exception) */
+    kEmex64RegisterCR3 =    0b11001,    /* CRVEC:   cpu vector table */
+    kEmex64RegisterCR4 =    0b11010,    /* CRPTB:   page table pointer (first 8bits are the flags and the rest is the physical address where the page table is) */
+    kEmex64RegisterCR5 =    0b11011,
+    kEmex64RegisterCR6 =    0b11100,
+    kEmex64RegisterCR7 =    0b11101,
+    kEmex64RegisterCR8 =    0b11110,
+    kEmex64RegisterCR9 =    0b11111,
 
-/* control registers */
-#define LA64_REGISTER_CR0   0b10110 /* CREL:    elevation control register */
-#define LA64_REGISTER_CR1   0b10111 /* CRKSP:   kernel stack pointer (the stack pointer the interrupt controller will use when receiving interrupt) */
-#define LA64_REGISTER_CR2   0b11000 /* CREXC:   exception register (first 3bits for the exception) */
-#define LA64_REGISTER_CR3   0b11001 /* CRVEC:   cpu vector table */
-#define LA64_REGISTER_CR4   0b11010 /* CRPTB:   page table pointer (first 8bits are the flags and the rest is the physical address where the page table is) */
-#define LA64_REGISTER_CR5   0b11011
-#define LA64_REGISTER_CR6   0b11100
-#define LA64_REGISTER_CR7   0b11101
-#define LA64_REGISTER_CR8   0b11110
-#define LA64_REGISTER_CR9   0b11111
-
-#define LA64_REGISTER_MAX   LA64_REGISTER_CR9
+    kEmex64RegisterMAX = kEmex64RegisterCR9
+};
 
 /* elevation levels */
 #define LA64_ELEVATION_USER             0b00
@@ -269,7 +269,7 @@ typedef struct la64_core {
     pthread_t pthread;
 
     /* a array of all (control) registers */
-    uint64_t rl[LA64_REGISTER_MAX + 1];
+    uint64_t rl[kEmex64RegisterMAX + 1];
 
     /* data of currently decoding or decoded operation */
     struct la64_operation {

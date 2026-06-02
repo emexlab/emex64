@@ -132,10 +132,10 @@ static void la64_core_decode_instruction_at_pc(la64_core_t *core)
     memset(&(core->op), 0, sizeof(la64_operation_t));
 
     /* accessing memory */
-    void *iptr = la64_memory_access(core, core->rl[LA64_REGISTER_PC], 100);
+    void *iptr = la64_memory_access(core, core->rl[kEmex64RegisterPC], 100);
     if(iptr == NULL)
     {
-        core->rl[LA64_REGISTER_CR2] = LA64_EXCEPTION_BAD_ACCESS;
+        core->rl[kEmex64RegisterCR2] = LA64_EXCEPTION_BAD_ACCESS;
         return;
     }
 
@@ -147,7 +147,7 @@ static void la64_core_decode_instruction_at_pc(la64_core_t *core)
     core->op.opcode = (uint8_t)bitwalker_read(&bw, 8);
     if(core->op.opcode > kEmex64OpcodeMAX)
     {
-        core->rl[LA64_REGISTER_CR2] = LA64_EXCEPTION_BAD_ACCESS;
+        core->rl[kEmex64RegisterCR2] = LA64_EXCEPTION_BAD_ACCESS;
         return;
     }
 
@@ -170,10 +170,10 @@ static void la64_core_decode_instruction_at_pc(la64_core_t *core)
             {
                 uint8_t rcnt = (uint8_t)bitwalker_read(&bw, 5);
 
-                if(rcnt > LA64_REGISTER_RR &&
-                   core->rl[LA64_REGISTER_CR0] < LA64_ELEVATION_KERNEL)
+                if(rcnt > kEmex64RegisterRR &&
+                   core->rl[kEmex64RegisterCR0] < LA64_ELEVATION_KERNEL)
                 {
-                    core->rl[LA64_REGISTER_CR2] = LA64_EXCEPTION_BAD_INSTRUCTION;
+                    core->rl[kEmex64RegisterCR2] = LA64_EXCEPTION_BAD_INSTRUCTION;
                     return;
                 }
 
@@ -194,7 +194,7 @@ static void la64_core_decode_instruction_at_pc(la64_core_t *core)
                 break;
             }
             default:
-                core->rl[LA64_REGISTER_CR2] = LA64_EXCEPTION_BAD_INSTRUCTION;
+                core->rl[kEmex64RegisterCR2] = LA64_EXCEPTION_BAD_INSTRUCTION;
                 reached_end = true;
                 return;
         }
@@ -223,7 +223,7 @@ static void *la64_core_execute_thread(void *arg)
         if(!core->in_interrupt)
         {
             /* checking if exception is non-NONE */
-            if(core->rl[LA64_REGISTER_CR2] != LA64_EXCEPTION_NONE)
+            if(core->rl[kEmex64RegisterCR2] != LA64_EXCEPTION_NONE)
             {
                 core->halted = true;
                 la64_raise_interrupt(core->machine, LA64_IRQ_EXCEPTION);
@@ -242,10 +242,10 @@ static void *la64_core_execute_thread(void *arg)
         la64_core_decode_instruction_at_pc(core);
 
         /* sanity check */
-        if((core->rl[LA64_REGISTER_CR2] != LA64_EXCEPTION_NONE) &&
+        if((core->rl[kEmex64RegisterCR2] != LA64_EXCEPTION_NONE) &&
            !core->in_interrupt)
         {
-            core->rl[LA64_REGISTER_CR2] = LA64_EXCEPTION_BAD_INSTRUCTION;
+            core->rl[kEmex64RegisterCR2] = LA64_EXCEPTION_BAD_INSTRUCTION;
             continue;
         }
 
@@ -253,7 +253,7 @@ static void *la64_core_execute_thread(void *arg)
         core->op.op.func(core);
 
         /* incrementing program counter by instruction size */
-        core->rl[LA64_REGISTER_PC] += core->op.ilen;
+        core->rl[kEmex64RegisterPC] += core->op.ilen;
 
         /*
          * if we are in a interrupt then there is no reason

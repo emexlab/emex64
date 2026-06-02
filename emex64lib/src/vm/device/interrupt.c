@@ -156,36 +156,41 @@ bool la64_serve_interrupt_if_needed(la64_core_t *core)
     uint64_t handler_addr = *(uint64_t *)vector_ptr;
 
     /* jump to handler */
-    uint64_t oldsp = core->rl[LA64_REGISTER_SP];
-    uint64_t oldel = core->rl[LA64_REGISTER_CR0];
+    uint64_t oldsp = core->rl[kEmex64RegisterSP];
+    uint64_t oldel = core->rl[kEmex64RegisterCR0];
 
-    core->rl[LA64_REGISTER_CR0] = LA64_ELEVATION_KERNEL;
-    core->rl[LA64_REGISTER_SP] = core->rl[LA64_REGISTER_CR1];
+    core->rl[kEmex64RegisterCR0] = LA64_ELEVATION_KERNEL;
+    core->rl[kEmex64RegisterSP] = core->rl[kEmex64RegisterCR1];
 
     /* creating interrupt stack frame */
     la64_push(core, oldel);
-    la64_push(core, core->rl[LA64_REGISTER_PC]);
+    la64_push(core, core->rl[kEmex64RegisterPC]);
     la64_push(core, oldsp);
-    la64_push(core, core->rl[LA64_REGISTER_FP]);
-    la64_push(core, core->rl[LA64_REGISTER_CF]);
-    la64_push(core, core->rl[LA64_REGISTER_R0]);
-    la64_push(core, core->rl[LA64_REGISTER_R1]);
-    la64_push(core, core->rl[LA64_REGISTER_R2]);
-    la64_push(core, core->rl[LA64_REGISTER_R3]);
-    la64_push(core, core->rl[LA64_REGISTER_R4]);
-    la64_push(core, core->rl[LA64_REGISTER_R5]);
-    la64_push(core, core->rl[LA64_REGISTER_R6]);
-    la64_push(core, core->rl[LA64_REGISTER_R7]);
-    la64_push(core, core->rl[LA64_REGISTER_R8]);
-    la64_push(core, core->rl[LA64_REGISTER_R9]);
-    la64_push(core, core->rl[LA64_REGISTER_R10]);
-    la64_push(core, core->rl[LA64_REGISTER_R11]);
+    la64_push(core, core->rl[kEmex64RegisterFP]);
+    la64_push(core, core->rl[kEmex64RegisterCF]);
+    la64_push(core, core->rl[kEmex64RegisterR0]);
+    la64_push(core, core->rl[kEmex64RegisterR1]);
+    la64_push(core, core->rl[kEmex64RegisterR2]);
+    la64_push(core, core->rl[kEmex64RegisterR3]);
+    la64_push(core, core->rl[kEmex64RegisterR4]);
+    la64_push(core, core->rl[kEmex64RegisterR5]);
+    la64_push(core, core->rl[kEmex64RegisterR6]);
+    la64_push(core, core->rl[kEmex64RegisterR7]);
+    la64_push(core, core->rl[kEmex64RegisterR8]);
+    la64_push(core, core->rl[kEmex64RegisterR9]);
+    la64_push(core, core->rl[kEmex64RegisterR10]);
+    la64_push(core, core->rl[kEmex64RegisterR11]);
+    la64_push(core, core->rl[kEmex64RegisterR12]);
+    la64_push(core, core->rl[kEmex64RegisterR13]);
+    la64_push(core, core->rl[kEmex64RegisterR14]);
+    la64_push(core, core->rl[kEmex64RegisterR15]);
+    la64_push(core, core->rl[kEmex64RegisterR16]);
 
     /* storing it as frame pointer  */
-    core->rl[LA64_REGISTER_FP] = core->rl[LA64_REGISTER_SP];
+    core->rl[kEmex64RegisterFP] = core->rl[kEmex64RegisterSP];
 
     /* performing jump */
-    core->rl[LA64_REGISTER_PC] = handler_addr;
+    core->rl[kEmex64RegisterPC] = handler_addr;
     core->op.ilen = 0;
     core->in_interrupt = true;
 
