@@ -40,3 +40,4 @@
 %define% IRQ_NETWORK    4
 %define% IRQ_SOFTWARE   5
 %define% IRQ_8042       6   ; spicy x3 silly keyboard controller
+%define% IRQ_AC97       7   ; just ac97 controller nothing much :P

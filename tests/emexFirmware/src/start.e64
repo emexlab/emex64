@@ -24,6 +24,8 @@
 
 %include% <emex64.e64inc>
 
+%define% FW_TONE_RATE       48000
+
 section .data
     fw_font_test_msg db "[fw] firmware font test\n     ABCDEFGHIJKLMNOPQRSTUVWXYZ\n     abcdefghijklmnopqrstuvwxyz\n     0123456789\n     @#%^&*()!<>?:;\n\0"
     fw_display_msg db "[fw] display resolution: \0"
@@ -39,23 +41,20 @@ section .data
     fw_ktrr_msg db "[fw] locked KTRR\n\0"
 
 _fw_8042_handler:
-    ;ldq r3, putc_sym
-    ;stq putc_sym, _uart_putc
-
-    ldd r0, 0x002000000000C008          ; STATUS port
-    and r0, 0x01                        ; OBF (bit 0)?
+    ldd r0, 0x002000000000C008
+    and r0, 0x01
     bz r0, .no_data
     ldd r1, 0x002000000000C008
     and r1, 0x20
     bnz r1, .mouse_event
-    
+
     ldd r0, 0x002000000000C000
     blw _puts, fw_8042_msg
     blw _puts, fw_scancode_msg
     blw _putbase, r0, 16
     blw _putc, '\n'
     b .done
-    
+
 .mouse_event:
     ldd r0, 0x002000000000C000
     blw _puts, fw_8042_mouse_msg
@@ -64,8 +63,8 @@ _fw_8042_handler:
 
 .done:
 .no_data:
-    ;stq putc_sym, r3
     iret
+
 
 _fw_start:
     blw _interrupt_register_handler, IRQ_EXCEPTION, _exception_handler
@@ -89,7 +88,7 @@ _fw_start:
     blw _mc_get_mem_size
     mov r1, rr
     sub r0, r1, __emex64_exec_img_end
-    
+
     blw _puts, fw_memory_msg
     blw _put_mem, r1, r1
     blw _putc, '\n'
@@ -97,11 +96,14 @@ _fw_start:
     blw _puts, fw_memory_available_msg
     blw _put_mem, r0, r1
     blw _putc, '\n'
-    
+
     blw _print_time
 
     blw _mc_lock_ktrr
     blw _puts, fw_ktrr_msg
+
+    ; init AC97 codec at 48000 Hz
+    blw _ac97_init, FW_TONE_RATE
 
 .hang:
     hlt
@@ -109,16 +111,14 @@ _fw_start:
 
 ; main setup routine
 _start:
-    ; setting up stack
     ldq r0, MCSIZE
     sub r0, 8
     mov sp, r0
-    
-    blw _put_init                                    ; checks for fb
-    blw _pmm_init                                    ; initilizing page allocator
-    blw _slab_init                                   ; initilizing slab allocator
-    blw _interrupt_init                              ; initilizing interrupt controller
-    bl _fw_start                                     ; branching to main symbol
+
+    blw _put_init
+    blw _pmm_init
+    blw _slab_init
+    blw _interrupt_init
+    bl _fw_start
 .poweroff:
-    stb PLATFORM_PWR, 0                             ; telling platform device to turn off
-    
+    stb PLATFORM_PWR, 0

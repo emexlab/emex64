@@ -42,7 +42,7 @@
 
 /* user devices */
 #define EMEX64_IRQ_8042       6   /* emex8042 MMIO chip fires interrupt when device gets plugged in for example */
-/* IRQ 7-63 available for user devices */
+#define EMEX64_IRQ_AC97       7   
 
 #define EMEX64_IRQ_MAX        63
 

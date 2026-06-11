@@ -54,6 +54,7 @@ int main(int argc, char *argv[])
             fprintf(stderr, "\t--help                                       : showing help menu\n");
             fprintf(stderr, "\t--firmware <image path>                      : providing firmware image\n");
             fprintf(stderr, "\t--memory <memory size>                       : providing memory size in megabyte\n");
+            fprintf(stderr, "\t--audio [on|off|required]                    : enables or disables AC97 audio\n");
             if(machine_support.display)
             {
                 fprintf(stderr, "\t--display [on|off|required]                  : enables or disables display\n");
@@ -104,6 +105,32 @@ int main(int argc, char *argv[])
             else
             {
                 diag_error(NULL, "unknown argument supplied to '--display': '%s'\n", argv[i + 1]);
+                return 1;
+            }
+            i++;
+        }
+        else if(strcmp(argv[i], "--audio") == 0 && i + 1 < argc)
+        {
+            if(strcmp(argv[i + 1], "on") == 0)
+            {
+                machine_options.audio = true;
+            }
+            else if(strcmp(argv[i + 1], "off") == 0)
+            {
+                machine_options.audio = false;
+            }
+            else if(strcmp(argv[i + 1], "required") == 0)
+            {
+                if(!machine_support.audio)
+                {
+                    diag_error(NULL, "audio support is not available in this distribution of the emex64 toolchain\n");
+                    return 1;
+                }
+                machine_options.audio = true;
+            }
+            else
+            {
+                diag_error(NULL, "unknown argument supplied to '--audio': '%s'\n", argv[i + 1]);
                 return 1;
             }
             i++;

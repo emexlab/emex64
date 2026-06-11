@@ -29,7 +29,8 @@ LINK_ORDER = \
     $(BUILDDIR)/rtc.o      \
     $(BUILDDIR)/gui.o      \
     $(BUILDDIR)/font.o     \
-    $(BUILDDIR)/string.o
+    $(BUILDDIR)/string.o   \
+    $(BUILDDIR)/ac97.o
 
 all: compile execute
 

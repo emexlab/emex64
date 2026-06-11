@@ -31,3 +31,4 @@
 %include% <mm.e64inc>
 %include% <regs.e64inc>
 %include% <timer.e64inc>
+%include% <ac97.e64inc>

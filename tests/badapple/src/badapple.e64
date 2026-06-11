@@ -24,17 +24,172 @@
 
 %include% <emex64.e64inc>
 
-%define% VFB_HEIGHT	256
-%define% VFB_WIDTH  	256
-%define% VFB_SIZE   	0x10000
+%define% VFB_HEIGHT      256
+%define% VFB_WIDTH       256
+%define% VFB_SIZE        0x10000
+%define% VFB_ENABLED     1
+%define% VIDEO_FRAMES    6520
 
-%define% VFB_ENABLED 	1
+%define% AUDIO_RATE           22050
+%define% AUDIO_CHUNK_SAMPLES  1470        ; 2 video frames worth
+%define% AUDIO_CHUNK_BYTES    5880        ; 1470 * 4
+%define% AUDIO_BDL_ENTRIES    32
+%define% AUDIO_BDL_FILL       31          ; slots to fill per refill (32-1 gap)
+%define% AUDIO_BDL_MASK       0x1F
+%define% AUDIO_TOTAL_CHUNKS   3261        ; ceil(6520 frames / 2)
 
 section .data
     badapple_bitmap df "../vid.bitmask"
+    badapple_audio  df "../audio.raw"
+
 %ifdef% BENCHMARK
     result_msg db "Timer Ticks: \0"
 %endif%
+
+section .bss
+    audio_bdl_base   dq 1
+    audio_chunk_idx  dq 1   ; next chunk to schedule
+    audio_lvi        dq 1   ; current LVI mod 32
+
+
+; _audio_write_entry  (inline helper, not a real function)
+_ac97_lvbi_handler:
+    ldq  r0, audio_chunk_idx
+
+    ; if all audio consumed, just ack and return
+    mov  r1, AUDIO_TOTAL_CHUNKS
+    cmp  r0, r1
+    bge  .ack
+
+    ; refill 31 slots starting at slot (audio_lvi+1)&MASK
+    ldq  r6, audio_lvi
+    inc  r6
+    and  r6, AUDIO_BDL_MASK        ; r6 = first slot to write eh :/
+
+    ldq  r7, audio_bdl_base
+    mov  r8, 0                      ; loop counter (0..30)
+
+.refill_loop:
+    mov  r9, AUDIO_BDL_FILL
+    cmp  r8, r9
+    bge  .refill_done
+
+    ; bail out if we've consumed all chunks
+    ldq  r0, audio_chunk_idx
+    mov  r1, AUDIO_TOTAL_CHUNKS
+    cmp  r0, r1
+    bge  .refill_done
+
+    ; slot address = bdl_base + slot * 8
+    and  r2, r6, AUDIO_BDL_MASK
+    mul  r3, r2, 8
+    add  r3, r7                     ; r3 = &bdl[slot]
+
+    ; PCM byte offset = chunk_idx * AUDIO_CHUNK_BYTES
+    mul  r4, r0, AUDIO_CHUNK_BYTES
+    mov  r5, badapple_audio
+    add  r5, r4                     ; r5 = src address
+
+    ; write base_addr (32-bit)
+    std  r3, r5
+    add  r3, 4
+
+    ; write length (no flags — no IOC, no BUP)
+    mov  r4, AUDIO_CHUNK_SAMPLES
+    std  r3, r4
+
+    ; advance chunk and slot
+    inc  r0
+    stq  audio_chunk_idx, r0
+    inc  r6
+    inc  r8
+    b    .refill_loop
+
+.refill_done:
+    ; new LVI = (audio_lvi + r8) & MASK  where r8 = slots actually written
+    ldq  r6, audio_lvi
+    add  r6, r8
+    and  r6, AUDIO_BDL_MASK
+    stq  audio_lvi, r6
+
+    ; clear LVBCI and DCH (W1C on LVBCI, then restart by writing LVI + RUN)
+    mov  r0, AC97_BM_STATUS_LVBCI
+    stw  AC97_BM_PCMOUT_STATUS, r0
+
+    stb  AC97_BM_PCMOUT_LVI, r6
+
+    mov  r0, AC97_BM_CTRL_RUN
+    or   r0, AC97_BM_CTRL_LVBIE
+    stb  AC97_BM_PCMOUT_CTRL, r0
+
+.ack:
+    mov  r0, IRQ_AC97
+    stq  INTC_REG_ACK, r0
+    iret
+
+_audio_init:
+    blw  _pmm_alloc
+    stq  audio_bdl_base, rr
+
+    blw  _ac97_init, AUDIO_RATE
+
+    ; fill slots 0..30
+    ldq  r8, audio_bdl_base
+    mov  r9, 0
+
+.fill_loop:
+    mov  r10, AUDIO_BDL_FILL
+    cmp  r9, r10
+    bge  .fill_done
+
+    ; BDL slot address
+    mul  r2, r9, 8
+    add  r2, r8
+
+    mov  r0, r9
+    mul  r0, AUDIO_CHUNK_BYTES
+    mov  r1, badapple_audio
+    add  r1, r0
+
+    std  r2, r1
+    add  r2, 4
+    mov  r3, AUDIO_CHUNK_SAMPLES
+    std  r2, r3
+
+    inc  r9
+    b    .fill_loop
+
+.fill_done:
+    ; chunk_idx = 31 (slots 0..30 pre-filled)
+    mov  r0, AUDIO_BDL_FILL
+    stq  audio_chunk_idx, r0
+
+    mov  r0, 30
+    stq  audio_lvi, r0
+
+    blw  _interrupt_register_handler, IRQ_AC97, _ac97_lvbi_handler
+
+    ; start DMA: LVI=30, RUN | LVBIE (no IOCE — no IOC flags in entries)
+    ldq  r0, audio_bdl_base
+    mov  r1, 30
+    blw  _ac97_play_lvbie, r0, r1
+
+    wret
+
+_ac97_play_lvbie:
+    mov  r2, AC97_BM_CTRL_RESET
+    stb  AC97_BM_PCMOUT_CTRL, r2
+
+    stq  AC97_BM_PCMOUT_BDL_BASE, r0
+
+    and  r1, 0x1F
+    stb  AC97_BM_PCMOUT_LVI, r1
+
+    mov  r2, AC97_BM_CTRL_RUN
+    or   r2, AC97_BM_CTRL_LVBIE
+    stb  AC97_BM_PCMOUT_CTRL, r2
+
+    wret
 
 %ifdef% FULL
 _timer_handler:
@@ -42,20 +197,15 @@ _timer_handler:
 %endif%
 
 _start:
-    ; lol the first if not xD
-;%ifdef% MINIMAL
-;%else%
-    ; setup stack
     ldq r0, MCSIZE
     sub r0, 8
     mov sp, r0
-;%endif%
 
 %ifdef% BENCHMARK
     blw _put_init
     stw gui_line, 0
 
-    stq TIMER_COMPARE, 0xFFFFFFFFFFFFFFFF   ; we need ticks
+    stq TIMER_COMPARE, 0xFFFFFFFFFFFFFFFF
     stq TIMER_CTRL, 0x7
 %endif%
 
@@ -69,30 +219,28 @@ _start:
     stq TIMER_COMPARE, r0
     stq TIMER_COUNT, 0
     stq TIMER_CTRL, 0x7
+
+    blw _audio_init
 %endif%
 
-    ; checking if display device is available
     ldb r0, FB_ENABLED
     bz r0, .end
 
     ldd r10, FB_WIDTH
 
-    ; this is the main start of the video
 .video_entry:
-    add r1, FB_FRAMEBUFFER, VFB_SIZE            ; calculating the end of the framebuffer, r1 is for the lifetime of this stack frame the marker of the framebuffer end
+    add r1, FB_FRAMEBUFFER, VFB_SIZE
 
-    ; starts the video it self
 .video_playback:
     mov r2, badapple_bitmap
     mov r5, 0
 
-    ; advances to the next frame
 .video_frame_next:
 %ifdef% FULL
     hlt
 %endif%
 
-    cmp r5, 6520
+    cmp r5, VIDEO_FRAMES
 %ifdef% BENCHMARK
     bgt .end
 %else%
@@ -100,39 +248,32 @@ _start:
 %endif%
     mov r0, FB_FRAMEBUFFER
 
-    ; draws the entire frame in 8 byte steps
 .video_frame_draw:
-    ; drawing logic (8 byte per draw)
-    ldb r3, r2                                  ; loading the bitmap byte of the next 8 pixels of the current frame on the video
-    pdep r4, r3, 0x0101010101010101             ; expanding the bitmap byte to a 64bit unsigned integer so we can draw it on the frame buffer
-    mul r4, 0xFF                                ; applying color, 0xFF usually is white
-    bswapq r4                                   ; reversing byte order
+    ldb r3, r2
+    pdep r4, r3, 0x0101010101010101
+    mul r4, 0xFF
+    bswapq r4
 
 %if% VFB_ENABLED
-    ; inlined _virt_to_phys_fb_addr
-    sub r11, r0, FB_FRAMEBUFFER                 ; getting the offset of the provided ptr
-    shr r12, r11, 8                             ; this math is only valid on 256 x 256 screens
+    sub r11, r0, FB_FRAMEBUFFER
+    shr r12, r11, 8
     and r14, r11, 0xFF
     mul r15, r12, r10
     add r15, r14
     add r15, FB_FRAMEBUFFER
-
-    stq r15, r4                                  ; and drawing the 8byte segment to the framebuffer
+    stq r15, r4
 %else%
     stq r0, r4
 %endif%
 
-    ; pointer advancement logic
     add r0, 8
     inc r2
 
-    ; frame drawing management logic
     cmp r0, r1
     blt .video_frame_draw
     inc r5
     b .video_frame_next
 
-    ; shuts down the platform
 .end:
 %ifdef% BENCHMARK
     ldq r0, TIMER_COUNT
@@ -143,6 +284,5 @@ _start:
 .no_end:
     hlt
     b .no_end
-    
 %endif%
     stb PLATFORM_PWR, 0
