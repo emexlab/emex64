@@ -34,13 +34,38 @@
 #include <emex64lib/support/file.h>
 #include <emex64lib/support/fdwalker.h>
 
-emex_file_t *emex_file_alloc(const char *path)
+static inline int emex_file_policy_to_o_rw(kEmexFilePolicyPermission p)
+{
+    if((p & (kEmexFilePolicyPermissionRead | kEmexFilePolicyPermissionWrite)) == (kEmexFilePolicyPermissionRead | kEmexFilePolicyPermissionWrite))
+    {
+        return O_RDWR;
+    }
+    if(p & kEmexFilePolicyPermissionWrite)
+    {
+        return O_WRONLY;
+    }
+    return O_RDONLY;
+}
+
+static inline int emex_file_policy_to_prot(kEmexFilePolicyPermission p)
+{
+    int prot = PROT_NONE;
+    prot |= ((p & kEmexFilePolicyPermissionRead) ? PROT_READ : PROT_NONE);
+    prot |= ((p & kEmexFilePolicyPermissionWrite) ? PROT_WRITE : PROT_NONE);
+    prot |= ((p & kEmexFilePolicyPermissionExecute) ? PROT_EXEC : PROT_NONE);
+    return prot;
+}
+
+emex_file_t *emex_file_alloc(const char *path,
+                             emex_file_policy_t policy)
 {
     emex_file_t *f = malloc(sizeof(emex_file_t));
     if(f == NULL)
     {
         return NULL;
     }
+
+    f->policy = policy;
 
     /*
      * resolving the true paths is important
@@ -68,9 +93,10 @@ emex_file_t *emex_file_alloc(const char *path)
 }
 
 emex_file_t *emex_file_alloc_unsaved(const char *path,
+                                     emex_file_policy_t policy,
                                      const char *content)
 {
-    emex_file_t *f = emex_file_alloc(path);
+    emex_file_t *f = emex_file_alloc(path, policy);
     if(f == NULL)
     {
         return NULL;
@@ -129,7 +155,7 @@ bool emex_file_open(emex_file_t *f)
     }
 
     /* initial open */
-    f->fd = open(f->path, O_RDONLY);
+    f->fd = open(f->path, emex_file_policy_to_o_rw(f->policy.needed_permission));
     if(f->fd < 0)
     {
         return false;
@@ -166,13 +192,9 @@ bool emex_file_map(emex_file_t *f)
 
     f->len = fdstat.st_size;
     /* TODO: check if UTF8 encoded or force UTF8 encoding */
-    f->content = mmap(NULL, f->len, PROT_READ | PROT_WRITE, MAP_PRIVATE, f->fd, 0);
-    if(f->content == MAP_FAILED)
-    {
-        return false;
-    }
+    f->content = mmap(NULL, f->len, emex_file_policy_to_prot(f->policy.needed_permission), MAP_SHARED, f->fd, 0);
 
-    return true;
+    return (f->content == MAP_FAILED) ? false : true;
 }
 
 void emex_file_unmap(emex_file_t *f)

@@ -49,6 +49,16 @@ typedef enum: uint8_t {
     kEmexFileInstanceTypeUnsaved,
 } kEmexFileInstanceType;
 
+typedef enum: uint8_t {
+    kEmexFilePolicyPermissionRead =     0b00000001,
+    kEmexFilePolicyPermissionWrite =    0b00000010,
+    kEmexFilePolicyPermissionExecute =  0b00000100,
+} kEmexFilePolicyPermission;
+
+typedef struct emex_file_policy {
+    kEmexFilePolicyPermission needed_permission;    /* permissions them selves */
+} emex_file_policy_t;
+
 typedef struct emex_file {
     const char *path;
     const char *content;    /* mapped file contents */
@@ -56,10 +66,11 @@ typedef struct emex_file {
     size_t len;
     kEmexFileType type;
     kEmexFileInstanceType instance_type;
+    emex_file_policy_t policy;
 } emex_file_t;
 
-emex_file_t *emex_file_alloc(const char *path);
-emex_file_t *emex_file_alloc_unsaved(const char *path, const char *content);
+emex_file_t *emex_file_alloc(const char *path, emex_file_policy_t policy);
+emex_file_t *emex_file_alloc_unsaved(const char *path, emex_file_policy_t policy, const char *content);
 void emex_file_dealloc(emex_file_t *f);
 
 bool emex_file_open(emex_file_t *f);

@@ -155,7 +155,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
                                     return false;
                                 }
 
-                                emex_file_t *file = emex_file_alloc(resolved);
+                                emex_file_t *file = emex_file_alloc(resolved, (emex_file_policy_t){ .needed_permission = kEmexFilePolicyPermissionRead });
                                 if(file == NULL || !emex_file_map(file))
                                 {
                                     diag_error(inv->line[i]->token[a], "cannot map file at \"%s\"\n", path_component);
