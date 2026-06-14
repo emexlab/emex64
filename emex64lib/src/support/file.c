@@ -33,6 +33,17 @@
 
 #include <emex64lib/support/file.h>
 
+emex_file_policy_t assembly_file_policy = {
+    .needed_permission = kEmexFilePolicyPermissionRead,
+    .must_exist = true,
+    .must_be_file = true,
+};
+emex_file_policy_t section_data_file_policy = {
+    .needed_permission = kEmexFilePolicyPermissionRead,
+    .must_exist = true,
+    .must_be_file = true,
+};
+
 static inline int emex_file_policy_to_o_rw(kEmexFilePolicyPermission p)
 {
     if((p & (kEmexFilePolicyPermissionRead | kEmexFilePolicyPermissionWrite)) == (kEmexFilePolicyPermissionRead | kEmexFilePolicyPermissionWrite))

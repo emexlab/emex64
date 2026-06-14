@@ -61,6 +61,9 @@ typedef struct emex_file_policy {
     bool must_be_file;
 } emex_file_policy_t;
 
+extern emex_file_policy_t assembly_file_policy;
+extern emex_file_policy_t section_data_file_policy;
+
 typedef struct emex_file {
     const char *path;
     const char *content;    /* mapped file contents */

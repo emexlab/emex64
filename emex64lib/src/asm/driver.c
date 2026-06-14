@@ -736,7 +736,7 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
         inv->include_dir_cnt = driver->inc_dir_cnt;
         inv->include_dirs = driver->inc_dirs;
 
-        emex_file_t *file = emex_file_alloc(driver->input_path[0], (emex_file_policy_t){ .needed_permission = kEmexFilePolicyPermissionRead, .must_be_file = true, .must_exist = true });
+        emex_file_t *file = emex_file_alloc(driver->input_path[0], assembly_file_policy);
         if(file == NULL)
         {
             assembler_invocation_dealloc(inv);
