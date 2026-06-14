@@ -42,7 +42,7 @@
 #include <emex64lib/vm/instruction/alu.h>
 #include <emex64lib/vm/instruction/ctrl.h>
 
-#include <emex64lib/support/bitwalker.h>
+#include <emex64lib/support/bitbolt.h>
 #include <emex64lib/support/likely.h>
 
 #if defined(__APPLE__)
@@ -163,14 +163,9 @@ static inline void emex64_core_execute_instruction_at_pc(emex64_core_t *core)
         return;
     }
 
-    bitwalker_t bw = {
-        .buffer = core->op.inscache,
-        .byte_pos = 0,
-        .bit_idx = 0,
-        .capacity = EMEX64_MAX_ILEN,
-        .endian = BW_LITTLE_ENDIAN,
-    };
-    enum kEmex64Opcode opcode = (uint8_t)bitwalker_read(&bw, 8);
+    bitbolt_t bb = { core->op.inscache, 0 };
+
+    enum kEmex64Opcode opcode = (uint8_t)bb_read(&bb, 8);
     if(unlikely(opcode > kEmex64OpcodeMAX))
     {
         core->rl[kEmex64RegisterCR2] = kEmex64ExceptionBadInstruction;
@@ -188,7 +183,7 @@ static inline void emex64_core_execute_instruction_at_pc(emex64_core_t *core)
     uint8_t i = 0;
     for(; i < maxarg; i++)
     {
-        enum kEmex64ParameterCoding coding = (uint8_t)bitwalker_read(&bw, 3);
+        enum kEmex64ParameterCoding coding = (uint8_t)bb_read(&bb, 3);
         core->op.param_coding[i] = coding;
         switch(coding)
         {
@@ -197,7 +192,7 @@ static inline void emex64_core_execute_instruction_at_pc(emex64_core_t *core)
                 goto escape_from_la;
             case kEmex64ParameterCodingReg:
             {
-                uint8_t rcnt = (uint8_t)bitwalker_read(&bw, 5);
+                uint8_t rcnt = (uint8_t)bb_read(&bb, 5);
 
                 /*
                  * userspace shouldn't be able to access control
@@ -220,7 +215,7 @@ static inline void emex64_core_execute_instruction_at_pc(emex64_core_t *core)
                 break;
             }
             case kEmex64ParameterCodingAddr64:
-                bitwalker_align_byte(&bw);
+                bb_align(&bb);
                 /*
                  * fallthrough, because kEmex64ParameterCodingAddr64
                  * was invented to make relocation possible, because
@@ -231,7 +226,7 @@ static inline void emex64_core_execute_instruction_at_pc(emex64_core_t *core)
             case kEmex64ParameterCodingImm16:
             case kEmex64ParameterCodingImm32:
             case kEmex64ParameterCodingImm64:
-                core->op.imm[i] = bitwalker_read(&bw, kImmBits[coding]);
+                core->op.imm[i] = bb_read(&bb, kImmBits[coding]);
                 core->op.param[i] = &(core->op.imm[i]);
                 break;
         }
@@ -244,7 +239,7 @@ escape_from_la:
      * very very very good.
      */
     core->op.param_cnt = i;
-    core->op.ilen = bitwalker_bytes_used(&bw);
+    core->op.ilen = (uint32_t)((bb.pos + 7u) >> 3);
 
     /* the part of executing the instruction */
     core->op.op.func(core);
