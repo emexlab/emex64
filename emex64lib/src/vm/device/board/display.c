@@ -268,7 +268,10 @@ void *display_start(void *arg)
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_MAXIMIZED, GLFW_FALSE);
 
-    GLFWwindow* win = glfwCreateWindow(display->width, display->height, "EMEX64LCD @ 60Hz", NULL, NULL);
+    char buf[64];
+    snprintf(buf, 64, "EMEX64VM %d x %d @ 60Hz", display->width, display->height);
+
+    GLFWwindow* win = glfwCreateWindow(display->width, display->height, buf, NULL, NULL);
     if(!win) die("glfwCreateWindow failed");
     glfwSetWindowCloseCallback(win, display_close_callback);
     glfwSetWindowUserPointer(win, display);
