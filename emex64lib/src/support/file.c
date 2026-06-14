@@ -132,6 +132,11 @@ emex_file_t *emex_file_alloc_unsaved(const char *path,
 
 void emex_file_dealloc(emex_file_t *f)
 {
+    if(f == NULL)
+    {
+        return;
+    }
+
     emex_file_unmap(f);
     emex_file_close(f);
     if(f->instance_type == kEmexFileInstanceTypeUnsaved)
@@ -192,7 +197,7 @@ fdwalker_t *emex_file_dup_fdwalker(emex_file_t *f,
     {
         return NULL;
     }
-    
+
     return fdwalker_alloc(f->fd, endian);
 }
 
@@ -260,7 +265,6 @@ kEmexFileType emex_file_type_for_path(const char *path, bool must_exist)
             goto extension_validation;
         }
 
-        perror("stat");
         return kEmexFileTypeUnknown;
     }
 

@@ -56,6 +56,7 @@ typedef struct {
     char *output_path;
     int input_path_count;
     char **input_path;
+    kEmexFileType *input_path_type;
 
     size_t inc_dir_cnt;
     char **inc_dirs;

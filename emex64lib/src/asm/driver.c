@@ -144,6 +144,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
     driver->output_path = NULL;
     driver->input_path_count = 0;
     driver->input_path = calloc(argc, sizeof(char *));
+    driver->input_path_type = calloc(argc, sizeof(kEmexFileType));
 
     driver->inc_dir_cnt = 0;
     driver->inc_dirs = NULL;
@@ -354,7 +355,8 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
         }
         else if(argv[i][0] != '-')
         {
-            driver->input_path[driver->input_path_count++] = strdup(argv[i]);
+            driver->input_path[driver->input_path_count] = strdup(argv[i]);
+            driver->input_path_type[driver->input_path_count++] = emex_file_type_for_path(argv[i], true);
         }
         else
         {
@@ -372,8 +374,8 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
     return true;
 }
 
-char *assembler_driver_tmppath(assembler_driver_t *driver,
-                               const char *input_path)
+static char *assembler_driver_tmppath(assembler_driver_t *driver,
+                                      const char *input_path)
 {
     const char *base = strrchr(input_path, '/');
     base = base ? base + 1 : input_path;
@@ -409,6 +411,13 @@ char *assembler_driver_tmppath(assembler_driver_t *driver,
     return path;
 }
 
+static void assembler_driver_append_additional_linker_flag(assembler_driver_t *driver,
+                                                           char *flag)
+{
+    driver->linker_flags = realloc(driver->linker_flags, (driver->linker_flags_cnt + 1) * sizeof(char *));
+    driver->linker_flags[driver->linker_flags_cnt++] = strdup(flag);
+}
+
 bool assembler_driver_jobgen(assembler_driver_t *driver)
 {
     if(driver->emit_object && driver->input_path_count > 1)
@@ -424,54 +433,68 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
 
     for(int i = 0; i < driver->input_path_count; i++)
     {
-        int argc = 0;
-        char **argv = calloc(1024, sizeof(char*));
-        if(argv == NULL)
+        switch(driver->input_path_type[i])
         {
-            return false;
-        }
-
-        argv[argc++] = strdup("emex64asm");
-        if(driver->verbose)
-        {
-            argv[argc++] = strdup("-v");
-        }
-        argv[argc++] = strdup("-c");
-        argv[argc++] = strdup("-o");
-        argv[argc++] = strdup(assembler_driver_tmppath(driver, driver->input_path[i]));
-        argv[argc++] = strdup(driver->input_path[i]);
-        argv[argc++] = driver->page_align ? strdup("-fpage_align") : strdup("-fno_page_align");
-        argv[argc++] = driver->warning_error ? strdup("-Werror") : strdup("-Wno_error");
-        argv[argc++] = driver->warning_deprecated ? strdup("-Wdeprecated") : strdup("-Wno_deprecated");
-        for(size_t j = 0; j < driver->inc_dir_cnt; j++)
-        {
-            size_t ilen = strlen(driver->inc_dirs[j]);
-            char *new_buf = malloc(ilen + 3);
-            snprintf(new_buf, ilen + 3, "-I%s", driver->inc_dirs[j]);
-            argv[argc++] = new_buf;
-        }
-        for(uint64_t j = 0; j < driver->macro_cnt; j++)
-        {
-            const char *m = driver->macro[j].match;
-            const char *v = driver->macro[j].value;
-
-            size_t blen = 2 + strlen(m) + 1 + strlen(v) + 1;
-            char *buf = malloc(blen);
-            if(buf == NULL)
+            case kEmexFileTypeAssembly:
+            case kEmexFileTypeAssemblyIncludation:
             {
-                return false;
+                int argc = 0;
+                char **argv = calloc(1024, sizeof(char*));
+                if(argv == NULL)
+                {
+                    return false;
+                }
+
+                argv[argc++] = strdup("emex64asm");
+                if(driver->verbose)
+                {
+                    argv[argc++] = strdup("-v");
+                }
+                argv[argc++] = strdup("-c");
+                argv[argc++] = strdup("-o");
+                argv[argc++] = strdup(assembler_driver_tmppath(driver, driver->input_path[i]));
+                argv[argc++] = strdup(driver->input_path[i]);
+                argv[argc++] = driver->page_align ? strdup("-fpage_align") : strdup("-fno_page_align");
+                argv[argc++] = driver->warning_error ? strdup("-Werror") : strdup("-Wno_error");
+                argv[argc++] = driver->warning_deprecated ? strdup("-Wdeprecated") : strdup("-Wno_deprecated");
+                for(size_t j = 0; j < driver->inc_dir_cnt; j++)
+                {
+                    size_t ilen = strlen(driver->inc_dirs[j]);
+                    char *new_buf = malloc(ilen + 3);
+                    snprintf(new_buf, ilen + 3, "-I%s", driver->inc_dirs[j]);
+                    argv[argc++] = new_buf;
+                }
+                for(uint64_t j = 0; j < driver->macro_cnt; j++)
+                {
+                    const char *m = driver->macro[j].match;
+                    const char *v = driver->macro[j].value;
+
+                    size_t blen = 2 + strlen(m) + 1 + strlen(v) + 1;
+                    char *buf = malloc(blen);
+                    if(buf == NULL)
+                    {
+                        return false;
+                    }
+                    snprintf(buf, blen, "-D%s=%s", m, v);
+                    argv[argc++] = buf;
+                }
+
+                driver->job = assembler_job_alloc(driver->job, (driver->emit_object) ? kAssemblerJobTypeAssembler : kAssemblerJobTypeDriver, "emex64asm", (const char**)argv, argc);
+
+                for(int j = 0; j < argc; j++)
+                {
+                    free(argv[j]);
+                }
+                free(argv);
+                break;
             }
-            snprintf(buf, blen, "-D%s=%s", m, v);
-            argv[argc++] = buf;
+            case kEmexFileTypeObject:
+                assembler_driver_append_additional_linker_flag(driver, driver->input_path[i]);
+                break;
+            default:
+                diag_error(NULL, "unknown or non existing input file '%s'\n", driver->input_path[i]);
+                return false;
         }
-
-        driver->job = assembler_job_alloc(driver->job, (driver->emit_object) ? kAssemblerJobTypeAssembler : kAssemblerJobTypeDriver, "emex64asm", (const char**)argv, argc);
-
-        for(int j = 0; j < argc; j++)
-        {
-            free(argv[j]);
-        }
-        free(argv);
     }
 
     if(!driver->emit_object)
@@ -647,6 +670,7 @@ void assembler_driver_dealloc(assembler_driver_t *driver)
         free(driver->input_path[i]);
     }
     free(driver->input_path);
+    free(driver->input_path_type);
 
     for(size_t i = 0; i < driver->inc_dir_cnt; i++)
     {

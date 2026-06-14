@@ -56,6 +56,11 @@ fdwalker_t *fdwalker_alloc(int fd,
 
 void fdwalker_dealloc(fdwalker_t *fw)
 {
+    if(fw == NULL)
+    {
+        return;
+    }
+    
     close(fw->fd);
     free(fw);
 }
