@@ -38,6 +38,7 @@ typedef struct expand_entry {
     char    *source_path;
     char    *code;
     size_t  len;
+    size_t  line_num;
 } expand_entry_t;
 
 static char *find_header(const char *name,
@@ -129,12 +130,15 @@ static bool expand_file(const char *path,
     const char *source_dir = slash ? (slash[0] = '\0', dir_buf) : ".";
 
     size_t start = 0;
+    size_t phys_line = 0;
     for(size_t i = 0; i <= len; i++)
     {
         if(code[i] != '\n' && i != len)
         {
             continue;
         }
+
+        phys_line++;
 
         size_t line_len = i - start;
         char *line = malloc(line_len + 1);
@@ -226,6 +230,7 @@ static bool expand_file(const char *path,
         (*entries)[*cnt].source_path = strdup(path);
         (*entries)[*cnt].code = line;
         (*entries)[*cnt].len = line_len;
+        (*entries)[*cnt].line_num = phys_line;
         (*cnt)++;
     }
 
@@ -279,9 +284,6 @@ bool assembler_code_preparse(assembler_invocation_t *inv,
     inv->line = calloc(entry_cnt + 1, sizeof(assembler_line_t*));
     inv->line_cnt = 0;
 
-    size_t file_line_counters[inv->file_cnt > 0 ? inv->file_cnt : 1];
-    memset(file_line_counters, 0, sizeof(size_t) * (inv->file_cnt > 0 ? inv->file_cnt : 1));
-
     for(size_t i = 0; i < entry_cnt; i++)
     {
         size_t file_idx = 0;
@@ -296,7 +298,7 @@ bool assembler_code_preparse(assembler_invocation_t *inv,
 
         assembler_line_t *al = calloc(1, sizeof(assembler_line_t));
         al->str = entries[i].code;
-        al->line_num = ++file_line_counters[file_idx] + 1;
+        al->line_num = entries[i].line_num;
         al->file_idx = file_idx;
         al->inv = inv;
         inv->line[inv->line_cnt++] = al;
