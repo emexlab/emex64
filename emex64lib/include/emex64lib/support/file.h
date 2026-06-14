@@ -78,6 +78,8 @@ void emex_file_dealloc(emex_file_t *f);
 bool emex_file_open(emex_file_t *f);
 void emex_file_close(emex_file_t *f);
 
+int emex_file_dup_fd(emex_file_t *f);
+
 bool emex_file_map(emex_file_t *f);
 void emex_file_unmap(emex_file_t *f);
 

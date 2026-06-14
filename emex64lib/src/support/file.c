@@ -147,7 +147,7 @@ bool emex_file_open(emex_file_t *f)
 {
     if(f->fd > 0)
     {
-        emex_file_close(f);
+        return true;
     }
 
     if(f->type == kEmexFileTypeDirectory)
@@ -177,10 +177,23 @@ void emex_file_close(emex_file_t *f)
     f->fd = -1;
 }
 
+int emex_file_dup_fd(emex_file_t *f)
+{
+    if(!emex_file_open(f))
+    {
+        return -1;
+    }
+    return dup(f->fd);
+}
+
 bool emex_file_map(emex_file_t *f)
 {
     if(f->content != MAP_FAILED)
     {
+        /*
+         * there could be a reason to remap,
+         * for example file contents that changed.
+         */
         emex_file_unmap(f);
     }
 
