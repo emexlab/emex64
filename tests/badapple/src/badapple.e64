@@ -27,7 +27,6 @@
 %define% VFB_HEIGHT      256
 %define% VFB_WIDTH       256
 %define% VFB_SIZE        0x10000
-%define% VFB_ENABLED     1
 %define% VIDEO_FRAMES    6520
 
 %define% AUDIO_RATE           22050

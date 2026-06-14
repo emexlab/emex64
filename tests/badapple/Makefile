@@ -9,10 +9,10 @@ all-minimal: ADDITIONAL_FLAGS := -DMINIMAL="1"
 all-minimal: compile execute clean
 
 compile:
-	emex64asm -o badapple.img src/badapple.e64 ../emexFirmware/src/gui.e64 ../emexFirmware/src/uart.e64 ../emexFirmware/src/font.e64 ../emexFirmware/src/interrupt.e64 ../emexFirmware/src/pmm.e64 ../emexFirmware/src/mc.e64 ../emexFirmware/src/mem.e64 ../emexFirmware/src/ac97.e64 ../emexFirmware/src/put.e64 $(ADDITIONAL_FLAGS) -DPUT_DRAW_LOGO="0" -I../emexFirmware/inc -Wl,-T,../emexFirmware/emex64.e64ld
+	emex64asm -o badapple.img src/badapple.e64 ../emexFirmware/src/gui.e64 ../emexFirmware/src/uart.e64 ../emexFirmware/src/font.e64 ../emexFirmware/src/interrupt.e64 ../emexFirmware/src/pmm.e64 ../emexFirmware/src/mc.e64 ../emexFirmware/src/mem.e64 ../emexFirmware/src/ac97.e64 ../emexFirmware/src/put.e64 $(ADDITIONAL_FLAGS) -DPUT_DRAW_LOGO="0" -DVFB_ENABLED="0"  -I../emexFirmware/inc -Wl,-T,../emexFirmware/emex64.e64ld
 
 execute:
-	emex64vm --display required --audio on --firmware badapple.img
+	emex64vm --display required --display:resolution 256 256  --audio on --firmware badapple.img
 
 clean:
 	rm badapple.img
