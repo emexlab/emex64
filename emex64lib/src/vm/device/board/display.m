@@ -711,7 +711,7 @@ void *display_start(void *arg)
 
             NSRect r = NSMakeRect(100, 100, display->width, display->height);
             NSWindow *win = [[NSWindow alloc] initWithContentRect:r styleMask:(NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable | NSWindowStyleMaskMiniaturizable) backing:NSBackingStoreBuffered defer:NO];
-            [win setTitle:[NSString stringWithFormat:@"EMEX64VM %d x %d @ 60Hz", display->width, display->height]];
+            [win setTitle:[NSString stringWithFormat:@"emex64vm %d x %d @ 60Hz", display->width, display->height]];
             [[win standardWindowButton:NSWindowZoomButton] setEnabled:NO];
 
             EMEX64GLView *glView = [[EMEX64GLView alloc] initWithFrame:r display:display];

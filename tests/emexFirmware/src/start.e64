@@ -105,9 +105,6 @@ _fw_start:
 
     blw _ac97_init, FW_TONE_RATE
 
-    mov r5, 0x9
-    mov rr, 0xa
-    mov r15, 10
     div r0, 0, 0
     
 .hang:

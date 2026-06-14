@@ -269,7 +269,7 @@ void *display_start(void *arg)
     glfwWindowHint(GLFW_MAXIMIZED, GLFW_FALSE);
 
     char buf[64];
-    snprintf(buf, 64, "EMEX64VM %d x %d @ 60Hz", display->width, display->height);
+    snprintf(buf, 64, "emex64vm %d x %d @ 60Hz", display->width, display->height);
 
     GLFWwindow* win = glfwCreateWindow(display->width, display->height, buf, NULL, NULL);
     if(!win) die("glfwCreateWindow failed");

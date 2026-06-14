@@ -69,3 +69,12 @@ _interrupt_unregister_handler:
     and r2, r1
     stq INTC_REG_ENABLED, r2
     wret
+
+_interrupt_unregister_all:
+    clr r0
+    mov r1, 64
+.loop:
+    dec r1
+    blw _interrupt_unregister_handler, r1
+    bnz r1, .loop
+    wret

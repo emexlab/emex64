@@ -184,6 +184,14 @@ _exception_putreg:
     blw _putc, '\n'
     wret
 
+section .data
+    test_msg db "nya!\n\0"
+
+_exception_hang:
+.hang:
+    hlt
+    b .hang
+
 ; the handler it self
 _exception_handler:
     ;stq putc_sym, _uart_putc
@@ -228,4 +236,14 @@ _exception_handler:
 
     ; on UART we don't have to keep the device alive
     ;b _start.poweroff
-    b _fw_start.hang
+    ;b _fw_start.hang
+    blw _interrupt_unregister_all
+
+    mov cr2, 0x0
+    
+    ;mul r7, 8, r8
+    add r0, fp, 168
+    stq r0, _exception_hang
+    
+    ;b _fw_start.hang 
+    iret
