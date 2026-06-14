@@ -156,16 +156,15 @@ bool assembler_section_parse(assembler_invocation_t *inv)
                                 }
 
                                 emex_file_t *file = emex_file_alloc(resolved);
-                                if(file == NULL || !emex_file_open(file))
+                                if(file == NULL || !emex_file_map(file))
                                 {
-                                    diag_error(inv->line[i]->token[a], "cannot open file at \"%s\"\n", path_component);
+                                    diag_error(inv->line[i]->token[a], "cannot map file at \"%s\"\n", path_component);
                                     free(path_component);
                                     return false;
                                 }
 
-                                fdwalker_write_buf(inv->fdwalker, file->code, file->len);
+                                fdwalker_write_buf(inv->fdwalker, file->content, file->len);
 
-                                emex_file_close(file);
                                 emex_file_dealloc(file);
                                 free(path_component);
                                 continue;

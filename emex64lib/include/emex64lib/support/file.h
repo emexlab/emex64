@@ -28,6 +28,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include <emex64lib/support/fdwalker.h>
+
 typedef enum: uint8_t {
     kEmexFileTypeUnknown,
     kEmexFileTypeDirectory,
@@ -42,12 +44,18 @@ typedef enum: uint8_t {
     kEmexFileTypeObject
 } kEmexFileType;
 
+typedef enum: uint8_t {
+    kEmexFileInstanceTypeSaved,
+    kEmexFileInstanceTypeUnsaved,
+} kEmexFileInstanceType;
+
 typedef struct emex_file {
-    char *path;
-    char *code;
+    const char *path;
+    const char *content;    /* mapped file contents */
+    int fd;                 /* file descriptor that gets duped by emex_file_dup_fd */
     size_t len;
-    bool is_unsaved;
     kEmexFileType type;
+    kEmexFileInstanceType instance_type;
 } emex_file_t;
 
 emex_file_t *emex_file_alloc(const char *path);
@@ -56,6 +64,9 @@ void emex_file_dealloc(emex_file_t *f);
 
 bool emex_file_open(emex_file_t *f);
 void emex_file_close(emex_file_t *f);
+
+bool emex_file_map(emex_file_t *f);
+void emex_file_unmap(emex_file_t *f);
 
 kEmexFileType emex_file_type_for_path(const char *path, bool must_exist);
 

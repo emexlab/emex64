@@ -32,6 +32,7 @@
 #include <sys/stat.h>
 
 #include <emex64lib/support/file.h>
+#include <emex64lib/support/fdwalker.h>
 
 emex_file_t *emex_file_alloc(const char *path)
 {
@@ -46,18 +47,22 @@ emex_file_t *emex_file_alloc(const char *path)
      * so errors can reveal the actual file
      * locations.
      */
-    f->path = malloc(PATH_MAX);
-    if(realpath(path, f->path) == NULL)
+    char *tmp_path = malloc(PATH_MAX);
+    if(realpath(path, tmp_path) == NULL)
     {
+        free(tmp_path);
         free(f);
         return NULL;
     }
+    f->path = tmp_path;
+    
 
     /* setting standard values */
-    f->is_unsaved = false;
+    f->instance_type = kEmexFileInstanceTypeSaved;
     f->len = 0;
-    f->code = MAP_FAILED;
+    f->content = MAP_FAILED;
     f->type = emex_file_type_for_path(path, true);
+    f->fd = -1;
 
     return f;
 }
@@ -72,86 +77,110 @@ emex_file_t *emex_file_alloc_unsaved(const char *path,
     }
 
     f->type = emex_file_type_for_path(path, false);
-    if(f->type == kEmexFileTypeDirectory || f->type == kEmexFileTypeUnknown)
+    if(f->type == kEmexFileTypeDirectory)
     {
         free(f);
         return NULL;
     }
 
     f->len = strlen(content);
-    f->code = strdup(content);
-    if(f->code == NULL)
+    f->content = strdup(content);
+    if(f->content == NULL)
     {
         free(f);
         return NULL;
     }
 
     /* setting unsaved values */
-    f->is_unsaved = true;
+    f->instance_type = kEmexFileInstanceTypeUnsaved;
+    f->fd = -1;
+    f->content = MAP_FAILED;
 
     return f;
 }
 
 void emex_file_dealloc(emex_file_t *f)
 {
+    emex_file_unmap(f);
     emex_file_close(f);
-    free(f->path);
+    if(f->instance_type == kEmexFileInstanceTypeUnsaved)
+    {
+        free((void*)f->content);
+    }
     free(f);
 }
 
 bool emex_file_open(emex_file_t *f)
 {
-    if(f->type == kEmexFileTypeUnknown ||
-       f->type == kEmexFileTypeDirectory)
-    {
-        return false;
-    }
-
-    if(f->is_unsaved)
-    {
-        return true;
-    }
-
-    if(f->code != MAP_FAILED)
+    if(f->fd > 0)
     {
         emex_file_close(f);
     }
 
+    if(f->type == kEmexFileTypeDirectory)
+    {
+        return false;
+    }
+
+    if(f->instance_type == kEmexFileInstanceTypeUnsaved)
+    {
+        /* TODO: open via creating the file at unsaved location flipping unsaved off */
+        return false;
+    }
+
     /* initial open */
-    int fd = open(f->path, O_RDONLY);
-    if(fd < 0)
+    f->fd = open(f->path, O_RDONLY);
+    if(f->fd < 0)
     {
         return false;
     }
-
-    /* initially mapping assembly file */
-    struct stat fdstat;
-    if(fstat(fd, &fdstat) < 0)
-    {
-        close(fd);
-        return false;
-    }
-
-    f->len = fdstat.st_size;
-    /* TODO: check if UTF8 encoded or force UTF8 encoding */
-    f->code = mmap(NULL, f->len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
-    if(f->code == MAP_FAILED)
-    {
-        close(fd);
-        return false;
-    }
-
-    close(fd);
 
     return true;
 }
 
 void emex_file_close(emex_file_t *f)
 {
-    if(f->is_unsaved && f->code != MAP_FAILED)
+    close(f->fd);
+    f->fd = -1;
+}
+
+bool emex_file_map(emex_file_t *f)
+{
+    if(f->content != MAP_FAILED)
     {
-        munmap(f->code, f->len);
-        f->code = MAP_FAILED;
+        emex_file_unmap(f);
+    }
+
+    /* initial open */
+    if(!emex_file_open(f))
+    {
+        return false;
+    }
+
+    /* initially mapping assembly file */
+    struct stat fdstat;
+    if(fstat(f->fd, &fdstat) < 0)
+    {
+        return false;
+    }
+
+    f->len = fdstat.st_size;
+    /* TODO: check if UTF8 encoded or force UTF8 encoding */
+    f->content = mmap(NULL, f->len, PROT_READ | PROT_WRITE, MAP_PRIVATE, f->fd, 0);
+    if(f->content == MAP_FAILED)
+    {
+        return false;
+    }
+
+    return true;
+}
+
+void emex_file_unmap(emex_file_t *f)
+{
+    if(f->instance_type == kEmexFileInstanceTypeUnsaved && f->content != MAP_FAILED)
+    {
+        munmap((void*)f->content, f->len);
+        f->content = MAP_FAILED;
         f->len = 0;
     }
 }
