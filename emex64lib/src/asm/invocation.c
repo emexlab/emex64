@@ -137,6 +137,7 @@ bool assembler_invocation_emit(assembler_invocation_t *inv,
        !assembler_emit(inv) ||
        !assembler_elf_emit(inv))
     {
+        unlink(inv->options->output_path);
         return false;
     }
     

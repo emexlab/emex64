@@ -43,6 +43,11 @@ emex_file_policy_t section_data_file_policy = {
     .must_exist = true,
     .must_be_file = true,
 };
+emex_file_policy_t assembly_unsaved_file_policy = {
+    .needed_permission = kEmexFilePolicyPermissionRead,
+    .must_exist = false,
+    .must_be_file = true,
+};
 
 static inline int emex_file_policy_to_o_rw(kEmexFilePolicyPermission p)
 {
@@ -85,9 +90,15 @@ emex_file_t *emex_file_alloc(const char *path,
     char *tmp_path = malloc(PATH_MAX);
     if(realpath(path, tmp_path) == NULL)
     {
+        if(policy.must_exist)
+        {
+            free(tmp_path);
+            free(f);
+            return NULL;
+        }
+
         free(tmp_path);
-        free(f);
-        return NULL;
+        tmp_path = strdup(path);
     }
     f->path = tmp_path;
     
@@ -136,7 +147,6 @@ emex_file_t *emex_file_alloc_unsaved(const char *path,
     /* setting unsaved values */
     f->instance_type = kEmexFileInstanceTypeUnsaved;
     f->fd = -1;
-    f->content = MAP_FAILED;
 
     return f;
 }
@@ -214,6 +224,11 @@ fdwalker_t *emex_file_dup_fdwalker(emex_file_t *f,
 
 bool emex_file_map(emex_file_t *f)
 {
+    if(f->instance_type == kEmexFileInstanceTypeUnsaved)
+    {
+        return true;
+    }
+
     if(f->content != MAP_FAILED)
     {
         /*
@@ -245,7 +260,7 @@ bool emex_file_map(emex_file_t *f)
 
 void emex_file_unmap(emex_file_t *f)
 {
-    if(f->instance_type == kEmexFileInstanceTypeUnsaved && f->content != MAP_FAILED)
+    if(f->instance_type == kEmexFileInstanceTypeSaved && f->content != MAP_FAILED)
     {
         munmap((void*)f->content, f->len);
         f->content = MAP_FAILED;
