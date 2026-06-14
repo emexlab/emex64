@@ -334,6 +334,13 @@ _start:
     ldq r0, TIMER_COUNT
     blw _puts, result_msg
     blw _putbase, r0, 10
+    blw _putc, ' '
+    blw _putc, '('
+    ldq r0, TIMER_FREQ
+    blw _putbase, r0, 10
+    blw _putc, 'H'
+    blw _putc, 'Z'
+    blw _putc, ')'
     blw _putc, '\n'
 
 .no_end:
