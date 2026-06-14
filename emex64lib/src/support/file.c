@@ -86,7 +86,13 @@ emex_file_t *emex_file_alloc(const char *path,
     f->instance_type = kEmexFileInstanceTypeSaved;
     f->len = 0;
     f->content = MAP_FAILED;
-    f->type = emex_file_type_for_path(path, true);
+    f->type = emex_file_type_for_path(path, policy.must_exist);
+    if(policy.must_be_file && f->type == kEmexFileTypeDirectory)
+    {
+        free((void*)f->path);
+        free(f);
+        return NULL;
+    }
     f->fd = -1;
 
     return f;
@@ -102,7 +108,7 @@ emex_file_t *emex_file_alloc_unsaved(const char *path,
         return NULL;
     }
 
-    f->type = emex_file_type_for_path(path, false);
+    f->type = emex_file_type_for_path(path, policy.must_exist);
     if(f->type == kEmexFileTypeDirectory)
     {
         free(f);
@@ -133,6 +139,7 @@ void emex_file_dealloc(emex_file_t *f)
     {
         free((void*)f->content);
     }
+    free((void*)f->path);
     free(f);
 }
 

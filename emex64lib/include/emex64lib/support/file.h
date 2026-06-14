@@ -57,6 +57,8 @@ typedef enum: uint8_t {
 
 typedef struct emex_file_policy {
     kEmexFilePolicyPermission needed_permission;    /* permissions them selves */
+    bool must_exist;
+    bool must_be_file;
 } emex_file_policy_t;
 
 typedef struct emex_file {
