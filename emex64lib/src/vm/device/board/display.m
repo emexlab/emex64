@@ -242,6 +242,7 @@ static GLuint linkProgram(GLuint vs, GLuint fs)
     _timer = [NSTimer scheduledTimerWithTimeInterval:EMEX64_FB_TICK_DT repeats:YES block:^(NSTimer *timer){
         [weakSelf setNeedsDisplay:YES];
     }];
+    [[NSRunLoop currentRunLoop] addTimer:_timer forMode:NSRunLoopCommonModes];
     [self updateTrackingAreas];
     return self;
 }
