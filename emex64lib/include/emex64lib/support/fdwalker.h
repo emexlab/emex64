@@ -34,8 +34,8 @@ typedef struct {
     bw_endian_t endian;
 } fdwalker_t;
 
-void fdwalker_init(fdwalker_t *fw, int fd, bw_endian_t endian);
-//void fdwalker_init_read(fdwalker_t *fw, const uint8_t *buf, size_t len, bw_endian_t endian);
+fdwalker_t *fdwalker_alloc(int fd, bw_endian_t endian);
+void fdwalker_dealloc(fdwalker_t *fw);
 
 void fdwalker_reset(fdwalker_t *fw);
 

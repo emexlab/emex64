@@ -57,16 +57,14 @@ assembler_invocation_t *assembler_invocation_alloc(assembler_options_t *options)
         return NULL;
     }
 
-    inv->fdwalker = malloc(sizeof(fdwalker_t));
+    inv->fdwalker = fdwalker_alloc(fd, BW_LITTLE_ENDIAN);
+    close(fd);
     if(inv->fdwalker == NULL)
     {
+        diag_error(NULL, "couldn't create fdwalker\n");
         free(inv);
-        close(fd);
         return NULL;
     }
-
-    fdwalker_init(inv->fdwalker, fd, BW_LITTLE_ENDIAN);
-    close(fd);
     fdwalker_seek(inv->fdwalker, 10, 0);
 
     inv->data_section_start = UINT64_MAX;

@@ -32,7 +32,6 @@
 #include <sys/stat.h>
 
 #include <emex64lib/support/file.h>
-#include <emex64lib/support/fdwalker.h>
 
 static inline int emex_file_policy_to_o_rw(kEmexFilePolicyPermission p)
 {
@@ -184,6 +183,17 @@ int emex_file_dup_fd(emex_file_t *f)
         return -1;
     }
     return dup(f->fd);
+}
+
+fdwalker_t *emex_file_dup_fdwalker(emex_file_t *f,
+                                   bw_endian_t endian)
+{
+    if(!emex_file_open(f))
+    {
+        return NULL;
+    }
+    
+    return fdwalker_alloc(f->fd, endian);
 }
 
 bool emex_file_map(emex_file_t *f)

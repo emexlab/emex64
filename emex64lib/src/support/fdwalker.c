@@ -22,28 +22,42 @@
  * SOFTWARE.
  */
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <assert.h>
 
 #include <emex64lib/support/fdwalker.h>
 
-void fdwalker_init(fdwalker_t *fw,
-                   int fd,
-                   bw_endian_t endian)
+fdwalker_t *fdwalker_alloc(int fd,
+                           bw_endian_t endian)
 {
-    /* you really shall duplicate the descriptor */
-    fw->fd = dup(fd);
+    fdwalker_t *fw = malloc(sizeof(fdwalker_t));
+    if(fw == NULL)
+    {
+        return NULL;
+    }
 
+    /* we really shall duplicate the descriptor */
+    fw->fd = dup(fd);
     if(fw->fd < 0)
     {
-        return;
+        free(fw);
+        return NULL;
     }
 
     /* setting properties */
     fw->byte_pos = 0;
-    fw->bit_idx  = 0;
-    fw->endian   = endian;
-    return;
+    fw->bit_idx = 0;
+    fw->endian = endian;
+
+    return fw;
+}
+
+void fdwalker_dealloc(fdwalker_t *fw)
+{
+    close(fw->fd);
+    free(fw);
 }
 
 void fdwalker_reset(fdwalker_t *fw)
