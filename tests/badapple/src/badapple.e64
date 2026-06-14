@@ -51,53 +51,44 @@ section .bss
     audio_lvi        dq 1   ; current LVI mod 32
 
 
-; _audio_write_entry  (inline helper, not a real function)
 _ac97_lvbi_handler:
     ldq  r0, audio_chunk_idx
 
-    ; if all audio consumed, stop the DMA cleanly and bail
     mov  r1, AUDIO_TOTAL_CHUNKS
     cmp  r0, r1
     bge  .stop
 
-    ; refill 31 slots starting at slot (audio_lvi+1)&MASK
     ldq  r6, audio_lvi
     inc  r6
-    and  r6, AUDIO_BDL_MASK        ; r6 = first slot to write
+    and  r6, AUDIO_BDL_MASK
 
     ldq  r7, audio_bdl_base
-    mov  r8, 0                      ; loop counter (0..30)
+    mov  r8, 0
 
 .refill_loop:
     mov  r9, AUDIO_BDL_FILL
     cmp  r8, r9
     bge  .refill_done
 
-    ; bail out if we've consumed all chunks
     ldq  r0, audio_chunk_idx
     mov  r1, AUDIO_TOTAL_CHUNKS
     cmp  r0, r1
     bge  .refill_done
 
-    ; slot address = bdl_base + slot * 8
     and  r2, r6, AUDIO_BDL_MASK
     mul  r3, r2, 8
-    add  r3, r7                     ; r3 = &bdl[slot]
+    add  r3, r7
 
-    ; PCM byte offset = chunk_idx * AUDIO_CHUNK_BYTES
     mul  r4, r0, AUDIO_CHUNK_BYTES
     mov  r5, badapple_audio
-    add  r5, r4                     ; r5 = src address
+    add  r5, r4
 
-    ; write base_addr (32-bit)
     std  r3, r5
     add  r3, 4
 
-    ; write length (no flags — no IOC, no BUP)
     mov  r4, AUDIO_CHUNK_SAMPLES
     std  r3, r4
 
-    ; advance chunk and slot
     inc  r0
     stq  audio_chunk_idx, r0
     inc  r6
@@ -105,29 +96,23 @@ _ac97_lvbi_handler:
     b    .refill_loop
 
 .refill_done:
-    ; new LVI = (audio_lvi + r8) & MASK  where r8 = slots actually written
     ldq  r6, audio_lvi
     add  r6, r8
     and  r6, AUDIO_BDL_MASK
     stq  audio_lvi, r6
 
-    ; advance LVI first, restart DMA, then clear LVBCI last so the tick
-    ; cannot re-arm LVBCI in the window between the status clear and LVI write
     stb  AC97_BM_PCMOUT_LVI, r6
 
     mov  r0, AC97_BM_CTRL_RUN
     or   r0, AC97_BM_CTRL_LVBIE
     stb  AC97_BM_PCMOUT_CTRL, r0
 
-    ; clear LVBCI (W1C) after DMA is already running
     mov  r0, AC97_BM_STATUS_LVBCI
     stw  AC97_BM_PCMOUT_STATUS, r0
 
     b    .ack
 
 .stop:
-    ; all audio chunks played — reset the channel to silence the DMA engine
-    ; so the tick stops firing LVBCI and starving the timer interrupt
     mov  r0, AC97_BM_CTRL_RESET
     stb  AC97_BM_PCMOUT_CTRL, r0
 
@@ -140,7 +125,6 @@ _audio_init:
 
     blw  _ac97_init, AUDIO_RATE
 
-    ; fill slots 0..30
     ldq  r8, audio_bdl_base
     mov  r9, 0
 
@@ -149,7 +133,6 @@ _audio_init:
     cmp  r9, r10
     bge  .fill_done
 
-    ; BDL slot address
     mul  r2, r9, 8
     add  r2, r8
 
@@ -167,7 +150,6 @@ _audio_init:
     b    .fill_loop
 
 .fill_done:
-    ; chunk_idx = 31 (slots 0..30 pre-filled)
     mov  r0, AUDIO_BDL_FILL
     stq  audio_chunk_idx, r0
 
@@ -176,7 +158,6 @@ _audio_init:
 
     blw  _interrupt_register_handler, IRQ_AC97, _ac97_lvbi_handler
 
-    ; start DMA: LVI=30, RUN | LVBIE (no IOCE — no IOC flags in entries)
     ldq  r0, audio_bdl_base
     mov  r1, 30
     blw  _ac97_play_lvbie, r0, r1
@@ -184,18 +165,15 @@ _audio_init:
     wret
 
 _audio_restart:
-    ; reset chunk index and lvi to initial state
     mov  r0, AUDIO_BDL_FILL
-    stq  audio_chunk_idx, r0        ; chunk_idx = 31 (slots 0..30 about to be filled)
+    stq  audio_chunk_idx, r0
 
     mov  r0, 30
     stq  audio_lvi, r0
 
-    ; stop any running DMA first
     mov  r0, AC97_BM_CTRL_RESET
     stb  AC97_BM_PCMOUT_CTRL, r0
 
-    ; refill slots 0..30 with audio from the start
     ldq  r8, audio_bdl_base
     mov  r9, 0
 
@@ -221,7 +199,6 @@ _audio_restart:
     b    .restart_fill_loop
 
 .restart_fill_done:
-    ; restart DMA from slot 0, LVI=30
     ldq  r0, audio_bdl_base
     mov  r1, 30
     blw  _ac97_play_lvbie, r0, r1
@@ -264,6 +241,13 @@ _start:
 %ifdef% FULL
     bl _pmm_init
     bl _interrupt_init
+%endif%
+%ifdef% BENCHMARK
+    bl _pmm_init
+    bl _interrupt_init
+%endif%
+
+%ifdef% FULL
     blw _interrupt_register_handler, IRQ_TIMER, _timer_handler
 
     ldq r0, TIMER_FREQ
@@ -271,7 +255,12 @@ _start:
     stq TIMER_COMPARE, r0
     stq TIMER_COUNT, 0
     stq TIMER_CTRL, 0x7
+%endif%
 
+%ifdef% FULL
+    blw _audio_init
+%endif%
+%ifdef% BENCHMARK
     blw _audio_init
 %endif%
 
@@ -289,7 +278,9 @@ _start:
 %ifdef% FULL
     blw _audio_restart
 %endif%
-
+%ifdef% BENCHMARK
+    blw _audio_restart
+%endif%
 .video_frame_next:
 %ifdef% FULL
     hlt

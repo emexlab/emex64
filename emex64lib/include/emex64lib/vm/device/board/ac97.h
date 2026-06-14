@@ -115,9 +115,9 @@ typedef struct emex64_ac97 {
     uint16_t codec_regs[AC97_CODEC_REG_COUNT];
 
     uint64_t bm_bdl_base;
-    uint8_t  bm_civ;        /* current index value                        */
-    uint8_t  bm_civ_next;   /* pending CIV advance, committed on BCIS ack */
-    uint8_t  bm_lvi;        /* last valid index                           */
+    uint8_t  bm_civ;
+    uint8_t  bm_civ_next;
+    uint8_t  bm_lvi;
     uint16_t bm_status;
     uint16_t bm_picb;
     uint8_t  bm_piv;
@@ -129,17 +129,22 @@ typedef struct emex64_ac97 {
     emex64_ac97_bdle_t bdl[AC97_BDL_MAX_ENTRIES];
     uint32_t           samples_remaining;
 
-    /* lock-free PCM ring; head owned by VM thread, tail by audio thread */
     uint8_t          ring[AC97_RING_SIZE];
     _Atomic uint32_t ring_head;
     _Atomic uint32_t ring_tail;
+
+    pthread_mutex_t  dma_mutex;
+    pthread_cond_t   dma_cond;
+    pthread_t        dma_thread;
+    _Atomic bool     dma_stop;
+    bool             dma_enabled;
 
 #if EMEX64VM_DEVICE_AUDIO && (defined(__linux__) || defined(__APPLE__))
     pthread_t        audio_thread;
     _Atomic bool     audio_stop;
     bool             audio_enabled;
-    _Atomic uint32_t audio_rate;         /* current DAC sample rate (Hz)      */
-    _Atomic bool     audio_rate_changed; /* set by write handler on rate change */
+    _Atomic uint32_t audio_rate;
+    _Atomic bool     audio_rate_changed;
 #endif
 
     emex64_machine_t *machine;
@@ -150,8 +155,5 @@ void           emex64_ac97_dealloc(emex64_ac97_t *ac97);
 
 uint64_t emex64_ac97_read (emex64_core_t *core, void *device, uint64_t offset, int size);
 void     emex64_ac97_write(emex64_core_t *core, void *device, uint64_t offset, uint64_t value, int size);
-
-/* Advances the BDL DMA engine; call each VM execute loop iteration. */
-void emex64_ac97_tick(emex64_ac97_t *ac97, emex64_core_t *core);
 
 #endif /* EMEX64VM_DEVICE_AC97_H */
