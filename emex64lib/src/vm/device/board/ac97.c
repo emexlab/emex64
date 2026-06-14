@@ -42,6 +42,10 @@
 #include <emex64lib/vm/device/board/ac97.h>
 #include <emex64lib/vm/device/internal/controller/ic.h>
 
+
+// Ac97 driver for emex64 VM 
+
+
 static void ac97_codec_reset(emex64_ac97_t *ac97)
 {
     memset(ac97->codec_regs, 0, sizeof(ac97->codec_regs));
@@ -188,7 +192,7 @@ static void *ac97_audio_thread(void *arg)
 
 #endif /* EMEX64VM_DEVICE_AUDIO && __linux__ */
 
-/* * macOS AudioQueue — OS pulls samples from the ring via a fill callback. */
+// macOS AudioQueue it pulls samples via fill callbacks 
 #if EMEX64VM_DEVICE_AUDIO && defined(__APPLE__)
 
 #define AC97_AQ_NBUFFERS   3u
@@ -302,6 +306,8 @@ static void *ac97_audio_thread(void *arg)
 
 #endif /* EMEX64VM_DEVICE_AUDIO && __APPLE__ */
 
+static void *ac97_dma_thread(void *arg);
+
 emex64_ac97_t *emex64_ac97_alloc(emex64_machine_t *machine, bool install)
 {
     emex64_ac97_t *ac97 = calloc(1, sizeof(emex64_ac97_t));
@@ -322,6 +328,12 @@ emex64_ac97_t *emex64_ac97_alloc(emex64_machine_t *machine, bool install)
     ac97->bm_glob_ctrl   = 0;
     ac97->bm_glob_status = 0;
 
+    pthread_mutex_init(&ac97->dma_mutex, NULL);
+    pthread_cond_init(&ac97->dma_cond, NULL);
+    atomic_store_explicit(&ac97->dma_stop, false, memory_order_relaxed);
+    ac97->dma_enabled = true;
+    pthread_create(&ac97->dma_thread, NULL, ac97_dma_thread, ac97);
+
 #if EMEX64VM_DEVICE_AUDIO && (defined(__linux__) || defined(__APPLE__))
     atomic_store_explicit(&ac97->audio_rate,         (uint32_t)AC97_DEFAULT_SAMPLE_RATE, memory_order_relaxed);
     atomic_store_explicit(&ac97->audio_rate_changed, false, memory_order_relaxed);
@@ -332,20 +344,31 @@ emex64_ac97_t *emex64_ac97_alloc(emex64_machine_t *machine, bool install)
         ac97->audio_enabled = true;
         pthread_create(&ac97->audio_thread, NULL, ac97_audio_thread, ac97);
     }
-#endif /* EMEX64VM_DEVICE_AUDIO */
+#endif
 
     return ac97;
 }
 
 void emex64_ac97_dealloc(emex64_ac97_t *ac97)
 {
+    if(ac97->dma_enabled)
+    {
+        atomic_store_explicit(&ac97->dma_stop, true, memory_order_release);
+        pthread_mutex_lock(&ac97->dma_mutex);
+        pthread_cond_signal(&ac97->dma_cond);
+        pthread_mutex_unlock(&ac97->dma_mutex);
+        pthread_join(ac97->dma_thread, NULL);
+        pthread_cond_destroy(&ac97->dma_cond);
+        pthread_mutex_destroy(&ac97->dma_mutex);
+    }
+
 #if EMEX64VM_DEVICE_AUDIO && (defined(__linux__) || defined(__APPLE__))
     if(ac97->audio_enabled)
     {
         atomic_store_explicit(&ac97->audio_stop, true, memory_order_release);
         pthread_join(ac97->audio_thread, NULL);
     }
-#endif /* EMEX64VM_DEVICE_AUDIO */
+#endif
 
     free(ac97);
 }
@@ -406,7 +429,7 @@ void emex64_ac97_write(emex64_core_t *core, void *device, uint64_t offset, uint6
             ac97->codec_regs[reg_idx] = (uint16_t)(value & 0xFFFF);
 
 #if EMEX64VM_DEVICE_AUDIO && (defined(__linux__) || defined(__APPLE__))
-        /* notify the audio thread when the DAC sample rate changes */
+        // notify the audio thread when the DAC sample rate changes //
         if((offset & ~1ULL) == AC97_CODEC_PCM_DAC_RATE && !(offset & 1))
         {
             uint32_t new_rate = (uint32_t)ac97->codec_regs[AC97_CODEC_PCM_DAC_RATE >> 1];
@@ -431,15 +454,21 @@ void emex64_ac97_write(emex64_core_t *core, void *device, uint64_t offset, uint6
             ac97->bm_lvi = (uint8_t)(value & 0x1F);
             if((ac97->bm_status & AC97_BM_STATUS_DCH) && (ac97->bm_ctrl & AC97_BM_CTRL_RUN))
                 ac97->bm_status &= ~AC97_BM_STATUS_DCH;
+            pthread_mutex_lock(&ac97->dma_mutex);
+            pthread_cond_signal(&ac97->dma_cond);
+            pthread_mutex_unlock(&ac97->dma_mutex);
             break;
 
         case AC97_BM_PCMOUT_STATUS:
-            /* W1C — only clearable interrupt bits */
             ac97->bm_status &= ~((uint16_t)(value & 0xFFFF) &
                                  (AC97_BM_STATUS_LVBCI | AC97_BM_STATUS_BCIS | AC97_BM_STATUS_FIFOE));
-            /* on BCIS ack, commit the deferred CIV advance */
             if((value & AC97_BM_STATUS_BCIS) && !(ac97->bm_status & AC97_BM_STATUS_BCIS))
+            {
                 ac97->bm_civ = ac97->bm_civ_next;
+                pthread_mutex_lock(&ac97->dma_mutex);
+                pthread_cond_signal(&ac97->dma_cond);
+                pthread_mutex_unlock(&ac97->dma_mutex);
+            }
             break;
 
         case AC97_BM_PCMOUT_CTRL:
@@ -452,9 +481,16 @@ void emex64_ac97_write(emex64_core_t *core, void *device, uint64_t offset, uint6
             }
             ac97->bm_ctrl = ctrl;
             if(ctrl & AC97_BM_CTRL_RUN)
+            {
                 ac97->bm_status &= ~AC97_BM_STATUS_DCH;
+                pthread_mutex_lock(&ac97->dma_mutex);
+                pthread_cond_signal(&ac97->dma_cond);
+                pthread_mutex_unlock(&ac97->dma_mutex);
+            }
             else
+            {
                 ac97->bm_status |= AC97_BM_STATUS_DCH;
+            }
             break;
         }
 
@@ -522,7 +558,7 @@ static bool ac97_fetch_bdle(emex64_ac97_t *ac97, uint8_t index)
     return true;
 }
 
-/* ring_head is written only by the VM thread; ring_tail only by the audio thread */
+// ring head is written only by the VM and ring_tail only by the audio
 
 static inline uint32_t ac97_ring_free(emex64_ac97_t *ac97)
 {
@@ -534,34 +570,39 @@ static inline uint32_t ac97_ring_free(emex64_ac97_t *ac97)
 static inline void ac97_ring_write(emex64_ac97_t *ac97, const uint8_t *src, uint32_t count)
 {
     uint32_t head = atomic_load_explicit(&ac97->ring_head, memory_order_relaxed);
-    for(uint32_t i = 0; i < count; i++)
-        ac97->ring[(head + i) & AC97_RING_MASK] = src[i];
-    atomic_store_explicit(&ac97->ring_head, (head + count) & AC97_RING_MASK, memory_order_release);
+    uint32_t mask = AC97_RING_MASK;
+    uint32_t till_wrap = AC97_RING_SIZE - (head & mask);
+    if(count <= till_wrap)
+    {
+        memcpy(&ac97->ring[head & mask], src, count);
+    }
+    else
+    {
+        memcpy(&ac97->ring[head & mask], src, till_wrap);
+        memcpy(&ac97->ring[0], src + till_wrap, count - till_wrap);
+    }
+    atomic_store_explicit(&ac97->ring_head, (head + count) & mask, memory_order_release);
 }
 
-void emex64_ac97_tick(emex64_ac97_t *ac97, emex64_core_t *core)
+static void ac97_dma_drain(emex64_ac97_t *ac97)
 {
-    if((ac97->bm_status & AC97_BM_STATUS_DCH) || !(ac97->bm_ctrl & AC97_BM_CTRL_RUN))
-        return;
-
-    /* one-shot debug: confirm tick is running with DMA active */
-    static bool _dbg_tick_once = false;
-    if(!_dbg_tick_once)
-    {
-        _dbg_tick_once = true;
-        fprintf(stderr, "[ac97] tick active: bdl_base=0x%llx civ=%u lvi=%u ctrl=0x%02x status=0x%04x\n",
-                (unsigned long long)ac97->bm_bdl_base,
-                ac97->bm_civ, ac97->bm_lvi,
-                ac97->bm_ctrl, ac97->bm_status);
-        fflush(stderr);
-    }
-
     emex64_memory_t *mem = ac97->machine->memory;
 
     for(;;)
     {
-        /* stall while a buffer-completion interrupt awaits guest acknowledgement */
         if(ac97->bm_status & AC97_BM_STATUS_BCIS)
+        {
+            pthread_mutex_lock(&ac97->dma_mutex);
+            while((ac97->bm_status & AC97_BM_STATUS_BCIS) &&
+                  !atomic_load_explicit(&ac97->dma_stop, memory_order_acquire))
+                pthread_cond_wait(&ac97->dma_cond, &ac97->dma_mutex);
+            pthread_mutex_unlock(&ac97->dma_mutex);
+
+            if(atomic_load_explicit(&ac97->dma_stop, memory_order_acquire))
+                return;
+        }
+
+        if((ac97->bm_status & AC97_BM_STATUS_DCH) || !(ac97->bm_ctrl & AC97_BM_CTRL_RUN))
             return;
 
         if(ac97->samples_remaining == 0)
@@ -569,10 +610,6 @@ void emex64_ac97_tick(emex64_ac97_t *ac97, emex64_core_t *core)
             if(ac97->bm_civ == ((ac97->bm_lvi + 1) & 0x1F))
             {
                 ac97->bm_status |= AC97_BM_STATUS_DCH | AC97_BM_STATUS_CELV;
-
-                /* only fire LVBCI if it isn't already pending — prevents re-entrant
-                 * handler invocations when the tick runs between the LVI write and
-                 * the STATUS clear inside the guest LVBCI handler */
                 if((ac97->bm_ctrl & AC97_BM_CTRL_LVBIE) &&
                    !(ac97->bm_status & AC97_BM_STATUS_LVBCI))
                 {
@@ -582,7 +619,6 @@ void emex64_ac97_tick(emex64_ac97_t *ac97, emex64_core_t *core)
                 return;
             }
 
-            /* CIV is no longer equal to LVI+1, clear CELV */
             ac97->bm_status &= ~AC97_BM_STATUS_CELV;
 
             if(!ac97_fetch_bdle(ac97, ac97->bm_civ))
@@ -593,7 +629,6 @@ void emex64_ac97_tick(emex64_ac97_t *ac97, emex64_core_t *core)
                 return;
             }
 
-            /* AC97 spec: length == 0 means 65536 samples */
             ac97->samples_remaining = (ac97->bdl[ac97->bm_civ].length == 0)
                                           ? 65536u
                                           : ac97->bdl[ac97->bm_civ].length;
@@ -604,12 +639,17 @@ void emex64_ac97_tick(emex64_ac97_t *ac97, emex64_core_t *core)
                                            : ac97->samples_remaining);
         }
 
-        uint32_t bytes_per_sample = 4; /* stereo: 2 channels × 2 bytes */
+        static const uint32_t bytes_per_sample = 4;
+
         uint32_t free_bytes       = ac97_ring_free(ac97);
         uint32_t can_push_samples = free_bytes / bytes_per_sample;
 
         if(can_push_samples == 0)
-            return;
+        {
+            struct timespec ts = { .tv_sec = 0, .tv_nsec = 500000L };
+            nanosleep(&ts, NULL);
+            continue;
+        }
 
         uint32_t todo = (can_push_samples < ac97->samples_remaining)
                             ? can_push_samples
@@ -626,7 +666,9 @@ void emex64_ac97_tick(emex64_ac97_t *ac97, emex64_core_t *core)
         else
         {
             static bool _dbg_oob_once = false;
-            if(!_dbg_oob_once) { _dbg_oob_once = true;
+            if(!_dbg_oob_once)
+            {
+                _dbg_oob_once = true;
                 fprintf(stderr, "[ac97] src OOB: src_addr=0x%llx copy_bytes=%llu civ=%u\n",
                         (unsigned long long)src_addr, (unsigned long long)copy_bytes, ac97->bm_civ);
                 fflush(stderr);
@@ -648,15 +690,12 @@ void emex64_ac97_tick(emex64_ac97_t *ac97, emex64_core_t *core)
             if(finished_idx == ac97->bm_lvi)
             {
                 ac97->bm_status |= AC97_BM_STATUS_CELV | AC97_BM_STATUS_DCH;
-
                 if((ac97->bm_ctrl & AC97_BM_CTRL_LVBIE) &&
                    !(ac97->bm_status & AC97_BM_STATUS_LVBCI))
                 {
                     ac97->bm_status |= AC97_BM_STATUS_LVBCI;
                     emex64_raise_interrupt(ac97->machine, EMEX64_IRQ_AC97);
                 }
-
-                /* PLEASE DONT CLEAN RUN HERE — DCH ALREADY GATES TO DMA. */
             }
 
             if(has_ioc)
@@ -671,6 +710,27 @@ void emex64_ac97_tick(emex64_ac97_t *ac97, emex64_core_t *core)
                 ac97->bm_civ_next = next_civ;
             }
         }
-
     }
+}
+
+static void *ac97_dma_thread(void *arg)
+{
+    emex64_ac97_t *ac97 = (emex64_ac97_t *)arg;
+
+    pthread_mutex_lock(&ac97->dma_mutex);
+
+    while(!atomic_load_explicit(&ac97->dma_stop, memory_order_acquire))
+    {
+        pthread_cond_wait(&ac97->dma_cond, &ac97->dma_mutex);
+
+        if(atomic_load_explicit(&ac97->dma_stop, memory_order_acquire))
+            break;
+
+        pthread_mutex_unlock(&ac97->dma_mutex);
+        ac97_dma_drain(ac97);
+        pthread_mutex_lock(&ac97->dma_mutex);
+    }
+
+    pthread_mutex_unlock(&ac97->dma_mutex);
+    return NULL;
 }
