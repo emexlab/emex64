@@ -35,10 +35,10 @@
 #include <emex64lib/asm/cmptok.h>
 
 typedef struct expand_entry {
-    char    *source_path;
-    char    *code;
-    size_t  len;
-    size_t  line_num;
+    char *source_path;
+    char *code;
+    size_t len;
+    size_t line_num;
 } expand_entry_t;
 
 static char *find_header(const char *name,
@@ -69,40 +69,7 @@ static char *find_header(const char *name,
     return NULL;
 }
 
-static char *slurp_file(const char *path, size_t *out_len)
-{
-    FILE *f = fopen(path, "rb");
-    if(!f)
-    {
-        return NULL;
-    }
-    fseek(f, 0, SEEK_END);
-    long sz = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    if(sz < 0)
-    {
-        fclose(f);
-        return NULL;
-    }
-    char *buf = malloc((size_t)sz + 1);
-    if(!buf)
-    {
-        fclose(f);
-        return NULL;
-    }
-    if((size_t)sz > 0 && fread(buf, 1, (size_t)sz, f) != (size_t)sz)
-    {
-        free(buf);
-        fclose(f);
-        return NULL;
-    }
-    buf[sz] = '\0';
-    fclose(f);
-    *out_len = (size_t)sz;
-    return buf;
-}
-
-static bool expand_file(const char *path,
+static bool expand_file(emex_file_t *file,
                         expand_entry_t **entries,
                         size_t *cnt,
                         size_t *cap,
@@ -110,22 +77,23 @@ static bool expand_file(const char *path,
                         size_t inc_cnt,
                         int depth)
 {
-    if(depth > 32)
+    if(depth > 1024)
     {
-        diag_error(NULL, "include recurse limit exceeded near \"%s\"\n", path);
+        diag_error(NULL, "include recurse limit exceeded near '%s'\n", file->path);
         return false;
     }
 
-    size_t len = 0;
-    char *code = slurp_file(path, &len);
-    if(!code)
+    if(!emex_file_map(file))
     {
-        diag_error(NULL, "failed to open header \"%s\"\n", path);
+        diag_error(NULL, "failed to map assembly file '%s'\n", file->path);
         return false;
     }
+
+    size_t len = file->len;
+    const char *code = file->content;
 
     char dir_buf[PATH_MAX];
-    snprintf(dir_buf, sizeof(dir_buf), "%s", path);
+    snprintf(dir_buf, sizeof(dir_buf), "%s", file->path);
     char *slash = strrchr(dir_buf, '/');
     const char *source_dir = slash ? (slash[0] = '\0', dir_buf) : ".";
 
@@ -168,9 +136,8 @@ static bool expand_file(const char *path,
                 char *end = strchr(arg + 1, '>');
                 if(!end)
                 {
-                    diag_error(NULL, "malformed %%include%% (missing '>') in \"%s\"\n", path);
+                    diag_error(NULL, "malformed %%include%% (missing '>') in '%s'\n", file->path);
                     free(line);
-                    free(code);
                     return false;
                 }
                 size_t nlen = (size_t)(end - arg - 1);
@@ -182,9 +149,8 @@ static bool expand_file(const char *path,
                 char *end = strchr(arg + 1, '"');
                 if(!end)
                 {
-                    diag_error(NULL, "malformed %%include%% (missing '\"') in \"%s\"\n", path);
+                    diag_error(NULL, "malformed %%include%% (missing '\"') in '%s'\n", file->path);
                     free(line);
-                    free(code);
                     return false;
                 }
                 size_t nlen = (size_t)(end - arg - 1);
@@ -193,9 +159,8 @@ static bool expand_file(const char *path,
             }
             else
             {
-                diag_error(NULL, "malformed %%include%% directive in \"%s\"\n", path);
+                diag_error(NULL, "malformed %%include%% directive in '%s'\n", file->path);
                 free(line);
-                free(code);
                 return false;
             }
 
@@ -203,20 +168,25 @@ static bool expand_file(const char *path,
             char *hdr_path = find_header(hdr_name, is_system ? NULL : source_dir, inc_dirs, inc_cnt);
             if(!hdr_path)
             {
-                diag_error(NULL, "header \"%s\" not found (included from \"%s\")\n", hdr_name, path);
+                diag_error(NULL, "header '%s' not found (included from '%s')\n", hdr_name, file->path);
                 free(line);
-                free(code);
                 return false;
             }
 
             free(line);
 
-            /* recurse */
-            bool ok = expand_file(hdr_path, entries, cnt, cap, inc_dirs, inc_cnt, depth + 1);
+            emex_file_t *file = emex_file_alloc(hdr_path, (emex_file_policy_t){ .needed_permission = kEmexFilePolicyPermissionRead, .must_be_file = true, .must_exist = true });
             free(hdr_path);
+            if(file == NULL)
+            {
+                return false;
+            }
+
+            /* recurse */
+            bool ok = expand_file(file, entries, cnt, cap, inc_dirs, inc_cnt, depth + 1);
+            emex_file_dealloc(file);
             if(!ok)
             {
-                free(code);
                 return false;
             }
             continue;
@@ -227,20 +197,18 @@ static bool expand_file(const char *path,
             *cap = (*cap) ? (*cap) * 2 : 64;
             *entries = realloc(*entries, (*cap) * sizeof(expand_entry_t));
         }
-        (*entries)[*cnt].source_path = strdup(path);
+        (*entries)[*cnt].source_path = strdup(file->path);
         (*entries)[*cnt].code = line;
         (*entries)[*cnt].len = line_len;
         (*entries)[*cnt].line_num = phys_line;
         (*cnt)++;
     }
 
-    free(code);
     return true;
 }
 
 bool assembler_code_preparse(assembler_invocation_t *inv,
-                             const char **filev,
-                             int filec)
+                             emex_file_t *input)
 {
     /*
      * preparing compiler invocation to
@@ -249,13 +217,10 @@ bool assembler_code_preparse(assembler_invocation_t *inv,
     expand_entry_t *entries = NULL;
     size_t entry_cnt = 0, entry_cap = 0;
 
-    for(int i = 0; i < filec; i++)
+    if(!expand_file(input, &entries, &entry_cnt, &entry_cap, (const char **)inv->include_dirs, inv->include_dir_cnt, 0))
     {
-        if(!expand_file(filev[i], &entries, &entry_cnt, &entry_cap, (const char **)inv->include_dirs, inv->include_dir_cnt, 0))
-        {
-            free(entries);
-            return false;
-        }
+        free(entries);
+        return false;
     }
 
     inv->file_cnt = 0;
@@ -267,7 +232,7 @@ bool assembler_code_preparse(assembler_invocation_t *inv,
         bool found = false;
         for(size_t j = 0; j < inv->file_cnt; j++)
         {
-            if(strcmp(inv->file[j]->path, sp) == 0)
+            if(strcmp(inv->file[j], sp) == 0)
             {
                 found = true; break;
             }
@@ -275,9 +240,7 @@ bool assembler_code_preparse(assembler_invocation_t *inv,
         if(!found)
         {
             inv->file = realloc(inv->file, (inv->file_cnt + 1) * sizeof(emex_file_t*));
-            emex_file_t *ef = calloc(1, sizeof(emex_file_t));
-            ef->path = strdup(sp);
-            inv->file[inv->file_cnt++] = ef;
+            inv->file[inv->file_cnt++] = strdup(sp);
         }
     }
 
@@ -289,7 +252,7 @@ bool assembler_code_preparse(assembler_invocation_t *inv,
         size_t file_idx = 0;
         for(size_t j = 0; j < inv->file_cnt; j++)
         {
-            if(strcmp(inv->file[j]->path, entries[i].source_path) == 0)
+            if(strcmp(inv->file[j], entries[i].source_path) == 0)
             {
                 file_idx = j;
                 break;

@@ -233,7 +233,7 @@ static void diag_vemit(diag_level_t level,
 
     if(at != NULL)
     {
-        printf("%s:%zu:%zu: ", at->al->inv->file[at->al->file_idx]->path, at->al->line_num, at->column_num);
+        printf("%s:%zu:%zu: ", at->al->inv->file[at->al->file_idx], at->al->line_num, at->column_num);
     }
 
     switch(level)

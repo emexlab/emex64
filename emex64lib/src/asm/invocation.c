@@ -83,7 +83,7 @@ void assembler_invocation_dealloc(assembler_invocation_t *inv)
 
     for(size_t i = 0; i < inv->file_cnt; i++)
     {
-        emex_file_dealloc(inv->file[i]);
+        free(inv->file[i]);
     }
     free(inv->file);
 
@@ -121,16 +121,15 @@ void assembler_invocation_dealloc(assembler_invocation_t *inv)
 }
 
 bool assembler_invocation_emit(assembler_invocation_t *inv,
-                               int filec,
-                               char **filev)
+                               emex_file_t *input)
 {
-    if(filec <= 0)
+    if(input == NULL)
     {
-        diag_error(NULL, "no input files provided\n");
+        diag_error(NULL, "no input file provided\n");
         return false;
     }
 
-    if(!assembler_code_preparse(inv, (const char **)filev, filec) ||
+    if(!assembler_code_preparse(inv, input) ||
        !assembler_macro_expand(inv) ||
        !assembler_code_parse(inv) ||
        !assembler_label_prealloc(inv) ||
