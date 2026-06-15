@@ -47,11 +47,10 @@ typedef struct linker_global_symbol {
     char *object_path;
     uint64_t addr;
     bool defined;
-    struct linker_global_symbol *prev;
     struct linker_global_symbol *next;
 } linker_global_symbol_t;
 
-linker_global_symbol_t *linker_global_symbol_alloc(linker_global_symbol_t *prev, const char *name, const char *object_path, uint64_t addr, bool defined);
+linker_global_symbol_t *linker_global_symbol_alloc(const char *name, const char *object_path, uint64_t addr, bool defined);
 void linker_global_symbol_dealloc(linker_global_symbol_t *sym);
 
 #endif /* EMEX64LD_SYM_H */

@@ -23,6 +23,9 @@
  */
 
 #include <stdlib.h>
+#include <string.h>
+
+#include <emex64lib/support/diag.h>
 
 #include <emex64lib/linker/linker.h>
 
@@ -45,11 +48,54 @@ void linker_invocation_dealloc(linker_invocation_t *inv)
     while(sym != NULL)
     {
         linker_global_symbol_t *next = sym->next;
-        free(sym->name);
-        free(sym->object_path);
-        free(sym);
+        linker_global_symbol_dealloc(sym);
         sym = next;
     }
 
     free(inv);
+}
+
+bool linker_append_global_symbol_definition(linker_invocation_t *inv,
+                                             const char *name,
+                                             const char *object_path,
+                                             uint64_t addr)
+{
+    linker_global_symbol_t *sym = linker_lookup_global_symbol(inv, name);
+    if(sym == NULL)
+    {
+        sym = linker_global_symbol_alloc(name, object_path, addr, true);
+    }
+    if(sym->defined && sym->addr != addr)
+    {
+        diag_error(NULL, "duplicate symbol '%s' in \"%s\"\n", name, object_path);
+        diag_note(NULL, "symbol '%s' also exists in \"%s\"\n", name, sym->object_path);
+        return false;
+    }
+
+    if(inv->sym == NULL)
+    {
+        inv->sym = sym;
+    }
+    else
+    {
+        sym->next = inv->sym;
+        inv->sym = sym;
+    }
+
+    return true;
+}
+
+linker_global_symbol_t *linker_lookup_global_symbol(linker_invocation_t *inv,
+                                                    const char *name)
+{
+    linker_global_symbol_t *sym = inv->sym;
+    while(sym != NULL)
+    {
+        if(strcmp(sym->name, name) == 0)
+        {
+            return sym;
+        }
+        sym = sym->next;
+    }
+    return NULL;
 }

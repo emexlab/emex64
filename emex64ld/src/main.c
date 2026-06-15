@@ -39,55 +39,6 @@
 
 #include <emex64lib/linker/linker.h>
 
-linker_global_symbol_t *glob = NULL;
-
-static linker_global_symbol_t *sym_lookup(const char *name)
-{
-    linker_global_symbol_t *sym = glob;
-    while(sym != NULL)
-    {
-        if(strcmp(sym->name, name) == 0)
-        {
-            return sym;
-        }
-        sym = sym->next;
-    }
-    return NULL;
-}
-
-static linker_global_symbol_t *sym_define(const char *name,
-                                          const char *object_path,
-                                          uint64_t addr)
-{
-    linker_global_symbol_t *sym = sym_lookup(name);
-    if(sym == NULL)
-    {
-        sym = linker_global_symbol_alloc(NULL, name, object_path, addr, true);
-    }
-    if(sym->defined && sym->addr != addr)
-    {
-        diag_error(NULL, "duplicate symbol '%s' in \"%s\"\n", name, object_path);
-        diag_note(NULL, "symbol '%s' also exists in \"%s\"\n", name, sym->object_path);
-        return NULL;
-    }
-    sym->addr = addr;
-    sym->defined = true;
-
-    if(glob == NULL)
-    {
-        glob = sym;
-    }
-    else
-    {
-        /* stiching those symbols together >< like fabric of clothes */
-        glob->prev = sym;
-        sym->next = glob;
-        glob = sym;
-    }
-
-    return sym;
-}
-
 static uint8_t *read_file(const char *path, size_t *out_size)
 {
     int fd = open(path, O_RDONLY);
@@ -234,7 +185,8 @@ static inline uint64_t obj_bss_size(const Obj *o)
     return o->idx_bss >= 0 ? o->shdrs[o->idx_bss].sh_size : 0;
 }
 
-static bool obj_register_symbols(Obj *o)
+static bool obj_register_symbols(linker_invocation_t *inv,
+                                 Obj *o)
 {
     if(o->idx_symtab < 0)
     {
@@ -293,7 +245,7 @@ static bool obj_register_symbols(Obj *o)
             addr = sym->st_value;
         }
 
-        if(!sym_define(name, o->object_path, addr))
+        if(!linker_append_global_symbol_definition(inv, name,o->object_path, addr))
         {
             return false;
         }
@@ -301,7 +253,9 @@ static bool obj_register_symbols(Obj *o)
     return true;
 }
 
-static uint64_t sym_resolve(const Obj *o, uint32_t sym_idx)
+static uint64_t sym_resolve(linker_invocation_t *inv,
+                            const Obj *o,
+                            uint32_t sym_idx)
 {
     if(o->idx_symtab < 0)
     {
@@ -341,7 +295,7 @@ static uint64_t sym_resolve(const Obj *o, uint32_t sym_idx)
     if(strtab)
     {
         const char *name = strtab + sym->st_name;
-        linker_global_symbol_t *gsym = sym_lookup(name);
+        linker_global_symbol_t *gsym = linker_lookup_global_symbol(inv, name);
         if(gsym && gsym->defined)
         {
             return gsym->addr;
@@ -369,7 +323,10 @@ static uint64_t sym_resolve(const Obj *o, uint32_t sym_idx)
     return 0;
 }
 
-static bool obj_apply_relocs(const Obj *o, uint8_t *out_text, uint8_t *out_data)
+static bool obj_apply_relocs(linker_invocation_t *inv,
+                             const Obj *o,
+                             uint8_t *out_text,
+                             uint8_t *out_data)
 {
     if(o->idx_rela_text >= 0)
     {
@@ -390,7 +347,7 @@ static bool obj_apply_relocs(const Obj *o, uint8_t *out_text, uint8_t *out_data)
                 return false;
             }
 
-            uint64_t sym_addr = sym_resolve(o, sym_idx);
+            uint64_t sym_addr = sym_resolve(inv, o, sym_idx);
             uint64_t value = sym_addr + (uint64_t)addend;
 
             uint8_t *patch = out_text + offset;
@@ -417,7 +374,7 @@ static bool obj_apply_relocs(const Obj *o, uint8_t *out_text, uint8_t *out_data)
                 return false;
             }
 
-            uint64_t sym_addr = sym_resolve(o, sym_idx);
+            uint64_t sym_addr = sym_resolve(inv, o, sym_idx);
             uint64_t value = sym_addr + (uint64_t)addend;
 
             uint8_t *patch = out_data + offset;
@@ -551,7 +508,8 @@ static bool parse_linker_script(const char *path)
     return true;
 }
 
-static bool apply_script_symbols(uint64_t image_end,
+static bool apply_script_symbols(linker_invocation_t *inv,
+                                 uint64_t image_end,
                                  uint64_t text_start,
                                  uint64_t data_start,
                                  uint64_t bss_start)
@@ -593,7 +551,7 @@ static bool apply_script_symbols(uint64_t image_end,
             }
         }
 
-        if(!sym_define(script_syms[i].name, script_syms[i].script_path, value))
+        if(!linker_append_global_symbol_definition(inv, script_syms[i].name, script_syms[i].script_path, value))
         {
             return false;
         }
@@ -704,6 +662,12 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    linker_invocation_t *inv = linker_invocation_alloc();
+    if(inv == NULL)
+    {
+        return 1;
+    }
+
     Obj *objs = calloc((size_t)file_count, sizeof(Obj));
     if(!objs)
     {
@@ -744,14 +708,14 @@ int main(int argc, char *argv[])
     uint64_t total_data = cur_data - cur_text;
     uint64_t image_size = BOOT_HEADER_SIZE + total_text + total_data;
 
-    if(!apply_script_symbols(cur_bss, BOOT_HEADER_SIZE, cur_text, cur_bss > cur_data ? cur_data : cur_bss))
+    if(!apply_script_symbols(inv, cur_bss, BOOT_HEADER_SIZE, cur_text, cur_bss > cur_data ? cur_data : cur_bss))
     {
         return 1;
     }
 
     for(int i = 0; i < file_count; i++)
     {
-        if(!obj_register_symbols(&objs[i]))
+        if(!obj_register_symbols(inv, &objs[i]))
         {
             return 1;
         }
@@ -793,13 +757,13 @@ int main(int argc, char *argv[])
     {
         uint8_t *obj_text_ptr = image + objs[i].base_text;
         uint8_t *obj_data_ptr = image + objs[i].base_data;
-        if(!obj_apply_relocs(&objs[i], obj_text_ptr, obj_data_ptr))
+        if(!obj_apply_relocs(inv, &objs[i], obj_text_ptr, obj_data_ptr))
         {
             return 1;
         }
     }
 
-    linker_global_symbol_t *gsym = sym_lookup(entry_name);
+    linker_global_symbol_t *gsym = linker_lookup_global_symbol(inv, entry_name);
     if(!gsym || !gsym->defined)
     {
         diag_error(NULL, "entry symbol '%s' not found\n", entry_name);
@@ -847,5 +811,6 @@ int main(int argc, char *argv[])
     free(image);
     free(objs);
     free(input_files);
+    linker_invocation_dealloc(inv);
     return 0;
 }

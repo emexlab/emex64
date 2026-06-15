@@ -27,8 +27,7 @@
 
 #include <emex64lib/linker/sym.h>
 
-linker_global_symbol_t *linker_global_symbol_alloc(linker_global_symbol_t *prev,
-                                                   const char *name,
+linker_global_symbol_t *linker_global_symbol_alloc(const char *name,
                                                    const char *object_path,
                                                    uint64_t addr,
                                                    bool defined)
@@ -59,27 +58,11 @@ linker_global_symbol_t *linker_global_symbol_alloc(linker_global_symbol_t *prev,
 
     sym->next = NULL;
 
-    if(prev != NULL)
-    {
-        prev->next = sym;
-        sym->prev = prev;
-    }
-
     return sym;
 }
 
 void linker_global_symbol_dealloc(linker_global_symbol_t *sym)
 {
-    if(sym->prev != NULL)
-    {
-        sym->prev->next = sym->next;
-    }
-
-    if(sym->next != NULL)
-    {
-        sym->next->prev = sym->prev;
-    }
-
     free(sym->name);
     free(sym->object_path);
     free(sym);
