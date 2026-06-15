@@ -25,7 +25,8 @@
 #ifndef EMEX64LD_OBJ_H
 #define EMEX64LD_OBJ_H
 
-#include <emex64lib/linker/elf.h>
+#include <emex64lib/linker/type.h>
+#include <emex64lib/linker/header.h>
 
 typedef struct {
     const char *object_path;

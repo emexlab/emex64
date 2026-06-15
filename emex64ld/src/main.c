@@ -41,14 +41,6 @@
 
 #define SYMTAB_HASH 4096
 
-typedef struct GlobSym {
-    char *name;
-    const char *object_path;
-    uint64_t addr;
-    bool defined;
-    struct GlobSym *next;
-} GlobSym;
-
 static GlobSym *sym_hash[SYMTAB_HASH];
 
 static uint32_t sym_hash_fn(const char *s)

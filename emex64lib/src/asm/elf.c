@@ -42,7 +42,7 @@
 #include <emex64lib/asm/emit.h>
 #include <emex64lib/asm/section.h>
 
-#include <emex64lib/linker/elf.h>
+#include <emex64lib/linker/linker.h>
 
 typedef struct {
     uint8_t *data;

@@ -25,4 +25,29 @@
 #ifndef EMEX64LD_SYM_H
 #define EMEX64LD_SYM_H
 
+#include <emex64lib/linker/type.h>
+
+typedef struct {
+    uint32_t st_name;
+    uint8_t st_info;
+    uint8_t st_other;
+    uint16_t st_shndx;
+    uint64_t st_value;
+    uint64_t st_size;
+} __attribute__((packed)) ELF64_Sym;
+
+typedef struct {
+    uint64_t r_offset;
+    uint64_t r_info;
+    int64_t r_addend;
+} __attribute__((packed)) ELF64_Rela;
+
+typedef struct GlobSym {
+    char *name;
+    const char *object_path;
+    uint64_t addr;
+    bool defined;
+    struct GlobSym *next;
+} GlobSym;
+
 #endif /* EMEX64LD_SYM_H */

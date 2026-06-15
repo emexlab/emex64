@@ -22,12 +22,39 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64LD_LINKER_H
-#define EMEX64LD_LINKER_H
+#ifndef EMEX64LD_HEADER_H
+#define EMEX64LD_HEADER_H
 
 #include <emex64lib/linker/type.h>
-#include <emex64lib/linker/header.h>
-#include <emex64lib/linker/sym.h>
-#include <emex64lib/linker/obj.h>
 
-#endif /* EMEX64LD_LINKER_H */
+typedef struct {
+    uint8_t e_ident[EI_NIDENT];
+    uint16_t e_type;
+    uint16_t e_machine;
+    uint32_t e_version;
+    uint64_t e_entry;
+    uint64_t e_phoff;
+    uint64_t e_shoff;
+    uint32_t e_flags;
+    uint16_t e_ehsize;
+    uint16_t e_phentsize;
+    uint16_t e_phnum;
+    uint16_t e_shentsize;
+    uint16_t e_shnum;
+    uint16_t e_shstrndx;
+} __attribute__((packed)) ELF64_Ehdr;
+
+typedef struct {
+    uint32_t sh_name;
+    uint32_t sh_type;
+    uint64_t sh_flags;
+    uint64_t sh_addr;
+    uint64_t sh_offset;
+    uint64_t sh_size;
+    uint32_t sh_link;
+    uint32_t sh_info;
+    uint64_t sh_addralign;
+    uint64_t sh_entsize;
+} __attribute__((packed)) ELF64_Shdr;
+
+#endif /* EMEX64LD_HEADER_H */

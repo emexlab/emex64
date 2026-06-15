@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64LD_ELF_H
-#define EMEX64LD_ELF_H
+#ifndef EMEX64LD_TYPE_H
+#define EMEX64LD_TYPE_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -104,51 +104,6 @@ typedef enum: uint16_t {
 
 #define EI_NIDENT   16
 
-typedef struct {
-    uint8_t e_ident[EI_NIDENT];
-    uint16_t e_type;
-    uint16_t e_machine;
-    uint32_t e_version;
-    uint64_t e_entry;
-    uint64_t e_phoff;
-    uint64_t e_shoff;
-    uint32_t e_flags;
-    uint16_t e_ehsize;
-    uint16_t e_phentsize;
-    uint16_t e_phnum;
-    uint16_t e_shentsize;
-    uint16_t e_shnum;
-    uint16_t e_shstrndx;
-} __attribute__((packed)) ELF64_Ehdr;
-
-typedef struct {
-    uint32_t sh_name;
-    uint32_t sh_type;
-    uint64_t sh_flags;
-    uint64_t sh_addr;
-    uint64_t sh_offset;
-    uint64_t sh_size;
-    uint32_t sh_link;
-    uint32_t sh_info;
-    uint64_t sh_addralign;
-    uint64_t sh_entsize;
-} __attribute__((packed)) ELF64_Shdr;
-
-typedef struct {
-    uint32_t st_name;
-    uint8_t st_info;
-    uint8_t st_other;
-    uint16_t st_shndx;
-    uint64_t st_value;
-    uint64_t st_size;
-} __attribute__((packed)) ELF64_Sym;
-
-typedef struct {
-    uint64_t r_offset;
-    uint64_t r_info;
-    int64_t r_addend;
-} __attribute__((packed)) ELF64_Rela;
-
 #define ELF32_R_SYM(i) ((i) >> 32)
 #define ELF32_R_TYPE(i) ((i) & 0xFFFFFFFF)
 #define ELF64_R_INFO(s,t) (((uint64_t)(s) << 32) | (uint32_t)(t))
@@ -157,4 +112,4 @@ typedef struct {
 
 static uint8_t ident[EI_NIDENT] = { ELF_MAGIC_0, ELF_MAGIC_1, ELF_MAGIC_2, ELF_MAGIC_3, ELF_CLASS64, ELF_DATA2LSB, EV_CURRENT };
 
-#endif /* EMEX64LD_ELF_H */
+#endif /* EMEX64LD_TYPE_H */
