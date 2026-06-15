@@ -44,181 +44,6 @@ section .data
     result_msg db "Timer Ticks: \0"
 %endif%
 
-section .bss
-    audio_bdl_base   dq 1
-    audio_chunk_idx  dq 1   ; next chunk to schedule
-    audio_lvi        dq 1   ; current LVI mod 32
-
-
-_ac97_lvbi_handler:
-    ldq  r0, audio_chunk_idx
-
-    mov  r1, AUDIO_TOTAL_CHUNKS
-    cmp  r0, r1
-    bge  .stop
-
-    ldq  r6, audio_lvi
-    inc  r6
-    and  r6, AUDIO_BDL_MASK
-
-    ldq  r7, audio_bdl_base
-    mov  r8, 0
-
-.refill_loop:
-    mov  r9, AUDIO_BDL_FILL
-    cmp  r8, r9
-    bge  .refill_done
-
-    ldq  r0, audio_chunk_idx
-    mov  r1, AUDIO_TOTAL_CHUNKS
-    cmp  r0, r1
-    bge  .refill_done
-
-    and  r2, r6, AUDIO_BDL_MASK
-    mul  r3, r2, 8
-    add  r3, r7
-
-    mul  r4, r0, AUDIO_CHUNK_BYTES
-    mov  r5, badapple_audio
-    add  r5, r4
-
-    std  r3, r5
-    add  r3, 4
-
-    mov  r4, AUDIO_CHUNK_SAMPLES
-    std  r3, r4
-
-    inc  r0
-    stq  audio_chunk_idx, r0
-    inc  r6
-    inc  r8
-    b    .refill_loop
-
-.refill_done:
-    ldq  r6, audio_lvi
-    add  r6, r8
-    and  r6, AUDIO_BDL_MASK
-    stq  audio_lvi, r6
-
-    stb  AC97_BM_PCMOUT_LVI, r6
-
-    mov  r0, AC97_BM_CTRL_RUN
-    or   r0, AC97_BM_CTRL_LVBIE
-    stb  AC97_BM_PCMOUT_CTRL, r0
-
-    mov  r0, AC97_BM_STATUS_LVBCI
-    stw  AC97_BM_PCMOUT_STATUS, r0
-
-    b    .ack
-
-.stop:
-    mov  r0, AC97_BM_CTRL_RESET
-    stb  AC97_BM_PCMOUT_CTRL, r0
-
-.ack:
-    iret
-
-_audio_init:
-    blw  _pmm_alloc
-    stq  audio_bdl_base, rr
-
-    blw  _ac97_init, AUDIO_RATE
-
-    ldq  r8, audio_bdl_base
-    mov  r9, 0
-
-.fill_loop:
-    mov  r10, AUDIO_BDL_FILL
-    cmp  r9, r10
-    bge  .fill_done
-
-    mul  r2, r9, 8
-    add  r2, r8
-
-    mov  r0, r9
-    mul  r0, AUDIO_CHUNK_BYTES
-    mov  r1, badapple_audio
-    add  r1, r0
-
-    std  r2, r1
-    add  r2, 4
-    mov  r3, AUDIO_CHUNK_SAMPLES
-    std  r2, r3
-
-    inc  r9
-    b    .fill_loop
-
-.fill_done:
-    mov  r0, AUDIO_BDL_FILL
-    stq  audio_chunk_idx, r0
-
-    mov  r0, 30
-    stq  audio_lvi, r0
-
-    blw  _interrupt_register_handler, IRQ_AC97, _ac97_lvbi_handler
-
-    ldq  r0, audio_bdl_base
-    mov  r1, 30
-    blw  _ac97_play_lvbie, r0, r1
-
-    wret
-
-_audio_restart:
-    mov  r0, AUDIO_BDL_FILL
-    stq  audio_chunk_idx, r0
-
-    mov  r0, 30
-    stq  audio_lvi, r0
-
-    mov  r0, AC97_BM_CTRL_RESET
-    stb  AC97_BM_PCMOUT_CTRL, r0
-
-    ldq  r8, audio_bdl_base
-    mov  r9, 0
-
-.restart_fill_loop:
-    mov  r10, AUDIO_BDL_FILL
-    cmp  r9, r10
-    bge  .restart_fill_done
-
-    mul  r2, r9, 8
-    add  r2, r8
-
-    mov  r0, r9
-    mul  r0, AUDIO_CHUNK_BYTES
-    mov  r1, badapple_audio
-    add  r1, r0
-
-    std  r2, r1
-    add  r2, 4
-    mov  r3, AUDIO_CHUNK_SAMPLES
-    std  r2, r3
-
-    inc  r9
-    b    .restart_fill_loop
-
-.restart_fill_done:
-    ldq  r0, audio_bdl_base
-    mov  r1, 30
-    blw  _ac97_play_lvbie, r0, r1
-
-    wret
-
-_ac97_play_lvbie:
-    mov  r2, AC97_BM_CTRL_RESET
-    stb  AC97_BM_PCMOUT_CTRL, r2
-
-    stq  AC97_BM_PCMOUT_BDL_BASE, r0
-
-    and  r1, 0x1F
-    stb  AC97_BM_PCMOUT_LVI, r1
-
-    mov  r2, AC97_BM_CTRL_RUN
-    or   r2, AC97_BM_CTRL_LVBIE
-    stb  AC97_BM_PCMOUT_CTRL, r2
-
-    wret
-
 %ifdef% FULL
 _timer_handler:
     iret
@@ -256,13 +81,6 @@ _start:
     stq TIMER_CTRL, 0x7
 %endif%
 
-%ifdef% FULL
-    blw _audio_init
-%endif%
-%ifdef% BENCHMARK
-    blw _audio_init
-%endif%
-
     ldb r0, FB_ENABLED
     bz r0, .end
 
@@ -274,12 +92,6 @@ _start:
 .video_playback:
     mov r2, badapple_bitmap
     mov r5, 0
-%ifdef% FULL
-    blw _audio_restart
-%endif%
-%ifdef% BENCHMARK
-    blw _audio_restart
-%endif%
 .video_frame_next:
 %ifdef% FULL
     hlt

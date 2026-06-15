@@ -30,7 +30,6 @@
 
 typedef struct {
     bool display;
-    bool audio;
 } emex64_machine_support_t;
 
 typedef struct {
@@ -41,7 +40,6 @@ typedef struct {
 
 typedef struct {
     emex64_machine_display_options_t display;
-    bool audio;
     uint64_t memory_size;
 } emex64_machine_options_t;
 

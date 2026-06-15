@@ -56,10 +56,6 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "\t--display [on|off|required]                  : enables or disables display\n");
                 fprintf(stderr, "\t--display:resolution <height> <width>        : sets the resolution of the display\n");
             }
-            if(machine_support.audio)
-            {
-                fprintf(stderr, "\t--audio [on|off|required]                    : enables or disables AC97 audio\n");
-            }
             return 1;
         }
         else if(strcmp(argv[i], "--firmware") == 0 && i + 1 < argc)
@@ -157,32 +153,6 @@ int main(int argc, char *argv[])
                 diag_error(NULL, "illegal arguments supplied to '--display:resolution': '%s' and '%s'\n", argv[i - 1], argv[i - 2]);
                 return 1;
             }
-        }
-        else if(strcmp(argv[i], "--audio") == 0 && i + 1 < argc)
-        {
-            if(strcmp(argv[i + 1], "on") == 0)
-            {
-                machine_options.audio = true;
-            }
-            else if(strcmp(argv[i + 1], "off") == 0)
-            {
-                machine_options.audio = false;
-            }
-            else if(strcmp(argv[i + 1], "required") == 0)
-            {
-                if(!machine_support.audio)
-                {
-                    diag_error(NULL, "audio support is not available in this distribution of the emex64 toolchain\n");
-                    return 1;
-                }
-                machine_options.audio = true;
-            }
-            else
-            {
-                diag_error(NULL, "unknown argument supplied to '--audio': '%s'\n", argv[i + 1]);
-                return 1;
-            }
-            i++;
         }
         else
         {

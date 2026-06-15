@@ -103,8 +103,6 @@ _fw_start:
     
     blw _print_time
 
-    blw _ac97_init, FW_TONE_RATE
-
 %if% FW_TEST_EXCEPTION
     cmov REG_CR0, 0x0
     cmov REG_CR0, 0x2

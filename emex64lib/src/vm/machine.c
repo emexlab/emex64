@@ -27,7 +27,6 @@
 
 #include <emex64lib/vm/device/internal/controller/mem.h>
 #include <emex64lib/vm/device/board/controller/power.h>
-#include <emex64lib/vm/device/board/ac97.h>
 #include <emex64lib/vm/device/board/rtc.h>
 
 emex64_machine_t *emex64_machine_alloc(emex64_machine_options_t options)
@@ -87,23 +86,15 @@ emex64_machine_t *emex64_machine_alloc(emex64_machine_options_t options)
         goto out_release_8042;
     }
 
-    machine->ac97 = emex64_ac97_alloc(machine, options.audio);
-    if(machine->ac97 == NULL)
-    {
-        goto out_release_display;
-    }
-
     if(!emex64_mmio_register(machine->mmio_bus, EMEX64_RTC_BASE, EMEX64_RTC_SIZE, NULL, emex64_rtc_read, NULL) ||
        !emex64_mmio_register(machine->mmio_bus, EMEX64_MC_BASE, EMEX64_MC_SIZE, NULL, emex64_mc_read, emex64_mc_write) ||
        !emex64_mmio_register(machine->mmio_bus, EMEX64_PLATFORM_BASE, EMEX64_PLATFORM_SIZE, NULL, emex64_platform_read, emex64_platform_write))
     {
-        goto out_release_ac97;
+        goto out_release_display;
     }
 
     return machine;
 
-out_release_ac97:
-    emex64_ac97_dealloc(machine->ac97);
 out_release_display:
     emex64_display_dealloc(machine->display);
 out_release_8042:
@@ -146,11 +137,6 @@ emex64_machine_support_t emex64_machine_support_get(void)
     #else
     support.display = false;
     #endif /* EMEX64VM_DEVICE_DISPLAY */
-    #if EMEX64VM_DEVICE_AUDIO && (defined(__linux__) || defined(__APPLE__))
-    support.audio = true;
-    #else
-    support.audio = false;
-    #endif /* EMEX64VM_DEVICE_AUDIO */
     return support;
 }
 
@@ -164,11 +150,6 @@ emex64_machine_options_t emex64_machine_options_default(void)
     #endif /* EMEX64VM_DEVICE_DISPLAY */
     options.display.width = 640;
     options.display.height = 480;
-    #if EMEX64VM_DEVICE_AUDIO && (defined(__linux__) || defined(__APPLE__))
-    options.audio = true;
-    #else
-    options.audio = false;
-    #endif /* EMEX64VM_DEVICE_AUDIO */
     options.memory_size = 100 * 1024 * 1024;
     return options;
 }

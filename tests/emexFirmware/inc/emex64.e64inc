@@ -31,5 +31,4 @@
 %include% <mm.e64inc>
 %include% <regs.e64inc>
 %include% <timer.e64inc>
-%include% <ac97.e64inc>
 %include% <8042.e64inc>
