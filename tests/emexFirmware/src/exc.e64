@@ -184,9 +184,6 @@ _exception_putreg:
     blw _putc, '\n'
     wret
 
-section .data
-    test_msg db "nya!\n\0"
-
 _exception_hang:
 .hang:
     hlt
