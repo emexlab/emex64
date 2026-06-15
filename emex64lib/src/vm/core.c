@@ -225,6 +225,7 @@ escape_from_la:
 
     /* the part of executing the instruction */
     core->op.op.func(core);
+    core->rl[kEmex64RegisterPC] += core->op.ilen;   /* FIXME: IDK if it should increment or not due to interrupts */
 
     return;
 }
@@ -238,6 +239,7 @@ static void *emex64_core_execute_thread(void *arg)
     for(;;)
     {
         emex64_core_execute_instruction_at_pc(core);
+        emex64_serve_interrupt_if_needed(core);
 
         /*
          * currently exceptions happening in a interrupt
@@ -251,7 +253,6 @@ static void *emex64_core_execute_thread(void *arg)
             {
                 core->halted = true;
                 emex64_raise_interrupt(core->machine, EMEX64_IRQ_EXCEPTION);
-                goto skip_to_interrupt;
             }
             else if(unlikely(core->halted))
             {
@@ -262,13 +263,6 @@ static void *emex64_core_execute_thread(void *arg)
                 usleep(100);
             }
         }
-
-        /* increment PC after entire cycle is done */
-        core->rl[kEmex64RegisterPC] += core->op.ilen;
-
-skip_to_interrupt:
-        /* go after exception before incrementing PC */
-        emex64_serve_interrupt_if_needed(core);
 
         /*
          * tick the timer always (has to always be ticked for the interrupt controller)
