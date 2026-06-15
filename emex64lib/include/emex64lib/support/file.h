@@ -59,13 +59,14 @@ typedef struct emex_file_policy {
     kEmexFilePolicyPermission needed_permission;    /* permissions them selves */
     bool must_exist;
     bool must_be_file;
+    bool create_on_open;
 } emex_file_policy_t;
 
 extern emex_file_policy_t assembly_file_policy;
 extern emex_file_policy_t section_data_file_policy;
 extern emex_file_policy_t assembly_unsaved_file_policy;
 extern emex_file_policy_t object_file_load_policy;
-extern emex_file_policy_t object_file_output_policy;
+extern emex_file_policy_t object_file_out_policy;
 
 typedef struct emex_file {
     const char *path;

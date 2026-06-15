@@ -37,26 +37,31 @@ emex_file_policy_t assembly_file_policy = {
     .needed_permission = kEmexFilePolicyPermissionRead,
     .must_exist = true,
     .must_be_file = true,
+    .create_on_open = false,
 };
 emex_file_policy_t section_data_file_policy = {
     .needed_permission = kEmexFilePolicyPermissionRead,
     .must_exist = true,
     .must_be_file = true,
+    .create_on_open = false,
 };
 emex_file_policy_t assembly_unsaved_file_policy = {
     .needed_permission = kEmexFilePolicyPermissionRead,
     .must_exist = false,
     .must_be_file = true,
+    .create_on_open = false,
 };
 emex_file_policy_t object_file_load_policy = {
     .needed_permission = kEmexFilePolicyPermissionRead,
     .must_exist = true,
     .must_be_file = true,
+    .create_on_open = false,
 };
 emex_file_policy_t object_file_out_policy = {
     .needed_permission = kEmexFilePolicyPermissionRead | kEmexFilePolicyPermissionWrite,
     .must_exist = false,
     .must_be_file = true,
+    .create_on_open = true,
 };
 
 static inline int emex_file_policy_to_o_rw(kEmexFilePolicyPermission p)
@@ -197,7 +202,7 @@ bool emex_file_open(emex_file_t *f)
     }
 
     /* initial open */
-    f->fd = open(f->path, emex_file_policy_to_o_rw(f->policy.needed_permission));
+    f->fd = open(f->path, emex_file_policy_to_o_rw(f->policy.needed_permission) | (f->policy.create_on_open ? (O_CREAT | O_TRUNC) : 0));
     if(f->fd < 0)
     {
         return false;

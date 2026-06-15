@@ -37,6 +37,7 @@
 
 #include <emex64lib/support/diag.h>
 #include <emex64lib/support/file.h>
+#include <emex64lib/support/fdwalker.h>
 
 #include <emex64lib/linker/linker.h>
 
@@ -195,8 +196,7 @@ static uint64_t sym_resolve(linker_invocation_t *inv,
 
 static bool obj_apply_relocs(linker_invocation_t *inv,
                              const linker_object_t *o,
-                             uint8_t *out_text,
-                             uint8_t *out_data)
+                             fdwalker_t *fw)
 {
     if(o->idx_rela_text >= 0)
     {
@@ -220,8 +220,8 @@ static bool obj_apply_relocs(linker_invocation_t *inv,
             uint64_t sym_addr = sym_resolve(inv, o, sym_idx);
             uint64_t value = sym_addr + (uint64_t)addend;
 
-            uint8_t *patch = out_text + offset;
-            memcpy(patch, &value, 8);
+            fdwalker_seek(fw, o->base_text + offset, 0);
+            fdwalker_write(fw, value, 64);
         }
     }
 
@@ -247,8 +247,8 @@ static bool obj_apply_relocs(linker_invocation_t *inv,
             uint64_t sym_addr = sym_resolve(inv, o, sym_idx);
             uint64_t value = sym_addr + (uint64_t)addend;
 
-            uint8_t *patch = out_data + offset;
-            memcpy(patch, &value, 8);
+            fdwalker_seek(fw, o->base_data + offset, 0);
+            fdwalker_write(fw, value, 64);
         }
     }
 
@@ -573,7 +573,6 @@ int main(int argc, char *argv[])
 
     uint64_t total_text = cur_text - BOOT_HEADER_SIZE;
     uint64_t total_data = cur_data - cur_text;
-    uint64_t image_size = BOOT_HEADER_SIZE + total_text + total_data;
 
     if(!apply_script_symbols(inv, cur_bss, BOOT_HEADER_SIZE, cur_text, cur_bss > cur_data ? cur_data : cur_bss))
     {
@@ -590,11 +589,17 @@ int main(int argc, char *argv[])
         obj = obj->next;
     }
 
-    uint8_t *image = calloc(image_size, 1);
-    if(!image)
+    emex_file_t *file = emex_file_alloc(output_path, object_file_out_policy);
+    if(file == NULL)
     {
-        perror("malloc");
         return 1;
+    }
+
+    fdwalker_t *fw = emex_file_dup_fdwalker(file, BW_LITTLE_ENDIAN);
+    if(fw == NULL)
+    {
+        emex_file_dealloc(file);
+        fdwalker_dealloc(fw);
     }
 
     /* copy .text sections */
@@ -607,8 +612,8 @@ int main(int argc, char *argv[])
             continue;
         }
         ELF64_Shdr *sh = &obj->shdrs[obj->idx_text];
-        uint64_t dst_off = obj->base_text;
-        memcpy(image + dst_off, obj->file->content + sh->sh_offset, sh->sh_size);
+        fdwalker_seek(fw, obj->base_text, 0);
+        fdwalker_write_buf(fw, obj->file->content + sh->sh_offset, sh->sh_size);
         obj = obj->next;
     }
 
@@ -622,8 +627,8 @@ int main(int argc, char *argv[])
             continue;
         }
         ELF64_Shdr *sh = &obj->shdrs[obj->idx_data];
-        uint64_t dst_off = obj->base_data;
-        memcpy(image + dst_off, obj->file->content + sh->sh_offset, sh->sh_size);
+        fdwalker_seek(fw, obj->base_data, 0);
+        fdwalker_write_buf(fw, obj->file->content + sh->sh_offset, sh->sh_size);
         obj = obj->next;
     }
 
@@ -631,9 +636,7 @@ int main(int argc, char *argv[])
     obj = inv->obj;
     while(obj != NULL)
     {
-        uint8_t *obj_text_ptr = image + obj->base_text;
-        uint8_t *obj_data_ptr = image + obj->base_data;
-        if(!obj_apply_relocs(inv, obj, obj_text_ptr, obj_data_ptr))
+        if(!obj_apply_relocs(inv, obj, fw))
         {
             return 1;
         }
@@ -650,25 +653,11 @@ int main(int argc, char *argv[])
     uint64_t entry_addr = gsym->addr;
     uint8_t boot_hdr[10];
     emit_boot_header(boot_hdr, entry_addr);
-    memcpy(image, boot_hdr, 10);
+    fdwalker_seek(fw, 0, 0);
+    fdwalker_write_buf(fw, (char*)boot_hdr, 10);
 
-    int fd = open(output_path, O_WRONLY | O_CREAT | O_TRUNC, 0755);
-    if(fd < 0)
-    {
-        perror(output_path);
-        return 1;
-    }
-
-    ssize_t written = write(fd, image, image_size);
-    if(written != (ssize_t)image_size)
-    {
-        diag_error(NULL, "write error: %s\n", output_path);
-        close(fd);
-        return 1;
-    }
-
-    fsync(fd);
-    close(fd);
+    fsync(fw->fd);
+    fdwalker_dealloc(fw);
 
     if(verbose)
     {
@@ -685,7 +674,6 @@ int main(int argc, char *argv[])
                 entry_name, (unsigned long)entry_addr);
     }
 
-    free(image);
     free(input_files);
     linker_invocation_dealloc(inv);
     return 0;
