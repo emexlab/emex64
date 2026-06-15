@@ -251,6 +251,7 @@ static void *emex64_core_execute_thread(void *arg)
             {
                 core->halted = true;
                 emex64_raise_interrupt(core->machine, EMEX64_IRQ_EXCEPTION);
+                goto skip_to_interrupt;
             }
             else if(unlikely(core->halted))
             {
@@ -262,11 +263,12 @@ static void *emex64_core_execute_thread(void *arg)
             }
         }
 
-        /* go after exception before incrementing PC */
-        emex64_serve_interrupt_if_needed(core);
-
         /* increment PC after entire cycle is done */
         core->rl[kEmex64RegisterPC] += core->op.ilen;
+
+skip_to_interrupt:
+        /* go after exception before incrementing PC */
+        emex64_serve_interrupt_if_needed(core);
 
         /*
          * tick the timer always (has to always be ticked for the interrupt controller)
