@@ -216,9 +216,9 @@ _exception_handler:
     ;mov 0x0, 0x0
     cmov REG_CR2, 0x0
     ;mov r2, 0x0
-    
+
     ;mul r7, 8, r8
-    add r0, fp, 168
+    add r0, fp, 248
     stq r0, _exception_hang
     
     ;b _fw_start.hang 
