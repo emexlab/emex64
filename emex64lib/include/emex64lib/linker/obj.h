@@ -25,4 +25,28 @@
 #ifndef EMEX64LD_OBJ_H
 #define EMEX64LD_OBJ_H
 
+#include <emex64lib/linker/elf.h>
+
+typedef struct {
+    const char *object_path;
+    uint8_t *data;
+    size_t size;
+
+    ELF64_Ehdr *ehdr;
+    ELF64_Shdr *shdrs;
+    char *shstrtab;
+
+    int32_t idx_text;
+    int32_t idx_data;
+    int32_t idx_bss;
+    int32_t idx_rela_text;
+    int32_t idx_rela_data;
+    int32_t idx_symtab;
+    int32_t idx_strtab;
+
+    uint64_t base_text;
+    uint64_t base_data;
+    uint64_t base_bss;
+} Obj;
+
 #endif /* EMEX64LD_OBJ_H */

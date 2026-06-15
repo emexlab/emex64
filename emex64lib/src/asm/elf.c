@@ -41,12 +41,13 @@
 #include <emex64lib/asm/label.h>
 #include <emex64lib/asm/emit.h>
 #include <emex64lib/asm/section.h>
+
 #include <emex64lib/linker/elf.h>
 
 typedef struct {
     uint8_t *data;
-    size_t   len;
-    size_t   cap;
+    size_t len;
+    size_t cap;
 } buf_t;
 
 static bool buf_reserve(buf_t *b, size_t extra)

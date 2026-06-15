@@ -33,32 +33,11 @@
 #include <assert.h>
 #include <errno.h>
 
-#include <emex64lib/asm/elf.h>
 #include <emex64lib/vm/core.h>
 
 #include <emex64lib/support/diag.h>
 
-typedef struct {
-    const char  *object_path;
-    uint8_t     *data;
-    size_t      size;
-
-    Emex64_Ehdr *ehdr;
-    Emex64_Shdr *shdrs;
-    char       *shstrtab;
-
-    int32_t    idx_text;
-    int32_t    idx_data;
-    int32_t    idx_bss;
-    int32_t    idx_rela_text;
-    int32_t    idx_rela_data;
-    int32_t    idx_symtab;
-    int32_t    idx_strtab;
-
-    uint64_t   base_text;
-    uint64_t   base_data;
-    uint64_t   base_bss;
-} Obj;
+#include <emex64lib/linker/linker.h>
 
 #define SYMTAB_HASH 4096
 
@@ -169,41 +148,41 @@ static bool obj_load(Obj *o, const char *path)
         return false;
     }
 
-    if(o->size < sizeof(Emex64_Shdr))
+    if(o->size < sizeof(ELF64_Shdr))
     {
         diag_error(NULL, "%s: too small to be ELF\n", path);
         return false;
     }
 
-    o->ehdr = (Emex64_Ehdr *)o->data;
+    o->ehdr = (ELF64_Ehdr *)o->data;
 
-    if(o->ehdr->e_ident[0] != ELFMAG0 ||
-       o->ehdr->e_ident[1] != ELFMAG1 ||
-       o->ehdr->e_ident[2] != ELFMAG2 ||
-       o->ehdr->e_ident[3] != ELFMAG3)
+    if(o->ehdr->e_ident[0] != ELF_MAGIC_0 ||
+       o->ehdr->e_ident[1] != ELF_MAGIC_1 ||
+       o->ehdr->e_ident[2] != ELF_MAGIC_2 ||
+       o->ehdr->e_ident[3] != ELF_MAGIC_3)
     {
        diag_error(NULL, "%s: not an ELF file\n", path);
        return false;
     }
 
-    if(o->ehdr->e_machine != EM_EMEX64)
+    if(o->ehdr->e_machine != ELF_MAGIC_EMEX64)
     {
         diag_error(NULL, "%s: not an emex64 object (e_machine=0x%x)\n", path, o->ehdr->e_machine);
         return false;
     }
 
-    if(o->ehdr->e_type != ET_REL)
+    if(o->ehdr->e_type != kELFTypeRel)
     {
         diag_error(NULL, "%s: not a relocatable object\n", path);
         return false;
     }
 
-    o->shdrs = (Emex64_Shdr *)(o->data + o->ehdr->e_shoff);
+    o->shdrs = (ELF64_Shdr *)(o->data + o->ehdr->e_shoff);
 
     if(o->ehdr->e_shstrndx != 0xFFFF &&
        o->ehdr->e_shstrndx < o->ehdr->e_shnum)
     {
-        Emex64_Shdr *ss = &o->shdrs[o->ehdr->e_shstrndx];
+        ELF64_Shdr *ss = &o->shdrs[o->ehdr->e_shstrndx];
         o->shstrtab = (char *)(o->data + ss->sh_offset);
     }
 
@@ -236,7 +215,7 @@ static bool obj_load(Obj *o, const char *path)
         {
             o->idx_rela_data = i;
         }
-        else if(o->shdrs[i].sh_type == SHT_SYMTAB)
+        else if(o->shdrs[i].sh_type == kELFSectionHeaderTypeSymtab)
         {
             o->idx_symtab  = i;
         }
@@ -272,21 +251,21 @@ static bool obj_register_symbols(Obj *o)
         return true;
     }
 
-    Emex64_Shdr *symsh = &o->shdrs[o->idx_symtab];
-    Emex64_Sym  *syms = (Emex64_Sym *)(o->data + symsh->sh_offset);
-    size_t nsyms  = symsh->sh_size / sizeof(Emex64_Sym);
+    ELF64_Shdr *symsh = &o->shdrs[o->idx_symtab];
+    ELF64_Sym *syms = (ELF64_Sym *)(o->data + symsh->sh_offset);
+    size_t nsyms  = symsh->sh_size / sizeof(ELF64_Sym);
     const char *strtab = (o->idx_strtab >= 0) ? (char *)(o->data + o->shdrs[o->idx_strtab].sh_offset) : NULL;
 
     for(size_t i = 0; i < nsyms; i++)
     {
-        Emex64_Sym *sym = &syms[i];
+        ELF64_Sym *sym = &syms[i];
         uint8_t bind = sym->st_info >> 4;
 
-        if(bind != STB_GLOBAL)
+        if(bind != kELFSymbolTableBindingGlobal)
         {
             continue;
         }
-        if(sym->st_shndx == SHN_UNDEF)
+        if(sym->st_shndx == kELFSectionHeaderNumberUndefined)
         {
             continue;
         }
@@ -303,7 +282,7 @@ static bool obj_register_symbols(Obj *o)
 
         uint64_t addr = 0;
 
-        if(sym->st_shndx == SHN_ABS)
+        if(sym->st_shndx == kELFSectionHeaderNumberAbsolute)
         {
             addr = sym->st_value;
         }
@@ -339,9 +318,9 @@ static uint64_t sym_resolve(const Obj *o, uint32_t sym_idx)
         return 0;
     }
 
-    Emex64_Shdr *symsh = &o->shdrs[o->idx_symtab];
-    Emex64_Sym *syms = (Emex64_Sym *)(o->data + symsh->sh_offset);
-    size_t nsyms = symsh->sh_size / sizeof(Emex64_Sym);
+    ELF64_Shdr *symsh = &o->shdrs[o->idx_symtab];
+    ELF64_Sym *syms = (ELF64_Sym *)(o->data + symsh->sh_offset);
+    size_t nsyms = symsh->sh_size / sizeof(ELF64_Sym);
     const char *strtab = (o->idx_strtab >= 0) ? (char *)(o->data + o->shdrs[o->idx_strtab].sh_offset) : NULL;
 
     if(sym_idx >= nsyms)
@@ -349,10 +328,10 @@ static uint64_t sym_resolve(const Obj *o, uint32_t sym_idx)
         return 0;
     }
 
-    Emex64_Sym *sym = &syms[sym_idx];
+    ELF64_Sym *sym = &syms[sym_idx];
     (void)(sym->st_info >> 4);
 
-    if((sym->st_info & 0xf) == STT_SECTION)
+    if((sym->st_info & 0xf) == kELFSymbolTableTypeSection)
     {
         if((int32_t)sym->st_shndx == o->idx_text)
         {
@@ -378,7 +357,7 @@ static uint64_t sym_resolve(const Obj *o, uint32_t sym_idx)
             return g->addr;
         }
 
-        if(sym->st_shndx != SHN_UNDEF)
+        if(sym->st_shndx != kELFSectionHeaderNumberUndefined)
         {
             if((int32_t)sym->st_shndx == o->idx_text)
             {
@@ -404,14 +383,14 @@ static bool obj_apply_relocs(const Obj *o, uint8_t *out_text, uint8_t *out_data)
 {
     if(o->idx_rela_text >= 0)
     {
-        Emex64_Shdr *rs = &o->shdrs[o->idx_rela_text];
-        Emex64_Rela *rela = (Emex64_Rela *)(o->data + rs->sh_offset);
-        size_t cnt = rs->sh_size / sizeof(Emex64_Rela);
+        ELF64_Shdr *rs = &o->shdrs[o->idx_rela_text];
+        ELF64_Rela *rela = (ELF64_Rela *)(o->data + rs->sh_offset);
+        size_t cnt = rs->sh_size / sizeof(ELF64_Rela);
 
         for(size_t i = 0; i < cnt; i++)
         {
-            uint32_t type = (uint32_t)EMEX64_ELF32_R_TYPE(rela[i].r_info);
-            uint32_t sym_idx = (uint32_t)EMEX64_ELF32_R_SYM(rela[i].r_info);
+            uint32_t type = (uint32_t)ELF32_R_TYPE(rela[i].r_info);
+            uint32_t sym_idx = (uint32_t)ELF32_R_SYM(rela[i].r_info);
             uint64_t offset = rela[i].r_offset;
             int64_t  addend = rela[i].r_addend;
 
@@ -431,14 +410,14 @@ static bool obj_apply_relocs(const Obj *o, uint8_t *out_text, uint8_t *out_data)
 
     if(o->idx_rela_data >= 0)
     {
-        Emex64_Shdr *rs = &o->shdrs[o->idx_rela_data];
-        Emex64_Rela *rela = (Emex64_Rela *)(o->data + rs->sh_offset);
-        size_t cnt = rs->sh_size / sizeof(Emex64_Rela);
+        ELF64_Shdr *rs = &o->shdrs[o->idx_rela_data];
+        ELF64_Rela *rela = (ELF64_Rela *)(o->data + rs->sh_offset);
+        size_t cnt = rs->sh_size / sizeof(ELF64_Rela);
 
         for(size_t i = 0; i < cnt; i++)
         {
-            uint32_t type = (uint32_t)EMEX64_ELF32_R_TYPE(rela[i].r_info);
-            uint32_t sym_idx = (uint32_t)EMEX64_ELF32_R_SYM(rela[i].r_info);
+            uint32_t type = (uint32_t)ELF32_R_TYPE(rela[i].r_info);
+            uint32_t sym_idx = (uint32_t)ELF32_R_SYM(rela[i].r_info);
             uint64_t offset = rela[i].r_offset;
             int64_t addend = rela[i].r_addend;
 
@@ -802,7 +781,7 @@ int main(int argc, char *argv[])
         {
             continue;
         }
-        Emex64_Shdr *sh = &objs[i].shdrs[objs[i].idx_text];
+        ELF64_Shdr *sh = &objs[i].shdrs[objs[i].idx_text];
         uint64_t dst_off = objs[i].base_text;
         memcpy(image + dst_off, objs[i].data + sh->sh_offset, sh->sh_size);
     }
@@ -814,7 +793,7 @@ int main(int argc, char *argv[])
         {
             continue;
         }
-        Emex64_Shdr *sh = &objs[i].shdrs[objs[i].idx_data];
+        ELF64_Shdr *sh = &objs[i].shdrs[objs[i].idx_data];
         uint64_t dst_off = objs[i].base_data;
         memcpy(image + dst_off, objs[i].data + sh->sh_offset, sh->sh_size);
     }

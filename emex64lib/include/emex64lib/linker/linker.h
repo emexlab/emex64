@@ -25,4 +25,7 @@
 #ifndef EMEX64LD_LINKER_H
 #define EMEX64LD_LINKER_H
 
+#include <emex64lib/linker/elf.h>
+#include <emex64lib/linker/obj.h>
+
 #endif /* EMEX64LD_LINKER_H */
