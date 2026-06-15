@@ -76,7 +76,7 @@ static uint8_t *read_file(const char *path, size_t *out_size)
     return buf;
 }
 
-static bool obj_load(Obj *o, const char *path)
+static bool obj_load(linker_object_t *o, const char *path)
 {
     memset(o, 0, sizeof(*o));
     o->idx_text = o->idx_data = o->idx_bss =
@@ -170,23 +170,23 @@ static bool obj_load(Obj *o, const char *path)
     return true;
 }
 
-static inline uint64_t obj_text_size(const Obj *o)
+static inline uint64_t obj_text_size(const linker_object_t *o)
 {
     return o->idx_text >= 0 ? o->shdrs[o->idx_text].sh_size : 0;
 }
 
-static inline uint64_t obj_data_size(const Obj *o)
+static inline uint64_t obj_data_size(const linker_object_t *o)
 {
     return o->idx_data >= 0 ? o->shdrs[o->idx_data].sh_size : 0;
 }
 
-static inline uint64_t obj_bss_size(const Obj *o)
+static inline uint64_t obj_bss_size(const linker_object_t *o)
 {
     return o->idx_bss >= 0 ? o->shdrs[o->idx_bss].sh_size : 0;
 }
 
 static bool obj_register_symbols(linker_invocation_t *inv,
-                                 Obj *o)
+                                 linker_object_t *o)
 {
     if(o->idx_symtab < 0)
     {
@@ -254,7 +254,7 @@ static bool obj_register_symbols(linker_invocation_t *inv,
 }
 
 static uint64_t sym_resolve(linker_invocation_t *inv,
-                            const Obj *o,
+                            const linker_object_t *o,
                             uint32_t sym_idx)
 {
     if(o->idx_symtab < 0)
@@ -324,7 +324,7 @@ static uint64_t sym_resolve(linker_invocation_t *inv,
 }
 
 static bool obj_apply_relocs(linker_invocation_t *inv,
-                             const Obj *o,
+                             const linker_object_t *o,
                              uint8_t *out_text,
                              uint8_t *out_data)
 {
@@ -668,7 +668,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    Obj *objs = calloc((size_t)file_count, sizeof(Obj));
+    linker_object_t *objs = calloc((size_t)file_count, sizeof(linker_object_t));
     if(!objs)
     {
         perror("malloc");

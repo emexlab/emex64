@@ -48,6 +48,6 @@ typedef struct {
     uint64_t base_text;
     uint64_t base_data;
     uint64_t base_bss;
-} Obj;
+} linker_object_t;
 
 #endif /* EMEX64LD_OBJ_H */
