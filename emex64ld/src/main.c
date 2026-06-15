@@ -40,105 +40,6 @@
 
 #include <emex64lib/linker/linker.h>
 
-static bool obj_load(linker_object_t *o, const char *path)
-{
-    memset(o, 0, sizeof(*o));
-    o->idx_text = o->idx_data = o->idx_bss =
-    o->idx_rela_text = o->idx_rela_data = o->idx_symtab = o->idx_strtab = -1;
-
-    o->file = emex_file_alloc(path, object_file_load_policy);
-    if(o->file == NULL)
-    {
-        return false;
-    }
-
-    if(!emex_file_map(o->file))
-    {
-        emex_file_dealloc(o->file);
-        return false;
-    }
-
-    if(o->file->len < sizeof(ELF64_Shdr))
-    {
-        diag_error(NULL, "%s: too small to be ELF\n", path);
-        return false;
-    }
-
-    o->ehdr = (ELF64_Ehdr *)o->file->content;
-
-    if(o->ehdr->e_ident[0] != ELF_MAGIC_0 ||
-       o->ehdr->e_ident[1] != ELF_MAGIC_1 ||
-       o->ehdr->e_ident[2] != ELF_MAGIC_2 ||
-       o->ehdr->e_ident[3] != ELF_MAGIC_3)
-    {
-       diag_error(NULL, "%s: not an ELF file\n", path);
-       return false;
-    }
-
-    if(o->ehdr->e_machine != ELF_MAGIC_EMEX64)
-    {
-        diag_error(NULL, "%s: not an emex64 object (e_machine=0x%x)\n", path, o->ehdr->e_machine);
-        return false;
-    }
-
-    if(o->ehdr->e_type != kELFTypeRel)
-    {
-        diag_error(NULL, "%s: not a relocatable object\n", path);
-        return false;
-    }
-
-    o->shdrs = (ELF64_Shdr *)(o->file->content + o->ehdr->e_shoff);
-
-    if(o->ehdr->e_shstrndx != 0xFFFF &&
-       o->ehdr->e_shstrndx < o->ehdr->e_shnum)
-    {
-        ELF64_Shdr *ss = &o->shdrs[o->ehdr->e_shstrndx];
-        o->shstrtab = (char *)(o->file->content + ss->sh_offset);
-    }
-
-    /* find known sections */
-    for(uint16_t i = 0; i < o->ehdr->e_shnum; i++)
-    {
-        if(!o->shstrtab)
-        {
-            continue;
-        }
-        const char *name = o->shstrtab + o->shdrs[i].sh_name;
-
-        if(strcmp(name, ".text") == 0)
-        {
-            o->idx_text = i;
-        }
-        else if(strcmp(name, ".data") == 0)
-        {
-            o->idx_data = i;
-        }
-        else if(strcmp(name, ".bss") == 0)
-        {
-            o->idx_bss       = i;
-        }
-        else if(strcmp(name, ".rela.text") == 0)
-        {
-            o->idx_rela_text = i;
-        }
-        else if(strcmp(name, ".rela.data") == 0)
-        {
-            o->idx_rela_data = i;
-        }
-        else if(o->shdrs[i].sh_type == kELFSectionHeaderTypeSymtab)
-        {
-            o->idx_symtab  = i;
-        }
-    }
-
-    if(o->idx_symtab >= 0)
-    {
-        o->idx_strtab = (int32_t)o->shdrs[o->idx_symtab].sh_link;
-    }
-
-    return true;
-}
-
 static inline uint64_t obj_text_size(const linker_object_t *o)
 {
     return o->idx_text >= 0 ? o->shdrs[o->idx_text].sh_size : 0;
@@ -637,7 +538,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    linker_object_t *objs = calloc((size_t)file_count, sizeof(linker_object_t));
+    linker_object_t **objs = calloc((size_t)file_count, sizeof(linker_object_t*));
     if(!objs)
     {
         perror("malloc");
@@ -651,26 +552,27 @@ int main(int argc, char *argv[])
 
     for(int i = 0; i < file_count; i++)
     {
-        if(!obj_load(&objs[i], input_files[i]))
+        objs[i] = linker_object_alloc(input_files[i]);
+        if(objs[i] == NULL)
         {
             return 1;
         }
-        objs[i].base_text = cur_text;
-        cur_text += obj_text_size(&objs[i]);
+        objs[i]->base_text = cur_text;
+        cur_text += obj_text_size(objs[i]);
     }
 
     cur_data = cur_text;
     for(int i = 0; i < file_count; i++)
     {
-        objs[i].base_data = cur_data;
-        cur_data += obj_data_size(&objs[i]);
+        objs[i]->base_data = cur_data;
+        cur_data += obj_data_size(objs[i]);
     }
 
     cur_bss = cur_data;
     for(int i = 0; i < file_count; i++)
     {
-        objs[i].base_bss = cur_bss;
-        cur_bss += obj_bss_size(&objs[i]);
+        objs[i]->base_bss = cur_bss;
+        cur_bss += obj_bss_size(objs[i]);
     }
 
     uint64_t total_text = cur_text - BOOT_HEADER_SIZE;
@@ -684,7 +586,7 @@ int main(int argc, char *argv[])
 
     for(int i = 0; i < file_count; i++)
     {
-        if(!obj_register_symbols(inv, &objs[i]))
+        if(!obj_register_symbols(inv, objs[i]))
         {
             return 1;
         }
@@ -700,33 +602,33 @@ int main(int argc, char *argv[])
     /* copy .text sections */
     for(int i = 0; i < file_count; i++)
     {
-        if(objs[i].idx_text < 0)
+        if(objs[i]->idx_text < 0)
         {
             continue;
         }
-        ELF64_Shdr *sh = &objs[i].shdrs[objs[i].idx_text];
-        uint64_t dst_off = objs[i].base_text;
-        memcpy(image + dst_off, objs[i].file->content + sh->sh_offset, sh->sh_size);
+        ELF64_Shdr *sh = &objs[i]->shdrs[objs[i]->idx_text];
+        uint64_t dst_off = objs[i]->base_text;
+        memcpy(image + dst_off, objs[i]->file->content + sh->sh_offset, sh->sh_size);
     }
 
     /* copy .data sections */
     for(int i = 0; i < file_count; i++)
     {
-        if(objs[i].idx_data < 0)
+        if(objs[i]->idx_data < 0)
         {
             continue;
         }
-        ELF64_Shdr *sh = &objs[i].shdrs[objs[i].idx_data];
-        uint64_t dst_off = objs[i].base_data;
-        memcpy(image + dst_off, objs[i].file->content + sh->sh_offset, sh->sh_size);
+        ELF64_Shdr *sh = &objs[i]->shdrs[objs[i]->idx_data];
+        uint64_t dst_off = objs[i]->base_data;
+        memcpy(image + dst_off, objs[i]->file->content + sh->sh_offset, sh->sh_size);
     }
 
     /* .bss: already zeroed by calloc */
     for(int i = 0; i < file_count; i++)
     {
-        uint8_t *obj_text_ptr = image + objs[i].base_text;
-        uint8_t *obj_data_ptr = image + objs[i].base_data;
-        if(!obj_apply_relocs(inv, &objs[i], obj_text_ptr, obj_data_ptr))
+        uint8_t *obj_text_ptr = image + objs[i]->base_text;
+        uint8_t *obj_data_ptr = image + objs[i]->base_data;
+        if(!obj_apply_relocs(inv, objs[i], obj_text_ptr, obj_data_ptr))
         {
             return 1;
         }

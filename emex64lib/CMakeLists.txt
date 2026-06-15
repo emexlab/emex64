@@ -105,6 +105,7 @@ add_library(emex64 ${LIB_TYPE}
 
     src/linker/linker.c
     src/linker/sym.c
+    src/linker/obj.c
 
     # C Compiler
 

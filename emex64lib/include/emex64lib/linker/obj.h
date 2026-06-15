@@ -30,7 +30,7 @@
 #include <emex64lib/linker/type.h>
 #include <emex64lib/linker/header.h>
 
-typedef struct {
+typedef struct linker_object {
     emex_file_t *file;
 
     ELF64_Ehdr *ehdr;
@@ -49,5 +49,8 @@ typedef struct {
     uint64_t base_data;
     uint64_t base_bss;
 } linker_object_t;
+
+linker_object_t *linker_object_alloc(const char *object_path);
+void linker_object_dealloc(linker_object_t *obj);
 
 #endif /* EMEX64LD_OBJ_H */
