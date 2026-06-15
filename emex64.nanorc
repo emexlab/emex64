@@ -5,7 +5,7 @@ color red "\b(0x|0b)[0-9A-Fa-f]+\b"
 color red "\b[0-9]+\b"
 
 # INSTRUCTIONS
-color brightgreen "\b(hlt|nop|mov|swp|swpz|push|pop|ldb|ldw|ldd|ldq|stb|stw|std|stq|add|sub|mul|div|idiv|mod|inc|dec|not|and|or|xor|shr|shl|ror|rol|pdep|pext|bswapw|bswapd|bswapq|b|cmp|be|bne|blt|bgt|ble|bge|bz|bnz|bl|ret|iret|clr|blw|wret)\b"
+color brightgreen "\b(hlt|nop|mov|swp|swpz|push|pop|ldb|ldw|ldd|ldq|stb|stw|std|stq|add|sub|mul|div|idiv|mod|inc|dec|not|and|or|xor|shr|shl|ror|rol|pdep|pext|bswapw|bswapd|bswapq|b|cmp|be|bne|blt|bgt|ble|bge|bz|bnz|bl|ret|iret|clr|blw|wret|cmov|cmovb)\b"
 
 # LEGACY INSTRUCTIONS
 color brightgreen "\b(jmp|je|jne|jlt|jgt|jle|jge|jz|jnz)\b"
@@ -18,7 +18,7 @@ color magenta "\.(data|bss)\b"
 color brightmagenta "%[A-Za-z_][A-Za-z0-9_]*%"
 
 # REGISTERS
-color cyan "\b(r([0-9]|1[0-7])|cr([0-9]|[12][0-9]|3[01])|rr|pc|sp|fp|cf|cr(el|ksp|exc|vec|ptb))\b"
+color cyan "\b(r([0-9]|1[0-9]|2[0-5])|rr|pc|sp|fp|cf|cr(el|ksp|exc|vec|ptb))\b"
 
 # CONSTANTS
 color brightyellow "\b[A-Z][A-Z0-9_]+\b"
