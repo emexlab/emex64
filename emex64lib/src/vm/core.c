@@ -48,7 +48,7 @@
 #include <CoreFoundation/CFRunLoop.h>
 #endif /* __APPLE__ */
 
-static emex64_opfunc_entry_t kOpfuncTable[] = {
+const emex64_opfunc_entry_t kEmex64OpfuncTable[] = {
     /* core operations */
     [kEmex64OpcodeHLT] = { .func = emex64_op_hlt, .maxargs = 0 },
     [kEmex64OpcodeNOP] = { .func = emex64_op_nop, .maxargs = 0 },
@@ -174,7 +174,7 @@ static inline void emex64_core_execute_instruction_at_pc(emex64_core_t *core)
     }
 
     core->op.opcode = opcode;
-    core->op.op = kOpfuncTable[opcode];
+    core->op.op = kEmex64OpfuncTable[opcode];
 
     /*
      * parameter decoder, this decoding loop decodes

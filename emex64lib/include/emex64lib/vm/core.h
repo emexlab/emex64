@@ -401,6 +401,8 @@ typedef struct emex64_opfunc_entry {
     uint8_t maxargs;
 } emex64_opfunc_entry_t;
 
+extern const emex64_opfunc_entry_t kEmex64OpfuncTable[];
+
 typedef struct emex64_core {
 
     /* the pthread this core is running on on the host */
