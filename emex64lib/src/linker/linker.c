@@ -22,19 +22,34 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64LD_LINKER_H
-#define EMEX64LD_LINKER_H
+#include <stdlib.h>
 
-#include <emex64lib/linker/type.h>
-#include <emex64lib/linker/header.h>
-#include <emex64lib/linker/sym.h>
-#include <emex64lib/linker/obj.h>
+#include <emex64lib/linker/linker.h>
 
-typedef struct {
-    linker_global_symbol_t *sym;
-} linker_invocation_t;
+linker_invocation_t *linker_invocation_alloc(void)
+{
+    linker_invocation_t *inv = malloc(sizeof(linker_invocation_t));
+    if(inv == NULL)
+    {
+        return NULL;
+    }
 
-linker_invocation_t *linker_invocation_alloc(void);
-void linker_invocation_dealloc(linker_invocation_t *inv);
+    inv->sym = NULL;
 
-#endif /* EMEX64LD_LINKER_H */
+    return inv;
+}
+
+void linker_invocation_dealloc(linker_invocation_t *inv)
+{
+    linker_global_symbol_t *sym = inv->sym;
+    while(sym != NULL)
+    {
+        linker_global_symbol_t *next = sym->next;
+        free(sym->name);
+        free(sym->object_path);
+        free(sym);
+        sym = next;
+    }
+
+    free(inv);
+}

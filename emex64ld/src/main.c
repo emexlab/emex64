@@ -39,55 +39,53 @@
 
 #include <emex64lib/linker/linker.h>
 
-#define SYMTAB_HASH 4096
+linker_global_symbol_t *glob = NULL;
 
-static GlobSym *sym_hash[SYMTAB_HASH];
-
-static uint32_t sym_hash_fn(const char *s)
+static linker_global_symbol_t *sym_lookup(const char *name)
 {
-    uint32_t h = 5381;
-    while(*s)
+    linker_global_symbol_t *sym = glob;
+    while(sym != NULL)
     {
-        h = ((h << 5) + h) ^ (uint8_t)*s++;
-    }
-    return h % SYMTAB_HASH;
-}
-
-static GlobSym *sym_lookup(const char *name)
-{
-    GlobSym *g = sym_hash[sym_hash_fn(name)];
-    while(g)
-    {
-        if(strcmp(g->name, name) == 0)
+        if(strcmp(sym->name, name) == 0)
         {
-            return g;
+            return sym;
         }
-        g = g->next;
+        sym = sym->next;
     }
     return NULL;
 }
 
-static GlobSym *sym_define(const char *name, const char *object_path, uint64_t addr)
+static linker_global_symbol_t *sym_define(const char *name,
+                                          const char *object_path,
+                                          uint64_t addr)
 {
-    GlobSym *g = sym_lookup(name);
-    if(!g)
+    linker_global_symbol_t *sym = sym_lookup(name);
+    if(sym == NULL)
     {
-        g = calloc(1, sizeof(GlobSym));
-        g->name = strdup(name);
-        g->object_path = object_path;
-        uint32_t h = sym_hash_fn(name);
-        g->next = sym_hash[h];
-        sym_hash[h] = g;
+        sym = linker_global_symbol_alloc(NULL, name, object_path, addr, true);
     }
-    if(g->defined && g->addr != addr)
+    if(sym->defined && sym->addr != addr)
     {
         diag_error(NULL, "duplicate symbol '%s' in \"%s\"\n", name, object_path);
-        diag_note(NULL, "symbol '%s' also exists in \"%s\"\n", name, g->object_path);
+        diag_note(NULL, "symbol '%s' also exists in \"%s\"\n", name, sym->object_path);
         return NULL;
     }
-    g->addr = addr;
-    g->defined = true;
-    return g;
+    sym->addr = addr;
+    sym->defined = true;
+
+    if(glob == NULL)
+    {
+        glob = sym;
+    }
+    else
+    {
+        /* stiching those symbols together >< like fabric of clothes */
+        glob->prev = sym;
+        sym->next = glob;
+        glob = sym;
+    }
+
+    return sym;
 }
 
 static uint8_t *read_file(const char *path, size_t *out_size)
@@ -343,10 +341,10 @@ static uint64_t sym_resolve(const Obj *o, uint32_t sym_idx)
     if(strtab)
     {
         const char *name = strtab + sym->st_name;
-        GlobSym *g = sym_lookup(name);
-        if(g && g->defined)
+        linker_global_symbol_t *gsym = sym_lookup(name);
+        if(gsym && gsym->defined)
         {
-            return g->addr;
+            return gsym->addr;
         }
 
         if(sym->st_shndx != kELFSectionHeaderNumberUndefined)
@@ -801,14 +799,14 @@ int main(int argc, char *argv[])
         }
     }
 
-    GlobSym *entry_sym = sym_lookup(entry_name);
-    if(!entry_sym || !entry_sym->defined)
+    linker_global_symbol_t *gsym = sym_lookup(entry_name);
+    if(!gsym || !gsym->defined)
     {
         diag_error(NULL, "entry symbol '%s' not found\n", entry_name);
         return 1;
     }
 
-    uint64_t entry_addr = entry_sym->addr;
+    uint64_t entry_addr = gsym->addr;
     uint8_t boot_hdr[10];
     emit_boot_header(boot_hdr, entry_addr);
     memcpy(image, boot_hdr, 10);

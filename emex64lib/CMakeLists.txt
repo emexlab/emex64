@@ -101,6 +101,11 @@ add_library(emex64 ${LIB_TYPE}
     src/asm/macro.c
     src/asm/elf.c
 
+    # Linker
+
+    src/linker/linker.c
+    src/linker/sym.c
+
     # C Compiler
 
     src/c/ASTUnit.c
