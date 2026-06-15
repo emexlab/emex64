@@ -603,6 +603,7 @@ int main(int argc, char *argv[])
     {
         if(obj->idx_text < 0)
         {
+            obj = obj->next;
             continue;
         }
         ELF64_Shdr *sh = &obj->shdrs[obj->idx_text];
@@ -617,6 +618,7 @@ int main(int argc, char *argv[])
     {
         if(obj->idx_data < 0)
         {
+            obj = obj->next;
             continue;
         }
         ELF64_Shdr *sh = &obj->shdrs[obj->idx_data];
