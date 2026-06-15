@@ -146,6 +146,7 @@ void emex64_op_cmov(emex64_core_t *core)
     if(core->cr_state.crel.level < kEmex64ElevationLevelKernel)
     {
         core->cr_state.crexc.exception = kEmex64ExceptionPermission;
+        return;
     }
 
     uint8_t cr_select = *(core->op.param[0]);
@@ -185,6 +186,7 @@ void emex64_op_cmovb(emex64_core_t *core)
             if(core->cr_state.crel.level < kEmex64ElevationLevelKernel)
             {
                 core->cr_state.crexc.exception = kEmex64ExceptionPermission;
+                return;
             }
 
             *cr_recv = core->cr_state.crksp.address;
@@ -196,6 +198,7 @@ void emex64_op_cmovb(emex64_core_t *core)
             if(core->cr_state.crel.level < kEmex64ElevationLevelKernel)
             {
                 core->cr_state.crexc.exception = kEmex64ExceptionPermission;
+                return;
             }
 
             *cr_recv = 0;
