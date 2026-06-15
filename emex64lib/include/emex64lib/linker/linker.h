@@ -32,6 +32,7 @@
 
 typedef struct {
     linker_global_symbol_t *sym;
+    linker_object_t *obj;
 } linker_invocation_t;
 
 linker_invocation_t *linker_invocation_alloc(void);
@@ -39,5 +40,7 @@ void linker_invocation_dealloc(linker_invocation_t *inv);
 
 bool linker_append_global_symbol_definition(linker_invocation_t *inv, const char *name, const char *object_path, uint64_t addr);
 linker_global_symbol_t *linker_lookup_global_symbol(linker_invocation_t *inv, const char *name);
+
+bool linker_load_object(linker_invocation_t *inv, const char *object_path);
 
 #endif /* EMEX64LD_LINKER_H */

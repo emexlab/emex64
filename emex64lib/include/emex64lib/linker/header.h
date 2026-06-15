@@ -57,4 +57,6 @@ typedef struct {
     uint64_t sh_entsize;
 } __attribute__((packed)) ELF64_Shdr;
 
+#define BOOT_HEADER_SIZE    10
+
 #endif /* EMEX64LD_HEADER_H */

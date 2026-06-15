@@ -538,41 +538,37 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    linker_object_t **objs = calloc((size_t)file_count, sizeof(linker_object_t*));
-    if(!objs)
-    {
-        perror("malloc");
-        return 1;
-    }
-
-    const uint64_t BOOT_HEADER_SIZE = 10;
     uint64_t cur_text = BOOT_HEADER_SIZE;
     uint64_t cur_data = 0;
     uint64_t cur_bss = 0;
 
     for(int i = 0; i < file_count; i++)
     {
-        objs[i] = linker_object_alloc(input_files[i]);
-        if(objs[i] == NULL)
+        if(!linker_load_object(inv, input_files[i]))
         {
             return 1;
         }
-        objs[i]->base_text = cur_text;
-        cur_text += obj_text_size(objs[i]);
+
+        inv->obj->base_text = cur_text;
+        cur_text += obj_text_size(inv->obj);
     }
 
     cur_data = cur_text;
-    for(int i = 0; i < file_count; i++)
+    linker_object_t *obj = inv->obj;
+    while(obj != NULL)
     {
-        objs[i]->base_data = cur_data;
-        cur_data += obj_data_size(objs[i]);
+        obj->base_data = cur_data;
+        cur_data += obj_data_size(obj);
+        obj = obj->next;
     }
 
     cur_bss = cur_data;
-    for(int i = 0; i < file_count; i++)
+    obj = inv->obj;
+    while(obj != NULL)
     {
-        objs[i]->base_bss = cur_bss;
-        cur_bss += obj_bss_size(objs[i]);
+        obj->base_bss = cur_bss;
+        cur_bss += obj_bss_size(obj);
+        obj = obj->next;
     }
 
     uint64_t total_text = cur_text - BOOT_HEADER_SIZE;
@@ -584,12 +580,14 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    for(int i = 0; i < file_count; i++)
+    obj = inv->obj;
+    while(obj != NULL)
     {
-        if(!obj_register_symbols(inv, objs[i]))
+        if(!obj_register_symbols(inv, obj))
         {
             return 1;
         }
+        obj = obj->next;
     }
 
     uint8_t *image = calloc(image_size, 1);
@@ -600,38 +598,44 @@ int main(int argc, char *argv[])
     }
 
     /* copy .text sections */
-    for(int i = 0; i < file_count; i++)
+    obj = inv->obj;
+    while(obj != NULL)
     {
-        if(objs[i]->idx_text < 0)
+        if(obj->idx_text < 0)
         {
             continue;
         }
-        ELF64_Shdr *sh = &objs[i]->shdrs[objs[i]->idx_text];
-        uint64_t dst_off = objs[i]->base_text;
-        memcpy(image + dst_off, objs[i]->file->content + sh->sh_offset, sh->sh_size);
+        ELF64_Shdr *sh = &obj->shdrs[obj->idx_text];
+        uint64_t dst_off = obj->base_text;
+        memcpy(image + dst_off, obj->file->content + sh->sh_offset, sh->sh_size);
+        obj = obj->next;
     }
 
     /* copy .data sections */
-    for(int i = 0; i < file_count; i++)
+    obj = inv->obj;
+    while(obj != NULL)
     {
-        if(objs[i]->idx_data < 0)
+        if(obj->idx_data < 0)
         {
             continue;
         }
-        ELF64_Shdr *sh = &objs[i]->shdrs[objs[i]->idx_data];
-        uint64_t dst_off = objs[i]->base_data;
-        memcpy(image + dst_off, objs[i]->file->content + sh->sh_offset, sh->sh_size);
+        ELF64_Shdr *sh = &obj->shdrs[obj->idx_data];
+        uint64_t dst_off = obj->base_data;
+        memcpy(image + dst_off, obj->file->content + sh->sh_offset, sh->sh_size);
+        obj = obj->next;
     }
 
     /* .bss: already zeroed by calloc */
-    for(int i = 0; i < file_count; i++)
+    obj = inv->obj;
+    while(obj != NULL)
     {
-        uint8_t *obj_text_ptr = image + objs[i]->base_text;
-        uint8_t *obj_data_ptr = image + objs[i]->base_data;
-        if(!obj_apply_relocs(inv, objs[i], obj_text_ptr, obj_data_ptr))
+        uint8_t *obj_text_ptr = image + obj->base_text;
+        uint8_t *obj_data_ptr = image + obj->base_data;
+        if(!obj_apply_relocs(inv, obj, obj_text_ptr, obj_data_ptr))
         {
             return 1;
         }
+        obj = obj->next;
     }
 
     linker_global_symbol_t *gsym = linker_lookup_global_symbol(inv, entry_name);
@@ -680,7 +684,6 @@ int main(int argc, char *argv[])
     }
 
     free(image);
-    free(objs);
     free(input_files);
     linker_invocation_dealloc(inv);
     return 0;

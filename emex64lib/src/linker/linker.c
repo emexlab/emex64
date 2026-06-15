@@ -52,6 +52,14 @@ void linker_invocation_dealloc(linker_invocation_t *inv)
         sym = next;
     }
 
+    linker_object_t *obj = inv->obj;
+    while(obj != NULL)
+    {
+        linker_object_t *next = obj->next;
+        linker_object_dealloc(obj);
+        obj = next;
+    }
+
     free(inv);
 }
 
@@ -98,4 +106,26 @@ linker_global_symbol_t *linker_lookup_global_symbol(linker_invocation_t *inv,
         sym = sym->next;
     }
     return NULL;
+}
+
+bool linker_load_object(linker_invocation_t *inv,
+                        const char *object_path)
+{
+    linker_object_t *obj = linker_object_alloc(object_path);
+    if(obj == NULL)
+    {
+        return false;
+    }
+
+    if(inv->obj == NULL)
+    {
+        inv->obj = obj;
+    }
+    else
+    {
+        obj->next = inv->obj;
+        inv->obj = obj;
+    }
+
+    return true;
 }

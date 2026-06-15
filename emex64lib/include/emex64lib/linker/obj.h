@@ -48,6 +48,8 @@ typedef struct linker_object {
     uint64_t base_text;
     uint64_t base_data;
     uint64_t base_bss;
+
+    struct linker_object *next;
 } linker_object_t;
 
 linker_object_t *linker_object_alloc(const char *object_path);
