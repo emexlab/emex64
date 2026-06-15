@@ -149,12 +149,12 @@ bool assembler_emit_instruction(assembler_line_t *al)
     }
     if((al->token_cnt - 1) > opce->maxargs)
     {
-        diag_error(al->token[al->token_cnt - 1], "too many operands for opcode \"%s\", expected %d operands, but got %d operands\n", opce->name, opce->maxargs, al->token_cnt - 1);
+        diag_error(al->token[al->token_cnt - 1], "too many operands for opcode \"%s\", expected %d operands, but got %d operands\n", al->token[0]->str, opce->maxargs, al->token_cnt - 1);
         return false;
     }
     else if((al->token_cnt - 1) < opce->minargs)
     {
-        diag_error(al->token[al->token_cnt - 1], "too few operands for opcode \"%s\", expected %d operands, but got %d operands\n", opce->name, opce->minargs, al->token_cnt - 1);
+        diag_error(al->token[al->token_cnt - 1], "too few operands for opcode \"%s\", expected %d operands, but got %d operands\n", al->token[0]->str, opce->minargs, al->token_cnt - 1);
         return false;
     }
 

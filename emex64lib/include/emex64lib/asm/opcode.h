@@ -41,7 +41,6 @@ typedef struct opcode_entry opcode_entry_t;
 typedef bool (*instruction_emit_handler)(const opcode_entry_t *opce, assembler_line_t *cl);
 
 typedef struct opcode_entry {
-    const char *name;                   /* name to match with of opcode */
     uint8_t opcode;                     /* opcode in machine code */
     uint8_t minargs;                    /* minimum arguments count */
     uint8_t maxargs;                    /* maximum arguments count */
