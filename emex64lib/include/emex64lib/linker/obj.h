@@ -30,6 +30,10 @@
 #include <emex64lib/linker/type.h>
 #include <emex64lib/linker/header.h>
 
+#define linker_object_text_size(obj) ((obj)->idx_text >= 0 ? (obj)->shdrs[(obj)->idx_text].sh_size : 0)
+#define linker_object_data_size(obj) ((obj)->idx_data >= 0 ? (obj)->shdrs[(obj)->idx_data].sh_size : 0)
+#define linker_object_bss_size(obj) ((obj)->idx_bss >= 0 ? (obj)->shdrs[(obj)->idx_bss].sh_size : 0)
+
 typedef struct linker_object {
     emex_file_t *file;
 

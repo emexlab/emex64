@@ -41,21 +41,6 @@
 
 #include <emex64lib/linker/linker.h>
 
-static inline uint64_t obj_text_size(const linker_object_t *o)
-{
-    return o->idx_text >= 0 ? o->shdrs[o->idx_text].sh_size : 0;
-}
-
-static inline uint64_t obj_data_size(const linker_object_t *o)
-{
-    return o->idx_data >= 0 ? o->shdrs[o->idx_data].sh_size : 0;
-}
-
-static inline uint64_t obj_bss_size(const linker_object_t *o)
-{
-    return o->idx_bss >= 0 ? o->shdrs[o->idx_bss].sh_size : 0;
-}
-
 static bool obj_register_symbols(linker_invocation_t *inv,
                                  linker_object_t *o)
 {
@@ -550,7 +535,7 @@ int main(int argc, char *argv[])
         }
 
         inv->obj->base_text = cur_text;
-        cur_text += obj_text_size(inv->obj);
+        cur_text += linker_object_text_size(inv->obj);
     }
 
     cur_data = cur_text;
@@ -558,7 +543,7 @@ int main(int argc, char *argv[])
     while(obj != NULL)
     {
         obj->base_data = cur_data;
-        cur_data += obj_data_size(obj);
+        cur_data += linker_object_data_size(obj);
         obj = obj->next;
     }
 
@@ -567,7 +552,7 @@ int main(int argc, char *argv[])
     while(obj != NULL)
     {
         obj->base_bss = cur_bss;
-        cur_bss += obj_bss_size(obj);
+        cur_bss += linker_object_bss_size(obj);
         obj = obj->next;
     }
 
