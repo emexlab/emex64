@@ -121,7 +121,7 @@ target_compile_features(emex64 PUBLIC c_std_23)
 
 if (MSVC)
     # Fuck MSVC nobody likes you
-    target_compile_options(emex64 PRIVATE /W4)
+    message(FATAL_ERROR "MSVC is not supported. Switch to Linux moron, microslop sheep!")
 else()
 
     # Setting up compiler flags
