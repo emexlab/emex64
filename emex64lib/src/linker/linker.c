@@ -38,6 +38,7 @@ linker_invocation_t *linker_invocation_alloc(void)
     }
 
     inv->sym = NULL;
+    inv->obj = NULL;
 
     return inv;
 }
