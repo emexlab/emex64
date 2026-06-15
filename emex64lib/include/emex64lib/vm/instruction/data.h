@@ -41,4 +41,9 @@ void emex64_op_stw(emex64_core_t *core);
 void emex64_op_std(emex64_core_t *core);
 void emex64_op_stq(emex64_core_t *core);
 
+void emex64_op_clr(emex64_core_t *core);
+
+void emex64_op_cmov(emex64_core_t *core);
+void emex64_op_cmovb(emex64_core_t *core);
+
 #endif /* EMEX64VM_INSTRUCTION_DATA_H */

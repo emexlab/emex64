@@ -141,7 +141,7 @@ bool emex64_serve_interrupt_if_needed(emex64_core_t *core)
 
     /* jump to handler */
     uint64_t oldsp = core->rl[kEmex64RegisterSP];
-    uint64_t oldel = core->rl[kEmex64RegisterCR0];
+    uint64_t oldel = core->cr_state.crel.level;
 
     /*
      * must be kernel, because the IC is internal
@@ -156,8 +156,8 @@ bool emex64_serve_interrupt_if_needed(emex64_core_t *core)
      *       distinct between read vs write access.
      *       my beautiful decoder is doomed.
      */
-    core->rl[kEmex64RegisterCR0] = kEmex64ElevationLevelKernel;
-    core->rl[kEmex64RegisterSP] = core->rl[kEmex64RegisterCR1];
+    core->cr_state.crel.level = kEmex64ElevationLevelKernel;
+    core->rl[kEmex64RegisterSP] = core->cr_state.crksp.address;
 
     /* creating interrupt stack frame */
     emex64_push_il(core, oldel);
@@ -182,6 +182,16 @@ bool emex64_serve_interrupt_if_needed(emex64_core_t *core)
     emex64_push_il(core, core->rl[kEmex64RegisterR13]);
     emex64_push_il(core, core->rl[kEmex64RegisterR14]);
     emex64_push_il(core, core->rl[kEmex64RegisterR15]);
+    emex64_push_il(core, core->rl[kEmex64RegisterR16]);
+    emex64_push_il(core, core->rl[kEmex64RegisterR17]);
+    emex64_push_il(core, core->rl[kEmex64RegisterR18]);
+    emex64_push_il(core, core->rl[kEmex64RegisterR19]);
+    emex64_push_il(core, core->rl[kEmex64RegisterR20]);
+    emex64_push_il(core, core->rl[kEmex64RegisterR21]);
+    emex64_push_il(core, core->rl[kEmex64RegisterR22]);
+    emex64_push_il(core, core->rl[kEmex64RegisterR23]);
+    emex64_push_il(core, core->rl[kEmex64RegisterR24]);
+    emex64_push_il(core, core->rl[kEmex64RegisterR25]);
 
     /* storing it as frame pointer  */
     core->rl[kEmex64RegisterFP] = core->rl[kEmex64RegisterSP];

@@ -25,11 +25,11 @@
 #ifndef EMEX64VM_INSTRUCTION_H
 #define EMEX64VM_INSTRUCTION_H
 
-#define emex64_instr_termcond(case)                                               \
-    if(case)                                                                    \
-    {                                                                           \
-        core->rl[kEmex64RegisterCR2] = kEmex64ExceptionBadAccess;               \
-        return;                                                                 \
+#define emex64_instr_termcond(case)                                 \
+    if(case)                                                        \
+    {                                                               \
+        core->cr_state.crexc.exception = kEmex64ExceptionBadAccess; \
+        return;                                                     \
     }    
 
 #endif /* EMEX64VM_INSTRUCTION_H */

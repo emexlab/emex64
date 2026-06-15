@@ -128,3 +128,79 @@ void emex64_op_stq(emex64_core_t *core)
 
     emex64_memory_action(core, *(core->op.param[0]), sizeof(uint64_t), core->op.param[1], kEmex64MemoryActionWrite);
 }
+
+void emex64_op_clr(emex64_core_t *core)
+{
+    emex64_instr_termcond(core->op.param_cnt < 1);
+
+    for(uint8_t i = 0; i < core->op.param_cnt; i++)
+    {
+        *core->op.param[i] = 0;
+    }
+}
+
+void emex64_op_cmov(emex64_core_t *core)
+{
+    emex64_instr_termcond(core->op.param_cnt != 2);
+
+    if(core->cr_state.crel.level < kEmex64ElevationLevelKernel)
+    {
+        core->cr_state.crexc.exception = kEmex64ExceptionPermission;
+    }
+
+    uint8_t cr_select = *(core->op.param[0]);
+    uint64_t cr_value = *(core->op.param[1]);
+
+    switch(cr_select)
+    {
+        case kEmex64ControlRegisterCR0: /* elevation level */
+            core->cr_state.crel.level = cr_value;
+            break;
+        case kEmex64ControlRegisterCR1: /* kernel stack pointer */
+            core->cr_state.crksp.address = cr_value;
+            break;
+        case kEmex64ControlRegisterCR2: /* exception  */
+            core->cr_state.crexc.exception = cr_value;
+            break;
+        case kEmex64ControlRegisterCR4: /* page table */
+            core->cr_state.crptb.enabled = (cr_value & EMEX64_MEMORY_MMU_MASK_FLAGS) & kEmex64MMUPTPresent;
+            core->cr_state.crptb.pgd_addr = ((cr_value & EMEX64_MEMORY_MMU_MASK_PFN) >> 8) << 13;
+            break;
+    }
+}
+
+void emex64_op_cmovb(emex64_core_t *core)
+{
+    emex64_instr_termcond(core->op.param_cnt != 2);
+
+    uint64_t *cr_recv = core->op.param[0];
+    uint8_t cr_select = *(core->op.param[1]);
+
+    switch(cr_select)
+    {
+        case kEmex64ControlRegisterCR0: /* elevation level */
+            *cr_recv = core->cr_state.crel.level;
+            break;
+        case kEmex64ControlRegisterCR1: /* kernel stack pointer */
+            if(core->cr_state.crel.level < kEmex64ElevationLevelKernel)
+            {
+                core->cr_state.crexc.exception = kEmex64ExceptionPermission;
+            }
+
+            *cr_recv = core->cr_state.crksp.address;
+            break;
+        case kEmex64ControlRegisterCR2: /* exception  */
+            *cr_recv = core->cr_state.crexc.exception;
+            break;
+        case kEmex64ControlRegisterCR4: /* page table */
+            if(core->cr_state.crel.level < kEmex64ElevationLevelKernel)
+            {
+                core->cr_state.crexc.exception = kEmex64ExceptionPermission;
+            }
+
+            *cr_recv = 0;
+            *cr_recv |= ((core->cr_state.crptb.pgd_addr >> 13) << 8) & EMEX64_MEMORY_MMU_MASK_PFN;
+            *cr_recv |= -(uint64_t)core->cr_state.crptb.enabled & kEmex64MMUPTPresent;
+            break;
+    }
+}

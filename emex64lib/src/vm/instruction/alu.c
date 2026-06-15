@@ -29,26 +29,26 @@
 #include <immintrin.h>
 #endif /* __x86_64__ */
 
-#define DEFINE_EMEX64_ARITHMETIC_OP(act)                                                                                                  \
+#define DEFINE_EMEX64_ARITHMETIC_OP(act)                                                                                                \
     *(core->op.param[0]) = *(core->op.param[core->op.param_cnt - 2]) act *(core->op.param[core->op.param_cnt - 1]);                     \
 
-#define DEFINE_EMEX64_SIGNED_ARITHMETIC_OP(act)                                                                                           \
+#define DEFINE_EMEX64_SIGNED_ARITHMETIC_OP(act)                                                                                         \
     *(core->op.param[0]) = (int64_t)*(core->op.param[core->op.param_cnt - 2]) act (int64_t)*(core->op.param[core->op.param_cnt - 1]);   \
 
-#define DEFINE_EMEX64_ARITHMETIC_OP_ZERO_BAD(act)                                                                                         \
+#define DEFINE_EMEX64_ARITHMETIC_OP_ZERO_BAD(act)                                                                                       \
     uint64_t *operand[2] = { core->op.param[core->op.param_cnt - 2], core->op.param[core->op.param_cnt - 1] };                          \
     if(*operand[1] == 0)                                                                                                                \
     {                                                                                                                                   \
-        core->rl[kEmex64RegisterCR2] = kEmex64ExceptionBadArithmetic;                                                                   \
+        core->cr_state.crexc.exception = kEmex64ExceptionBadArithmetic;                                                                 \
         return;                                                                                                                         \
     }                                                                                                                                   \
     *(core->op.param[0]) = *operand[0] act *operand[1];
 
-#define DEFINE_EMEX64_SIGNED_ARITHMETIC_OP_ZERO_BAD(act)                                                                                  \
+#define DEFINE_EMEX64_SIGNED_ARITHMETIC_OP_ZERO_BAD(act)                                                                                \
     uint64_t *operand[2] = { core->op.param[core->op.param_cnt - 2], core->op.param[core->op.param_cnt - 1] };                          \
     if(*operand[1] == 0)                                                                                                                \
     {                                                                                                                                   \
-        core->rl[kEmex64RegisterCR2] = kEmex64ExceptionBadArithmetic;                                                                   \
+        core->cr_state.crexc.exception = kEmex64ExceptionBadArithmetic;                                                                 \
         return;                                                                                                                         \
     }                                                                                                                                   \
     *(core->op.param[0]) = (int64_t)*operand[0] act (int64_t)*operand[1];
@@ -292,15 +292,5 @@ void emex64_op_dec(emex64_core_t *core)
     for(uint8_t i = 0; i < core->op.param_cnt; i++)
     {
         (*core->op.param[i])--;
-    }
-}
-
-void emex64_op_clr(emex64_core_t *core)
-{
-    emex64_instr_termcond(core->op.param_cnt < 1);
-
-    for(uint8_t i = 0; i < core->op.param_cnt; i++)
-    {
-        *core->op.param[i] = 0;
     }
 }

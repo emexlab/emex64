@@ -55,7 +55,7 @@ void emex64_mc_write(emex64_core_t *core,
     {
         if(core->machine->memory->ktrr_locked)
         {
-            core->rl[kEmex64RegisterCR2] = kEmex64ExceptionKTRRViolation;
+            core->cr_state.crexc.exception = kEmex64ExceptionKTRRViolation;
             return;
         }
 
@@ -65,7 +65,7 @@ void emex64_mc_write(emex64_core_t *core,
     {
         if(core->machine->memory->ktrr_locked)
         {
-            core->rl[kEmex64RegisterCR2] = kEmex64ExceptionKTRRViolation;
+            core->cr_state.crexc.exception = kEmex64ExceptionKTRRViolation;
             return;
         }
 

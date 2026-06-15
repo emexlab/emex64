@@ -31,7 +31,8 @@ _interrupt_init:
     ; allocate kernel stack for the interrupt handlers
     blw _pmm_alloc
     add rr, 0x1FFE
-    mov cr1, rr
+    cmov REG_CR1, rr
+    ;mov cr1, rr
 
     ; setting up vector table onto interrupt controller
     stq INTC_REG_VECTOR, ivec

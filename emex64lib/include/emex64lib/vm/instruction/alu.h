@@ -52,6 +52,4 @@ void emex64_op_bswapq(emex64_core_t *core);
 void emex64_op_inc(emex64_core_t *core);
 void emex64_op_dec(emex64_core_t *core);
 
-void emex64_op_clr(emex64_core_t *core);
-
 #endif /* EMEX64VM_INSTRUCTION_ALU_H */

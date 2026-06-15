@@ -105,7 +105,12 @@ _fw_start:
 
     blw _ac97_init, FW_TONE_RATE
 
+%if% FW_TEST_EXCEPTION
+    cmov REG_CR0, 0x0
+    cmov REG_CR0, 0x2
+    mov r20, 5
     div r0, 0, 0
+%endif%
     
 .hang:
     hlt

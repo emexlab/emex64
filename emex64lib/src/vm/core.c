@@ -110,8 +110,10 @@ static emex64_opfunc_entry_t kOpfuncTable[] = {
     [kEmex64OpcodeBL] = { .func = emex64_op_bl, .maxargs = 1 },
     [kEmex64OpcodeRET] = { .func = emex64_op_ret, .maxargs = 0 },
 
-    /* arithmetic operations v2 */
+    /* data operations v2 */
     [kEmex64OpcodeCLR] = { .func = emex64_op_clr, .maxargs = EMEX64_MAX_ARGS },
+    [kEmex64OpcodeCMOV] = { .func = emex64_op_cmov, .maxargs = 2 },
+    [kEmex64OpcodeCMOVB] = { .func = emex64_op_cmovb, .maxargs = 2 },
 };
 
 static const uint8_t kImmBits[] = {
@@ -138,7 +140,7 @@ emex64_core_t *emex64_core_alloc()
      * to write to control registers, ultimatively
      * rendering the entire state functionless.
      */
-    core->rl[kEmex64RegisterCR0] = kEmex64ElevationLevelSecureMonitor;
+    core->cr_state.crel.level = kEmex64ElevationLevelSecureMonitor;
 
     return core;
 }
@@ -167,7 +169,7 @@ static inline void emex64_core_execute_instruction_at_pc(emex64_core_t *core)
     enum kEmex64Opcode opcode = (uint8_t)bb_read(&bb, 8);
     if(unlikely(opcode > kEmex64OpcodeMAX))
     {
-        core->rl[kEmex64RegisterCR2] = kEmex64ExceptionBadInstruction;
+        core->cr_state.crexc.exception = kEmex64ExceptionBadInstruction;
         return;
     }
 
@@ -191,26 +193,7 @@ static inline void emex64_core_execute_instruction_at_pc(emex64_core_t *core)
                 goto escape_from_la;
             case kEmex64ParameterCodingReg:
             {
-                uint8_t rcnt = (uint8_t)bb_read(&bb, 5);
-
-                /*
-                 * userspace shouldn't be able to access control
-                 * registers, a attacker could defeat ASLR in the
-                 * future by reading CRPTB which is the page table
-                 * address.
-                 * 
-                 * another reason is that control registers define
-                 * execution behaviour. if a userspace program can
-                 * write to CREL or CRKSP, they can cause panics
-                 * or spy on the user.
-                 */
-                if(unlikely(rcnt > kEmex64RegisterRR && core->rl[kEmex64RegisterCR0] < kEmex64ElevationLevelKernel))
-                {
-                    core->rl[kEmex64RegisterCR2] = kEmex64ExceptionPermission;
-                    return;
-                }
-
-                core->op.param[i] = &(core->rl[rcnt]);
+                core->op.param[i] = &(core->rl[(uint8_t)bb_read(&bb, 5)]);
                 break;
             }
             case kEmex64ParameterCodingAddr64:
@@ -266,7 +249,7 @@ static void *emex64_core_execute_thread(void *arg)
         if(!core->in_interrupt)
         {
             /* handling exception if applicable */
-            if(unlikely(core->rl[kEmex64RegisterCR2] != kEmex64ExceptionNone))
+            if(unlikely(core->cr_state.crexc.exception != kEmex64ExceptionNone))
             {
                 core->halted = true;
                 emex64_raise_interrupt(core->machine, EMEX64_IRQ_EXCEPTION);

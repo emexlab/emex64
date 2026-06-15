@@ -90,8 +90,10 @@ const opcode_entry_t opcode_table[] = {
     { .name = "bl",     .opcode = kEmex64OpcodeBL,          .minargs = 1, .maxargs = 1,                 .argmask = 0b0000000000000000 },
     { .name = "ret",    .opcode = kEmex64OpcodeRET,         .minargs = 0, .maxargs = 0,                 .argmask = 0b0000000000000000 },
 
-    /* alu operations v2 */
+    /* data operations v2 */
     { .name = "clr",    .opcode = kEmex64OpcodeCLR,         .minargs = 1, .maxargs = EMEX64_MAX_ARGS,   .argmask = 0b1111111111111111 },
+    { .name = "cmov",   .opcode = kEmex64OpcodeCMOV,        .minargs = 2, .maxargs = 2,                 .argmask = 0b1000000000000000 },
+    { .name = "cmovb",  .opcode = kEmex64OpcodeCMOVB,       .minargs = 2, .maxargs = 2,                 .argmask = 0b1000000000000000 },
 };
 
 const opcode_entry_t *opcode_from_string(const char *name)

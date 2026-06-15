@@ -92,7 +92,7 @@ static inline bool emex64_mmu_access_pxd(emex64_core_t *core,
          * check too, otherwise the user program will
          * be able to access kernel memory.
          */
-        if(core->rl[kEmex64RegisterCR0] < kEmex64ElevationLevelKernel)
+        if(core->cr_state.crel.level < kEmex64ElevationLevelKernel)
         {
             checkflg |= kEmex64MMUPTUser;
         }
@@ -140,7 +140,7 @@ static inline bool emex64_mmu_translate(emex64_core_t *core,
      * getting page global directory from physical frame number
      * stored in the 5th level (yk the control register x3).
      */
-    uint64_t pgd_addr = ((core->rl[kEmex64RegisterCR4] & EMEX64_MEMORY_MMU_MASK_PFN) >> 8) << 13;
+    uint64_t pgd_addr = core->cr_state.crptb.pgd_addr;
 
     /* still unknown page directory addresses */
     uint64_t pud_addr, pmd_addr, pte_addr, phys_page_base_addr;
@@ -246,7 +246,7 @@ void emex64_memory_action(emex64_core_t *core,
                           uint64_t *value,
                           kEmex64MemoryAction action)
 {
-    if(unlikely((core->rl[kEmex64RegisterCR2] == kEmex64ExceptionBadAccess || core->rl[kEmex64RegisterCR2] == kEmex64ExceptionKTRRViolation) && !core->in_interrupt))
+    if(unlikely((core->cr_state.crexc.exception == kEmex64ExceptionBadAccess || core->cr_state.crexc.exception == kEmex64ExceptionKTRRViolation) && !core->in_interrupt))
     {
         return;
     }
@@ -267,9 +267,9 @@ void emex64_memory_action(emex64_core_t *core,
          * the decoder later in actual emex64 hardware would explode
          * in size otherwise. MMIO busses are complex!
          */
-        if(unlikely((((core->rl[kEmex64RegisterCR4] & EMEX64_MEMORY_MMU_MASK_FLAGS) & kEmex64MMUPTPresent) && !core->in_interrupt) || (!EMEX64_IS_ALIGNED_64(addr) && addr < EMEX64_FB_BASE)))
+        if(unlikely((core->cr_state.crptb.enabled && !core->in_interrupt) || (!EMEX64_IS_ALIGNED_64(addr) && addr < EMEX64_FB_BASE)))
         {
-            core->rl[kEmex64RegisterCR2] = kEmex64ExceptionBadAccess;
+            core->cr_state.crexc.exception = kEmex64ExceptionBadAccess;
             return;
         }
 
@@ -286,7 +286,7 @@ void emex64_memory_action(emex64_core_t *core,
                     mmio_region->write(core, mmio_region->device, offset, *value, (int)size);
                     return;
                 default:
-                    core->rl[kEmex64RegisterCR2] = kEmex64ExceptionBadAccess;
+                    core->cr_state.crexc.exception = kEmex64ExceptionBadAccess;
                     return;
             }
         }
@@ -300,11 +300,11 @@ void emex64_memory_action(emex64_core_t *core,
      * we read it as if it was a 5th level entry, but its just a
      * control register.. for simplicity we do that hahaha.
      */
-    if(((core->rl[kEmex64RegisterCR4] & EMEX64_MEMORY_MMU_MASK_FLAGS) & kEmex64MMUPTPresent) && !core->in_interrupt)
+    if(core->cr_state.crptb.enabled && !core->in_interrupt)
     {
         if(!emex64_mmu_translate(core, addr, action, &addr))
         {
-            core->rl[kEmex64RegisterCR2] = kEmex64ExceptionPageFault;
+            core->cr_state.crexc.exception = kEmex64ExceptionPageFault;
             return;
         }
     }
@@ -346,7 +346,7 @@ rw_fastpath:
     {
         if(likely(!emex64_memory_access(core, addr, size)))
         {
-            core->rl[kEmex64RegisterCR2] = kEmex64ExceptionBadAccess;
+            core->cr_state.crexc.exception = kEmex64ExceptionBadAccess;
             return;
         }
 
@@ -362,7 +362,7 @@ rw_fastpath:
             case kEmex64MemoryActionWrite:
                 if(unlikely(core->machine->memory->ktrr_size > addr))
                 {
-                    core->rl[kEmex64RegisterCR2] = kEmex64ExceptionKTRRViolation;
+                    core->cr_state.crexc.exception = kEmex64ExceptionKTRRViolation;
                     return;
                 }
                 *ptr = (*ptr & ~mask) | (*value & mask);
@@ -380,7 +380,7 @@ bool emex64_memory_cpy(emex64_core_t *core,
     /* do not allow other actions than rx */
     assert(action != kEmex64MemoryActionWrite);
 
-    if(unlikely((core->rl[kEmex64RegisterCR2] == kEmex64ExceptionBadAccess || core->rl[kEmex64RegisterCR2] == kEmex64ExceptionKTRRViolation) && !core->in_interrupt))
+    if(unlikely((core->cr_state.crexc.exception == kEmex64ExceptionBadAccess || core->cr_state.crexc.exception == kEmex64ExceptionKTRRViolation) && !core->in_interrupt))
     {
         return false;
     }
@@ -388,11 +388,11 @@ bool emex64_memory_cpy(emex64_core_t *core,
     /* there will never be a buffer copy out on the MMIO regions */
     if(unlikely((addr >> 53) || ((addr + len - 1) >> 53)))
     {
-        core->rl[kEmex64RegisterCR2] = kEmex64ExceptionBadAccess;
+        core->cr_state.crexc.exception = kEmex64ExceptionBadAccess;
         return false;
     }
 
-    bool paging = ((core->rl[kEmex64RegisterCR4] & EMEX64_MEMORY_MMU_MASK_FLAGS) & kEmex64MMUPTPresent) && !core->in_interrupt;
+    bool paging = core->cr_state.crptb.enabled && !core->in_interrupt;
 
     /* walking the MMU once per page */
     while(len > 0)
@@ -404,7 +404,7 @@ bool emex64_memory_cpy(emex64_core_t *core,
         {
             if(unlikely(!emex64_mmu_translate(core, addr, action, &paddr)))
             {
-                core->rl[kEmex64RegisterCR2] = kEmex64ExceptionPageFault;
+                core->cr_state.crexc.exception = kEmex64ExceptionPageFault;
                 return false;
             }
 
@@ -417,7 +417,7 @@ bool emex64_memory_cpy(emex64_core_t *core,
 
         if(unlikely(!emex64_memory_access(core, paddr, chunk)))
         {
-            core->rl[kEmex64RegisterCR2] = kEmex64ExceptionBadAccess;
+            core->cr_state.crexc.exception = kEmex64ExceptionBadAccess;
             return false;
         }
 

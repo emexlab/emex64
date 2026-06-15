@@ -91,10 +91,28 @@ enum kEmex64Opcode: uint8_t {
     kEmex64OpcodeBL =       0b00110011,
     kEmex64OpcodeRET =      0b00110100,
 
-    /* alu operations v2 */
+    /* data operations v2 */
     kEmex64OpcodeCLR =      0b00110101,
+    kEmex64OpcodeCMOV =     0b00110110,
+    kEmex64OpcodeCMOVB =    0b00110111,
 
-    kEmex64OpcodeMAX = kEmex64OpcodeCLR,
+    /*
+     * for floating point later (ideas atleast):
+     *
+     * data operations:
+     * fmov
+     * fswp
+     * fswpz
+     *
+     * floating point arithmetic:
+     * fadd
+     * fsub
+     * fmul
+     * fdiv
+     * ... (what not)
+     */
+
+    kEmex64OpcodeMAX = kEmex64OpcodeCMOVB,
 };
 
 enum kEmex64ParameterCoding: uint8_t {
@@ -192,6 +210,16 @@ enum kEmex64Register: uint8_t {
     kEmex64RegisterR13 =    0b10010,
     kEmex64RegisterR14 =    0b10011,
     kEmex64RegisterR15 =    0b10100,
+    kEmex64RegisterR16 =    0b10101,
+    kEmex64RegisterR17 =    0b10110,
+    kEmex64RegisterR18 =    0b10111,
+    kEmex64RegisterR19 =    0b11000,
+    kEmex64RegisterR20 =    0b11001,
+    kEmex64RegisterR21 =    0b11010,
+    kEmex64RegisterR22 =    0b11011,
+    kEmex64RegisterR23 =    0b11100,
+    kEmex64RegisterR24 =    0b11101,
+    kEmex64RegisterR25 =    0b11110,
 
     /*
      * return register: also a general purpose register but
@@ -200,21 +228,44 @@ enum kEmex64Register: uint8_t {
      * return without any crazy memory math a value for
      * example.
      */
-    kEmex64RegisterRR =     0b10101,
+    kEmex64RegisterRR =     0b11111,
 
-    /* control registers */
-    kEmex64RegisterCR0 =    0b10110,    /* CREL:    elevation control register */
-    kEmex64RegisterCR1 =    0b10111,    /* CRKSP:   kernel stack pointer (the stack pointer the interrupt controller will use when receiving interrupt) */
-    kEmex64RegisterCR2 =    0b11000,    /* CREXC:   exception register (first 3bits for the exception) */
-    kEmex64RegisterCR3 =    0b11001,    /* CRVEC:   cpu vector table */
-    kEmex64RegisterCR4 =    0b11010,    /* CRPTB:   page table pointer (first 8bits are the flags and the rest is the physical address where the page table is) */
-    kEmex64RegisterCR5 =    0b11011,    /* CRFPC:   kernel only floating point control register */
-    kEmex64RegisterCR6 =    0b11100,
-    kEmex64RegisterCR7 =    0b11101,
-    kEmex64RegisterCR8 =    0b11110,
-    kEmex64RegisterCR9 =    0b11111,
+    kEmex64RegisterMAX = kEmex64RegisterRR
+};
 
-    kEmex64RegisterMAX = kEmex64RegisterCR9
+enum kEmex64ControlRegister: uint8_t {
+    kEmex64ControlRegisterCR0 = 0b00000,    /* CREL:    elevation control register */
+    kEmex64ControlRegisterCR1 = 0b00001,    /* CRKSP:   kernel stack pointer (the stack pointer the interrupt controller will use when receiving interrupt) */
+    kEmex64ControlRegisterCR2 = 0b00010,    /* CREXC:   exception register (first 3bits for the exception) */
+    kEmex64ControlRegisterCR3 = 0b00011,    /* CRVEC:   cpu vector table */
+    kEmex64ControlRegisterCR4 = 0b00100,    /* CRPTB:   page table pointer (first 8bits are the flags and the rest is the physical address where the page table is) */
+    kEmex64ControlRegisterCR5 = 0b00101,    /* CRFPC:   kernel only floating point control register */
+    kEmex64ControlRegisterCR6 = 0b00110,
+    kEmex64ControlRegisterCR7 = 0b00111,
+    kEmex64ControlRegisterCR8 = 0b01000,
+    kEmex64ControlRegisterCR9 = 0b01001,
+    kEmex64ControlRegisterCR10 = 0b01010,
+    kEmex64ControlRegisterCR11 = 0b01011,
+    kEmex64ControlRegisterCR12 = 0b01100,
+    kEmex64ControlRegisterCR13 = 0b01101,
+    kEmex64ControlRegisterCR14 = 0b01110,
+    kEmex64ControlRegisterCR15 = 0b01111,
+    kEmex64ControlRegisterCR16 = 0b10000,
+    kEmex64ControlRegisterCR17 = 0b10001,
+    kEmex64ControlRegisterCR18 = 0b10010,
+    kEmex64ControlRegisterCR19 = 0b10011,
+    kEmex64ControlRegisterCR20 = 0b10100,
+    kEmex64ControlRegisterCR21 = 0b10101,
+    kEmex64ControlRegisterCR22 = 0b10110,
+    kEmex64ControlRegisterCR23 = 0b10111,
+    kEmex64ControlRegisterCR24 = 0b11000,
+    kEmex64ControlRegisterCR25 = 0b11001,
+    kEmex64ControlRegisterCR26 = 0b11010,
+    kEmex64ControlRegisterCR27 = 0b11011,
+    kEmex64ControlRegisterCR28 = 0b11100,
+    kEmex64ControlRegisterCR29 = 0b11101,
+    kEmex64ControlRegisterCR30 = 0b11110,
+    kEmex64ControlRegisterCR31 = 0b11111,
 };
 
 enum kEmex64FloatingRegister: uint8_t {
@@ -335,7 +386,7 @@ enum kEmex64Exception {
     kEmex64ExceptionKTRRViolation =     0b110,
 };
 
-#define EMEX64_MAX_ARGS 16
+#define EMEX64_MAX_ARGS 26
 #define EMEX64_MAX_ILEN (1 + EMEX64_MAX_ARGS * 9)
 
 typedef struct emex64_core emex64_core_t;
