@@ -225,7 +225,6 @@ escape_from_la:
 
     /* the part of executing the instruction */
     core->op.op.func(core);
-    core->rl[kEmex64RegisterPC] += core->op.ilen;
 
     return;
 }
@@ -239,7 +238,6 @@ static void *emex64_core_execute_thread(void *arg)
     for(;;)
     {
         emex64_core_execute_instruction_at_pc(core);
-        emex64_serve_interrupt_if_needed(core);
 
         /*
          * currently exceptions happening in a interrupt
@@ -263,6 +261,12 @@ static void *emex64_core_execute_thread(void *arg)
                 usleep(100);
             }
         }
+
+        /* go after exception before incrementing PC */
+        emex64_serve_interrupt_if_needed(core);
+
+        /* increment PC after entire cycle is done */
+        core->rl[kEmex64RegisterPC] += core->op.ilen;
 
         /*
          * tick the timer always (has to always be ticked for the interrupt controller)
