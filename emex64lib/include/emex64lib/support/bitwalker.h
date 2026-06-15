@@ -42,166 +42,27 @@ typedef enum {
 } bw_endian_t;
 
 typedef struct {
-    uint8_t    *buffer;
-    size_t      byte_pos;
-    uint8_t     bit_idx;
-    size_t      capacity;
+    uint8_t *buffer;
+    size_t byte_pos;
+    uint8_t bit_idx;
+    size_t capacity;
     bw_endian_t endian;
 } bitwalker_t;
 
-static inline uint64_t bw_swap_n(uint64_t v,
-                                 uint8_t num_bytes)
-{
-    switch(num_bytes)
-    {
-        case 2:  return __builtin_bswap16((uint16_t)v);
-        case 3:  return ((v >> 16) & 0xFF) | (v & 0xFF00) | ((v & 0xFF) << 16);
-        case 4:  return __builtin_bswap32((uint32_t)v);
-        case 5:
-        case 6:
-        case 7:
-        case 8:  return __builtin_bswap64(v) >> ((8 - num_bytes) * 8);
-        default: return v;
-    }
-}
+uint64_t bw_swap_n(uint64_t v, uint8_t num_bytes);
+void bitwalker_init(bitwalker_t *bw, uint8_t *buf, size_t capacity, bw_endian_t endian);
 
-static inline void bitwalker_init(bitwalker_t *bw,
-                                  uint8_t *buf,
-                                  size_t capacity,
-                                  bw_endian_t endian)
-{
-    bw->buffer = buf;
-    bw->byte_pos = 0;
-    bw->bit_idx = 0;
-    bw->capacity = capacity;
-    bw->endian = endian;
-    memset(buf, 0, capacity);
-}
+void bitwalker_init_read(bitwalker_t *bw, const uint8_t *buf, size_t len, bw_endian_t endian);
+void bitwalker_reset(bitwalker_t *bw);
 
-static inline void bitwalker_init_read(bitwalker_t *bw,
-                                       const uint8_t *buf,
-                                       size_t len,
-                                       bw_endian_t endian)
-{
-    bw->buffer = (uint8_t *)buf;
-    bw->byte_pos = 0;
-    bw->bit_idx = 0;
-    bw->capacity = len;
-    bw->endian = endian;
-}
+int bitwalker_write(bitwalker_t *bw, uint64_t value, uint8_t num_bits);
 
-static inline void bitwalker_reset(bitwalker_t *bw)
-{
-    bw->byte_pos = 0;
-    bw->bit_idx = 0;
-}
+uint64_t bitwalker_read(bitwalker_t *bw, uint8_t num_bits);
 
-static inline int bitwalker_write(bitwalker_t *bw,
-                                  uint64_t value,
-                                  uint8_t num_bits)
-{
-    if(bw->byte_pos >= bw->capacity)
-    {
-        return -1;
-    }
+void bitwalker_skip(bitwalker_t *bw, size_t num_bits);
 
-    uint64_t mask = (num_bits == 64) ? ~0ULL : ((1ULL << num_bits) - 1);
-    value &= mask;
+size_t bitwalker_bytes_used(const bitwalker_t *bw);
 
-    /*
-     * for multi-byte values we gonna have to convert host endian to target endian
-     * in case they aint the same
-     */
-    if(num_bits > 8)
-    {
-        uint8_t num_bytes = (num_bits + 7) / 8;
-        if(BW_HOST_ENDIAN != bw->endian)
-        {
-            value = bw_swap_n(value, num_bytes);
-        }
-    }
-
-    __uint128_t chunk = 0;
-
-    /* copy up to 8 bytes from buffer */
-    size_t remain = bw->capacity - bw->byte_pos;
-    size_t n = remain < 9 ? remain : 9;
-
-    memcpy(&chunk, bw->buffer + bw->byte_pos, n);
-
-    /* shift value into position */
-    chunk |= (__uint128_t)value << bw->bit_idx;
-
-    /* write back */
-    memcpy(bw->buffer + bw->byte_pos, &chunk, n);
-
-    /* advance cursor */
-    size_t tmp = bw->bit_idx + num_bits;
-    bw->byte_pos += tmp >> 3;
-    bw->bit_idx = tmp & 7;
-    
-    return 0;
-}
-
-static inline uint64_t bitwalker_read(bitwalker_t *bw,
-                                      uint8_t num_bits)
-{
-    if(bw->byte_pos >= bw->capacity)
-    {
-        return 0;
-    }
-
-    /*
-     * calculate how many bits we are offset
-     * because on a 64bit number we could be
-     * a couple of bits offset.
-     */
-    size_t remain = bw->capacity - bw->byte_pos;
-    size_t n = remain < 9 ? remain : 9;
-
-    /* copying up to 9 bytes into the chunk */
-    __uint128_t chunk = 0;
-    memcpy(&chunk, bw->buffer + bw->byte_pos, n);
-
-    /* now lets set the schunk and so on */
-    uint64_t value = (uint64_t)(chunk >> bw->bit_idx) & ((num_bits == 64) ? UINT64_MAX : ((1ULL << num_bits) - 1));
-    uint32_t total_bits = bw->bit_idx + num_bits;
-    bw->byte_pos += total_bits >> 3;
-    bw->bit_idx = total_bits & 7;
-
-    /* endian fix (on missmatch) */
-    if(num_bits > 8)
-    {
-        if(BW_HOST_ENDIAN != bw->endian)
-        {
-            uint8_t num_bytes = (num_bits + 7) / 8;
-            value = bw_swap_n(value, num_bytes);
-        }
-    }
-
-    return value;
-}
-
-static inline void bitwalker_skip(bitwalker_t *bw,
-                                  size_t num_bits)
-{
-    size_t tmp = bw->bit_idx + num_bits;
-    bw->byte_pos += tmp >> 3;
-    bw->bit_idx = tmp & 7;
-}
-
-static inline size_t bitwalker_bytes_used(const bitwalker_t *bw)
-{
-    return bw->byte_pos + ((bw->bit_idx == 0) ? 0 : 1);
-}
-
-static inline void bitwalker_align_byte(bitwalker_t *bw)
-{
-    if(bw->bit_idx != 0)
-    {
-        bw->bit_idx = 0;
-        bw->byte_pos += 1;
-    }
-}
+void bitwalker_align_byte(bitwalker_t *bw);
 
 #endif /* EMEXUTILS_BITWALKER_H */
