@@ -36,45 +36,9 @@
 #include <emex64lib/vm/core.h>
 
 #include <emex64lib/support/diag.h>
+#include <emex64lib/support/file.h>
 
 #include <emex64lib/linker/linker.h>
-
-static uint8_t *read_file(const char *path, size_t *out_size)
-{
-    int fd = open(path, O_RDONLY);
-    if(fd < 0)
-    {
-        perror(path);
-        return NULL;
-    }
-
-    struct stat st;
-    if(fstat(fd, &st) != 0)
-    {
-        perror(path);
-        close(fd);
-        return NULL;
-    }
-
-    size_t sz = (size_t)st.st_size;
-    uint8_t *buf = malloc(sz);
-    if(!buf)
-    {
-        close(fd);
-        return NULL;
-    }
-
-    if(read(fd, buf, sz) != (ssize_t)sz)
-    {
-        diag_error(NULL, "read error: %s\n", path);
-        free(buf);
-        close(fd);
-        return NULL;
-    }
-    close(fd);
-    *out_size = sz;
-    return buf;
-}
 
 static bool obj_load(linker_object_t *o, const char *path)
 {
@@ -82,20 +46,25 @@ static bool obj_load(linker_object_t *o, const char *path)
     o->idx_text = o->idx_data = o->idx_bss =
     o->idx_rela_text = o->idx_rela_data = o->idx_symtab = o->idx_strtab = -1;
 
-    o->object_path = path;
-    o->data = read_file(path, &o->size);
-    if(!o->data)
+    o->file = emex_file_alloc(path, object_file_load_policy);
+    if(o->file == NULL)
     {
         return false;
     }
 
-    if(o->size < sizeof(ELF64_Shdr))
+    if(!emex_file_map(o->file))
+    {
+        emex_file_dealloc(o->file);
+        return false;
+    }
+
+    if(o->file->len < sizeof(ELF64_Shdr))
     {
         diag_error(NULL, "%s: too small to be ELF\n", path);
         return false;
     }
 
-    o->ehdr = (ELF64_Ehdr *)o->data;
+    o->ehdr = (ELF64_Ehdr *)o->file->content;
 
     if(o->ehdr->e_ident[0] != ELF_MAGIC_0 ||
        o->ehdr->e_ident[1] != ELF_MAGIC_1 ||
@@ -118,13 +87,13 @@ static bool obj_load(linker_object_t *o, const char *path)
         return false;
     }
 
-    o->shdrs = (ELF64_Shdr *)(o->data + o->ehdr->e_shoff);
+    o->shdrs = (ELF64_Shdr *)(o->file->content + o->ehdr->e_shoff);
 
     if(o->ehdr->e_shstrndx != 0xFFFF &&
        o->ehdr->e_shstrndx < o->ehdr->e_shnum)
     {
         ELF64_Shdr *ss = &o->shdrs[o->ehdr->e_shstrndx];
-        o->shstrtab = (char *)(o->data + ss->sh_offset);
+        o->shstrtab = (char *)(o->file->content + ss->sh_offset);
     }
 
     /* find known sections */
@@ -194,9 +163,9 @@ static bool obj_register_symbols(linker_invocation_t *inv,
     }
 
     ELF64_Shdr *symsh = &o->shdrs[o->idx_symtab];
-    ELF64_Sym *syms = (ELF64_Sym *)(o->data + symsh->sh_offset);
+    ELF64_Sym *syms = (ELF64_Sym *)(o->file->content + symsh->sh_offset);
     size_t nsyms  = symsh->sh_size / sizeof(ELF64_Sym);
-    const char *strtab = (o->idx_strtab >= 0) ? (char *)(o->data + o->shdrs[o->idx_strtab].sh_offset) : NULL;
+    const char *strtab = (o->idx_strtab >= 0) ? (char *)(o->file->content + o->shdrs[o->idx_strtab].sh_offset) : NULL;
 
     for(size_t i = 0; i < nsyms; i++)
     {
@@ -245,7 +214,7 @@ static bool obj_register_symbols(linker_invocation_t *inv,
             addr = sym->st_value;
         }
 
-        if(!linker_append_global_symbol_definition(inv, name,o->object_path, addr))
+        if(!linker_append_global_symbol_definition(inv, name, o->file->path, addr))
         {
             return false;
         }
@@ -263,9 +232,9 @@ static uint64_t sym_resolve(linker_invocation_t *inv,
     }
 
     ELF64_Shdr *symsh = &o->shdrs[o->idx_symtab];
-    ELF64_Sym *syms = (ELF64_Sym *)(o->data + symsh->sh_offset);
+    ELF64_Sym *syms = (ELF64_Sym *)(o->file->content + symsh->sh_offset);
     size_t nsyms = symsh->sh_size / sizeof(ELF64_Sym);
-    const char *strtab = (o->idx_strtab >= 0) ? (char *)(o->data + o->shdrs[o->idx_strtab].sh_offset) : NULL;
+    const char *strtab = (o->idx_strtab >= 0) ? (char *)(o->file->content + o->shdrs[o->idx_strtab].sh_offset) : NULL;
 
     if(sym_idx >= nsyms)
     {
@@ -317,7 +286,7 @@ static uint64_t sym_resolve(linker_invocation_t *inv,
             }
         }
 
-        diag_error(NULL, "undefined symbol '%s', needed by \"%s\"\n", name, o->object_path);
+        diag_error(NULL, "undefined symbol '%s', needed by \"%s\"\n", name, o->file->path);
         exit(1); /* TODO: somehow make it not as strict, so it becomes embeddable */
     }
     return 0;
@@ -331,7 +300,7 @@ static bool obj_apply_relocs(linker_invocation_t *inv,
     if(o->idx_rela_text >= 0)
     {
         ELF64_Shdr *rs = &o->shdrs[o->idx_rela_text];
-        ELF64_Rela *rela = (ELF64_Rela *)(o->data + rs->sh_offset);
+        ELF64_Rela *rela = (ELF64_Rela *)(o->file->content + rs->sh_offset);
         size_t cnt = rs->sh_size / sizeof(ELF64_Rela);
 
         for(size_t i = 0; i < cnt; i++)
@@ -358,7 +327,7 @@ static bool obj_apply_relocs(linker_invocation_t *inv,
     if(o->idx_rela_data >= 0)
     {
         ELF64_Shdr *rs = &o->shdrs[o->idx_rela_data];
-        ELF64_Rela *rela = (ELF64_Rela *)(o->data + rs->sh_offset);
+        ELF64_Rela *rela = (ELF64_Rela *)(o->file->content + rs->sh_offset);
         size_t cnt = rs->sh_size / sizeof(ELF64_Rela);
 
         for(size_t i = 0; i < cnt; i++)
@@ -737,7 +706,7 @@ int main(int argc, char *argv[])
         }
         ELF64_Shdr *sh = &objs[i].shdrs[objs[i].idx_text];
         uint64_t dst_off = objs[i].base_text;
-        memcpy(image + dst_off, objs[i].data + sh->sh_offset, sh->sh_size);
+        memcpy(image + dst_off, objs[i].file->content + sh->sh_offset, sh->sh_size);
     }
 
     /* copy .data sections */
@@ -749,7 +718,7 @@ int main(int argc, char *argv[])
         }
         ELF64_Shdr *sh = &objs[i].shdrs[objs[i].idx_data];
         uint64_t dst_off = objs[i].base_data;
-        memcpy(image + dst_off, objs[i].data + sh->sh_offset, sh->sh_size);
+        memcpy(image + dst_off, objs[i].file->content + sh->sh_offset, sh->sh_size);
     }
 
     /* .bss: already zeroed by calloc */

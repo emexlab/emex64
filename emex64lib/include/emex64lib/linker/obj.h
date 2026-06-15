@@ -25,13 +25,13 @@
 #ifndef EMEX64LD_OBJ_H
 #define EMEX64LD_OBJ_H
 
+#include <emex64lib/support/file.h>
+
 #include <emex64lib/linker/type.h>
 #include <emex64lib/linker/header.h>
 
 typedef struct {
-    const char *object_path;
-    uint8_t *data;
-    size_t size;
+    emex_file_t *file;
 
     ELF64_Ehdr *ehdr;
     ELF64_Shdr *shdrs;

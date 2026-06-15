@@ -48,6 +48,16 @@ emex_file_policy_t assembly_unsaved_file_policy = {
     .must_exist = false,
     .must_be_file = true,
 };
+emex_file_policy_t object_file_load_policy = {
+    .needed_permission = kEmexFilePolicyPermissionRead,
+    .must_exist = true,
+    .must_be_file = true,
+};
+emex_file_policy_t object_file_out_policy = {
+    .needed_permission = kEmexFilePolicyPermissionRead | kEmexFilePolicyPermissionWrite,
+    .must_exist = false,
+    .must_be_file = true,
+};
 
 static inline int emex_file_policy_to_o_rw(kEmexFilePolicyPermission p)
 {
