@@ -600,6 +600,7 @@ int main(int argc, char *argv[])
     {
         emex_file_dealloc(file);
         fdwalker_dealloc(fw);
+        return 1;
     }
 
     /* copy .text sections */

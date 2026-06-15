@@ -32,7 +32,9 @@
 
 linker_object_t *linker_object_alloc(const char *object_path)
 {
-    linker_object_t *obj = calloc(1, sizeof(linker_object_t));
+    linker_object_t *obj = malloc(sizeof(linker_object_t));
+
+    bzero(obj, sizeof(linker_object_t));
 
     /* setting to -1 as a sentinel */
     obj->idx_text = -1;
