@@ -35,12 +35,17 @@ typedef struct {
     uint32_t pos;
 } bitbolt_t;
 
+static inline uint64_t cpy64le(const uint8_t *p)
+{
+    return  (uint64_t)p[0] | ((uint64_t)p[1] <<  8) | ((uint64_t)p[2] << 16) | ((uint64_t)p[3] << 24) | ((uint64_t)p[4] << 32) | ((uint64_t)p[5] << 40) | ((uint64_t)p[6] << 48) | ((uint64_t)p[7] << 56);
+}
+
 static inline uint64_t bb_read(bitbolt_t *bb,
                                unsigned n)
 {
-    uint64_t lo, hi;
-    memcpy(&lo, bb->buf + (bb->pos >> 3), sizeof lo);
-    memcpy(&hi, bb->buf + (bb->pos >> 3) + 8, sizeof hi);
+    const uint8_t *p = (const uint8_t *)bb->buf + (bb->pos >> 3);
+    uint64_t lo = cpy64le(p);
+    uint64_t hi = cpy64le(p + 8);
 
     unsigned shift = bb->pos & 7;
 
