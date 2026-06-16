@@ -44,7 +44,8 @@ if(EMEX64VM_DEVICE_DISPLAY)
 endif()
 
 option(EMEX64LIB_STATIC "Link statically against emex64lib" OFF)
-option(EMEX64_NATIVE_ARCH "Optimizations for the host CPU" OFF)
+option(EMEX64LIB_NATIVE_ARCH "Optimizations for the host CPU" OFF)
+option(EMEX64LIB_DEBUG "Debugging" OFF)
 
 if(EMEX64LIB_STATIC)
     set(LIB_TYPE STATIC)
@@ -139,7 +140,7 @@ else()
     set(_EMEX64_WARN_FLAGS -Wall -Wextra -Wpedantic -Wno-unused-parameter)
     set(_EMEX64_OPT_FLAGS -O3 -fomit-frame-pointer -fstrict-aliasing -ffast-math -funroll-loops)
     
-    if(EMEX64_NATIVE_ARCH)
+    if(EMEX64LIB_NATIVE_ARCH)
         list(APPEND _EMEX64_OPT_FLAGS -march=native -mtune=native)
     endif()
 
@@ -148,6 +149,10 @@ else()
         list(APPEND _EMEX64_OPT_FLAGS -fgraphite-identity -floop-nest-optimize -fipa-pta)
     elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
         list(APPEND _EMEX64_OPT_FLAGS -fvectorize -fslp-vectorize)
+    endif()
+
+    if(EMEX64LIB_DEBUG)
+        list(APPEND -g)
     endif()
     
     include(CheckIPOSupported)
