@@ -613,7 +613,7 @@ assembler_driver_t *assembler_driver_alloc(const char **argv,
         }
         fprintf(stderr, " }\n");
 
-        fprintf(stderr, "macro[%lu]: { ", driver->macro_cnt);
+        fprintf(stderr, "macro[%llu]: { ", (unsigned long long)driver->macro_cnt);
         for(uint64_t i = 0; i < driver->macro_cnt; i++)
         {
             if(i != 0)
