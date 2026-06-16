@@ -102,6 +102,7 @@ assembler_job_t *assembler_job_alloc(assembler_job_t *prev,
 
     job->argv[argc] = NULL;
 
+    job->prev = NULL;
     job->next = NULL;
 
     if(prev != NULL)
@@ -793,7 +794,7 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
                 {
                     printf("\n");
                 }
-                
+
                 linker_driver_t *subdriver = linker_driver_alloc((const char**)job->argv, job->argc);
                 if(subdriver == NULL)
                 {
