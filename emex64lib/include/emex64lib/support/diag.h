@@ -27,10 +27,18 @@
 
 #include <emex64lib/asm/type.h>
 
+#define diag_note(at, msg, ...) diag_log(DIAG_NOTE, at, msg,  ##__VA_ARGS__)
+#define diag_warn(at, msg, ...) diag_log(DIAG_WARN, at, msg,  ##__VA_ARGS__)
+#define diag_error(at, msg, ...) diag_log(DIAG_ERROR, at, msg,  ##__VA_ARGS__)
+
 extern _Thread_local bool warning_error;
 
-void diag_note(assembler_token_t *at, const char *msg, ...);
-void diag_warn(assembler_token_t *at, const char *msg, ...);
-void diag_error(assembler_token_t *at, const char *msg, ...);
+typedef enum {
+    DIAG_NOTE,
+    DIAG_WARN,
+    DIAG_ERROR
+} diag_level_t;
+
+void diag_log(diag_level_t level, assembler_token_t *at, const char *msg, ...);
 
 #endif /* EMEX64ASM_DIAG_H */

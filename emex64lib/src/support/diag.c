@@ -129,102 +129,10 @@ static inline int put_float(double n)
     return count;
 }
 
-static inline int handle_format(const char *fmt,
-                                int *i,
-                                va_list *args)
-{
-    int count = 0;
-
-    /* clean handlinggg!! */
-    switch(fmt[*i])
-    {
-        case 'c':
-            count += putchar_c(va_arg(*args, int));
-            break;
-        case 's':
-            count += putstr_c(va_arg(*args, char *));
-            break;
-        case 'd':
-            count += putnbr_signed(va_arg(*args, int));
-            break;
-        case 'u':
-            count += putnbr_base_unsigned(va_arg(*args, unsigned int), "0123456789");
-            break;
-        case 'b':
-            count += put_binary(va_arg(*args, unsigned int));
-            break;
-        case 'x':
-            count += putnbr_base_unsigned(va_arg(*args, unsigned int), "0123456789abcdef");
-            break;
-        case 'X':
-            count += putnbr_base_unsigned(va_arg(*args, unsigned int), "0123456789ABCDEF");
-            break;
-        case 'p':
-            count += put_pointer(va_arg(*args, void *));
-            break;
-        case 'f':
-            count += put_float(va_arg(*args, double));
-            break;
-        case 'l':
-            switch(fmt[*i + 1])
-            {
-                case 'd':
-                    (*i)++;
-                    count += putnbr_signed(va_arg(*args, long));
-                    break;
-                case 'u':
-                    (*i)++;
-                    count += putnbr_base_unsigned(va_arg(*args, unsigned long), "0123456789");
-                    break;
-                default:
-                    break;
-            }
-            break;
-        case '%':
-            count += putchar_c('%');
-            break;
-        default:
-            break;
-    }
-
-    return count;
-}
-
-static inline void diag_helper(const char *msg,
-                               va_list *args)
-{
-    /* dont forget to flush the toilet otherwise things get stinky */
-    fflush(stdout);
-
-    /* starting to parse arguments */
-    int i = 0;
-
-    /* handling format */
-    while(msg[i])
-    {
-        if(msg[i] == '%' && msg[i + 1])
-        {
-            i++;
-            handle_format(msg, &i, args);
-        }
-        else
-        {
-            putchar_c(msg[i]);
-        }
-        i++;
-    }
-}
-
-typedef enum {
-    DIAG_NOTE,
-    DIAG_WARN,
-    DIAG_ERROR
-} diag_level_t;
-
-static void diag_vemit(diag_level_t level,
-                       assembler_token_t *at,
-                       const char *msg,
-                       va_list args)
+void diag_log(diag_level_t level,
+              assembler_token_t *at,
+              const char *msg,
+              ...)
 {
     if(warning_error)
     {
@@ -250,38 +158,78 @@ static void diag_vemit(diag_level_t level,
     }
     printf("\033[0m\x1b[0m ");
 
-    diag_helper(msg, (va_list*)&args);
-}
-
-void diag_note(assembler_token_t *at,
-               const char *msg,
-               ...)
-{
     va_list args;
-
     va_start(args, msg);
-    diag_vemit(DIAG_NOTE, at, msg, args);
-    va_end(args);
-}
 
-void diag_warn(assembler_token_t *at,
-               const char *msg,
-               ...)
-{
-    va_list args;
+    /* dont forget to flush the toilet otherwise things get stinky */
+    fflush(stdout);
 
-    va_start(args, msg);
-    diag_vemit(DIAG_WARN, at, msg, args);
-    va_end(args);
-}
+    /* starting to parse arguments */
+    int i = 0;
+    while(msg[i])
+    {
+        if(msg[i] == '%' && msg[i + 1])
+        {
+            i++;
+            /* clean handlinggg!! */
+            switch(msg[i])
+            {
+                case 'c':
+                    putchar_c(va_arg(args, int));
+                    break;
+                case 's':
+                    putstr_c(va_arg(args, char *));
+                    break;
+                case 'd':
+                    putnbr_signed(va_arg(args, int));
+                    break;
+                case 'u':
+                    putnbr_base_unsigned(va_arg(args, unsigned int), "0123456789");
+                    break;
+                case 'b':
+                    put_binary(va_arg(args, unsigned int));
+                    break;
+                case 'x':
+                    putnbr_base_unsigned(va_arg(args, unsigned int), "0123456789abcdef");
+                    break;
+                case 'X':
+                    putnbr_base_unsigned(va_arg(args, unsigned int), "0123456789ABCDEF");
+                    break;
+                case 'p':
+                    put_pointer(va_arg(args, void *));
+                    break;
+                case 'f':
+                    put_float(va_arg(args, double));
+                    break;
+                case 'l':
+                    switch(msg[i + 1])
+                    {
+                        case 'd':
+                            i++;
+                            putnbr_signed(va_arg(args, long));
+                            break;
+                        case 'u':
+                            i++;
+                            putnbr_base_unsigned(va_arg(args, unsigned long), "0123456789");
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case '%':
+                    putchar_c('%');
+                    break;
+                default:
+                    break;
+            }
 
-void diag_error(assembler_token_t *at,
-                const char *msg,
-                ...)
-{
-    va_list args;
+        }
+        else
+        {
+            putchar_c(msg[i]);
+        }
+        i++;
+    }
 
-    va_start(args, msg);
-    diag_vemit(DIAG_ERROR, at, msg, args);
     va_end(args);
 }
