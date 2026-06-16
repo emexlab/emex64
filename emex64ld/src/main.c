@@ -425,11 +425,8 @@ static void write_le_u64(uint8_t *buf, uint64_t v)
 
 static void emit_boot_header(uint8_t hdr[10], uint64_t entry)
 {
-    memset(hdr, 0, 10);
-
-    /* b <start sym> */
     hdr[0] = kEmex64OpcodeB;
-    uint8_t coding = (uint8_t)(kEmex64ParameterCodingImm64 & 0x7); /* 0b110 = 6 */
+    uint8_t coding = (uint8_t)(kEmex64ParameterCodingImm64 & 0x7);
     uint64_t payload_lo = (uint64_t)coding | (entry << 3);
     uint64_t payload_hi = entry >> 61;
     write_le_u64(hdr + 1, payload_lo);
@@ -444,6 +441,9 @@ static void usage(const char *prog)
     fprintf(stderr, "  -T script.e64ld  Linker script (or pass .e64ld files directly)\n");
     fprintf(stderr, "  .e64ld files are auto-detected by extension\n");
     fprintf(stderr, "  -v verbose       verbose mode\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "  --emit-firmware  emits firmware image\n");
+    fprintf(stderr, "  --emit-object    emits static linkable object\n");
 }
 
 int main(int argc, char *argv[])
@@ -451,8 +451,16 @@ int main(int argc, char *argv[])
     bool verbose = false;
     const char *output_path = "a.out";
     const char *entry_name = "_start";
-    int file_count   = 0;
-    const char **input_files = calloc((size_t)argc, sizeof(char *));
+
+    kEmitMode emit_mode = kEmitModeNone;
+
+    linker_invocation_t *inv = linker_invocation_alloc();
+    if(inv == NULL)
+    {
+        return 1;
+    }
+
+    uint64_t cur_text = BOOT_HEADER_SIZE;
 
     for(int i = 1; i < argc; i++)
     {
@@ -487,6 +495,20 @@ int main(int argc, char *argv[])
         {
             verbose = true;
         }
+        else if(strcmp(argv[i], "--emit-firmware") == 0)
+        {
+            emit_mode = kEmitModeFirmware;
+        }
+        else if(strcmp(argv[i], "--emit-object") == 0)
+        {
+            if(emit_mode != kEmitModeNone)
+            {
+                diag_error(NULL, "emit mode is already set\n");
+                return 1;
+            }
+            diag_error(NULL, "emitting static object's is not yet supported\n");
+            return 1;
+        }
         else if (argv[i][0] != '-')
         {
             size_t n = strlen(argv[i]);
@@ -499,44 +521,37 @@ int main(int argc, char *argv[])
             }
             else
             {
-                input_files[file_count++] = argv[i];
+                if(!linker_load_object(inv, argv[i]))
+                {
+                    diag_error(NULL, "object file \'%s\' couldn't be loaded\n", argv[i]);
+                    return 1;
+                }
+
+                inv->obj->base_text = cur_text;
+                cur_text += linker_object_text_size(inv->obj);
             }
         }
         else
         {
             diag_error(NULL, "unknown option '%s'\n", argv[i]);
-            usage(argv[0]);
             return 1;
         }
     }
 
-    if(file_count == 0)
+    if(emit_mode == kEmitModeNone)
+    {
+        diag_error(NULL, "no emit mode was set\n");
+        return 1;
+    }
+
+    if(inv->obj == NULL)
     {
         diag_error(NULL, "no input files\n");
-        usage(argv[0]);
         return 1;
     }
 
-    linker_invocation_t *inv = linker_invocation_alloc();
-    if(inv == NULL)
-    {
-        return 1;
-    }
-
-    uint64_t cur_text = BOOT_HEADER_SIZE;
     uint64_t cur_data = 0;
     uint64_t cur_bss = 0;
-
-    for(int i = 0; i < file_count; i++)
-    {
-        if(!linker_load_object(inv, input_files[i]))
-        {
-            return 1;
-        }
-
-        inv->obj->base_text = cur_text;
-        cur_text += linker_object_text_size(inv->obj);
-    }
 
     cur_data = cur_text;
     linker_object_t *obj = inv->obj;
@@ -648,19 +663,17 @@ int main(int argc, char *argv[])
     if(verbose)
     {
         fprintf(stderr,
-                "emex64ld: linked %d object(s) → %s\n"
+                "emex64ld: linked object(s) → %s\n"
                 "  .text  %8lu bytes @ 0x%08lx\n"
                 "  .data  %8lu bytes @ 0x%08lx\n"
                 "  .bss   %8lu bytes @ 0x%08lx (virtual)\n"
-                "  entry  %s @ 0x%08lx\n",
-                file_count, output_path,
+                "  entry  %s @ 0x%08lx\n", output_path,
                 (unsigned long)total_text, (unsigned long)BOOT_HEADER_SIZE,
                 (unsigned long)total_data, (unsigned long)cur_text,
                 (unsigned long)(cur_bss - cur_data), (unsigned long)cur_data,
                 entry_name, (unsigned long)entry_addr);
     }
 
-    free(input_files);
     linker_invocation_dealloc(inv);
     return 0;
 }

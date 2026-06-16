@@ -507,6 +507,7 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
         }
 
         argv[argc++] = strdup("emex64ld");
+        argv[argc++] = strdup("--emit-firmware");
         if(driver->verbose)
         {
             argv[argc++] = strdup("-v");

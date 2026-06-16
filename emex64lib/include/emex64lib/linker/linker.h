@@ -35,6 +35,12 @@ typedef struct {
     linker_object_t *obj;
 } linker_invocation_t;
 
+typedef enum: uint8_t {
+    kEmitModeNone,
+    kEmitModeFirmware,
+    kEmitModeObject,
+} kEmitMode;
+
 linker_invocation_t *linker_invocation_alloc(void);
 void linker_invocation_dealloc(linker_invocation_t *inv);
 
