@@ -29,10 +29,12 @@
 #include <spawn.h>
 #include <sys/wait.h>
 
+#include <emex64lib/support/diag.h>
+
 #include <emex64lib/asm/driver.h>
 #include <emex64lib/asm/invocation.h>
 
-#include <emex64lib/support/diag.h>
+#include <emex64lib/linker/driver.h>
 
 extern char **environ;
 
@@ -780,6 +782,26 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
 
                 bool success = assembler_driver_drive_the_fucking_car(subdriver);
                 assembler_driver_dealloc(subdriver);
+                if(!success)
+                {
+                    return false;
+                }
+            }
+            else if(job->type == kAssemblerJobTypeLinker && driver->in_process)
+            {
+                if(driver->verbose)
+                {
+                    printf("\n");
+                }
+                
+                linker_driver_t *subdriver = linker_driver_alloc((const char**)job->argv, job->argc);
+                if(subdriver == NULL)
+                {
+                    return false;
+                }
+
+                bool success = linker_driver_drive_the_fucking_car(subdriver);
+                linker_driver_dealloc(subdriver);
                 if(!success)
                 {
                     return false;
