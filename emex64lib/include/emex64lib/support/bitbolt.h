@@ -38,12 +38,27 @@ typedef struct {
 static inline uint64_t bb_read(bitbolt_t *bb,
                                unsigned n)
 {
-    unsigned __int128 w;
-    memcpy(&w, bb->buf + (bb->pos >> 3), sizeof w);
-    uint64_t v = (uint64_t)(w >> (bb->pos & 7)) & kMask[n];
+    uint64_t lo, hi;
+    memcpy(&lo, bb->buf + (bb->pos >> 3), sizeof lo);
+    memcpy(&hi, bb->buf + (bb->pos >> 3) + 8, sizeof hi);
+
+    unsigned shift = bb->pos & 7;
+
+    uint64_t v;
+    if(shift == 0)
+    {
+        v = lo;
+    }
+    else
+    {
+        v = (lo >> shift) | (hi << (64 - shift));
+    }
+
+    v &= kMask[n];
     bb->pos += n;
     return v;
 }
+
 static inline void bb_align(bitbolt_t *bb)
 {
     bb->pos = (bb->pos + 7u) & ~7u;
