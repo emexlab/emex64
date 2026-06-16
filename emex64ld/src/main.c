@@ -414,34 +414,13 @@ static bool apply_script_symbols(linker_invocation_t *inv,
     return true;
 }
 
-static void write_le_u64(uint8_t *buf, uint64_t v)
+static void emit_boot_header(fdwalker_t *fw,
+                             uint64_t entry)
 {
-    for(int i = 0; i < 8; i++)
-    {
-        buf[i] = v & 0xff;
-        v >>= 8;
-    }
-}
-
-static void emit_boot_header(uint8_t hdr[10], uint64_t entry)
-{
-    hdr[0] = kEmex64OpcodeB;
-    uint8_t coding = (uint8_t)(kEmex64ParameterCodingImm64 & 0x7);
-    uint64_t payload_lo = (uint64_t)coding | (entry << 3);
-    uint64_t payload_hi = entry >> 61;
-    write_le_u64(hdr + 1, payload_lo);
-    hdr[9] = (uint8_t)(payload_hi & 0x7);
-}
-
-static void usage(const char *prog)
-{
-    fprintf(stderr, "Usage: %s [-o output] [-e entry] [-T script.e64ld] file1.e64o [...]\n", prog);
-    fprintf(stderr, "  -o output        Output file (default: a.out)\n");
-    fprintf(stderr, "  -e entry         Entry symbol (default: _start)\n");
-    fprintf(stderr, "  -T script.e64ld  Linker script (or pass .e64ld files directly)\n");
-    fprintf(stderr, "  .e64ld files are auto-detected by extension\n");
-    fprintf(stderr, "  -v verbose       verbose mode\n");
-    fprintf(stderr, "  -r               emits relocatable object\n");
+    fdwalker_seek(fw, 0, 0);
+    fdwalker_write(fw, kEmex64OpcodeB, 8);
+    fdwalker_write(fw, kEmex64ParameterCodingImm64, 3);
+    fdwalker_write(fw, entry, 64);
 }
 
 int main(int argc, char *argv[])
@@ -460,7 +439,18 @@ int main(int argc, char *argv[])
 
     for(int i = 1; i < argc; i++)
     {
-        if(strcmp(argv[i], "-o") == 0 && i + 1 < argc)
+        if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0)
+        {
+            fprintf(stderr, "Usage: %s [-o output] [-e entry] [-T script.e64ld] file1.e64o [...]\n", argv[0]);
+            fprintf(stderr, "  -o output        Output file (default: a.out)\n");
+            fprintf(stderr, "  -e entry         Entry symbol (default: _start)\n");
+            fprintf(stderr, "  -T script.e64ld  Linker script (or pass .e64ld files directly)\n");
+            fprintf(stderr, "  .e64ld files are auto-detected by extension\n");
+            fprintf(stderr, "  -v verbose       verbose mode\n");
+            fprintf(stderr, "  -r               emits relocatable object\n");
+            return 0;
+        }
+        else if(strcmp(argv[i], "-o") == 0 && i + 1 < argc)
         {
             output_path = argv[++i];
         }
@@ -481,11 +471,6 @@ int main(int argc, char *argv[])
             {
                 return 1;
             }
-        }
-        else if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0)
-        {
-            usage(argv[0]);
-            return 0;
         }
         else if(strcmp(argv[i], "-v") == 0)
         {
@@ -616,10 +601,7 @@ int main(int argc, char *argv[])
     }
 
     uint64_t entry_addr = gsym->addr;
-    uint8_t boot_hdr[10];
-    emit_boot_header(boot_hdr, entry_addr);
-    fdwalker_seek(fw, 0, 0);
-    fdwalker_write_buf(fw, (char*)boot_hdr, 10);
+    emit_boot_header(fw, entry_addr);
 
     fsync(fw->fd);
     fdwalker_dealloc(fw);
