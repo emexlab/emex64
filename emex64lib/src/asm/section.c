@@ -225,7 +225,6 @@ bool assembler_section_parse(assembler_invocation_t *inv)
                             rtbe->name = strdup(inv->line[i]->token[a]->str);
                             rtbe->at_link = inv->line[i]->token[a];
                             rtbe->byte_pos = inv->fdwalker->byte_pos;
-                            rtbe->bit_idx = 0;
                             fdwalker_skip(inv->fdwalker, 64);
                         }
                         else

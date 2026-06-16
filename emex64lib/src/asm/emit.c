@@ -222,7 +222,6 @@ bool assembler_emit_instruction(assembler_line_t *al)
             al->inv->rtbe = rtbe;
             rtbe->name = label;
             rtbe->byte_pos = al->inv->fdwalker->byte_pos;
-            rtbe->bit_idx = al->inv->fdwalker->bit_idx;
             rtbe->at_link = al->token[i];
 
             /*
@@ -284,6 +283,23 @@ bool assembler_emit(assembler_invocation_t *inv)
             }
         }
     }
+
+    /* TODO: fix this so static vs exported symbols work */
+    /*reloc_table_entry_t *rtbe = inv->rtbe;
+    while(rtbe != NULL)
+    {
+        assembler_label_t *label = assembler_label_lookup(inv, rtbe->name);
+        if(label == NULL)
+        {
+            rtbe = rtbe->next;
+            continue;
+        }
+
+        fdwalker_seek(inv->fdwalker, rtbe->byte_pos, 0);
+        fdwalker_write(inv->fdwalker, label->addr, 64);
+
+        rtbe = rtbe->next;
+    }*/
 
     fsync(inv->fdwalker->fd);
 
