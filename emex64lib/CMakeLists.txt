@@ -46,6 +46,7 @@ endif()
 option(EMEX64LIB_STATIC "Link statically against emex64lib" OFF)
 option(EMEX64LIB_NATIVE_ARCH "Optimizations for the host CPU" OFF)
 option(EMEX64LIB_DEBUG "Debugging" OFF)
+option(EMEX64LIB_COMPILER_OPTIMIZATIONS "Appends compiler optimization flags" ON)
 
 if(EMEX64LIB_STATIC)
     set(LIB_TYPE STATIC)
@@ -138,12 +139,15 @@ else()
 
     # Setting up compiler flags
     set(_EMEX64_WARN_FLAGS -Wall -Wextra -Wpedantic -Wno-unused-parameter)
-    set(_EMEX64_OPT_FLAGS -O3 -fomit-frame-pointer -fstrict-aliasing -ffast-math -funroll-loops)
-    
+    set(_EMEX64_OPT_FLAGS )
+
+    if(EMEX64LIB_COMPILER_OPTIMIZATIONS)
+        list(APPEND _EMEX64_OPT_FLAGS -O3 -fomit-frame-pointer -fstrict-aliasing -ffast-math -funroll-loops)
+    endif()
+
     if(EMEX64LIB_NATIVE_ARCH)
         list(APPEND _EMEX64_OPT_FLAGS -march=native -mtune=native)
     endif()
-
 
     if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
         list(APPEND _EMEX64_OPT_FLAGS -fgraphite-identity -floop-nest-optimize -fipa-pta)
