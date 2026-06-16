@@ -178,7 +178,7 @@ bool assembler_macro_expand(assembler_invocation_t *inv)
                     return false;
                 }
 
-                if(inv->line[li]->token_cnt >= 2 && strlen(inv->line[li]->token[1]->str) >= 0)
+                if(inv->line[li]->token_cnt >= 2 && strlen(inv->line[li]->token[1]->str) > 0)
                 {
                     parser_return_t pret = parse_value_from_string(inv->line[li]->token[1]->str);
                     if(pret.type == emexParserValueTypeNumber)
@@ -206,7 +206,7 @@ bool assembler_macro_expand(assembler_invocation_t *inv)
                 }
 
                 condition_met = false;
-                if(inv->line[li]->token_cnt >= 2 && strlen(inv->line[li]->token[1]->str) >= 0)
+                if(inv->line[li]->token_cnt >= 2 && strlen(inv->line[li]->token[1]->str) > 0)
                 {
                     for(uint64_t ami = 0; ami < c; ami++)
                     {
