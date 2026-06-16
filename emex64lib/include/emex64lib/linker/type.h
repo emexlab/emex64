@@ -116,6 +116,6 @@ typedef enum: uint8_t {
 
 #define ELF_SYM_INFO(bind, type) (((bind) << 4) | ((type) & 0xf))
 
-static uint8_t ident[EI_NIDENT] = { ELF_MAGIC_0, ELF_MAGIC_1, ELF_MAGIC_2, ELF_MAGIC_3, ELF_CLASS64, ELF_DATA2LSB, EV_CURRENT };
+extern uint8_t ident[EI_NIDENT];
 
 #endif /* EMEX64LD_TYPE_H */
