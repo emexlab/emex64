@@ -423,6 +423,145 @@ static void emit_boot_header(fdwalker_t *fw,
     fdwalker_write(fw, entry, 64);
 }
 
+bool linker_link(linker_options_t *options,
+                 char **input_file,
+                 uint64_t input_file_cnt)
+{
+    if(input_file_cnt <= 0)
+    {
+        diag_error(NULL, "no input files\n");
+        return false;
+    }
+
+    linker_invocation_t *inv = linker_invocation_alloc(options);
+    if(inv == NULL)
+    {
+        return false;
+    }
+
+    for(uint64_t i = 0; i < input_file_cnt; i++)
+    {
+        if(!linker_load_object(inv, input_file[i]))
+        {
+            diag_error(NULL, "object file \'%s\' couldn't be loaded\n", input_file[i]);
+            linker_invocation_dealloc(inv);
+            return false;
+        }
+    }
+
+    uint64_t total_text = inv->out_text_off - BOOT_HEADER_SIZE;
+    uint64_t total_data = inv->out_data_off - inv->out_text_off;
+
+    if(!apply_script_symbols(inv, inv->out_bss_off, BOOT_HEADER_SIZE, inv->out_text_off, inv->out_bss_off > inv->out_data_off ? inv->out_data_off : inv->out_bss_off))
+    {
+        linker_invocation_dealloc(inv);
+        return false;
+    }
+
+    linker_object_t *obj = inv->obj;
+    while(obj != NULL)
+    {
+        if(!obj_register_symbols(inv, obj))
+        {
+            linker_invocation_dealloc(inv);
+            return false;
+        }
+        obj = obj->next;
+    }
+
+    emex_file_t *file = emex_file_alloc(linker_options_get_output_path(options), object_file_out_policy);
+    if(file == NULL)
+    {
+        return false;
+    }
+
+    fdwalker_t *fw = emex_file_dup_fdwalker(file, BW_LITTLE_ENDIAN);
+    if(fw == NULL)
+    {
+        emex_file_dealloc(file);
+        linker_invocation_dealloc(inv);
+        return false;
+    }
+
+    /* copy .text sections */
+    obj = inv->obj;
+    while(obj != NULL)
+    {
+        if(obj->idx_text < 0)
+        {
+            obj = obj->next;
+            continue;
+        }
+        ELF64_Shdr *sh = &obj->shdrs[obj->idx_text];
+        fdwalker_seek(fw, obj->base_text, 0);
+        fdwalker_write_buf(fw, obj->file->content + sh->sh_offset, sh->sh_size);
+        obj = obj->next;
+    }
+
+    /* copy .data sections */
+    obj = inv->obj;
+    while(obj != NULL)
+    {
+        if(obj->idx_data < 0)
+        {
+            obj = obj->next;
+            continue;
+        }
+        ELF64_Shdr *sh = &obj->shdrs[obj->idx_data];
+        fdwalker_seek(fw, obj->base_data, 0);
+        fdwalker_write_buf(fw, obj->file->content + sh->sh_offset, sh->sh_size);
+        obj = obj->next;
+    }
+
+    /* .bss: already zeroed by calloc */
+    obj = inv->obj;
+    while(obj != NULL)
+    {
+        if(!obj_apply_relocs(inv, obj, fw))
+        {
+            fdwalker_dealloc(fw);
+            emex_file_dealloc(file);
+            linker_invocation_dealloc(inv);
+            return false;
+        }
+        obj = obj->next;
+    }
+
+    linker_symbol_t *gsym = linker_lookup_global_symbol(inv, linker_options_get_entry_name(options));
+    if(!gsym || !gsym->defined)
+    {
+        diag_error(NULL, "entry symbol '%s' not found\n", linker_options_get_entry_name(options));
+        fdwalker_dealloc(fw);
+        emex_file_dealloc(file);
+        linker_invocation_dealloc(inv);
+        return false;
+    }
+
+    uint64_t entry_addr = gsym->addr;
+    emit_boot_header(fw, entry_addr);
+
+    fsync(fw->fd);
+    fdwalker_dealloc(fw);
+    emex_file_dealloc(file);
+
+    if(options->verbose)
+    {
+        fprintf(stderr,
+                "emex64ld: linked object(s) → %s\n"
+                "  .text  %8lu bytes @ 0x%08lx\n"
+                "  .data  %8lu bytes @ 0x%08lx\n"
+                "  .bss   %8lu bytes @ 0x%08lx (virtual)\n"
+                "  entry  %s @ 0x%08lx\n", linker_options_get_output_path(options),
+                (unsigned long)total_text, (unsigned long)BOOT_HEADER_SIZE,
+                (unsigned long)total_data, (unsigned long)inv->out_text_off,
+                (unsigned long)(inv->out_bss_off - inv->out_data_off), (unsigned long)inv->out_data_off,
+                linker_options_get_entry_name(options), (unsigned long)entry_addr);
+    }
+
+    linker_invocation_dealloc(inv);
+    return true;
+}
+
 int main(int argc, char *argv[])
 {
     linker_options_t *options = linker_options_alloc();
@@ -444,7 +583,7 @@ int main(int argc, char *argv[])
             fprintf(stderr, "  -T script.e64ld  Linker script (or pass .e64ld files directly)\n");
             fprintf(stderr, "  .e64ld files are auto-detected by extension\n");
             fprintf(stderr, "  -v verbose       verbose mode\n");
-            fprintf(stderr, "  -r               emits relocatable object\n");
+            fprintf(stderr, "  -r relocatable   emits relocatable object\n");
             return 0;
         }
         else if(strcmp(argv[i], "-o") == 0 && i + 1 < argc)
@@ -501,127 +640,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    if(input_file_cnt <= 0)
-    {
-        diag_error(NULL, "no input files\n");
-        return 1;
-    }
-
-    linker_invocation_t *inv = linker_invocation_alloc(options);
-    if(inv == NULL)
-    {
-        return 1;
-    }
-
-    for(uint64_t i = 0; i < input_file_cnt; i++)
-    {
-        if(!linker_load_object(inv, input_file[i]))
-        {
-            diag_error(NULL, "object file \'%s\' couldn't be loaded\n", argv[i]);
-            return 1;
-        }
-    }
-
-    uint64_t total_text = inv->out_text_off - BOOT_HEADER_SIZE;
-    uint64_t total_data = inv->out_data_off - inv->out_text_off;
-
-    if(!apply_script_symbols(inv, inv->out_bss_off, BOOT_HEADER_SIZE, inv->out_text_off, inv->out_bss_off > inv->out_data_off ? inv->out_data_off : inv->out_bss_off))
-    {
-        return 1;
-    }
-
-    linker_object_t *obj = inv->obj;
-    while(obj != NULL)
-    {
-        if(!obj_register_symbols(inv, obj))
-        {
-            return 1;
-        }
-        obj = obj->next;
-    }
-
-    emex_file_t *file = emex_file_alloc(linker_options_get_output_path(options), object_file_out_policy);
-    if(file == NULL)
-    {
-        return 1;
-    }
-
-    fdwalker_t *fw = emex_file_dup_fdwalker(file, BW_LITTLE_ENDIAN);
-    if(fw == NULL)
-    {
-        emex_file_dealloc(file);
-        fdwalker_dealloc(fw);
-        return 1;
-    }
-
-    /* copy .text sections */
-    obj = inv->obj;
-    while(obj != NULL)
-    {
-        if(obj->idx_text < 0)
-        {
-            obj = obj->next;
-            continue;
-        }
-        ELF64_Shdr *sh = &obj->shdrs[obj->idx_text];
-        fdwalker_seek(fw, obj->base_text, 0);
-        fdwalker_write_buf(fw, obj->file->content + sh->sh_offset, sh->sh_size);
-        obj = obj->next;
-    }
-
-    /* copy .data sections */
-    obj = inv->obj;
-    while(obj != NULL)
-    {
-        if(obj->idx_data < 0)
-        {
-            obj = obj->next;
-            continue;
-        }
-        ELF64_Shdr *sh = &obj->shdrs[obj->idx_data];
-        fdwalker_seek(fw, obj->base_data, 0);
-        fdwalker_write_buf(fw, obj->file->content + sh->sh_offset, sh->sh_size);
-        obj = obj->next;
-    }
-
-    /* .bss: already zeroed by calloc */
-    obj = inv->obj;
-    while(obj != NULL)
-    {
-        if(!obj_apply_relocs(inv, obj, fw))
-        {
-            return 1;
-        }
-        obj = obj->next;
-    }
-
-    linker_symbol_t *gsym = linker_lookup_global_symbol(inv, linker_options_get_entry_name(options));
-    if(!gsym || !gsym->defined)
-    {
-        diag_error(NULL, "entry symbol '%s' not found\n", linker_options_get_entry_name(options));
-        return 1;
-    }
-
-    uint64_t entry_addr = gsym->addr;
-    emit_boot_header(fw, entry_addr);
-
-    fsync(fw->fd);
-    fdwalker_dealloc(fw);
-
-    if(options->verbose)
-    {
-        fprintf(stderr,
-                "emex64ld: linked object(s) → %s\n"
-                "  .text  %8lu bytes @ 0x%08lx\n"
-                "  .data  %8lu bytes @ 0x%08lx\n"
-                "  .bss   %8lu bytes @ 0x%08lx (virtual)\n"
-                "  entry  %s @ 0x%08lx\n", linker_options_get_output_path(options),
-                (unsigned long)total_text, (unsigned long)BOOT_HEADER_SIZE,
-                (unsigned long)total_data, (unsigned long)inv->out_text_off,
-                (unsigned long)(inv->out_bss_off - inv->out_data_off), (unsigned long)inv->out_data_off,
-                linker_options_get_entry_name(options), (unsigned long)entry_addr);
-    }
-
-    linker_invocation_dealloc(inv);
-    return 0;
+    bool success = linker_link(options, input_file, input_file_cnt);
+    linker_options_dealloc(options);
+    return success ? 0 : 1;
 }
