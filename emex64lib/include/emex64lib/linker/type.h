@@ -100,6 +100,12 @@ typedef enum: uint16_t {
     kELFSectionHeaderIndexCount =       9,
 } kELFSectionHeaderIndex;
 
+typedef enum: uint8_t {
+    kEmitModeNone,
+    kEmitModeFirmware,
+    kEmitModeObject,
+} kEmitMode;
+
 #define R_EMEX64_ABS64  1
 
 #define EI_NIDENT   16

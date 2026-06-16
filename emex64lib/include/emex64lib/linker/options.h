@@ -22,29 +22,24 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64LD_LINKER_H
-#define EMEX64LD_LINKER_H
+#ifndef EMEX64LD_OPTIONS_H
+#define EMEX64LD_OPTIONS_H
+
+#include <stdbool.h>
 
 #include <emex64lib/linker/type.h>
-#include <emex64lib/linker/header.h>
-#include <emex64lib/linker/sym.h>
-#include <emex64lib/linker/obj.h>
 
-typedef struct {
-    linker_global_symbol_t *sym;
-    linker_object_t *obj;
+typedef struct linker_options {
+    bool verbose;
+    char *output_path;
+    char *entry_name;
+    kEmitMode emit_mode;
+} linker_options_t;
 
-    uint64_t out_text_off;
-    uint64_t out_data_off;
-    uint64_t out_bss_off;
-} linker_invocation_t;
+linker_options_t *linker_options_alloc(void);
+void linker_options_dealloc(linker_options_t *options);
 
-linker_invocation_t *linker_invocation_alloc(void);
-void linker_invocation_dealloc(linker_invocation_t *inv);
+const char *linker_options_get_output_path(linker_options_t *options);
+const char *linker_options_get_entry_name(linker_options_t *options);
 
-bool linker_append_global_symbol_definition(linker_invocation_t *inv, const char *name, const char *object_path, uint64_t addr);
-linker_global_symbol_t *linker_lookup_global_symbol(linker_invocation_t *inv, const char *name);
-
-bool linker_load_object(linker_invocation_t *inv, const char *object_path);
-
-#endif /* EMEX64LD_LINKER_H */
+#endif /* EMEX64LD_OPTIONS_H */

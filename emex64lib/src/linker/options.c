@@ -22,29 +22,50 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64LD_LINKER_H
-#define EMEX64LD_LINKER_H
+#include <stdlib.h>
+#include <string.h>
 
-#include <emex64lib/linker/type.h>
-#include <emex64lib/linker/header.h>
-#include <emex64lib/linker/sym.h>
-#include <emex64lib/linker/obj.h>
+#include <emex64lib/support/diag.h>
 
-typedef struct {
-    linker_global_symbol_t *sym;
-    linker_object_t *obj;
+#include <emex64lib/linker/options.h>
 
-    uint64_t out_text_off;
-    uint64_t out_data_off;
-    uint64_t out_bss_off;
-} linker_invocation_t;
+linker_options_t *linker_options_alloc(void)
+{
+    linker_options_t *options = malloc(sizeof(linker_options_t));
+    if(options == NULL)
+    {
+        return NULL;
+    }
 
-linker_invocation_t *linker_invocation_alloc(void);
-void linker_invocation_dealloc(linker_invocation_t *inv);
+    options->output_path = NULL;
+    options->entry_name = NULL;
+    options->verbose = false;
+    options->emit_mode = kEmitModeFirmware;
 
-bool linker_append_global_symbol_definition(linker_invocation_t *inv, const char *name, const char *object_path, uint64_t addr);
-linker_global_symbol_t *linker_lookup_global_symbol(linker_invocation_t *inv, const char *name);
+    return options;
+}
 
-bool linker_load_object(linker_invocation_t *inv, const char *object_path);
+void linker_options_dealloc(linker_options_t *options)
+{
+    free(options->output_path);
+    free(options->entry_name);
+}
 
-#endif /* EMEX64LD_LINKER_H */
+const char *linker_options_get_output_path(linker_options_t *options)
+{
+    if(options->output_path == NULL)
+    {
+        diag_warn(NULL, "no output binary specified, falling back to a.out\n");
+        options->output_path = strdup("a.out");
+    }
+    return options->output_path;
+}
+
+const char *linker_options_get_entry_name(linker_options_t *options)
+{
+    if(options->entry_name == NULL)
+    {
+        options->entry_name = strdup("_start");
+    }
+    return options->entry_name;
+}
