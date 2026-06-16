@@ -130,7 +130,15 @@ bool linker_script_parse(linker_invocation_t *inv,
                 return false;
             }
 
-            inv->script_syms = realloc(inv->script_syms, (inv->script_sym_cnt + 1) * sizeof(script_sym_t));
+            script_sym_t *new = realloc(inv->script_syms, (inv->script_sym_cnt + 1) * sizeof(script_sym_t));
+            if(new == NULL)
+            {
+                diag_fatal(NULL, "out of memory\n", path, lineno);
+                free(sym_name);
+                fclose(f);
+                return false;
+            }
+            inv->script_syms = new;
             inv->script_syms[inv->script_sym_cnt].name = sym_name;
             inv->script_syms[inv->script_sym_cnt].expr = strdup(expr_start);
             inv->script_syms[inv->script_sym_cnt].script_path = path;

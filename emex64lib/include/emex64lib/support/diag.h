@@ -30,13 +30,15 @@
 #define diag_note(at, msg, ...) diag_log(DIAG_NOTE, at, msg __VA_OPT__(,) __VA_ARGS__)
 #define diag_warn(at, msg, ...) diag_log(DIAG_WARN, at, msg __VA_OPT__(,) __VA_ARGS__)
 #define diag_error(at, msg, ...) diag_log(DIAG_ERROR, at, msg __VA_OPT__(,) __VA_ARGS__)
+#define diag_fatal(at, msg, ...) diag_log(DIAG_FATAL, at, msg __VA_OPT__(,) __VA_ARGS__)
 
 extern _Thread_local bool warning_error;
 
 typedef enum {
     DIAG_NOTE,
     DIAG_WARN,
-    DIAG_ERROR
+    DIAG_ERROR,
+    DIAG_FATAL,
 } diag_level_t;
 
 void diag_log(diag_level_t level, assembler_token_t *at, const char *msg, ...);

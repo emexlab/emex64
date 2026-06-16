@@ -155,6 +155,9 @@ void diag_log(diag_level_t level,
         case DIAG_ERROR:
             printf("\x1b[1m\033[31merror:");
             break;
+        case DIAG_FATAL:
+            printf("\x1b[1m\033[31mfatal:");
+            break;
     }
     printf("\033[0m\x1b[0m ");
 
