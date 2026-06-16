@@ -10,7 +10,7 @@ find_package(Threads REQUIRED)
 option(EMEX64VM_DEVICE_DISPLAY "Enable display device support" ON)
 
 if(EMEX64VM_DEVICE_DISPLAY)
-    find_package(OpenGL REQUIRED)
+    find_package(OpenGL)
 
     if(NOT OPENGL_FOUND)
         message(WARNING "Missing OpenGL — EMEX64VM_DEVICE_DISPLAY disabled
