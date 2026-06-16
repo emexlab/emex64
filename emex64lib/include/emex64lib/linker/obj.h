@@ -49,9 +49,9 @@ typedef struct linker_object {
     int32_t idx_symtab;
     int32_t idx_strtab;
 
-    uint64_t base_text;
-    uint64_t base_data;
-    uint64_t base_bss;
+    uint64_t base_text; /* text base inside final object */
+    uint64_t base_data; /* data base inside final object */
+    uint64_t base_bss;  /* bss base inside final object */
 
     struct linker_object *next;
 } linker_object_t;

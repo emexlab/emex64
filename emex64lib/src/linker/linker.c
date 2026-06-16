@@ -139,7 +139,7 @@ bool linker_load_object(linker_invocation_t *inv,
 
     /* updating offsets */
     obj->base_text = inv->out_text_off;
-    inv->out_text_off += linker_object_text_size(inv->obj);
+    inv->out_text_off += linker_object_text_size(obj);
 
     inv->out_data_off = inv->out_text_off;
     obj = inv->obj;
