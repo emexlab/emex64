@@ -71,6 +71,24 @@ void fdwalker_reset(fdwalker_t *fw)
     fw->bit_idx = 0;
 }
 
+static __uint128_t load_window_le(const uint8_t *p, size_t n)
+{
+    __uint128_t v = 0;
+    for(size_t i = 0; i < n; i++)
+    {
+        v |= (__uint128_t)p[i] << (8 * i);
+    }
+    return v;
+}
+
+static void store_window_le(uint8_t *p, __uint128_t v, size_t n)
+{
+    for(size_t i = 0; i < n; i++)
+    {
+        p[i] = (uint8_t)(v >> (8 * i));
+    }
+}
+
 int fdwalker_write(fdwalker_t *fw,
                    uint64_t value,
                    uint8_t num_bits)
@@ -92,24 +110,28 @@ int fdwalker_write(fdwalker_t *fw,
     if(num_bits > 8)
     {
         uint8_t num_bytes = (num_bits + 7) / 8;
-        if(BW_HOST_ENDIAN != fw->endian)
+        if(fw->endian == BW_BIG_ENDIAN)
         {
             value = bw_swap_n(value, num_bytes);
         }
     }
 
-    __uint128_t chunk = 0;
-
-    /* copy up to 8 bytes from buffer */
+    uint8_t win[9] = {0};
     lseek(fw->fd, fw->byte_pos, SEEK_SET);
-    read(fw->fd, &chunk, 9);
+    if(read(fw->fd, win, sizeof win) < 0)
+    {
+        return -1;
+    }
 
-    /* shift value into position */
+    __uint128_t chunk = load_window_le(win, sizeof win);
     chunk |= (__uint128_t)value << fw->bit_idx;
+    store_window_le(win, chunk, sizeof win);
 
-    /* write back */
     lseek(fw->fd, fw->byte_pos, SEEK_SET);
-    write(fw->fd, &chunk, 9);
+    if(write(fw->fd, win, sizeof win) != (ssize_t)sizeof win)
+    {
+        return -1;
+    }
 
     /* advance cursor */
     size_t tmp = fw->bit_idx + num_bits;
@@ -127,28 +149,24 @@ uint64_t fdwalker_read(fdwalker_t *fw,
         return 0;
     }
 
-    __uint128_t chunk = 0;
-
-    /* copy up to 8 bytes */
+    uint8_t win[9] = {0};
     lseek(fw->fd, fw->byte_pos, SEEK_SET);
-    read(fw->fd, &chunk, 9);
+    if(read(fw->fd, win, sizeof win) < 0)
+    {
+        return 0;
+    }
 
-    /* shift away preceding bits */
+    __uint128_t chunk = load_window_le(win, sizeof win);
     chunk >>= fw->bit_idx;
 
-    uint64_t mask = (num_bits == 64) ? UINT64_MAX : ((1ULL << num_bits) - 1);
-
+    uint64_t mask  = (num_bits == 64) ? UINT64_MAX : ((1ULL << num_bits) - 1);
     uint64_t value = chunk & mask;
-
-    fw->bit_idx += num_bits;
-    fw->byte_pos += fw->bit_idx >> 3;
-    fw->bit_idx &= 7;
 
     /* endian fix */
     if(num_bits > 8)
     {
         uint8_t num_bytes = (num_bits + 7) / 8;
-        if(BW_HOST_ENDIAN != fw->endian)
+        if(fw->endian == BW_BIG_ENDIAN)
         {
             value = bw_swap_n(value, num_bytes);
         }
