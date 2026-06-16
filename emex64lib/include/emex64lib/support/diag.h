@@ -27,9 +27,9 @@
 
 #include <emex64lib/asm/type.h>
 
-#define diag_note(at, msg, ...) diag_log(DIAG_NOTE, at, msg,  ##__VA_ARGS__)
-#define diag_warn(at, msg, ...) diag_log(DIAG_WARN, at, msg,  ##__VA_ARGS__)
-#define diag_error(at, msg, ...) diag_log(DIAG_ERROR, at, msg,  ##__VA_ARGS__)
+#define diag_note(at, msg, ...) diag_log(DIAG_NOTE, at, msg __VA_OPT__(,) __VA_ARGS__)
+#define diag_warn(at, msg, ...) diag_log(DIAG_WARN, at, msg __VA_OPT__(,) __VA_ARGS__)
+#define diag_error(at, msg, ...) diag_log(DIAG_ERROR, at, msg __VA_OPT__(,) __VA_ARGS__)
 
 extern _Thread_local bool warning_error;
 

@@ -204,7 +204,7 @@ static inline void emex64_core_execute_instruction_at_pc(emex64_core_t *core)
                  * So it is like Imm64 just with alignment.
                  */
                 bb_align(&bb);
-                 /* FALLTHROUGH */
+                [[fallthrough]];
             case kEmex64ParameterCodingImm5:
             case kEmex64ParameterCodingImm8:
             case kEmex64ParameterCodingImm16:
