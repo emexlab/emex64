@@ -41,6 +41,7 @@ linker_invocation_t *linker_invocation_alloc(linker_options_t *options)
 
     inv->sym = NULL;
     inv->obj = NULL;
+    inv->script_syms = NULL;
 
     /* a lot of problems to solve for today :3 */
     inv->out_text_off = BOOT_HEADER_SIZE;
