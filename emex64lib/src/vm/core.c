@@ -197,12 +197,14 @@ static inline void emex64_core_execute_instruction_at_pc(emex64_core_t *core)
                 break;
             }
             case kEmex64ParameterCodingAddr64:
-                bb_align(&bb);
                 /*
                  * fallthrough, because kEmex64ParameterCodingAddr64
                  * was invented to make relocation possible, because
                  * the decoder would align to the next byte boundary.
+                 * So it is like Imm64 just with alignment.
                  */
+                bb_align(&bb);
+                 /* FALLTHROUGH */
             case kEmex64ParameterCodingImm5:
             case kEmex64ParameterCodingImm8:
             case kEmex64ParameterCodingImm16:
