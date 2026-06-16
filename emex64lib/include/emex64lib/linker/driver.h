@@ -22,36 +22,26 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64LD_LINKER_H
-#define EMEX64LD_LINKER_H
+#ifndef EMEX64LD_DRIVER_H
+#define EMEX64LD_DRIVER_H
 
-#include <emex64lib/linker/type.h>
-#include <emex64lib/linker/header.h>
-#include <emex64lib/linker/sym.h>
-#include <emex64lib/linker/obj.h>
+#include <stdint.h>
+
 #include <emex64lib/linker/options.h>
-#include <emex64lib/linker/script.h>
-#include <emex64lib/linker/emit.h>
-#include <emex64lib/linker/driver.h>
 
-typedef struct linker_invocation {
-    linker_options_t *options;  /* borrowed */
+typedef struct {
+    linker_options_t *options;
 
-    linker_symbol_t *sym;
-    linker_object_t *obj;
+    const char **input_file;            /* borrowed */
+    uint64_t input_file_cnt;
 
-    script_sym_t *script_syms;
-    size_t script_sym_cnt;
+    const char **linker_script_file;    /* borrowed */
+    uint64_t linker_script_file_cnt;
+} linker_driver_t;
 
-    uint64_t out_text_off;
-    uint64_t out_data_off;
-    uint64_t out_bss_off;
-} linker_invocation_t;
+linker_driver_t *linker_driver_alloc(const char **argv, int argc);
+void linker_driver_dealloc(linker_driver_t *driver);
 
-linker_invocation_t *linker_invocation_alloc(linker_options_t *options);
-void linker_invocation_dealloc(linker_invocation_t *inv);
+bool linker_driver_drive_the_fucking_car(linker_driver_t *driver);
 
-bool linker_append_global_symbol_definition(linker_invocation_t *inv, const char *name, const char *object_path, uint64_t addr);
-linker_symbol_t *linker_lookup_global_symbol(linker_invocation_t *inv, const char *name);
-
-#endif /* EMEX64LD_LINKER_H */
+#endif /* EMEX64LD_DRIVER_H */

@@ -30,6 +30,6 @@
 
 typedef struct linker_invocation linker_invocation_t;
 
-bool linker_link(linker_options_t *options, char **input_file, uint64_t input_file_cnt, char **linker_script_file, uint64_t linker_script_file_cnt);
+bool linker_link(linker_options_t *options, const char **input_file, uint64_t input_file_cnt, const char **linker_script_file, uint64_t linker_script_file_cnt);
 
 #endif /* EMEX64LD_EMIT_H */

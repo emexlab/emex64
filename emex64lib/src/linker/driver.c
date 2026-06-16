@@ -1,0 +1,135 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2026 emexlab
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <emex64lib/support/diag.h>
+
+#include <emex64lib/linker/linker.h>
+#include <emex64lib/linker/driver.h>
+#include <emex64lib/linker/emit.h>
+
+linker_driver_t *linker_driver_alloc(const char **argv,
+                                     int argc)
+{
+    /* slightly different from the assembler driver lol */
+    linker_driver_t *driver = calloc(1, sizeof(linker_driver_t));
+    if(driver == NULL)
+    {
+        return NULL;
+    }
+
+    driver->options = linker_options_alloc();
+    if(driver->options == NULL)
+    {
+        free(driver);
+        return NULL;
+    }
+
+    driver->input_file = calloc(argc, sizeof(char*));
+    driver->input_file_cnt = 0;
+
+    driver->linker_script_file = calloc(argc, sizeof(char*));
+    driver->linker_script_file_cnt = 0;
+
+    for(int i = 1; i < argc; i++)
+    {
+        if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0)
+        {
+            fprintf(stderr, "Usage: %s [-o output] [-e entry] [-T script.e64ld] file1.e64o [...]\n", argv[0]);
+            fprintf(stderr, "  -o output        Output file (default: a.out)\n");
+            fprintf(stderr, "  -e entry         Entry symbol (default: _start)\n");
+            fprintf(stderr, "  -T script.e64ld  Linker script (or pass .e64ld files directly)\n");
+            fprintf(stderr, "  .e64ld files are auto-detected by extension\n");
+            fprintf(stderr, "  -v verbose       verbose mode\n");
+            fprintf(stderr, "  -r relocatable   emits relocatable object\n");
+            goto failure;
+        }
+        else if(strcmp(argv[i], "-o") == 0 && i + 1 < argc)
+        {
+            driver->options->output_path = strdup(argv[++i]);
+        }
+        else if (strcmp(argv[i], "-e") == 0 && i + 1 < argc)
+        {
+            driver->options->entry_name = strdup(argv[++i]);
+        }
+        else if((strcmp(argv[i], "-T") == 0 || strcmp(argv[i], "--script") == 0) && i + 1 < argc)
+        {
+            driver->linker_script_file[driver->linker_script_file_cnt++] = argv[++i];
+        }
+        else if (strncmp(argv[i], "-T", 2) == 0 && argv[i][2])
+        {
+            driver->linker_script_file[driver->linker_script_file_cnt++] = argv[i] + 2;
+        }
+        else if(strcmp(argv[i], "-v") == 0)
+        {
+            driver->options->verbose = true;
+        }
+        else if(strcmp(argv[i], "-r") == 0)
+        {
+            diag_error(NULL, "relocatable object emission is not supported yet\n");
+            goto failure;
+        }
+        else if (argv[i][0] != '-')
+        {
+            size_t n = strlen(argv[i]);
+            if(n > 5 && strcmp(argv[i] + n - 5, ".e64ld") == 0)
+            {
+                driver->linker_script_file[driver->linker_script_file_cnt++] = argv[++i];
+            }
+            else
+            {
+                driver->input_file[driver->input_file_cnt++] = argv[i];
+            }
+        }
+        else
+        {
+            diag_error(NULL, "unknown option '%s'\n", argv[i]);
+            goto failure;
+        }
+    }
+
+    return driver;
+
+failure:
+    free(driver->input_file);
+    free(driver->linker_script_file);
+    linker_options_dealloc(driver->options);
+    free(driver);
+    return NULL;
+}
+
+void linker_driver_dealloc(linker_driver_t *driver)
+{
+    free(driver->input_file);
+    free(driver->linker_script_file);
+    linker_options_dealloc(driver->options);
+    free(driver);
+}
+
+bool linker_driver_drive_the_fucking_car(linker_driver_t *driver)
+{
+    return linker_link(driver->options, driver->input_file, driver->input_file_cnt, driver->linker_script_file, driver->linker_script_file_cnt);
+}

@@ -104,6 +104,7 @@ add_library(emex64 ${LIB_TYPE}
 
     # Linker
 
+    src/linker/driver.c
     src/linker/linker.c
     src/linker/sym.c
     src/linker/obj.c

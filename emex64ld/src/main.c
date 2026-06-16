@@ -22,96 +22,17 @@
  * SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
-#include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <assert.h>
-#include <errno.h>
-
-#include <emex64lib/support/diag.h>
-#include <emex64lib/support/file.h>
-#include <emex64lib/support/fdwalker.h>
-
 #include <emex64lib/linker/linker.h>
 
-int main(int argc, char *argv[])
+int main(int argc, const char *argv[])
 {
-    linker_options_t *options = linker_options_alloc();
-    if(options == NULL)
+    linker_driver_t *driver = linker_driver_alloc(argv, argc);
+    if(driver == NULL)
     {
         return 1;
     }
 
-    char **input_file = calloc(argc, sizeof(char*));
-    uint64_t input_file_cnt = 0;
-
-    char **linker_script_file = calloc(argc, sizeof(char*));
-    uint64_t linker_script_file_cnt = 0;
-
-    for(int i = 1; i < argc; i++)
-    {
-        if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0)
-        {
-            fprintf(stderr, "Usage: %s [-o output] [-e entry] [-T script.e64ld] file1.e64o [...]\n", argv[0]);
-            fprintf(stderr, "  -o output        Output file (default: a.out)\n");
-            fprintf(stderr, "  -e entry         Entry symbol (default: _start)\n");
-            fprintf(stderr, "  -T script.e64ld  Linker script (or pass .e64ld files directly)\n");
-            fprintf(stderr, "  .e64ld files are auto-detected by extension\n");
-            fprintf(stderr, "  -v verbose       verbose mode\n");
-            fprintf(stderr, "  -r relocatable   emits relocatable object\n");
-            return 0;
-        }
-        else if(strcmp(argv[i], "-o") == 0 && i + 1 < argc)
-        {
-            options->output_path = strdup(argv[++i]);
-        }
-        else if (strcmp(argv[i], "-e") == 0 && i + 1 < argc)
-        {
-            options->entry_name = strdup(argv[++i]);
-        }
-        else if((strcmp(argv[i], "-T") == 0 || strcmp(argv[i], "--script") == 0) && i + 1 < argc)
-        {
-            linker_script_file[linker_script_file_cnt++] = argv[++i];
-        }
-        else if (strncmp(argv[i], "-T", 2) == 0 && argv[i][2])
-        {
-            linker_script_file[linker_script_file_cnt++] = argv[i] + 2;
-        }
-        else if(strcmp(argv[i], "-v") == 0)
-        {
-            options->verbose = true;
-        }
-        else if(strcmp(argv[i], "-r") == 0)
-        {
-            diag_error(NULL, "relocatable object emission is not supported yet\n");
-            /* options->emit_mode = kEmitModeObject; */
-            return 1;
-        }
-        else if (argv[i][0] != '-')
-        {
-            size_t n = strlen(argv[i]);
-            if(n > 5 && strcmp(argv[i] + n - 5, ".e64ld") == 0)
-            {
-                linker_script_file[linker_script_file_cnt++] = argv[++i];
-            }
-            else
-            {
-                input_file[input_file_cnt++] = argv[i];
-            }
-        }
-        else
-        {
-            diag_error(NULL, "unknown option '%s'\n", argv[i]);
-            return 1;
-        }
-    }
-
-    bool success = linker_link(options, input_file, input_file_cnt, linker_script_file, linker_script_file_cnt);
-    linker_options_dealloc(options);
+    bool success = linker_driver_drive_the_fucking_car(driver);
+    linker_driver_dealloc(driver);
     return success ? 0 : 1;
 }
