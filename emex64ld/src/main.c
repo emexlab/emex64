@@ -458,8 +458,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    uint64_t cur_text = BOOT_HEADER_SIZE;
-
     for(int i = 1; i < argc; i++)
     {
         if(strcmp(argv[i], "-o") == 0 && i + 1 < argc)
@@ -516,9 +514,6 @@ int main(int argc, char *argv[])
                     diag_error(NULL, "object file \'%s\' couldn't be loaded\n", argv[i]);
                     return 1;
                 }
-
-                inv->obj->base_text = cur_text;
-                cur_text += linker_object_text_size(inv->obj);
             }
         }
         else
@@ -540,36 +535,15 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    uint64_t cur_data = 0;
-    uint64_t cur_bss = 0;
+    uint64_t total_text = inv->out_text_off - BOOT_HEADER_SIZE;
+    uint64_t total_data = inv->out_data_off - inv->out_text_off;
 
-    cur_data = cur_text;
-    linker_object_t *obj = inv->obj;
-    while(obj != NULL)
-    {
-        obj->base_data = cur_data;
-        cur_data += linker_object_data_size(obj);
-        obj = obj->next;
-    }
-
-    cur_bss = cur_data;
-    obj = inv->obj;
-    while(obj != NULL)
-    {
-        obj->base_bss = cur_bss;
-        cur_bss += linker_object_bss_size(obj);
-        obj = obj->next;
-    }
-
-    uint64_t total_text = cur_text - BOOT_HEADER_SIZE;
-    uint64_t total_data = cur_data - cur_text;
-
-    if(!apply_script_symbols(inv, cur_bss, BOOT_HEADER_SIZE, cur_text, cur_bss > cur_data ? cur_data : cur_bss))
+    if(!apply_script_symbols(inv, inv->out_bss_off, BOOT_HEADER_SIZE, inv->out_text_off, inv->out_bss_off > inv->out_data_off ? inv->out_data_off : inv->out_bss_off))
     {
         return 1;
     }
 
-    obj = inv->obj;
+    linker_object_t *obj = inv->obj;
     while(obj != NULL)
     {
         if(!obj_register_symbols(inv, obj))
@@ -659,8 +633,8 @@ int main(int argc, char *argv[])
                 "  .bss   %8lu bytes @ 0x%08lx (virtual)\n"
                 "  entry  %s @ 0x%08lx\n", output_path,
                 (unsigned long)total_text, (unsigned long)BOOT_HEADER_SIZE,
-                (unsigned long)total_data, (unsigned long)cur_text,
-                (unsigned long)(cur_bss - cur_data), (unsigned long)cur_data,
+                (unsigned long)total_data, (unsigned long)inv->out_text_off,
+                (unsigned long)(inv->out_bss_off - inv->out_data_off), (unsigned long)inv->out_data_off,
                 entry_name, (unsigned long)entry_addr);
     }
 

@@ -33,6 +33,10 @@
 typedef struct {
     linker_global_symbol_t *sym;
     linker_object_t *obj;
+
+    uint64_t out_text_off;
+    uint64_t out_data_off;
+    uint64_t out_bss_off;
 } linker_invocation_t;
 
 typedef enum: uint8_t {

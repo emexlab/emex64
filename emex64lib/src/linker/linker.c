@@ -40,6 +40,11 @@ linker_invocation_t *linker_invocation_alloc(void)
     inv->sym = NULL;
     inv->obj = NULL;
 
+    /* a lot of problems to solve for today :3 */
+    inv->out_text_off = BOOT_HEADER_SIZE;
+    inv->out_data_off = 0;
+    inv->out_bss_off = 0;
+
     return inv;
 }
 
@@ -112,12 +117,14 @@ linker_global_symbol_t *linker_lookup_global_symbol(linker_invocation_t *inv,
 bool linker_load_object(linker_invocation_t *inv,
                         const char *object_path)
 {
+    /* load object */
     linker_object_t *obj = linker_object_alloc(object_path);
     if(obj == NULL)
     {
         return false;
     }
 
+    /* stiching object into the linked list ^^ */
     if(inv->obj == NULL)
     {
         inv->obj = obj;
@@ -126,6 +133,28 @@ bool linker_load_object(linker_invocation_t *inv,
     {
         obj->next = inv->obj;
         inv->obj = obj;
+    }
+
+    /* updating offsets */
+    obj->base_text = inv->out_text_off;
+    inv->out_text_off += linker_object_text_size(inv->obj);
+
+    inv->out_data_off = inv->out_text_off;
+    obj = inv->obj;
+    while(obj != NULL)
+    {
+        obj->base_data = inv->out_data_off;
+        inv->out_data_off += linker_object_data_size(obj);
+        obj = obj->next;
+    }
+
+    inv->out_bss_off = inv->out_data_off;
+    obj = inv->obj;
+    while(obj != NULL)
+    {
+        obj->base_bss = inv->out_bss_off;
+        inv->out_bss_off += linker_object_bss_size(obj);
+        obj = obj->next;
     }
 
     return true;
