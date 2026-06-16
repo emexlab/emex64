@@ -31,6 +31,7 @@
 #include <emex64lib/linker/obj.h>
 #include <emex64lib/linker/options.h>
 #include <emex64lib/linker/script.h>
+#include <emex64lib/linker/emit.h>
 
 typedef struct linker_invocation {
     linker_options_t *options;  /* borrowed */

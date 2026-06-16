@@ -109,6 +109,7 @@ add_library(emex64 ${LIB_TYPE}
     src/linker/obj.c
     src/linker/options.c
     src/linker/script.c
+    src/linker/emit.c
 
     # C Compiler
 

@@ -202,7 +202,7 @@ bool emex_file_open(emex_file_t *f)
     }
 
     /* initial open */
-    f->fd = open(f->path, emex_file_policy_to_o_rw(f->policy.needed_permission) | (f->policy.create_on_open ? (O_CREAT | O_TRUNC) : 0));
+    f->fd = open(f->path, emex_file_policy_to_o_rw(f->policy.needed_permission) | (f->policy.create_on_open ? (O_CREAT | O_TRUNC) : 0), 0755);
     if(f->fd < 0)
     {
         return false;
