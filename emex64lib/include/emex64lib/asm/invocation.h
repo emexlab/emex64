@@ -38,7 +38,7 @@ typedef struct {
 } assembler_macro_definition_t;
 
 typedef struct assembler_invocation {
-    assembler_options_t *options;
+    assembler_options_t *options;               /* borrowed */
     
     char **file;
     size_t file_cnt;
@@ -50,11 +50,11 @@ typedef struct assembler_invocation {
     assembler_label_t *label;
     uint64_t label_cnt;
 
-    uint64_t definition_cnt;
-    assembler_macro_definition_t *definition;
+    uint64_t definition_cnt;                    /* borrowed */
+    assembler_macro_definition_t *definition;   /* borrowed */
 
-    char **include_dirs;
-    size_t include_dir_cnt;
+    char **include_dirs;                        /* borrowed */
+    size_t include_dir_cnt;                     /* borrowed */
 
     reloc_table_entry_t *rtbe;
     fdwalker_t *fdwalker;

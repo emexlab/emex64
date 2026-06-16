@@ -81,8 +81,8 @@ add_library(emex64 ${LIB_TYPE}
 
     src/vm/device/board/controller/power.c
     src/vm/device/board/controller/8042.c
-    src/vm/device/board/controller/gfx.c
-    src/vm/device/board/gfx/vimmio.c
+    # src/vm/device/board/controller/gfx.c
+    # src/vm/device/board/gfx/vimmio.c
     src/vm/device/board/display.c
     src/vm/device/board/uart.c
     src/vm/device/board/rtc.c
@@ -108,6 +108,7 @@ add_library(emex64 ${LIB_TYPE}
     src/linker/sym.c
     src/linker/obj.c
     src/linker/options.c
+    src/linker/script.c
 
     # C Compiler
 

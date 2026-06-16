@@ -22,34 +22,23 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64LD_LINKER_H
-#define EMEX64LD_LINKER_H
+#ifndef EMEX64LD_SCRIPT_H
+#define EMEX64LD_SCRIPT_H
+
+#include <stdint.h>
+#include <stdbool.h>
 
 #include <emex64lib/linker/type.h>
-#include <emex64lib/linker/header.h>
-#include <emex64lib/linker/sym.h>
-#include <emex64lib/linker/obj.h>
-#include <emex64lib/linker/options.h>
-#include <emex64lib/linker/script.h>
 
-typedef struct linker_invocation {
-    linker_options_t *options;  /* borrowed */
+typedef struct linker_invocation linker_invocation_t;
 
-    linker_symbol_t *sym;
-    linker_object_t *obj;
+typedef struct {
+    const char *script_path;    /* borrowed */
+    char *name;
+    char *expr;
+} script_sym_t;
 
-    script_sym_t *script_syms;
-    size_t script_sym_cnt;
+bool linker_script_parse(linker_invocation_t *inv, const char *path);
+bool linker_script_apply(linker_invocation_t *inv, uint64_t image_end, uint64_t text_start, uint64_t data_start, uint64_t bss_start);
 
-    uint64_t out_text_off;
-    uint64_t out_data_off;
-    uint64_t out_bss_off;
-} linker_invocation_t;
-
-linker_invocation_t *linker_invocation_alloc(linker_options_t *options);
-void linker_invocation_dealloc(linker_invocation_t *inv);
-
-bool linker_append_global_symbol_definition(linker_invocation_t *inv, const char *name, const char *object_path, uint64_t addr);
-linker_symbol_t *linker_lookup_global_symbol(linker_invocation_t *inv, const char *name);
-
-#endif /* EMEX64LD_LINKER_H */
+#endif /* EMEX64LD_SCRIPT_H */

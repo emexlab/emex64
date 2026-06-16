@@ -28,6 +28,7 @@
 
 #include <emex64lib/support/diag.h>
 
+#include <emex64lib/linker/linker.h>
 #include <emex64lib/linker/obj.h>
 
 linker_object_t *linker_object_alloc(const char *object_path)
@@ -150,4 +151,50 @@ void linker_object_dealloc(linker_object_t *obj)
 {
     emex_file_dealloc(obj->file);
     free(obj);
+}
+
+bool linker_load_object(linker_invocation_t *inv,
+                        const char *object_path)
+{
+    /* load object */
+    linker_object_t *obj = linker_object_alloc(object_path);
+    if(obj == NULL)
+    {
+        return false;
+    }
+
+    /* stiching object into the linked list ^^ */
+    if(inv->obj == NULL)
+    {
+        inv->obj = obj;
+    }
+    else
+    {
+        obj->next = inv->obj;
+        inv->obj = obj;
+    }
+
+    /* updating offsets */
+    obj->base_text = inv->out_text_off;
+    inv->out_text_off += linker_object_text_size(obj);
+
+    inv->out_data_off = inv->out_text_off;
+    obj = inv->obj;
+    while(obj != NULL)
+    {
+        obj->base_data = inv->out_data_off;
+        inv->out_data_off += linker_object_data_size(obj);
+        obj = obj->next;
+    }
+
+    inv->out_bss_off = inv->out_data_off;
+    obj = inv->obj;
+    while(obj != NULL)
+    {
+        obj->base_bss = inv->out_bss_off;
+        inv->out_bss_off += linker_object_bss_size(obj);
+        obj = obj->next;
+    }
+
+    return true;
 }

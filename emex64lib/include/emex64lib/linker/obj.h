@@ -34,6 +34,8 @@
 #define linker_object_data_size(obj) ((obj)->idx_data >= 0 ? (obj)->shdrs[(obj)->idx_data].sh_size : 0)
 #define linker_object_bss_size(obj) ((obj)->idx_bss >= 0 ? (obj)->shdrs[(obj)->idx_bss].sh_size : 0)
 
+typedef struct linker_invocation linker_invocation_t;
+
 typedef struct linker_object {
     emex_file_t *file;
 
@@ -58,5 +60,7 @@ typedef struct linker_object {
 
 linker_object_t *linker_object_alloc(const char *object_path);
 void linker_object_dealloc(linker_object_t *obj);
+
+bool linker_load_object(linker_invocation_t *inv, const char *object_path);
 
 #endif /* EMEX64LD_OBJ_H */

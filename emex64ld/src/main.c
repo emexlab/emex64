@@ -240,180 +240,6 @@ static bool obj_apply_relocs(linker_invocation_t *inv,
     return true;
 }
 
-typedef struct {
-    const char *script_path;
-    char *name;
-    char *expr;
-} script_sym_t;
-
-static script_sym_t *script_syms = NULL;
-static size_t script_sym_cnt = 0;
-
-static bool parse_linker_script(const char *path)
-{
-    FILE *f = fopen(path, "r");
-    if(!f)
-    {
-        diag_error(NULL, "cannot open linker script '%s': %s\n", path, strerror(errno));
-        return false;
-    }
-
-    char line[1024];
-    int lineno = 0;
-    while(fgets(line, sizeof(line), f))
-    {
-        lineno++;
-        char *comment = strchr(line, '#');
-        if(comment)
-        {
-            *comment = '\0';
-        }
-        char *end = line + strlen(line);
-        while(end > line && (end[-1] == '\n' || end[-1] == '\r' || end[-1] == ' '  || end[-1] == '\t'))
-        {
-            *--end = '\0';
-        }
-
-        char *p = line;
-        while(*p == ' ' || *p == '\t')
-        {
-            p++;
-        }
-        if(!*p)
-        {
-            continue;
-        }
-
-        if(strncmp(p, "PROVIDE", 7) == 0 && (p[7] == ' ' || p[7] == '\t'))
-        {
-            p += 7;
-            while(*p == ' ' || *p == '\t')
-            {
-                p++;
-            }
-
-            /* symbol name */
-            char *name_start = p;
-            while(*p && *p != '=' && *p != ' ' && *p != '\t')
-            {
-                p++;
-            }
-            size_t name_len = (size_t)(p - name_start);
-            if(name_len == 0)
-            {
-                diag_error(NULL, "%s:%d: expected symbol name after PROVIDE\n", path, lineno);
-                fclose(f);
-                return false;
-            }
-            char *sym_name = malloc(name_len + 1);
-            memcpy(sym_name, name_start, name_len);
-            sym_name[name_len] = '\0';
-
-            while(*p == ' ' || *p == '\t')
-            {
-                p++;
-            }
-            if(*p != '=')
-            {
-                diag_error(NULL, "%s:%d: expected '=' after symbol name\n", path, lineno);
-                free(sym_name);
-                fclose(f);
-                return false;
-            }
-            p++;
-            while(*p == ' ' || *p == '\t')
-            {
-                p++;
-            }
-
-            char *expr_start = p;
-            char *semi = strchr(p, ';');
-            if(semi)
-            {
-                *semi = '\0';
-            }
-            end = p + strlen(p);
-            while(end > p && (end[-1] == ' ' || end[-1] == '\t'))
-            {
-                *--end = '\0';
-            }
-
-            if(!*expr_start)
-            {
-                diag_error(NULL, "%s:%d: empty expression\n", path, lineno);
-                free(sym_name);
-                fclose(f);
-                return false;
-            }
-
-            script_syms = realloc(script_syms, (script_sym_cnt + 1) * sizeof(script_sym_t));
-            script_syms[script_sym_cnt].name = sym_name;
-            script_syms[script_sym_cnt].expr = strdup(expr_start);
-            script_syms[script_sym_cnt].script_path = path;
-            script_sym_cnt++;
-            continue;
-        }
-
-        diag_error(NULL, "%s:%d: unrecognised linker script directive: '%s'\n", path, lineno, p);
-        fclose(f);
-        return false;
-    }
-
-    fclose(f);
-    return true;
-}
-
-static bool apply_script_symbols(linker_invocation_t *inv,
-                                 uint64_t image_end,
-                                 uint64_t text_start,
-                                 uint64_t data_start,
-                                 uint64_t bss_start)
-{
-    for(size_t i = 0; i < script_sym_cnt; i++)
-    {
-        const char *expr = script_syms[i].expr;
-        uint64_t value = 0;
-
-        if(strcmp(expr, "IMAGE_END") == 0)
-        {
-            value = image_end;
-        }
-        else if(strcmp(expr, "IMAGE_START") == 0)
-        {
-            value = 0;
-        }
-        else if(strcmp(expr, "TEXT_START") == 0)
-        {
-            value = text_start;
-        }
-        else if(strcmp(expr, "DATA_START") == 0)
-        {
-            value = data_start;
-        }
-        else if(strcmp(expr, "BSS_START") == 0)
-        {
-            value = bss_start;
-        }
-        else
-        {
-            /* parse hex / decimal number */
-            char *endptr = NULL;
-            value = (uint64_t)strtoull(expr, &endptr, 0);
-            if(!endptr || *endptr != '\0')
-            {
-                diag_error(NULL, "unknown expression '%s' in linker script\n", expr);
-                return false;
-            }
-        }
-
-        if(!linker_append_global_symbol_definition(inv, script_syms[i].name, script_syms[i].script_path, value))
-        {
-            return false;
-        }
-    }
-    return true;
-}
-
 static void emit_boot_header(fdwalker_t *fw,
                              uint64_t entry)
 {
@@ -425,7 +251,9 @@ static void emit_boot_header(fdwalker_t *fw,
 
 bool linker_link(linker_options_t *options,
                  char **input_file,
-                 uint64_t input_file_cnt)
+                 uint64_t input_file_cnt,
+                 char **linker_script_file,
+                 uint64_t linker_script_file_cnt)
 {
     if(input_file_cnt <= 0)
     {
@@ -449,10 +277,20 @@ bool linker_link(linker_options_t *options,
         }
     }
 
+    for(uint64_t i = 0; i < linker_script_file_cnt; i++)
+    {
+        if(!linker_script_parse(inv, linker_script_file[i]))
+        {
+            diag_error(NULL, "linker script file \'%s\' is problematic\n", linker_script_file[i]);
+            linker_invocation_dealloc(inv);
+            return false;
+        }
+    }
+
     uint64_t total_text = inv->out_text_off - BOOT_HEADER_SIZE;
     uint64_t total_data = inv->out_data_off - inv->out_text_off;
 
-    if(!apply_script_symbols(inv, inv->out_bss_off, BOOT_HEADER_SIZE, inv->out_text_off, inv->out_bss_off > inv->out_data_off ? inv->out_data_off : inv->out_bss_off))
+    if(!linker_script_apply(inv, inv->out_bss_off, BOOT_HEADER_SIZE, inv->out_text_off, inv->out_bss_off > inv->out_data_off ? inv->out_data_off : inv->out_bss_off))
     {
         linker_invocation_dealloc(inv);
         return false;
@@ -573,6 +411,9 @@ int main(int argc, char *argv[])
     char **input_file = calloc(argc, sizeof(char*));
     uint64_t input_file_cnt = 0;
 
+    char **linker_script_file = calloc(argc, sizeof(char*));
+    uint64_t linker_script_file_cnt = 0;
+
     for(int i = 1; i < argc; i++)
     {
         if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0)
@@ -596,17 +437,11 @@ int main(int argc, char *argv[])
         }
         else if((strcmp(argv[i], "-T") == 0 || strcmp(argv[i], "--script") == 0) && i + 1 < argc)
         {
-            if(!parse_linker_script(argv[++i]))
-            {
-                return 1;
-            }
+            linker_script_file[linker_script_file_cnt++] = argv[++i];
         }
         else if (strncmp(argv[i], "-T", 2) == 0 && argv[i][2])
         {
-            if(!parse_linker_script(argv[i] + 2))
-            {
-                return 1;
-            }
+            linker_script_file[linker_script_file_cnt++] = argv[i] + 2;
         }
         else if(strcmp(argv[i], "-v") == 0)
         {
@@ -623,10 +458,7 @@ int main(int argc, char *argv[])
             size_t n = strlen(argv[i]);
             if(n > 5 && strcmp(argv[i] + n - 5, ".e64ld") == 0)
             {
-                if(!parse_linker_script(argv[i]))
-                {
-                    return 1;
-                }
+                linker_script_file[linker_script_file_cnt++] = argv[++i];
             }
             else
             {
@@ -640,7 +472,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    bool success = linker_link(options, input_file, input_file_cnt);
+    bool success = linker_link(options, input_file, input_file_cnt, linker_script_file, linker_script_file_cnt);
     linker_options_dealloc(options);
     return success ? 0 : 1;
 }
