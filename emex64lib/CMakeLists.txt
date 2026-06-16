@@ -152,7 +152,7 @@ else()
     endif()
 
     if(EMEX64LIB_DEBUG)
-        list(APPEND -g)
+        list(APPEND _EMEX64_OPT_FLAGS -g)
     endif()
     
     include(CheckIPOSupported)
