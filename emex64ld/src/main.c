@@ -425,17 +425,15 @@ static void emit_boot_header(fdwalker_t *fw,
 
 int main(int argc, char *argv[])
 {
-    bool verbose = false;
-    const char *output_path = "a.out";
-    const char *entry_name = "_start";
-
-    kEmitMode emit_mode = kEmitModeFirmware;
-
-    linker_invocation_t *inv = linker_invocation_alloc();
-    if(inv == NULL)
+    linker_options_t *options = linker_options_alloc();
+    if(options == NULL)
     {
         return 1;
     }
+
+    kEmitMode emit_mode = kEmitModeFirmware;
+    char **input_file = calloc(argc, sizeof(char*));
+    uint64_t input_file_cnt = 0;
 
     for(int i = 1; i < argc; i++)
     {
@@ -452,11 +450,11 @@ int main(int argc, char *argv[])
         }
         else if(strcmp(argv[i], "-o") == 0 && i + 1 < argc)
         {
-            output_path = argv[++i];
+            options->output_path = strdup(argv[++i]);
         }
         else if (strcmp(argv[i], "-e") == 0 && i + 1 < argc)
         {
-            entry_name = argv[++i];
+            options->entry_name = strdup(argv[++i]);
         }
         else if((strcmp(argv[i], "-T") == 0 || strcmp(argv[i], "--script") == 0) && i + 1 < argc)
         {
@@ -474,7 +472,7 @@ int main(int argc, char *argv[])
         }
         else if(strcmp(argv[i], "-v") == 0)
         {
-            verbose = true;
+            options->verbose = true;
         }
         else if(strcmp(argv[i], "-r") == 0)
         {
@@ -494,11 +492,7 @@ int main(int argc, char *argv[])
             }
             else
             {
-                if(!linker_load_object(inv, argv[i]))
-                {
-                    diag_error(NULL, "object file \'%s\' couldn't be loaded\n", argv[i]);
-                    return 1;
-                }
+                input_file[input_file_cnt++] = argv[i];
             }
         }
         else
@@ -514,10 +508,25 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    if(inv->obj == NULL)
+    if(input_file_cnt <= 0)
     {
         diag_error(NULL, "no input files\n");
         return 1;
+    }
+
+    linker_invocation_t *inv = linker_invocation_alloc(options);
+    if(inv == NULL)
+    {
+        return 1;
+    }
+
+    for(uint64_t i = 0; i < input_file_cnt; i++)
+    {
+        if(!linker_load_object(inv, input_file[i]))
+        {
+            diag_error(NULL, "object file \'%s\' couldn't be loaded\n", argv[i]);
+            return 1;
+        }
     }
 
     uint64_t total_text = inv->out_text_off - BOOT_HEADER_SIZE;
@@ -538,7 +547,7 @@ int main(int argc, char *argv[])
         obj = obj->next;
     }
 
-    emex_file_t *file = emex_file_alloc(output_path, object_file_out_policy);
+    emex_file_t *file = emex_file_alloc(linker_options_get_output_path(options), object_file_out_policy);
     if(file == NULL)
     {
         return 1;
@@ -593,10 +602,10 @@ int main(int argc, char *argv[])
         obj = obj->next;
     }
 
-    linker_global_symbol_t *gsym = linker_lookup_global_symbol(inv, entry_name);
+    linker_global_symbol_t *gsym = linker_lookup_global_symbol(inv, linker_options_get_entry_name(options));
     if(!gsym || !gsym->defined)
     {
-        diag_error(NULL, "entry symbol '%s' not found\n", entry_name);
+        diag_error(NULL, "entry symbol '%s' not found\n", linker_options_get_entry_name(options));
         return 1;
     }
 
@@ -606,18 +615,18 @@ int main(int argc, char *argv[])
     fsync(fw->fd);
     fdwalker_dealloc(fw);
 
-    if(verbose)
+    if(options->verbose)
     {
         fprintf(stderr,
                 "emex64ld: linked object(s) → %s\n"
                 "  .text  %8lu bytes @ 0x%08lx\n"
                 "  .data  %8lu bytes @ 0x%08lx\n"
                 "  .bss   %8lu bytes @ 0x%08lx (virtual)\n"
-                "  entry  %s @ 0x%08lx\n", output_path,
+                "  entry  %s @ 0x%08lx\n", linker_options_get_output_path(options),
                 (unsigned long)total_text, (unsigned long)BOOT_HEADER_SIZE,
                 (unsigned long)total_data, (unsigned long)inv->out_text_off,
                 (unsigned long)(inv->out_bss_off - inv->out_data_off), (unsigned long)inv->out_data_off,
-                entry_name, (unsigned long)entry_addr);
+                linker_options_get_entry_name(options), (unsigned long)entry_addr);
     }
 
     linker_invocation_dealloc(inv);

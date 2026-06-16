@@ -29,7 +29,7 @@
 
 #include <emex64lib/linker/linker.h>
 
-linker_invocation_t *linker_invocation_alloc(void)
+linker_invocation_t *linker_invocation_alloc(linker_options_t *options)
 {
     linker_invocation_t *inv = malloc(sizeof(linker_invocation_t));
     if(inv == NULL)
@@ -44,6 +44,8 @@ linker_invocation_t *linker_invocation_alloc(void)
     inv->out_text_off = BOOT_HEADER_SIZE;
     inv->out_data_off = 0;
     inv->out_bss_off = 0;
+
+    inv->options = options;
 
     return inv;
 }
