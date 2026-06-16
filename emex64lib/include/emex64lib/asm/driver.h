@@ -53,6 +53,8 @@ typedef struct {
     bool warning_error;
     bool warning_deprecated;
 
+    bool relocatable;
+
     char *output_path;
     int input_path_count;
     char **input_path;

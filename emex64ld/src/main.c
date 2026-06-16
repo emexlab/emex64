@@ -441,9 +441,7 @@ static void usage(const char *prog)
     fprintf(stderr, "  -T script.e64ld  Linker script (or pass .e64ld files directly)\n");
     fprintf(stderr, "  .e64ld files are auto-detected by extension\n");
     fprintf(stderr, "  -v verbose       verbose mode\n");
-    fprintf(stderr, "\n");
-    fprintf(stderr, "  --emit-firmware  emits firmware image\n");
-    fprintf(stderr, "  --emit-object    emits static linkable object\n");
+    fprintf(stderr, "  -r               emits relocatable object\n");
 }
 
 int main(int argc, char *argv[])
@@ -452,7 +450,7 @@ int main(int argc, char *argv[])
     const char *output_path = "a.out";
     const char *entry_name = "_start";
 
-    kEmitMode emit_mode = kEmitModeNone;
+    kEmitMode emit_mode = kEmitModeFirmware;
 
     linker_invocation_t *inv = linker_invocation_alloc();
     if(inv == NULL)
@@ -495,18 +493,10 @@ int main(int argc, char *argv[])
         {
             verbose = true;
         }
-        else if(strcmp(argv[i], "--emit-firmware") == 0)
+        else if(strcmp(argv[i], "-r") == 0)
         {
-            emit_mode = kEmitModeFirmware;
-        }
-        else if(strcmp(argv[i], "--emit-object") == 0)
-        {
-            if(emit_mode != kEmitModeNone)
-            {
-                diag_error(NULL, "emit mode is already set\n");
-                return 1;
-            }
-            diag_error(NULL, "emitting static object's is not yet supported\n");
+            diag_error(NULL, "relocatable object emission is not supported yet\n");
+            emit_mode = kEmitModeObject;
             return 1;
         }
         else if (argv[i][0] != '-')

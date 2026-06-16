@@ -349,6 +349,10 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
         {
             driver->verbose = true;
         }
+        else if(strncmp(argv[i], "-r", 2) == 0)
+        {
+            driver->relocatable = true;
+        }
         else if(strncmp(argv[i], "--in-process", 12) == 0)
         {
             driver->in_process = true;
@@ -507,7 +511,10 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
         }
 
         argv[argc++] = strdup("emex64ld");
-        argv[argc++] = strdup("--emit-firmware");
+        if(driver->relocatable)
+        {
+            argv[argc++] = strdup("-r");
+        }
         if(driver->verbose)
         {
             argv[argc++] = strdup("-v");
