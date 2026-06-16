@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
 
             if(!machine_support.display)
             {
-                diag_warn(NULL, "-display:resolution flag is not supported in this distribution of the emex64 toolchain\n");
+                diag_warn(NULL, "--display:resolution flag is not supported in this distribution of the emex64 toolchain\n");
                 continue;
             }
 
