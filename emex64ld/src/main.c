@@ -431,7 +431,6 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    kEmitMode emit_mode = kEmitModeFirmware;
     char **input_file = calloc(argc, sizeof(char*));
     uint64_t input_file_cnt = 0;
 
@@ -477,7 +476,7 @@ int main(int argc, char *argv[])
         else if(strcmp(argv[i], "-r") == 0)
         {
             diag_error(NULL, "relocatable object emission is not supported yet\n");
-            emit_mode = kEmitModeObject;
+            /* options->emit_mode = kEmitModeObject; */
             return 1;
         }
         else if (argv[i][0] != '-')
@@ -500,12 +499,6 @@ int main(int argc, char *argv[])
             diag_error(NULL, "unknown option '%s'\n", argv[i]);
             return 1;
         }
-    }
-
-    if(emit_mode == kEmitModeNone)
-    {
-        diag_error(NULL, "no emit mode was set\n");
-        return 1;
     }
 
     if(input_file_cnt <= 0)
