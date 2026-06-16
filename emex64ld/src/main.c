@@ -151,7 +151,7 @@ static uint64_t sym_resolve(linker_invocation_t *inv,
     if(strtab)
     {
         const char *name = strtab + sym->st_name;
-        linker_global_symbol_t *gsym = linker_lookup_global_symbol(inv, name);
+        linker_symbol_t *gsym = linker_lookup_global_symbol(inv, name);
         if(gsym && gsym->defined)
         {
             return gsym->addr;
@@ -595,7 +595,7 @@ int main(int argc, char *argv[])
         obj = obj->next;
     }
 
-    linker_global_symbol_t *gsym = linker_lookup_global_symbol(inv, linker_options_get_entry_name(options));
+    linker_symbol_t *gsym = linker_lookup_global_symbol(inv, linker_options_get_entry_name(options));
     if(!gsym || !gsym->defined)
     {
         diag_error(NULL, "entry symbol '%s' not found\n", linker_options_get_entry_name(options));

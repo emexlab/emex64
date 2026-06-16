@@ -42,15 +42,15 @@ typedef struct {
     int64_t r_addend;
 } __attribute__((packed)) ELF64_Rela;
 
-typedef struct linker_global_symbol {
+typedef struct linker_symbol {
     char *name;
     char *object_path;
     uint64_t addr;
     bool defined;
-    struct linker_global_symbol *next;
-} linker_global_symbol_t;
+    struct linker_symbol *next;
+} linker_symbol_t;
 
-linker_global_symbol_t *linker_global_symbol_alloc(const char *name, const char *object_path, uint64_t addr, bool defined);
-void linker_global_symbol_dealloc(linker_global_symbol_t *sym);
+linker_symbol_t *linker_symbol_alloc(const char *name, const char *object_path, uint64_t addr, bool defined);
+void linker_symbol_dealloc(linker_symbol_t *sym);
 
 #endif /* EMEX64LD_SYM_H */
