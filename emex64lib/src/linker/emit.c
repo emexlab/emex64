@@ -102,7 +102,7 @@ static bool obj_register_symbols(linker_invocation_t *inv,
             addr = sym->st_value;
         }
 
-        if(!linker_append_global_symbol_definition(inv, name, o->file->path, addr))
+        if(!linker_symbol_append_definition(inv, name, o->file->path, addr))
         {
             return false;
         }
@@ -152,7 +152,7 @@ static uint64_t sym_resolve(linker_invocation_t *inv,
     if(strtab)
     {
         const char *name = strtab + sym->st_name;
-        linker_symbol_t *gsym = linker_lookup_global_symbol(inv, name);
+        linker_symbol_t *gsym = linker_symbol_lookup(inv, name);
         if(gsym && gsym->defined)
         {
             return gsym->addr;
@@ -368,7 +368,7 @@ bool linker_link(linker_options_t *options,
         obj = obj->next;
     }
 
-    linker_symbol_t *gsym = linker_lookup_global_symbol(inv, linker_options_get_entry_name(options));
+    linker_symbol_t *gsym = linker_symbol_lookup(inv, linker_options_get_entry_name(options));
     if(!gsym || !gsym->defined)
     {
         diag_error(NULL, "entry symbol '%s' not found\n", linker_options_get_entry_name(options));

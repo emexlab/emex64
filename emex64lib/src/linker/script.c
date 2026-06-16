@@ -190,7 +190,7 @@ bool linker_script_apply(linker_invocation_t *inv,
             }
         }
 
-        if(!linker_append_global_symbol_definition(inv, inv->script_syms[i].name, inv->script_syms[i].script_path, value))
+        if(!linker_symbol_append_definition(inv, inv->script_syms[i].name, inv->script_syms[i].script_path, value))
         {
             return false;
         }

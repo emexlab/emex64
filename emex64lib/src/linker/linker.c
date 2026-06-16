@@ -81,12 +81,12 @@ void linker_invocation_dealloc(linker_invocation_t *inv)
     free(inv);
 }
 
-bool linker_append_global_symbol_definition(linker_invocation_t *inv,
-                                             const char *name,
-                                             const char *object_path,
-                                             uint64_t addr)
+bool linker_symbol_append_definition(linker_invocation_t *inv,
+                                     const char *name,
+                                     const char *object_path,
+                                     uint64_t addr)
 {
-    linker_symbol_t *sym = linker_lookup_global_symbol(inv, name);
+    linker_symbol_t *sym = linker_symbol_lookup(inv, name);
     if(sym == NULL)
     {
         sym = linker_symbol_alloc(name, object_path, addr, true);
@@ -115,8 +115,8 @@ bool linker_append_global_symbol_definition(linker_invocation_t *inv,
     return true;
 }
 
-linker_symbol_t *linker_lookup_global_symbol(linker_invocation_t *inv,
-                                             const char *name)
+linker_symbol_t *linker_symbol_lookup(linker_invocation_t *inv,
+                                      const char *name)
 {
     linker_symbol_t *sym = inv->sym;
     while(sym != NULL)
