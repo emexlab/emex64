@@ -1,12 +1,11 @@
 # emex64
 
 ## Introduction
-emex64 is a 64bit lightweight architecture. It's a mix out of RISC and CISC it is based on no previous architecture.
+emex64 is a 64bit lightweight little endian architecture. It's a mix out of RISC and CISC it is based on no previous architecture.
 
 Outside the SoC, the emulated board additionally integrates support for UART, Audio, and (implementation pending) Graphics.
 
 ## Setup and Installation
-
 Bulding the toolchain and installing it is as simple as the following:
 
 ```bash
@@ -17,72 +16,91 @@ This will install emex64's toolchain and VM to `/usr/local`, and will prompt for
 
 emex64vm will additionally require GLFW/GLEW if using the virtual display.
 
-## Using the VM
-
+## Using the Virtual Machine (VM)
 The VM can be invoked to run firmware with `emex64vm --firmware <image path>`. Test programs and the current testing firmware can be found in `./tests/`.
 
 These examples will be compiled and directly run with `make`. 
 
+## Instruction Set Architecture (ISA)
+The instruction coding is variable, it is not a fixed lenght instruction set, which is a CISC concept.
 
-## Instruction Set (Outdated)
+### Opcode's
+(1) Applies mathematical operation either on two or one operand together and stores the result into the source, the source must always be a register and can also be a operand.
+
+(2) Variadic instruction, meaning it can be used to apply the same operation onto many registers at the same time.
+
 #### Core
-| Instruction | Opcode       | Format      |
+| Instruction | Opcode       | Desciption  |
 |-------------|--------------|-------------|
-| `hlt`       | `0b00000000` | `op`        |
-| `nop`       | `0b00000001` | `op`        |
+| `hlt`       | `0b00000000` | Halts the CPU core until the next interrupt occurs from a timer or other device.        |
+| `nop`       | `0b00000001` | Does nothing, does a cycle.        |
+
 #### Data
-| Instruction | Opcode       | Format      |
+| Instruction | Opcode       | Desciption  |
 |-------------|--------------|-------------|
-| `mov`       | `0b00000010` | `op dest, any` |
-| `swp`       | `0b00000011` | `op dest, src` |
-| `swpz`      | `0b00000100` | `op dest, src` |
-| `push`      | `0b00000101` | `op src, ...32`  |
-| `pop`       | `0b00000110` | `op dest, ...32` |
-| `ldb`       | `0b00000111` | `op dest, any` |
-| `ldw`       | `0b00001000` | `op dest, any` |
-| `ldd`       | `0b00001001` | `op dest, any` |
-| `ldq`       | `0b00001010` | `op dest, any` |
-| `stb`       | `0b00001011` | `op any, src` |
-| `stw`       | `0b00001100` | `op any, src` |
-| `std`       | `0b00001101` | `op any, src` |
-| `stq`       | `0b00001110` | `op any, src` |
+| `mov`       | `0b00000010` | Moves a intermediate or a value of a register into a register. |
+| `swp`       | `0b00000011` | Swaps the values of two registers. |
+| `swpz`      | `0b00000100` | Swaps the values of two registers, while zeroing out the source. |
+| `push`      | `0b00000101` | Pushes a intermediate or a value of a register onto the stack. *(2) |
+| `pop`       | `0b00000110` | Pops a intermediate from the stack into a register. *(2) |
+| `ldb`       | `0b00000111` | Loads a byte from a memory address into a register. |
+| `ldw`       | `0b00001000` | Loads a word from a memory address into a register. |
+| `ldd`       | `0b00001001` | Loads a double word from a memory address into a register. |
+| `ldq`       | `0b00001010` | Loads a quad word form a memory address into a register. |
+| `stb`       | `0b00001011` | Stores a byte from a register into a memory address. |
+| `stw`       | `0b00001100` | Stores a word from a register into a memory address. |
+| `std`       | `0b00001101` | Stores a double word from a register into a memory address. |
+| `stq`       | `0b00001110` | Stores a quad word from a register into a memory address. |
+
 #### ALU
-| Instruction | Opcode       | Format      |
+| Instruction | Opcode       | Desciption   |
+|-------------|--------------|--------------|
+| `add`       | `0b00001111` | Addition. *(1)   |
+| `sub`       | `0b00010000` | Subtraction. *(1)    |
+| `mul`       | `0b00010001` | Multiplication. *(1) |
+| `div`       | `0b00010010` | Division. *(1)   |
+| `idiv`      | `0b00010011` | Signed Division. *(1)    |
+| `mod`       | `0b00010100` | Mudolu. *(1) |
+| `not`       | `0b00010101` | *(2)         |
+| `neg`       | `0b00010110` |              |
+| `and`       | `0b00010111` | AND gate *(1)|
+| `or`        | `0b00011000` | OR gate *(1) |
+| `xor`       | `0b00011001` | XOR gate *(1)|
+| `shr`       | `0b00011010` | Shifts bits to the right. *(1) |
+| `shl`       | `0b00011011` | Shifts bits to the left. *(1) |
+| `sar`       | `0b00011100` | Shifts bits to the right arithmetically. *(1) |
+| `ror`       | `0b00011101` | Rolls bits to the right. *(1) |
+| `rol`       | `0b00011110` | Rolls bits to the left. *(1) |
+| `pdep`      | `0b00011111` | Extracts non-contiguous bits from a source operand based on a mask pattern. |
+| `pext`      | `0b00100000` | Does the reverse of pext. Spreads contiguous bits into non-contiguous positions. |
+| `bswapw`    | `0b00100001` | Reverses the byte order of a word. |
+| `bswapd`    | `0b00100010` | Reverses the byte order of a double word. |
+| `bswapq`    | `0b00100011` | Reverses the byte order of a quad word. |
+| `inc`       | `0b00100100` | Increments operands. *(2) |
+| `dec`       | `0b00100101` | Decrements operands. *(2) |
+
+#### Control flow
+| Instruction | Opcode       | Desciption       |
+|-------------|--------------|------------------|
+| `b`         | `0b00100110` | Branches to a address by setting the PC register. |
+| `cmp`       | `0b00100111` | Compares two operands and sets the `cf` register. |
+| `be`        | `0b00101000` | Branches when the `cf` register says that the compared operands compared using `cmp` were equal. |
+| `bne`       | `0b00101001` | Branches when the `cf` register says that the compared operands compared using `cmp` were not equal. |
+| `blt`       | `0b00101010` | Branches when the `cf` register says that the first compared operand of the operands compared using `cmp` was less than the second operand. |
+| `bgt`       | `0b00101011` | Branches when the `cf` register says that the first compared operand of the operands compared using `cmp` was greater than the second operand. |
+| `ble`       | `0b00101100` | Branches when the `cf` register says that the first compared operand of the operands compared using `cmp` was less or equal to the second operand. |
+| `bge`       | `0b00101101` | Branches when the `cf` register says that the first compared operand of the operands compared using `cmp` was greater or equal to the second operand. |
+| `bz`        | `0b00101110` | Branches when the first operand is zero. |
+| `bnz`       | `0b00101111` | Branches when the first operand is not zero. |
+| `blw`       | `0b00110000` | Branches and links wastefully to a address by pushing all registers usable in the userspace to the stack. Linkage is done by storing the last stack pointer address to the stack frame in the `fp` register. |
+| `wret`      | `0b00110001` | Wastefully returns to the address it branched from when `blw` was used to branch by restoring all previously pushed registers.  |
+| `iret`      | `0b00110010` | Returns from a interrupt handler by restoring all registers backedup by the interrupt controller onto the stack located at the kernel stack pointer. |
+| `bl`        | `0b00110011` | branches and links by only storing the last `sp` address into the `fp` register. |
+| `ret`       | `0b00110100` | Returns from a `bl` branch. |
+
+#### Data (v2)
+| Instruction | Opcode       | Desciption  |
 |-------------|--------------|-------------|
-| `add`       | `0b00001111` | `op dest, any` or `op dest, any, any` |
-| `sub`       | `0b00010000` | `op dest, any` or `op dest, src, any` |
-| `mul`       | `0b00010001` | `op dest, any` or `op dest, src, any` |
-| `div`       | `0b00010010` | `op dest, any` or `op dest, src, any` |
-| `idiv`      | `0b00010011` | `op dest, any` or `op dest, src, any` |
-| `mod`       | `0b00010100` | `op dest, any` or `op dest, src, any` |
-| `not`       | `0b00010101` | `op dest, ...32` |
-| `neg`       | `0b00010110` | `op dest, ...32` |
-| `and`       | `0b00010111` | `op dest, any` or `op dest, src, any` |
-| `or`        | `0b00011000` | `op dest, any` or `op dest, src, any` |
-| `xor`       | `0b00011001` | `op dest, any` or `op dest, src, any` |
-| `shr`       | `0b00011010` | `op dest, any` or `op dest, src, any` |
-| `shl`       | `0b00011011` | `op dest, any` or `op dest, src, any` |
-| `sar`       | `0b00011100` | `op dest, any` or `op dest, src, any` |
-| `ror`       | `0b00011101` | `op dest, any` or `op dest, src, any` |
-| `rol`       | `0b00011110` | `op dest, any` or `op dest, src, any` |
-| `pdep`      | `0b00011111` |             |
-| `pext`      | `0b00100000` |             |
-| `bswapw`    | `0b00100001` |             |
-| `bswapd`    | `0b00100010` |             |
-| `bswapq`    | `0b00100011` |             |
-### Control flow
-| Instruction | Opcode       | Format      |
-|-------------|--------------|-------------|
-| `b`         | `0b00100100` | `op any` |
-| `cmp`       | `0b00100101` | `op any, any` |
-| `be`        | `0b00100110` | `op any` |
-| `bne`       | `0b00100111` | `op any` |
-| `blt`       | `0b00101000` | `op any` |
-| `bgt`       | `0b00101001` | `op any` |
-| `ble`       | `0b00101010` | `op any` |
-| `bge`       | `0b00101011` | `op any` |
-| `bz`        | `0b00101100` | `op reg, any` |
-| `bnz`       | `0b00101101` | `op reg, any` |
-| `bl`        | `0b00101110` | `op any` |
-| `ret`       | `0b00101111` | `op` |
-| `iret`      | `0b00110000` | `op` |
+| `clr`       | `0b00110101` | Clears operands. *(2) |
+| `cmov`      | `0b00110110` | Moves a value of a register or intermediate into a control register of the core.  |
+| `cmovb`     | `0b00110111` | Moves a value from a control register into a register. |
