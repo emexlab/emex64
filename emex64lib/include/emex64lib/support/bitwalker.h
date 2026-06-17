@@ -30,7 +30,6 @@
 #include <string.h>
 
 #if defined(__BYTE_ORDER__) && __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
-#error "bitwalker requires a little-endian host"
 #define BW_HOST_ENDIAN  BW_BIG_ENDIAN
 #else
 #define BW_HOST_ENDIAN  BW_LITTLE_ENDIAN

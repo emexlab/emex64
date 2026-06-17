@@ -250,7 +250,7 @@ void emex64_memory_action(emex64_core_t *core,
     {
         return;
     }
-    
+
     /*
      * MMIO starts at 0x0020000000000000 while the physical
      * maximum memory size is 0x001FFFFFFFFFFFFF, that is so
@@ -350,22 +350,53 @@ rw_fastpath:
             return;
         }
 
-        uint64_t *ptr = (uint64_t *)(core->machine->memory->memory + addr);
-        uint64_t mask = (size == 8) ? ~0ULL : (1ULL << (size * 8)) - 1;
+        uint8_t *mem_ptr = core->machine->memory->memory + addr;
+
         switch(action)
         {
             case kEmex64MemoryActionPageDirectory:
             case kEmex64MemoryActionExecute:
             case kEmex64MemoryActionRead:
-                *value = *ptr & mask;
+                switch(size)
+                {
+                    case 1:
+                        *value = *(uint8_t *)mem_ptr;
+                        break;
+                    case 2:
+                        *value = *(uint16_t *)mem_ptr;
+                        break;
+                    case 4:
+                        *value = *(uint32_t *)mem_ptr;
+                        break;
+                    case 8:
+                        *value = *(uint64_t *)mem_ptr;
+                        break;
+                    default:
+                        core->cr_state.crexc.exception = kEmex64ExceptionBadAccess;
+                        return;
+                }
                 return;
+
             case kEmex64MemoryActionWrite:
                 if(unlikely(core->machine->memory->ktrr_size > addr))
                 {
                     core->cr_state.crexc.exception = kEmex64ExceptionKTRRViolation;
                     return;
                 }
-                *ptr = (*ptr & ~mask) | (*value & mask);
+                switch(size)
+                {
+                    case 1:
+                        *(uint8_t *)mem_ptr = (uint8_t)*value; break;
+                    case 2:
+                        *(uint16_t *)mem_ptr = (uint16_t)*value; break;
+                    case 4:
+                        *(uint32_t *)mem_ptr = (uint32_t)*value; break;
+                    case 8:
+                        *(uint64_t *)mem_ptr = (uint64_t)*value; break;
+                    default:
+                        core->cr_state.crexc.exception = kEmex64ExceptionBadAccess;
+                        return;
+                }
                 return;
         }
     }
@@ -424,7 +455,7 @@ bool emex64_memory_cpy(emex64_core_t *core,
         /*
          * only a kernel level core may execute kernel space
          * code when KTRR is locked.
-         * 
+         *
          * fixme: causes SIGBUS
          */
         /*if(action == kEmex64MemoryActionExecute)

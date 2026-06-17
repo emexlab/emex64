@@ -92,7 +92,7 @@ _fw_start:
     blw _mc_get_mem_size
     mov r1, rr
     sub r0, r1, __emex64_exec_img_end
-    
+
     blw _puts, fw_memory_msg
     blw _put_mem, r1, r1
     blw _putc, '\n'
