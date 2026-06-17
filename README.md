@@ -5,7 +5,7 @@ emex64 is a 64bit lightweight little endian architecture. It's a mix out of RISC
 
 Outside the SoC, the emulated board additionally integrates support for UART, Audio, and (implementation pending) Graphics.
 
-## Setup and Installation
+## Setup and Installation of the emex64 toolchain
 Bulding the toolchain and installing it is as simple as the following:
 
 ```bash
@@ -61,8 +61,8 @@ The instruction coding is variable, it is not a fixed lenght instruction set, wh
 | `div`       | `0b00010010` | Division. *(1)   |
 | `idiv`      | `0b00010011` | Signed Division. *(1)    |
 | `mod`       | `0b00010100` | Mudolu. *(1) |
-| `not`       | `0b00010101` | *(2)         |
-| `neg`       | `0b00010110` |              |
+| `not`       | `0b00010101` | Applies a bitwise NOT gate onto the operands. *(2) |
+| `neg`       | `0b00010110` | Applies arithmetic negation onto the operands. *(2) |
 | `and`       | `0b00010111` | AND gate *(1)|
 | `or`        | `0b00011000` | OR gate *(1) |
 | `xor`       | `0b00011001` | XOR gate *(1)|
