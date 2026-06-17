@@ -26,7 +26,7 @@ The instruction coding is variable, it is not a fixed lenght instruction set, wh
 
 ### Register Set (RS)
 #### Userspace Accessible Registers
-| Register  | Name                                  | Binary       | Desciption  |
+| Register  | Name                                  | Binary       | Description |
 |-----------|---------------------------------------|--------------|-------------|
 | `pc`      | **P**rogram **C**ounter               | `0b00000`    | Points to the current address at which the CPU currently is, it increments by the lenght of the instruction when the CPU is done executing the instruction at which PC points to at that time. |
 | `sp`      | **S**tack **P**ointer                 | `0b00001`    | Points to the current address at which the stack lives, the stack grows downwards on allocation and upwards on deallocation. |
@@ -42,13 +42,13 @@ The instruction coding is variable, it is not a fixed lenght instruction set, wh
 (2) Variadic instruction, meaning it can be used to apply the same operation onto many registers at the same time.
 
 #### Core
-| Opcode      | Binary       | Desciption  |
+| Opcode      | Binary       | Description |
 |-------------|--------------|-------------|
 | `hlt`       | `0b00000000` | Halts the CPU core until the next interrupt occurs from a timer or other device.        |
 | `nop`       | `0b00000001` | Does nothing, does a cycle.        |
 
 #### Data
-| Opcode      | Binary       | Desciption  |
+| Opcode      | Binary       | Description |
 |-------------|--------------|-------------|
 | `mov`       | `0b00000010` | Moves a intermediate or a value of a register into a register. |
 | `swp`       | `0b00000011` | Swaps the values of two registers. |
@@ -65,7 +65,7 @@ The instruction coding is variable, it is not a fixed lenght instruction set, wh
 | `stq`       | `0b00001110` | Stores a quad word from a register into a memory address. |
 
 #### ALU
-| Opcode      | Binary       | Desciption   |
+| Opcode      | Binary       | Description  |
 |-------------|--------------|--------------|
 | `add`       | `0b00001111` | Addition. *(1)   |
 | `sub`       | `0b00010000` | Subtraction. *(1)    |
@@ -92,7 +92,7 @@ The instruction coding is variable, it is not a fixed lenght instruction set, wh
 | `dec`       | `0b00100101` | Decrements operands. *(2) |
 
 #### Control flow
-| Opcode      | Binary       | Desciption       |
+| Opcode      | Binary       | Description      |
 |-------------|--------------|------------------|
 | `b`         | `0b00100110` | Branches to a address by setting the PC register. |
 | `cmp`       | `0b00100111` | Compares two operands and sets the `cf` register. |
@@ -111,7 +111,7 @@ The instruction coding is variable, it is not a fixed lenght instruction set, wh
 | `ret`       | `0b00110100` | Returns from a `bl` branch. |
 
 #### Data (v2)
-| Opcode      | Binary       | Desciption  |
+| Opcode      | Binary       | Description |
 |-------------|--------------|-------------|
 | `clr`       | `0b00110101` | Clears operands. *(2) |
 | `cmov`      | `0b00110110` | Moves a value of a register or intermediate into a control register of the core.  |
