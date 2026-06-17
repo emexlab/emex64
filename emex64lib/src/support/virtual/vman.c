@@ -22,37 +22,4 @@
  * SOFTWARE.
  */
 
-#ifndef EMEXUTILS_FDWALKER_H
-#define EMEXUTILS_FDWALKER_H
-
-#include <emex64lib/support/virtual/vfd.h>
-#include <emex64lib/support/bitwalker.h>
-
-typedef struct {
-    vfd_t *d;
-    size_t byte_pos;
-    uint8_t bit_idx;
-    bw_endian_t endian;
-} fdwalker_t;
-
-fdwalker_t *fdwalker_alloc(int fd, bw_endian_t endian);
-void fdwalker_dealloc(fdwalker_t *fw);
-
-void fdwalker_reset(fdwalker_t *fw);
-
-int fdwalker_write(fdwalker_t *fw, uint64_t value, uint8_t num_bits);
-uint64_t fdwalker_read(fdwalker_t *fw, uint8_t num_bits);
-int fdwalker_write_buf(fdwalker_t *fw, const char *buf, size_t len);
-int fdwalker_read_buf(fdwalker_t *fw, char *buf, size_t len);
-
-void fdwalker_seek(fdwalker_t *fw, size_t byte_pos, uint8_t bit_idx);
-
-void fdwalker_skip(fdwalker_t *fw, size_t num_bits);
-
-size_t fdwalker_bytes_used(const fdwalker_t *fw);
-
-void fdwalker_align_byte(fdwalker_t *fw);
-
-void fdwalker_sync(fdwalker_t *fw);
-
-#endif /* EMEXUTILS_FDWALKER_H */
+#include <emex64lib/support/virtual/vman.h>

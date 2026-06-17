@@ -32,21 +32,21 @@
 fdwalker_t *fdwalker_alloc(int fd,
                            bw_endian_t endian)
 {
-    fdwalker_t *fw = malloc(sizeof(fdwalker_t));
-    if(fw == NULL)
+    vfd_t *d = vfd_open_fd(dup(fd));
+    if(d == NULL)
     {
         return NULL;
     }
 
-    /* we really shall duplicate the descriptor */
-    fw->fd = dup(fd);
-    if(fw->fd < 0)
+    fdwalker_t *fw = malloc(sizeof(fdwalker_t));
+    if(fw == NULL)
     {
-        free(fw);
+        vfd_close(d);
         return NULL;
     }
 
     /* setting properties */
+    fw->d = d;
     fw->byte_pos = 0;
     fw->bit_idx = 0;
     fw->endian = endian;
@@ -61,7 +61,7 @@ void fdwalker_dealloc(fdwalker_t *fw)
         return;
     }
     
-    close(fw->fd);
+    vfd_close(fw->d);
     free(fw);
 }
 
@@ -117,8 +117,8 @@ int fdwalker_write(fdwalker_t *fw,
     }
 
     uint8_t win[9] = {0};
-    lseek(fw->fd, fw->byte_pos, SEEK_SET);
-    if(read(fw->fd, win, sizeof win) < 0)
+    vfd_seek(fw->d, fw->byte_pos, SEEK_SET);
+    if(vfd_read(fw->d, win, sizeof win) < 0)
     {
         return -1;
     }
@@ -127,8 +127,8 @@ int fdwalker_write(fdwalker_t *fw,
     chunk |= (__uint128_t)value << fw->bit_idx;
     store_window_le(win, chunk, sizeof win);
 
-    lseek(fw->fd, fw->byte_pos, SEEK_SET);
-    if(write(fw->fd, win, sizeof win) != (ssize_t)sizeof win)
+    vfd_seek(fw->d, fw->byte_pos, SEEK_SET);
+    if(vfd_write(fw->d, win, sizeof win) != (ssize_t)sizeof win)
     {
         return -1;
     }
@@ -150,8 +150,8 @@ uint64_t fdwalker_read(fdwalker_t *fw,
     }
 
     uint8_t win[9] = {0};
-    lseek(fw->fd, fw->byte_pos, SEEK_SET);
-    if(read(fw->fd, win, sizeof win) < 0)
+    vfd_seek(fw->d, fw->byte_pos, SEEK_SET);
+    if(vfd_read(fw->d, win, sizeof win) < 0)
     {
         return 0;
     }
@@ -180,8 +180,8 @@ int fdwalker_write_buf(fdwalker_t *fw,
                        size_t len)
 {
     fdwalker_align_byte(fw);
-    lseek(fw->fd, fw->byte_pos, SEEK_SET);
-    ssize_t written = write(fw->fd, buf, len);
+    vfd_seek(fw->d, fw->byte_pos, SEEK_SET);
+    ssize_t written = vfd_write(fw->d, buf, len);
     fw->byte_pos += written;
     return written;
 }
@@ -191,8 +191,8 @@ int fdwalker_read_buf(fdwalker_t *fw,
                       size_t len)
 {
     fdwalker_align_byte(fw);
-    lseek(fw->fd, fw->byte_pos, SEEK_SET);
-    ssize_t reddit = read(fw->fd, buf, len);
+    vfd_seek(fw->d, fw->byte_pos, SEEK_SET);
+    ssize_t reddit = vfd_read(fw->d, buf, len);
     fw->byte_pos += reddit;
     return reddit;
 }
@@ -225,4 +225,9 @@ void fdwalker_align_byte(fdwalker_t *fw)
         fw->bit_idx = 0;
         fw->byte_pos += 1;
     }
+}
+
+void fdwalker_sync(fdwalker_t *fw)
+{
+    vfd_sync(fw->d);
 }

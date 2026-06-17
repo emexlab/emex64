@@ -115,8 +115,7 @@ void assembler_invocation_dealloc(assembler_invocation_t *inv)
         rtbe = next;
     }
 
-    close(inv->fdwalker->fd);
-    free(inv->fdwalker);
+    fdwalker_dealloc(inv->fdwalker);
     free(inv);
 }
 

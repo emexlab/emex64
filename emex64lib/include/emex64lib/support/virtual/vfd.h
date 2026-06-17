@@ -22,37 +22,43 @@
  * SOFTWARE.
  */
 
-#ifndef EMEXUTILS_FDWALKER_H
-#define EMEXUTILS_FDWALKER_H
+#ifndef VFD_H
+#define VFD_H
 
-#include <emex64lib/support/virtual/vfd.h>
-#include <emex64lib/support/bitwalker.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <sys/stat.h>
 
-typedef struct {
-    vfd_t *d;
-    size_t byte_pos;
-    uint8_t bit_idx;
-    bw_endian_t endian;
-} fdwalker_t;
+typedef enum: uint8_t {
+    kVFDTypeReal,
+    kVFDTypeVirtual,
+} kVFDType;
 
-fdwalker_t *fdwalker_alloc(int fd, bw_endian_t endian);
-void fdwalker_dealloc(fdwalker_t *fw);
+typedef struct vfd {
+    kVFDType type;
 
-void fdwalker_reset(fdwalker_t *fw);
+    union {
+        int fd;
 
-int fdwalker_write(fdwalker_t *fw, uint64_t value, uint8_t num_bits);
-uint64_t fdwalker_read(fdwalker_t *fw, uint8_t num_bits);
-int fdwalker_write_buf(fdwalker_t *fw, const char *buf, size_t len);
-int fdwalker_read_buf(fdwalker_t *fw, char *buf, size_t len);
+        /* WIP */
+        struct {
+            int flg;
+        } virtual;
+    };
+} vfd_t;
 
-void fdwalker_seek(fdwalker_t *fw, size_t byte_pos, uint8_t bit_idx);
+vfd_t *vfd_open(const char *path, int flg, ...);
+vfd_t *vfd_open_fd(int fd);
+int vfd_close(vfd_t *d);
 
-void fdwalker_skip(fdwalker_t *fw, size_t num_bits);
+ssize_t vfd_read(vfd_t *d, void *buf, size_t count);
+ssize_t vfd_write(vfd_t *d, const void *buf, size_t count);
+int vfd_truncate(vfd_t *d, off_t length);
 
-size_t fdwalker_bytes_used(const fdwalker_t *fw);
+off_t vfd_seek(vfd_t *d, off_t off, int a);
+void vfd_sync(vfd_t *d);
+int vfd_stat(vfd_t *d, struct stat *stat);
 
-void fdwalker_align_byte(fdwalker_t *fw);
-
-void fdwalker_sync(fdwalker_t *fw);
-
-#endif /* EMEXUTILS_FDWALKER_H */
+#endif /* VFD_H */

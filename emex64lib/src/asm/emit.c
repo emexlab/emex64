@@ -301,7 +301,7 @@ bool assembler_emit(assembler_invocation_t *inv)
         rtbe = rtbe->next;
     }*/
 
-    fsync(inv->fdwalker->fd);
+    fdwalker_sync(inv->fdwalker);
 
     return true;
 }

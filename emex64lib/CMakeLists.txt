@@ -57,6 +57,8 @@ endif()
 add_library(emex64 ${LIB_TYPE}
     # Support
 
+    src/support/virtual/vfd.c
+
     src/support/parser.c
     src/support/bitwalker.c
     src/support/fdwalker.c

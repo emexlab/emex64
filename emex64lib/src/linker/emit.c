@@ -381,7 +381,7 @@ bool linker_link(linker_options_t *options,
     uint64_t entry_addr = gsym->addr;
     emit_boot_header(fw, entry_addr);
 
-    fsync(fw->fd);
+    fdwalker_sync(fw);
     fdwalker_dealloc(fw);
     emex_file_dealloc(file);
 

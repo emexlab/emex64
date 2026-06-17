@@ -115,10 +115,10 @@ bool assembler_elf_emit(assembler_invocation_t *inv)
 {
     bool ok = false;
 
-    int flat_fd = inv->fdwalker->fd;
+    vfd_t *d = inv->fdwalker->d;
 
     struct stat st;
-    if(fstat(flat_fd, &st) != 0)
+    if(vfd_stat(d, &st) != 0)
     {
         diag_error(NULL, "elf_emit: fstat failed\n");
         return false;
@@ -132,7 +132,7 @@ bool assembler_elf_emit(assembler_invocation_t *inv)
         return false;
     }
 
-    if(lseek(flat_fd, 0, SEEK_SET) < 0 || read(flat_fd, flat, flat_size) != (ssize_t)flat_size)
+    if(vfd_seek(d, 0, SEEK_SET) < 0 || vfd_read(d, flat, flat_size) != (ssize_t)flat_size)
     {
         diag_error(NULL, "elf_emit: read flat binary failed\n");
         free(flat);
@@ -339,20 +339,19 @@ bool assembler_elf_emit(assembler_invocation_t *inv)
     size_t shstr_off = str_off + strtab_buf.len;
     size_t shdr_off = shstr_off + shstrtab_buf.len;
 
-    int fd = inv->fdwalker->fd;
-    if(ftruncate(fd, 0) != 0)
+    if(vfd_truncate(d, 0) != 0)
     {
         diag_error(NULL, "elf_emit: ftruncate failed\n");
         goto done;
     }
-    if(lseek(fd, 0, SEEK_SET) < 0)
+    if(vfd_seek(d, 0, SEEK_SET) < 0)
     {
         diag_error(NULL, "elf_emit: lseek failed\n");
         goto done;
     }
 
 #define WRITE_BUF(buf, len) do { \
-    if(write(fd, (buf), (len)) != (ssize_t)(len)) \
+    if(vfd_write(d, (buf), (len)) != (ssize_t)(len)) \
     { \
         diag_error(NULL, "elf_emit: write failed\n"); \
         goto done; \
@@ -484,7 +483,7 @@ bool assembler_elf_emit(assembler_invocation_t *inv)
 
     WRITE_BUF(shdrs, sizeof(shdrs));
 
-    fsync(fd);
+    vfd_sync(d);
     ok = true;
 
 done:
