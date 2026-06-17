@@ -227,7 +227,11 @@ escape_from_la:
 
     /* the part of executing the instruction */
     core->op.op.func(core);
-    core->rl[kEmex64RegisterPC] += core->op.ilen;   /* FIXME: IDK if it should increment or not due to interrupts */
+
+    if(core->cr_state.crexc.exception == kEmex64ExceptionNone)
+    {
+        core->rl[kEmex64RegisterPC] += core->op.ilen;   /* FIXME: IDK if it should increment or not due to interrupts */
+    }
 
     return;
 }
