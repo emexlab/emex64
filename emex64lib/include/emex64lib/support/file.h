@@ -29,6 +29,7 @@
 #include <stdbool.h>
 
 #include <emex64lib/support/fdwalker.h>
+#include <emex64lib/support/virtual/vfd.h>
 
 typedef enum: uint8_t {
     kEmexFileTypeUnknown,
@@ -71,7 +72,7 @@ extern emex_file_policy_t object_file_out_policy;
 typedef struct emex_file {
     const char *path;
     const char *content;    /* mapped file contents */
-    int fd;                 /* file descriptor that gets duped by emex_file_dup_fd */
+    vfd_t *d;               /* file descriptor that gets duped by emex_file_dup_fd */
     size_t len;
     kEmexFileType type;
     kEmexFileInstanceType instance_type;
@@ -85,7 +86,7 @@ void emex_file_dealloc(emex_file_t *f);
 bool emex_file_open(emex_file_t *f);
 void emex_file_close(emex_file_t *f);
 
-int emex_file_dup_fd(emex_file_t *f);
+vfd_t *emex_file_dup_fd(emex_file_t *f);
 fdwalker_t *emex_file_dup_fdwalker(emex_file_t *f, bw_endian_t endian);
 
 bool emex_file_map(emex_file_t *f);

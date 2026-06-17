@@ -40,6 +40,7 @@ typedef struct vpage {
 
 vpage_t *vpage_alloc();
 void vpage_dealloc(vpage_t *p);
+vpage_t *vpage_copy(vpage_t *p);
 
 size_t vpage_get_size(vpage_t *p);
 bool vpage_gib_page(vpage_t *p);

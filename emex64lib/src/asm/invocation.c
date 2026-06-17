@@ -44,8 +44,8 @@ assembler_invocation_t *assembler_invocation_alloc(assembler_options_t *options)
     /* apply warning_error local thread variable */
     warning_error = options->warning_error;
 
-    int fd = open(assembler_options_get_output_path(options), O_RDWR | O_CREAT | O_TRUNC, 0777);
-    if(fd < 0)
+    vfd_t *d = vfd_open(assembler_options_get_output_path(options), O_RDWR | O_CREAT | O_TRUNC, 0777);
+    if(d == NULL)
     {
         return NULL;
     }
@@ -53,12 +53,12 @@ assembler_invocation_t *assembler_invocation_alloc(assembler_options_t *options)
     assembler_invocation_t *inv = calloc(1, sizeof(assembler_invocation_t));
     if(inv == NULL)
     {
-        close(fd);
+        vfd_close(d);
         return NULL;
     }
 
-    inv->fdwalker = fdwalker_alloc(fd, BW_LITTLE_ENDIAN);
-    close(fd);
+    inv->fdwalker = fdwalker_alloc(d, BW_LITTLE_ENDIAN);
+    vfd_close(d);
     if(inv->fdwalker == NULL)
     {
         diag_error(NULL, "couldn't create fdwalker\n");

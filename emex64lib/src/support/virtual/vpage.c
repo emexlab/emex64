@@ -89,6 +89,53 @@ void vpage_dealloc(vpage_t *p)
     return;
 }
 
+vpage_t *vpage_copy(vpage_t *p)
+{
+    /* allocating new map */
+    vpage_t *page = vpage_get_first(p);
+    size_t total_len = vpage_get_size(page);
+    uint8_t *newmap = mmap(NULL, total_len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if(newmap == MAP_FAILED)
+    {
+        return NULL;
+    }
+
+    /* copying data from old pages to single page */
+    vpage_t *oldpage = page;
+    size_t loc = 0;
+    for(;;)
+    {
+        memcpy(newmap + loc, page->p, page->len);
+
+        vpage_t *next = page->next;
+        loc += page->len;
+
+        if(next == NULL)
+        {
+            break;
+        }
+
+        page = next;
+    }
+
+    /* setting to new map */
+    oldpage->next = NULL;
+    oldpage->p = newmap;
+    oldpage->len = total_len;
+
+    vpage_t *copy = calloc(1, sizeof(vpage_t));
+    if(copy == NULL)
+    {
+        munmap(newmap, total_len);
+        return NULL;
+    }
+
+    copy->len = total_len;
+    copy->p = newmap;
+
+    return copy;
+}
+
 size_t vpage_get_size(vpage_t *p)
 {
     vpage_t *page = vpage_get_first(p);

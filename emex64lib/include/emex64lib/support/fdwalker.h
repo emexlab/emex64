@@ -35,7 +35,7 @@ typedef struct {
     bw_endian_t endian;
 } fdwalker_t;
 
-fdwalker_t *fdwalker_alloc(int fd, bw_endian_t endian);
+fdwalker_t *fdwalker_alloc(vfd_t *d, bw_endian_t endian);
 void fdwalker_dealloc(fdwalker_t *fw);
 
 void fdwalker_reset(fdwalker_t *fw);

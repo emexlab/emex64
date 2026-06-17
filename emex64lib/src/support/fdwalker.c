@@ -29,24 +29,24 @@
 
 #include <emex64lib/support/fdwalker.h>
 
-fdwalker_t *fdwalker_alloc(int fd,
+fdwalker_t *fdwalker_alloc(vfd_t *d,
                            bw_endian_t endian)
 {
-    vfd_t *d = vfd_open_fd(dup(fd));
-    if(d == NULL)
+    fdwalker_t *fw = malloc(sizeof(fdwalker_t));
+    if(fw == NULL)
     {
         return NULL;
     }
 
-    fdwalker_t *fw = malloc(sizeof(fdwalker_t));
-    if(fw == NULL)
+    vfd_t *nd = vfd_dup(d);
+    if(nd == NULL)
     {
-        vfd_close(d);
+        free(fw);
         return NULL;
     }
 
     /* setting properties */
-    fw->d = d;
+    fw->d = nd;
     fw->byte_pos = 0;
     fw->bit_idx = 0;
     fw->endian = endian;

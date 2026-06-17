@@ -44,7 +44,6 @@ typedef struct vfd {
     union {
         int fd;
 
-        /* WIP */
         struct {
             int flg;
             off_t off;
@@ -58,6 +57,8 @@ vfd_t *vfd_open(const char *path, int flg, ...);
 vfd_t *vfd_open_fd(int fd);
 vfd_t *vfd_vopen(int flg);
 int vfd_close(vfd_t *d);
+
+vfd_t *vfd_dup(vfd_t *d);
 
 ssize_t vfd_read(vfd_t *d, void *buf, size_t count);
 ssize_t vfd_write(vfd_t *d, const void *buf, size_t count);

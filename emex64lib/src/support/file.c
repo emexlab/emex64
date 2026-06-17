@@ -129,7 +129,7 @@ emex_file_t *emex_file_alloc(const char *path,
         free(f);
         return NULL;
     }
-    f->fd = -1;
+    f->d = NULL;
 
     return f;
 }
@@ -161,7 +161,7 @@ emex_file_t *emex_file_alloc_unsaved(const char *path,
 
     /* setting unsaved values */
     f->instance_type = kEmexFileInstanceTypeUnsaved;
-    f->fd = -1;
+    f->d = NULL;
 
     return f;
 }
@@ -185,7 +185,7 @@ void emex_file_dealloc(emex_file_t *f)
 
 bool emex_file_open(emex_file_t *f)
 {
-    if(f->fd > 0)
+    if(f->d != NULL)
     {
         return true;
     }
@@ -202,8 +202,8 @@ bool emex_file_open(emex_file_t *f)
     }
 
     /* initial open */
-    f->fd = open(f->path, emex_file_policy_to_o_rw(f->policy.needed_permission) | (f->policy.create_on_open ? (O_CREAT | O_TRUNC) : 0), 0755);
-    if(f->fd < 0)
+    f->d = vfd_open(f->path, emex_file_policy_to_o_rw(f->policy.needed_permission) | (f->policy.create_on_open ? (O_CREAT | O_TRUNC) : 0), 0755);
+    if(f->d == NULL)
     {
         return false;
     }
@@ -213,17 +213,17 @@ bool emex_file_open(emex_file_t *f)
 
 void emex_file_close(emex_file_t *f)
 {
-    close(f->fd);
-    f->fd = -1;
+    vfd_close(f->d);
+    f->d = NULL;
 }
 
-int emex_file_dup_fd(emex_file_t *f)
+vfd_t *emex_file_dup_fd(emex_file_t *f)
 {
     if(!emex_file_open(f))
     {
-        return -1;
+        return NULL;
     }
-    return dup(f->fd);
+    return vfd_dup(f->d);
 }
 
 fdwalker_t *emex_file_dup_fdwalker(emex_file_t *f,
@@ -234,7 +234,7 @@ fdwalker_t *emex_file_dup_fdwalker(emex_file_t *f,
         return NULL;
     }
 
-    return fdwalker_alloc(f->fd, endian);
+    return fdwalker_alloc(f->d, endian);
 }
 
 bool emex_file_map(emex_file_t *f)
@@ -261,14 +261,14 @@ bool emex_file_map(emex_file_t *f)
 
     /* initially mapping assembly file */
     struct stat fdstat;
-    if(fstat(f->fd, &fdstat) < 0)
+    if(vfd_stat(f->d, &fdstat) < 0)
     {
         return false;
     }
 
     f->len = fdstat.st_size;
     /* TODO: check if UTF8 encoded or force UTF8 encoding */
-    f->content = mmap(NULL, f->len, emex_file_policy_to_prot(f->policy.needed_permission), MAP_SHARED, f->fd, 0);
+    f->content = mmap(NULL, f->len, emex_file_policy_to_prot(f->policy.needed_permission), MAP_SHARED, f->d->fd, 0);
 
     return (f->content == MAP_FAILED) ? false : true;
 }

@@ -118,6 +118,41 @@ int vfd_close(vfd_t *d)
     return vret;
 }
 
+vfd_t *vfd_dup(vfd_t *d)
+{
+    vfd_t *nd = calloc(1, sizeof(vfd_t));
+    if(nd == NULL)
+    {
+        return NULL;
+    }
+
+    nd->type = d->type;
+
+    switch(d->type)
+    {
+        case kVFDTypeReal:
+            nd->fd = dup(d->fd);
+            if(nd->fd < 0)
+            {
+                goto fail;
+            }
+            break;
+        case kVFDTypeVirtual:
+            /* copy entire state */
+            nd->virtual.flg = d->virtual.flg;
+            nd->virtual.off = d->virtual.off;
+            nd->virtual.p = d->virtual.p;       /* this is fine! */
+            nd->virtual.size = d->virtual.size; /* could require some vfd_vdatasource_t??? that is MRC ref counted?? */
+            break;
+        default:
+        fail:
+            free(d);
+            return NULL;
+    }
+
+    return nd;
+}
+
 ssize_t vfd_read(vfd_t *d,
                  void *buf,
                  size_t count)
@@ -278,12 +313,15 @@ void vfd_sync(vfd_t *d)
 int vfd_stat(vfd_t *d,
              struct stat *stat)
 {
+    fflush(stdout);
     switch(d->type)
     {
         case kVFDTypeReal:
+            fflush(stdout);
             return fstat(d->fd, stat);
         case kVFDTypeVirtual:
         {
+            fflush(stdout);
             stat->st_size = (off_t)d->virtual.size;
             return 0;
         }
