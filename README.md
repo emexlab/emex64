@@ -24,19 +24,56 @@ These examples will be compiled and directly run with `make`.
 ## Instruction Set Architecture (ISA)
 The instruction coding is variable, it is not a fixed lenght instruction set, which is a CISC concept.
 
-### Opcode's
+### Register Set (RS)
+#### Userspace Accessible Registers
+| Register  | Name                                  | Binary       | Desciption  |
+|-----------|---------------------------------------|--------------|-------------|
+| `pc`      | **P**rogram **C**ounter               | `0b00000`    | Points to the current address at which the CPU currently is, it increments by the lenght of the instruction when the CPU is done executing the instruction at which PC points to at that time. |
+| `sp`      | **S**tack **P**ointer                 | `0b00001`    | Points to the current address at which the stack lives, the stack grows downwards on allocation and upwards on deallocation. |
+| `fp`      | **F**rame **P**ointer                 | `0b00010`    | Points to the address at which the stack frame of the last function call lives, basically empowering you to branch and link and return back without destroying values stored in registers previously. |
+| `cf`      | **C**ontrol **F**lag                  | `0b00011`    | Used by control flow operations like `cmp`, `be` and `bne`. Basically used for if else kind of statements. |
+| `fpc`     | **F**loating **Point** **C**ontrol    | `0b00100`    | Controls the behaviour of the implementation pending floating point registers. |
+| `r0`      | General Purpose Registers             | `0b00101`    | Use it for what ever. |
+| `r1`      |                                       | `0b00110`    |             |
+| `r2`      |                                       | `0b00111`    |             |
+| `r3`      |                                       | `0b01000`    |             |
+| `r4`      |                                       | `0b01001`    |             |
+| `r5`      |                                       | `0b01010`    |             |
+| `r6`      |                                       | `0b01011`    |             |
+| `r7`      |                                       | `0b01100`    |             |
+| `r8`      |                                       | `0b01101`    |             |
+| `r9`      |                                       | `0b01110`    |             |
+| `r10`     |                                       | `0b01111`    |             |
+| `r11`     |                                       | `0b10000`    |             |
+| `r12`     |                                       | `0b10001`    |             |
+| `r13`     |                                       | `0b10010`    |             |
+| `r14`     |                                       | `0b10011`    |             |
+| `r15`     |                                       | `0b10100`    |             |
+| `r16`     |                                       | `0b10101`    |             |
+| `r17`     |                                       | `0b10110`    |             |
+| `r18`     |                                       | `0b10111`    |             |
+| `r19`     |                                       | `0b11000`    |             |
+| `r20`     |                                       | `0b11001`    |             |
+| `r21`     |                                       | `0b11010`    |             |
+| `r22`     |                                       | `0b11011`    |             |
+| `r23`     |                                       | `0b11100`    |             |
+| `r24`     |                                       | `0b11101`    |             |
+| `r25`     |                                       | `0b11110`    |             |
+| `rr`      | Return Register                       | `0b11111`    | Unaffected by operations like `blw` and `wret`. Intended to be used as a return value register. |
+
+### Opcode Set
 (1) Applies mathematical operation either on two or one operand together and stores the result into the source, the source must always be a register and can also be a operand.
 
 (2) Variadic instruction, meaning it can be used to apply the same operation onto many registers at the same time.
 
 #### Core
-| Instruction | Opcode       | Desciption  |
+| Opcode      | Binary       | Desciption  |
 |-------------|--------------|-------------|
 | `hlt`       | `0b00000000` | Halts the CPU core until the next interrupt occurs from a timer or other device.        |
 | `nop`       | `0b00000001` | Does nothing, does a cycle.        |
 
 #### Data
-| Instruction | Opcode       | Desciption  |
+| Opcode      | Binary       | Desciption  |
 |-------------|--------------|-------------|
 | `mov`       | `0b00000010` | Moves a intermediate or a value of a register into a register. |
 | `swp`       | `0b00000011` | Swaps the values of two registers. |
@@ -53,7 +90,7 @@ The instruction coding is variable, it is not a fixed lenght instruction set, wh
 | `stq`       | `0b00001110` | Stores a quad word from a register into a memory address. |
 
 #### ALU
-| Instruction | Opcode       | Desciption   |
+| Opcode      | Binary       | Desciption   |
 |-------------|--------------|--------------|
 | `add`       | `0b00001111` | Addition. *(1)   |
 | `sub`       | `0b00010000` | Subtraction. *(1)    |
@@ -80,7 +117,7 @@ The instruction coding is variable, it is not a fixed lenght instruction set, wh
 | `dec`       | `0b00100101` | Decrements operands. *(2) |
 
 #### Control flow
-| Instruction | Opcode       | Desciption       |
+| Opcode      | Binary       | Desciption       |
 |-------------|--------------|------------------|
 | `b`         | `0b00100110` | Branches to a address by setting the PC register. |
 | `cmp`       | `0b00100111` | Compares two operands and sets the `cf` register. |
@@ -99,7 +136,7 @@ The instruction coding is variable, it is not a fixed lenght instruction set, wh
 | `ret`       | `0b00110100` | Returns from a `bl` branch. |
 
 #### Data (v2)
-| Instruction | Opcode       | Desciption  |
+| Opcode      | Binary       | Desciption  |
 |-------------|--------------|-------------|
 | `clr`       | `0b00110101` | Clears operands. *(2) |
 | `cmov`      | `0b00110110` | Moves a value of a register or intermediate into a control register of the core.  |
