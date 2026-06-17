@@ -58,6 +58,8 @@ add_library(emex64 ${LIB_TYPE}
     # Support
 
     src/support/virtual/vfd.c
+    src/support/virtual/vpage.c
+    src/support/virtual/vmman.c
 
     src/support/parser.c
     src/support/bitwalker.c

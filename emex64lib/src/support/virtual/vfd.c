@@ -76,6 +76,26 @@ vfd_t *vfd_open_fd(int fd)
     return d;
 }
 
+vfd_t *vfd_vopen(int flg)
+{
+    vfd_t *d = calloc(1, sizeof(vfd_t));
+    if(d == NULL)
+    {
+        return NULL;
+    }
+
+    d->type = kVFDTypeVirtual;
+    d->virtual.flg = flg;
+    d->virtual.p = vpage_alloc();
+
+    if(d->virtual.p == NULL)
+    {
+        return NULL;
+    }
+
+    return d;
+}
+
 int vfd_close(vfd_t *d)
 {
     int vret = -1;
@@ -85,7 +105,7 @@ int vfd_close(vfd_t *d)
             vret = close(d->fd);
             break;
         case kVFDTypeVirtual:
-            /* s0n */
+            vpage_dealloc(d->virtual.p);
             break;
     }
 

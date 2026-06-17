@@ -22,4 +22,13 @@
  * SOFTWARE.
  */
 
-#include <emex64lib/support/virtual/vman.h>
+#ifndef VMAN_H
+#define VMAN_H
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <sys/mman.h>
+
+#endif /* VMAN_H */

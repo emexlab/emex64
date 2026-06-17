@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef VFD_H
-#define VFD_H
+#ifndef VPAGE_H
+#define VPAGE_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,39 +31,21 @@
 #include <stdbool.h>
 #include <sys/stat.h>
 
-#include <emex64lib/support/virtual/vpage.h>
+typedef struct vpage {
+    uint8_t *p;
+    size_t len;
+    struct vpage *prev;
+    struct vpage *next;
+} vpage_t;
 
-typedef enum: uint8_t {
-    kVFDTypeReal,
-    kVFDTypeVirtual,
-} kVFDType;
+vpage_t *vpage_alloc();
+void vpage_dealloc(vpage_t *p);
 
-typedef struct vfd {
-    kVFDType type;
+size_t vpage_get_size(vpage_t *p);
+bool vpage_gib_page(vpage_t *p);
+bool vpage_bind_page(vpage_t *p);
 
-    union {
-        int fd;
+size_t vpage_write(vpage_t *p, size_t off, const uint8_t *b, size_t len);
+size_t vpage_read(vpage_t *p, size_t off, uint8_t *b, size_t len);
 
-        /* WIP */
-        struct {
-            int flg;
-            off_t off;
-            vpage_t *p;
-        } virtual;
-    };
-} vfd_t;
-
-vfd_t *vfd_open(const char *path, int flg, ...);
-vfd_t *vfd_open_fd(int fd);
-vfd_t *vfd_vopen(int flg);
-int vfd_close(vfd_t *d);
-
-ssize_t vfd_read(vfd_t *d, void *buf, size_t count);
-ssize_t vfd_write(vfd_t *d, const void *buf, size_t count);
-int vfd_truncate(vfd_t *d, off_t length);
-
-off_t vfd_seek(vfd_t *d, off_t off, int a);
-void vfd_sync(vfd_t *d);
-int vfd_stat(vfd_t *d, struct stat *stat);
-
-#endif /* VFD_H */
+#endif /* VPAGE_H */

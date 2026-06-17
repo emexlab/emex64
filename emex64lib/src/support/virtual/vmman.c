@@ -22,7 +22,4 @@
  * SOFTWARE.
  */
 
-#ifndef VMAN_H
-#define VMAN_H
-
-#endif /* VMAN_H */
+#include <emex64lib/support/virtual/vmman.h>
