@@ -33,32 +33,7 @@ The instruction coding is variable, it is not a fixed lenght instruction set, wh
 | `fp`      | **F**rame **P**ointer                 | `0b00010`    | Points to the address at which the stack frame of the last function call lives, basically empowering you to branch and link and return back without destroying values stored in registers previously. |
 | `cf`      | **C**ontrol **F**lag                  | `0b00011`    | Used by control flow operations like `cmp`, `be` and `bne`. Basically used for if else kind of statements. |
 | `fpc`     | **F**loating **Point** **C**ontrol    | `0b00100`    | Controls the behaviour of the implementation pending floating point registers. |
-| `r0`      | General Purpose Registers             | `0b00101`    | Use it for what ever. |
-| `r1`      |                                       | `0b00110`    |             |
-| `r2`      |                                       | `0b00111`    |             |
-| `r3`      |                                       | `0b01000`    |             |
-| `r4`      |                                       | `0b01001`    |             |
-| `r5`      |                                       | `0b01010`    |             |
-| `r6`      |                                       | `0b01011`    |             |
-| `r7`      |                                       | `0b01100`    |             |
-| `r8`      |                                       | `0b01101`    |             |
-| `r9`      |                                       | `0b01110`    |             |
-| `r10`     |                                       | `0b01111`    |             |
-| `r11`     |                                       | `0b10000`    |             |
-| `r12`     |                                       | `0b10001`    |             |
-| `r13`     |                                       | `0b10010`    |             |
-| `r14`     |                                       | `0b10011`    |             |
-| `r15`     |                                       | `0b10100`    |             |
-| `r16`     |                                       | `0b10101`    |             |
-| `r17`     |                                       | `0b10110`    |             |
-| `r18`     |                                       | `0b10111`    |             |
-| `r19`     |                                       | `0b11000`    |             |
-| `r20`     |                                       | `0b11001`    |             |
-| `r21`     |                                       | `0b11010`    |             |
-| `r22`     |                                       | `0b11011`    |             |
-| `r23`     |                                       | `0b11100`    |             |
-| `r24`     |                                       | `0b11101`    |             |
-| `r25`     |                                       | `0b11110`    |             |
+| `r0` - `r25`      | General Purpose Registers             | `0b00101` - `0b11111`   | Use it for what ever. |
 | `rr`      | Return Register                       | `0b11111`    | Unaffected by operations like `blw` and `wret`. Intended to be used as a return value register. |
 
 ### Opcode Set
