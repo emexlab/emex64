@@ -137,7 +137,7 @@ bool emex64_serve_interrupt_if_needed(emex64_core_t *core)
         core->machine->intc->current_irq = -1;
         return false;
     }
-    uint64_t handler_addr = *(uint64_t*)(core->machine->memory->memory + vector_addr);
+    uint64_t handler_addr = TO_HOST64(*(uint64_t*)(core->machine->memory->memory + vector_addr));
 
     /* jump to handler */
     uint64_t oldsp = core->rl[kEmex64RegisterSP];
