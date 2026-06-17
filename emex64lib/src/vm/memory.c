@@ -33,6 +33,7 @@
 
 #include <emex64lib/support/diag.h>
 #include <emex64lib/support/likely.h>
+#include <emex64lib/support/bitwalker.h>
 
 #include <emex64lib/vm/memory.h>
 #include <emex64lib/vm/core.h>
@@ -363,20 +364,31 @@ rw_fastpath:
                         *value = *(uint8_t *)mem_ptr;
                         break;
                     case 2:
-                        *value = *(uint16_t *)mem_ptr;
+                    {
+                        uint16_t tmp;
+                        memcpy(&tmp, mem_ptr, 2);
+                        *value = TO_HOST16(tmp);
                         break;
+                    }
                     case 4:
-                        *value = *(uint32_t *)mem_ptr;
+                    {
+                        uint32_t tmp;
+                        memcpy(&tmp, mem_ptr, 4);
+                        *value = TO_HOST32(tmp);
                         break;
+                    }
                     case 8:
-                        *value = *(uint64_t *)mem_ptr;
+                    {
+                        uint64_t tmp;
+                        memcpy(&tmp, mem_ptr, 8);
+                        *value = TO_HOST64(tmp);
                         break;
+                    }
                     default:
-                        core->cr_state.crexc.exception = kEmex64ExceptionBadAccess;
+                        core->cr_state.crexc.exception = kEmex64ExceptionBadAccess; 
                         return;
                 }
                 return;
-
             case kEmex64MemoryActionWrite:
                 if(unlikely(core->machine->memory->ktrr_size > addr))
                 {
@@ -386,15 +398,31 @@ rw_fastpath:
                 switch(size)
                 {
                     case 1:
-                        *(uint8_t *)mem_ptr = (uint8_t)*value; break;
+                        *(uint8_t *)mem_ptr = (uint8_t)*value;
+                        break;
                     case 2:
-                        *(uint16_t *)mem_ptr = (uint16_t)*value; break;
+                    {
+                        uint16_t tmp = (uint16_t)*value;
+                        tmp = TO_HOST16(tmp);
+                        memcpy(mem_ptr, &tmp, 2);
+                        break;
+                    }
                     case 4:
-                        *(uint32_t *)mem_ptr = (uint32_t)*value; break;
+                    {
+                        uint32_t tmp = (uint32_t)*value;
+                        tmp = TO_HOST32(tmp);
+                        memcpy(mem_ptr, &tmp, 4);
+                        break;
+                    }
                     case 8:
-                        *(uint64_t *)mem_ptr = (uint64_t)*value; break;
+                    {
+                        uint64_t tmp = (uint64_t)*value;
+                        tmp = TO_HOST64(tmp);
+                        memcpy(mem_ptr, &tmp, 8);
+                        break;
+                    }
                     default:
-                        core->cr_state.crexc.exception = kEmex64ExceptionBadAccess;
+                        core->cr_state.crexc.exception = kEmex64ExceptionBadAccess; 
                         return;
                 }
                 return;
