@@ -344,3 +344,49 @@ int vfd_stat(vfd_t *d,
 
     return -1;
 }
+
+char *vfd_gets(vfd_t *d,
+               char *s,
+               int n)
+{
+    if(s == NULL || n <= 0)
+    {
+        return NULL;
+    }
+
+    if(n == 1)
+    {
+        s[0] = '\0';
+        return s;
+    }
+
+    int i = 0;
+    while(i < n - 1)
+    {
+        char c;
+        ssize_t r = vfd_read(d, &c, 1);
+
+        if(r < 0)
+        {
+
+            return NULL;
+        }
+        if(r == 0)
+        {
+            if(i == 0)
+            {
+                return NULL;
+            }
+            break;
+        }
+
+        s[i++] = c;
+        if(c == '\n')
+        {
+            break;
+        }
+    }
+
+    s[i] = '\0';
+    return s;
+}

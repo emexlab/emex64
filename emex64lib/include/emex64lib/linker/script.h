@@ -28,6 +28,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include <emex64lib/support/file.h>
+
 #include <emex64lib/linker/type.h>
 
 typedef struct linker_invocation linker_invocation_t;
@@ -38,7 +40,7 @@ typedef struct {
     char *expr;
 } script_sym_t;
 
-bool linker_script_parse(linker_invocation_t *inv, const char *path);
+bool linker_script_parse(linker_invocation_t *inv, emex_file_t *script_file);
 bool linker_script_apply(linker_invocation_t *inv, uint64_t image_end, uint64_t text_start, uint64_t data_start, uint64_t bss_start);
 
 #endif /* EMEX64LD_SCRIPT_H */

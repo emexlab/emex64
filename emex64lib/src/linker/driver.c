@@ -48,10 +48,10 @@ linker_driver_t *linker_driver_alloc(const char **argv,
         return NULL;
     }
 
-    driver->input_file = calloc(argc, sizeof(char*));
+    driver->input_file = calloc(argc, sizeof(emex_file_t));
     driver->input_file_cnt = 0;
 
-    driver->linker_script_file = calloc(argc, sizeof(char*));
+    driver->linker_script_file = calloc(argc, sizeof(emex_file_t));
     driver->linker_script_file_cnt = 0;
 
     for(int i = 1; i < argc; i++)
@@ -77,11 +77,23 @@ linker_driver_t *linker_driver_alloc(const char **argv,
         }
         else if((strcmp(argv[i], "-T") == 0 || strcmp(argv[i], "--script") == 0) && i + 1 < argc)
         {
-            driver->linker_script_file[driver->linker_script_file_cnt++] = argv[++i];
+            emex_file_t *script_file = emex_file_alloc(argv[++i], linker_script_file_policy);
+            if(script_file == NULL)
+            {
+                diag_error(NULL, "unknown or non existing script file '%s'\n", argv[i]);
+                goto failure;
+            }
+            driver->linker_script_file[driver->linker_script_file_cnt++] = script_file;
         }
         else if (strncmp(argv[i], "-T", 2) == 0 && argv[i][2])
         {
-            driver->linker_script_file[driver->linker_script_file_cnt++] = argv[i] + 2;
+            emex_file_t *script_file = emex_file_alloc(argv[i] + 2, linker_script_file_policy);
+            if(script_file == NULL)
+            {
+                diag_error(NULL, "unknown or non existing script file '%s'\n", argv[i] + 2);
+                goto failure;
+            }
+            driver->linker_script_file[driver->linker_script_file_cnt++] = script_file;
         }
         else if(strcmp(argv[i], "-v") == 0)
         {
@@ -97,11 +109,23 @@ linker_driver_t *linker_driver_alloc(const char **argv,
             size_t n = strlen(argv[i]);
             if(n > 5 && strcmp(argv[i] + n - 5, ".e64ld") == 0)
             {
-                driver->linker_script_file[driver->linker_script_file_cnt++] = argv[++i];
+                emex_file_t *script_file = emex_file_alloc(argv[i], linker_script_file_policy);
+                if(script_file == NULL)
+                {
+                    diag_error(NULL, "unknown or non existing script file '%s'\n", argv[i]);
+                    goto failure;
+                }
+                driver->linker_script_file[driver->linker_script_file_cnt++] = script_file;
             }
             else
             {
-                driver->input_file[driver->input_file_cnt++] = argv[i];
+                emex_file_t *input_file = emex_file_alloc(argv[i], object_file_load_policy);
+                if(input_file == NULL)
+                {
+                    diag_error(NULL, "unknown or non existing input file '%s'\n", argv[i]);
+                    goto failure;
+                }
+                driver->input_file[driver->input_file_cnt++] = input_file;
             }
         }
         else
@@ -114,8 +138,18 @@ linker_driver_t *linker_driver_alloc(const char **argv,
     return driver;
 
 failure:
+    for(uint64_t i = 0; i < driver->input_file_cnt; i++)
+    {
+        emex_file_dealloc(driver->input_file[i]);
+    }
     free(driver->input_file);
+
+    for(uint64_t i = 0; i < driver->linker_script_file_cnt; i++)
+    {
+        emex_file_dealloc(driver->linker_script_file[i]);
+    }
     free(driver->linker_script_file);
+
     linker_options_dealloc(driver->options);
     free(driver);
     return NULL;

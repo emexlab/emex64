@@ -31,7 +31,7 @@
 #include <emex64lib/linker/linker.h>
 #include <emex64lib/linker/obj.h>
 
-linker_object_t *linker_object_alloc(const char *object_path)
+linker_object_t *linker_object_alloc(emex_file_t *object_file)
 {
     linker_object_t *obj = calloc(1, sizeof(linker_object_t));
 
@@ -44,12 +44,7 @@ linker_object_t *linker_object_alloc(const char *object_path)
     obj->idx_symtab = -1;
     obj->idx_strtab = -1;
 
-    obj->file = emex_file_alloc(object_path, object_file_load_policy);
-    if(obj->file == NULL)
-    {
-        free(obj);
-        return NULL;
-    }
+    obj->file = object_file;
 
     if(!emex_file_map(obj->file))
     {
@@ -60,7 +55,7 @@ linker_object_t *linker_object_alloc(const char *object_path)
 
     if(obj->file->len < sizeof(ELF64_Shdr))
     {
-        diag_error(NULL, "%s: too small to be ELF\n", object_path);
+        diag_error(NULL, "%s: too small to be ELF\n", obj->file->path);
         emex_file_dealloc(obj->file);
         free(obj);
         return NULL;
@@ -73,7 +68,7 @@ linker_object_t *linker_object_alloc(const char *object_path)
        obj->ehdr->e_ident[2] != ELF_MAGIC_2 ||
        obj->ehdr->e_ident[3] != ELF_MAGIC_3)
     {
-        diag_error(NULL, "%s: not an ELF file\n", object_path);
+        diag_error(NULL, "%s: not an ELF file\n", obj->file->path);
         emex_file_dealloc(obj->file);
         free(obj);
         return NULL;
@@ -81,7 +76,7 @@ linker_object_t *linker_object_alloc(const char *object_path)
 
     if(obj->ehdr->e_machine != ELF_MAGIC_EMEX64)
     {
-        diag_error(NULL, "%s: not an emex64 object (e_machine=0x%x)\n", object_path, obj->ehdr->e_machine);
+        diag_error(NULL, "%s: not an emex64 object (e_machine=0x%x)\n", obj->file->path, obj->ehdr->e_machine);
         emex_file_dealloc(obj->file);
         free(obj);
         return NULL;
@@ -89,7 +84,7 @@ linker_object_t *linker_object_alloc(const char *object_path)
 
     if(obj->ehdr->e_type != kELFTypeRel)
     {
-        diag_error(NULL, "%s: not a relocatable object\n", object_path);
+        diag_error(NULL, "%s: not a relocatable object\n", obj->file->path);
         emex_file_dealloc(obj->file);
         free(obj);
         return NULL;
@@ -154,10 +149,10 @@ void linker_object_dealloc(linker_object_t *obj)
 }
 
 bool linker_load_object(linker_invocation_t *inv,
-                        const char *object_path)
+                        emex_file_t *object_file)
 {
     /* load object */
-    linker_object_t *obj = linker_object_alloc(object_path);
+    linker_object_t *obj = linker_object_alloc(object_file);
     if(obj == NULL)
     {
         return false;

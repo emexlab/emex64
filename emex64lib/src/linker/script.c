@@ -33,18 +33,24 @@
 #include <emex64lib/linker/script.h>
 
 bool linker_script_parse(linker_invocation_t *inv,
-                         const char *path)
+                         emex_file_t *script_file)
 {
-    FILE *f = fopen(path, "r");
-    if(!f)
+    if(!emex_file_open(script_file))
     {
-        diag_error(NULL, "cannot open linker script '%s': %s\n", path, strerror(errno));
+        /* couldn't open the script file */
+        return false;
+    }
+
+    vfd_t *d = emex_file_dup_fd(script_file);
+    if(d == NULL)
+    {
+        /* couldn't dup descriptor */
         return false;
     }
 
     char line[1024];
     int lineno = 0;
-    while(fgets(line, sizeof(line), f))
+    while(vfd_gets(d, line, sizeof(line)))
     {
         lineno++;
         char *comment = strchr(line, '#');
@@ -85,8 +91,8 @@ bool linker_script_parse(linker_invocation_t *inv,
             size_t name_len = (size_t)(p - name_start);
             if(name_len == 0)
             {
-                diag_error(NULL, "%s:%d: expected symbol name after PROVIDE\n", path, lineno);
-                fclose(f);
+                diag_error(NULL, "%s:%d: expected symbol name after PROVIDE\n", script_file->path, lineno);
+                vfd_close(d);
                 return false;
             }
             char *sym_name = malloc(name_len + 1);
@@ -99,9 +105,9 @@ bool linker_script_parse(linker_invocation_t *inv,
             }
             if(*p != '=')
             {
-                diag_error(NULL, "%s:%d: expected '=' after symbol name\n", path, lineno);
+                diag_error(NULL, "%s:%d: expected '=' after symbol name\n", script_file->path, lineno);
                 free(sym_name);
-                fclose(f);
+                vfd_close(d);
                 return false;
             }
             p++;
@@ -124,34 +130,34 @@ bool linker_script_parse(linker_invocation_t *inv,
 
             if(!*expr_start)
             {
-                diag_error(NULL, "%s:%d: empty expression\n", path, lineno);
+                diag_error(NULL, "%s:%d: empty expression\n", script_file->path, lineno);
                 free(sym_name);
-                fclose(f);
+                vfd_close(d);
                 return false;
             }
 
             script_sym_t *new = realloc(inv->script_syms, (inv->script_sym_cnt + 1) * sizeof(script_sym_t));
             if(new == NULL)
             {
-                diag_fatal(NULL, "out of memory\n", path, lineno);
+                diag_fatal(NULL, "out of memory\n", script_file->path, lineno);
                 free(sym_name);
-                fclose(f);
+                vfd_close(d);
                 return false;
             }
             inv->script_syms = new;
             inv->script_syms[inv->script_sym_cnt].name = sym_name;
             inv->script_syms[inv->script_sym_cnt].expr = strdup(expr_start);
-            inv->script_syms[inv->script_sym_cnt].script_path = path;
+            inv->script_syms[inv->script_sym_cnt].script_path = script_file->path;
             inv->script_sym_cnt++;
             continue;
         }
 
-        diag_error(NULL, "%s:%d: unrecognised linker script directive: '%s'\n", path, lineno, p);
-        fclose(f);
+        diag_error(NULL, "%s:%d: unrecognised linker script directive: '%s'\n", script_file->path, lineno, p);
+        vfd_close(d);
         return false;
     }
 
-    fclose(f);
+    vfd_close(d);
     return true;
 }
 

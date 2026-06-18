@@ -67,4 +67,6 @@ off_t vfd_seek(vfd_t *d, off_t off, int a);
 void vfd_sync(vfd_t *d);
 int vfd_stat(vfd_t *d, struct stat *stat);
 
+char *vfd_gets(vfd_t *d, char *s, int n);
+
 #endif /* VFD_H */

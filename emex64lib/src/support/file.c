@@ -39,29 +39,40 @@ emex_file_policy_t assembly_file_policy = {
     .must_be_file = true,
     .create_on_open = false,
 };
+
 emex_file_policy_t section_data_file_policy = {
     .needed_permission = kEmexFilePolicyPermissionRead,
     .must_exist = true,
     .must_be_file = true,
     .create_on_open = false,
 };
+
 emex_file_policy_t assembly_unsaved_file_policy = {
     .needed_permission = kEmexFilePolicyPermissionRead,
     .must_exist = false,
     .must_be_file = true,
     .create_on_open = false,
 };
+
 emex_file_policy_t object_file_load_policy = {
     .needed_permission = kEmexFilePolicyPermissionRead,
     .must_exist = true,
     .must_be_file = true,
     .create_on_open = false,
 };
+
 emex_file_policy_t object_file_out_policy = {
     .needed_permission = kEmexFilePolicyPermissionRead | kEmexFilePolicyPermissionWrite,
     .must_exist = false,
     .must_be_file = true,
     .create_on_open = true,
+};
+
+emex_file_policy_t linker_script_file_policy = {
+    .needed_permission = kEmexFilePolicyPermissionRead,
+    .must_exist = true,
+    .must_be_file = true,
+    .create_on_open = false,
 };
 
 static inline int emex_file_policy_to_o_rw(kEmexFilePolicyPermission p)
@@ -154,10 +165,17 @@ emex_file_t *emex_file_alloc_unsaved(const char *path,
     /* setting unsaved values */
     f->len = 0;
     f->content = MAP_FAILED;
+    f->path = strdup(path);
+    if(f->path == NULL)
+    {
+        free(f);
+        return NULL;
+    }
     f->instance_type = kEmexFileInstanceTypeUnsaved;
     f->d = vfd_vopen(O_RDWR);
     if(f->d == NULL)
     {
+        free(f->path);
         free(f);
         return NULL;
     }
@@ -177,7 +195,7 @@ void emex_file_dealloc(emex_file_t *f)
 
     emex_file_unmap(f);
     emex_file_close(f);
-    free((void*)f->path);
+    free(f->path);
     free(f);
 }
 
@@ -211,8 +229,11 @@ bool emex_file_open(emex_file_t *f)
 
 void emex_file_close(emex_file_t *f)
 {
-    vfd_close(f->d);
-    f->d = NULL;
+    if(f->d != NULL)
+    {
+        vfd_close(f->d);
+        f->d = NULL;
+    }
 }
 
 vfd_t *emex_file_dup_fd(emex_file_t *f)

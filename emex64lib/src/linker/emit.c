@@ -253,9 +253,9 @@ static void emit_boot_header(fdwalker_t *fw,
 }
 
 bool linker_link(linker_options_t *options,
-                 const char **input_file,
+                 emex_file_t **input_file,
                  uint64_t input_file_cnt,
-                 const char **linker_script_file,
+                 emex_file_t **linker_script_file,
                  uint64_t linker_script_file_cnt)
 {
     if(input_file_cnt <= 0)

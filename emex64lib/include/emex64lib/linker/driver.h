@@ -27,15 +27,17 @@
 
 #include <stdint.h>
 
+#include <emex64lib/support/file.h>
+
 #include <emex64lib/linker/options.h>
 
 typedef struct {
     linker_options_t *options;
 
-    const char **input_file;            /* borrowed */
+    emex_file_t **input_file;           /* borrowed */
     uint64_t input_file_cnt;
 
-    const char **linker_script_file;    /* borrowed */
+    emex_file_t **linker_script_file;   /* borrowed */
     uint64_t linker_script_file_cnt;
 } linker_driver_t;
 

@@ -68,10 +68,11 @@ extern emex_file_policy_t section_data_file_policy;
 extern emex_file_policy_t assembly_unsaved_file_policy;
 extern emex_file_policy_t object_file_load_policy;
 extern emex_file_policy_t object_file_out_policy;
+extern emex_file_policy_t linker_script_file_policy;
 
 typedef struct emex_file {
-    const char *path;
-    const char *content;    /* mapped file contents */
+    char *path;
+    char *content;          /* mapped file contents */
     vfd_t *d;               /* file descriptor that gets duped by emex_file_dup_fd */
     vpageobj_t *vo;         /* virtual page object */
     size_t len;

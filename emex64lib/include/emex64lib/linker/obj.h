@@ -58,9 +58,9 @@ typedef struct linker_object {
     struct linker_object *next;
 } linker_object_t;
 
-linker_object_t *linker_object_alloc(const char *object_path);
+linker_object_t *linker_object_alloc(emex_file_t *object_file);
 void linker_object_dealloc(linker_object_t *obj);
 
-bool linker_load_object(linker_invocation_t *inv, const char *object_path);
+bool linker_load_object(linker_invocation_t *inv, emex_file_t *object_file);
 
 #endif /* EMEX64LD_OBJ_H */
