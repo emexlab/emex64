@@ -475,9 +475,9 @@ emex64_display_t *emex64_display_alloc(emex64_machine_t *machine,
     display->emex8042 = machine->emex8042;
 
     #if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || defined(__APPLE__))
+    display->enabled = install;
     if(install)
     {
-        display->enabled = true;
         pthread_create(&(display->pthread), NULL, display_start, display);
     }
     #endif /* EMEX64VM_DEVICE_DISPLAY */
