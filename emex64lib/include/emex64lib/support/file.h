@@ -30,6 +30,7 @@
 
 #include <emex64lib/support/fdwalker.h>
 #include <emex64lib/support/virtual/vfd.h>
+#include <emex64lib/support/virtual/vmman.h>
 
 typedef enum: uint8_t {
     kEmexFileTypeUnknown,

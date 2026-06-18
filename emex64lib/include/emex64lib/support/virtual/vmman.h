@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef VMAN_H
-#define VMAN_H
+#ifndef VMMAN_H
+#define VMMAN_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -31,4 +31,8 @@
 #include <stdbool.h>
 #include <sys/mman.h>
 
-#endif /* VMAN_H */
+#include <emex64lib/support/virtual/vfd.h>
+
+void *vmmap(void *addr, size_t len, int prot, int flags, vfd_t *d, off_t offset);
+
+#endif /* VMMAN_H */

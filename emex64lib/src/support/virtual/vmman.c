@@ -23,3 +23,29 @@
  */
 
 #include <emex64lib/support/virtual/vmman.h>
+
+void *vmmap(void *addr,
+            size_t len,
+            int prot,
+            int flags,
+            vfd_t *d,
+            off_t offset)
+{
+    if(d == NULL)
+    {
+        return mmap(addr, len, prot, flags, -1, offset);
+    }
+
+    switch(d->type)
+    {
+        case kVFDTypeReal:
+            return mmap(addr, len, prot, flags, d->fd, offset);
+        case kVFDTypeVirtual:
+            vpage_bind_page(d->virtual.p);
+            return d->virtual.p;    /* add more checks if applicable */
+        default:
+            break;
+    }
+
+    return MAP_FAILED;
+}

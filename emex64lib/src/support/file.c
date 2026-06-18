@@ -268,7 +268,7 @@ bool emex_file_map(emex_file_t *f)
 
     f->len = fdstat.st_size;
     /* TODO: check if UTF8 encoded or force UTF8 encoding */
-    f->content = mmap(NULL, f->len, emex_file_policy_to_prot(f->policy.needed_permission), MAP_SHARED, f->d->fd, 0);
+    f->content = vmmap(NULL, f->len, emex_file_policy_to_prot(f->policy.needed_permission), MAP_SHARED, f->d, 0);
 
     return (f->content == MAP_FAILED) ? false : true;
 }
