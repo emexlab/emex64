@@ -35,7 +35,7 @@
 #include <emex64lib/linker/driver.h>
 
 typedef struct linker_invocation {
-    linker_options_t *options;  /* borrowed */
+    linker_options_t options;
 
     linker_symbol_t *sym;
     linker_object_t *obj;
@@ -48,7 +48,7 @@ typedef struct linker_invocation {
     uint64_t out_bss_off;
 } linker_invocation_t;
 
-linker_invocation_t *linker_invocation_alloc(linker_options_t *options);
+linker_invocation_t *linker_invocation_alloc(linker_options_t options);
 void linker_invocation_dealloc(linker_invocation_t *inv);
 
 bool linker_symbol_append_definition(linker_invocation_t *inv, const char *name, const char *object_path, uint64_t addr);

@@ -31,15 +31,10 @@
 
 typedef struct linker_options {
     bool verbose;
-    char *output_path;
-    char *entry_name;
     kEmitMode emit_mode;
+    const char *entry_name; /* borrowed */
 } linker_options_t;
 
-linker_options_t *linker_options_alloc(void);
-void linker_options_dealloc(linker_options_t *options);
-
-const char *linker_options_get_output_path(linker_options_t *options);
-const char *linker_options_get_entry_name(linker_options_t *options);
+extern linker_options_t linker_options_default;
 
 #endif /* EMEX64LD_OPTIONS_H */

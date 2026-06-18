@@ -41,12 +41,9 @@ linker_driver_t *linker_driver_alloc(const char **argv,
         return NULL;
     }
 
-    driver->options = linker_options_alloc();
-    if(driver->options == NULL)
-    {
-        free(driver);
-        return NULL;
-    }
+    driver->options = linker_options_default;
+
+    driver->output_file = NULL;
 
     driver->input_file = calloc(argc, sizeof(emex_file_t));
     driver->input_file_cnt = 0;
@@ -69,11 +66,12 @@ linker_driver_t *linker_driver_alloc(const char **argv,
         }
         else if(strcmp(argv[i], "-o") == 0 && i + 1 < argc)
         {
-            driver->options->output_path = strdup(argv[++i]);
+            emex_file_dealloc(driver->output_file);
+            driver->output_file = emex_file_alloc(argv[++i], object_file_out_policy);
         }
         else if (strcmp(argv[i], "-e") == 0 && i + 1 < argc)
         {
-            driver->options->entry_name = strdup(argv[++i]);
+            driver->options.entry_name = argv[++i];
         }
         else if((strcmp(argv[i], "-T") == 0 || strcmp(argv[i], "--script") == 0) && i + 1 < argc)
         {
@@ -97,7 +95,7 @@ linker_driver_t *linker_driver_alloc(const char **argv,
         }
         else if(strcmp(argv[i], "-v") == 0)
         {
-            driver->options->verbose = true;
+            driver->options.verbose = true;
         }
         else if(strcmp(argv[i], "-r") == 0)
         {
@@ -135,6 +133,18 @@ linker_driver_t *linker_driver_alloc(const char **argv,
         }
     }
 
+    if(driver->input_file_cnt <= 0)
+    {
+        diag_error(NULL, "no input files\n");
+        goto failure;
+    }
+
+    if(driver->output_file == NULL)
+    {
+        diag_warn(NULL, "no output binary specified, falling back to a.out");
+        driver->output_file = emex_file_alloc("a.out", object_file_out_policy);
+    }
+
     return driver;
 
 failure:
@@ -150,7 +160,6 @@ failure:
     }
     free(driver->linker_script_file);
 
-    linker_options_dealloc(driver->options);
     free(driver);
     return NULL;
 }
@@ -168,19 +177,11 @@ void linker_driver_dealloc(linker_driver_t *driver)
         emex_file_dealloc(driver->linker_script_file[i]);
     }
     free(driver->linker_script_file);
-    linker_options_dealloc(driver->options);
+    emex_file_dealloc(driver->output_file);
     free(driver);
 }
 
 bool linker_driver_drive_the_fucking_car(linker_driver_t *driver)
 {
-    emex_file_t *output = emex_file_alloc(linker_options_get_output_path(driver->options), object_file_out_policy);
-    if(output == NULL)
-    {
-        return false;
-    }
-
-    bool succeeded = linker_link(driver->options, driver->input_file, driver->input_file_cnt, driver->linker_script_file, driver->linker_script_file_cnt, output);
-    emex_file_dealloc(output);
-    return succeeded;
+    return linker_link(driver->options, driver->input_file, driver->input_file_cnt, driver->linker_script_file, driver->linker_script_file_cnt, driver->output_file);
 }

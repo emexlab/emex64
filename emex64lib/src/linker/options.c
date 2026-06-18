@@ -29,43 +29,8 @@
 
 #include <emex64lib/linker/options.h>
 
-linker_options_t *linker_options_alloc(void)
-{
-    linker_options_t *options = malloc(sizeof(linker_options_t));
-    if(options == NULL)
-    {
-        return NULL;
-    }
-
-    options->output_path = NULL;
-    options->entry_name = NULL;
-    options->verbose = false;
-    options->emit_mode = kEmitModeFirmware;
-
-    return options;
-}
-
-void linker_options_dealloc(linker_options_t *options)
-{
-    free(options->output_path);
-    free(options->entry_name);
-}
-
-const char *linker_options_get_output_path(linker_options_t *options)
-{
-    if(options->output_path == NULL)
-    {
-        diag_warn(NULL, "no output binary specified, falling back to a.out\n");
-        options->output_path = strdup("a.out");
-    }
-    return options->output_path;
-}
-
-const char *linker_options_get_entry_name(linker_options_t *options)
-{
-    if(options->entry_name == NULL)
-    {
-        options->entry_name = strdup("_start");
-    }
-    return options->entry_name;
-}
+linker_options_t linker_options_default = {
+    .verbose = false,
+    .emit_mode = kEmitModeFirmware,
+    .entry_name = "_start",
+};

@@ -32,7 +32,9 @@
 #include <emex64lib/linker/options.h>
 
 typedef struct {
-    linker_options_t *options;
+    linker_options_t options;
+
+    emex_file_t *output_file;
 
     emex_file_t **input_file;           /* borrowed */
     uint64_t input_file_cnt;

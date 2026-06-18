@@ -252,19 +252,13 @@ static void emit_boot_header(fdwalker_t *fw,
     fdwalker_write(fw, entry, 64);
 }
 
-bool linker_link(linker_options_t *options,
+bool linker_link(linker_options_t options,
                  emex_file_t **input_file,
                  uint64_t input_file_cnt,
                  emex_file_t **linker_script_file,
                  uint64_t linker_script_file_cnt,
                  emex_file_t *output)
 {
-    if(input_file_cnt <= 0)
-    {
-        diag_error(NULL, "no input files\n");
-        return false;
-    }
-
     linker_invocation_t *inv = linker_invocation_alloc(options);
     if(inv == NULL)
     {
@@ -361,10 +355,10 @@ bool linker_link(linker_options_t *options,
         obj = obj->next;
     }
 
-    linker_symbol_t *gsym = linker_symbol_lookup(inv, linker_options_get_entry_name(options));
+    linker_symbol_t *gsym = linker_symbol_lookup(inv, options.entry_name);
     if(!gsym || !gsym->defined)
     {
-        diag_error(NULL, "entry symbol '%s' not found\n", linker_options_get_entry_name(options));
+        diag_error(NULL, "entry symbol '%s' not found\n", options.entry_name);
         fdwalker_dealloc(fw);
         linker_invocation_dealloc(inv);
         return false;
@@ -376,18 +370,18 @@ bool linker_link(linker_options_t *options,
     fdwalker_sync(fw);
     fdwalker_dealloc(fw);
 
-    if(options->verbose)
+    if(options.verbose)
     {
         fprintf(stderr,
                 "emex64ld: linked object(s) → %s\n"
                 "  .text  %8lu bytes @ 0x%08lx\n"
                 "  .data  %8lu bytes @ 0x%08lx\n"
                 "  .bss   %8lu bytes @ 0x%08lx (virtual)\n"
-                "  entry  %s @ 0x%08lx\n", linker_options_get_output_path(options),
+                "  entry  %s @ 0x%08lx\n", output->path,
                 (unsigned long)total_text, (unsigned long)BOOT_HEADER_SIZE,
                 (unsigned long)total_data, (unsigned long)inv->out_text_off,
                 (unsigned long)(inv->out_bss_off - inv->out_data_off), (unsigned long)inv->out_data_off,
-                linker_options_get_entry_name(options), (unsigned long)entry_addr);
+                options.entry_name, (unsigned long)entry_addr);
     }
 
     linker_invocation_dealloc(inv);
