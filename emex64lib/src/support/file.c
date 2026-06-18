@@ -148,6 +148,12 @@ emex_file_t *emex_file_alloc_vfd(const char *path,
                                  emex_file_policy_t policy,
                                  vfd_t *d)
 {
+    d = vfd_dup(d);
+    if(d == NULL)
+    {
+        return NULL;
+    }
+
     emex_file_t *f = emex_file_alloc(path, policy);
     if(f == NULL)
     {
