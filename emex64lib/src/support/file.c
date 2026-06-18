@@ -97,8 +97,9 @@ static inline int emex_file_policy_to_prot(kEmexFilePolicyPermission p)
     return prot;
 }
 
-emex_file_t *emex_file_alloc(const char *path,
-                             emex_file_policy_t policy)
+static emex_file_t *__emex_file_alloc(const char *path,
+                                      emex_file_policy_t policy,
+                                      bool care_about_file_exist_policy)
 {
     emex_file_t *f = malloc(sizeof(emex_file_t));
     if(f == NULL)
@@ -144,6 +145,12 @@ emex_file_t *emex_file_alloc(const char *path,
     return f;
 }
 
+emex_file_t *emex_file_alloc(const char *path,
+                             emex_file_policy_t policy)
+{
+    return __emex_file_alloc(path, policy, true);
+}
+
 emex_file_t *emex_file_alloc_vfd(const char *path,
                                  emex_file_policy_t policy,
                                  vfd_t *d)
@@ -154,15 +161,17 @@ emex_file_t *emex_file_alloc_vfd(const char *path,
         return NULL;
     }
 
-    emex_file_t *f = emex_file_alloc(path, policy);
+    emex_file_t *f = __emex_file_alloc(path, policy, false);
     if(f == NULL)
     {
+        vfd_close(d);
         return NULL;
     }
 
     f->type = emex_file_type_for_path(path, policy.must_exist);
     if(f->type == kEmexFileTypeDirectory)
     {
+        vfd_close(d);
         free(f);
         return NULL;
     }
@@ -179,7 +188,7 @@ emex_file_t *emex_file_alloc_unsaved(const char *path,
                                      emex_file_policy_t policy,
                                      const char *content)
 {
-    emex_file_t *f = emex_file_alloc(path, policy);
+    emex_file_t *f = __emex_file_alloc(path, policy, false);
     if(f == NULL)
     {
         return NULL;
