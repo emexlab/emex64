@@ -1,16 +1,17 @@
 # Makefile
 
+CMAKE_FLAGS ?=
+
 all: compile
 
 # Prepares the build directory
-build/.build:
+rerun_cmake:
 	mkdir -p build
 	cd build; \
-		cmake ..
-	touch build/.build
+		cmake $(CMAKE_FLAGS) ..
 
 # Builds the targets
-compile: build/.build
+compile: rerun_cmake
 	cd build; \
 		make
 

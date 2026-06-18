@@ -140,7 +140,7 @@ target_link_libraries(emex64
 
 target_compile_features(emex64 PUBLIC c_std_23)
 
-if (MSVC)
+if(MSVC)
     # Fuck MSVC nobody likes you
     message(FATAL_ERROR "MSVC is not supported. Switch to Linux moron, microslop sheep!")
 else()
@@ -149,22 +149,22 @@ else()
     set(_EMEX64_WARN_FLAGS -Wall -Wextra -Wpedantic -Wno-unused-parameter)
     set(_EMEX64_OPT_FLAGS -fPIC)
 
-    if(EMEX64LIB_COMPILER_OPTIMIZATIONS)
-        list(APPEND _EMEX64_OPT_FLAGS -O3 -fomit-frame-pointer -fstrict-aliasing -ffast-math -funroll-loops)
-    endif()
-
-    if(EMEX64LIB_NATIVE_ARCH)
-        list(APPEND _EMEX64_OPT_FLAGS -march=native -mtune=native)
-    endif()
-
-    if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-        list(APPEND _EMEX64_OPT_FLAGS -fgraphite-identity -floop-nest-optimize -fipa-pta)
-    elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
-        list(APPEND _EMEX64_OPT_FLAGS -fvectorize -fslp-vectorize)
-    endif()
-
-    if(EMEX64LIB_DEBUG)
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         list(APPEND _EMEX64_OPT_FLAGS -g)
+    else()
+        if(EMEX64LIB_COMPILER_OPTIMIZATIONS)
+            list(APPEND _EMEX64_OPT_FLAGS -O3 -fomit-frame-pointer -fstrict-aliasing -ffast-math -funroll-loops)
+        endif()
+
+        if(EMEX64LIB_NATIVE_ARCH)
+            list(APPEND _EMEX64_OPT_FLAGS -march=native -mtune=native)
+        endif()
+
+        if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+            list(APPEND _EMEX64_OPT_FLAGS -fgraphite-identity -floop-nest-optimize -fipa-pta)
+        elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
+            list(APPEND _EMEX64_OPT_FLAGS -fvectorize -fslp-vectorize)
+        endif()
     endif()
     
     include(CheckIPOSupported)
@@ -228,15 +228,13 @@ else()
     option(EMEX64LIB_STATIC "Link statically against emex64" ON)
 endif()
 
-if(NOT EMEX64LIB_STATIC)
-    install(TARGETS emex64
-        LIBRARY DESTINATION lib
-        RUNTIME DESTINATION bin
-    )
+install(TARGETS emex64
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+)
 
-    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
-        DESTINATION include
-        FILES_MATCHING
-            PATTERN "*.h"
-    )
-endif()
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
+    DESTINATION include
+    FILES_MATCHING
+        PATTERN "*.h"
+)

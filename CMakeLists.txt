@@ -4,6 +4,7 @@ project(emex64Toolchain LANGUAGES C)
 
 option(EMEX64_BUILD_TOOLS "Builds tools that make interfacing the emex64 toolchain easy" ON)
 option(EMEX64_BUILD_EXAMPLES "Builds examples that showcase how to use the emex64 toolchain" OFF)
+option(EMEX64LIB_STATIC "Build emex64lib as a static library" OFF)
 
 add_subdirectory(evObj)
 add_subdirectory(emex64lib)
@@ -17,8 +18,6 @@ endif()
 if(EMEX64_BUILD_EXAMPLES)
     add_subdirectory(examples/emex64hello)
 endif()
-
-option(EMEX64LIB_STATIC "Link statically against emex64lib" OFF)
 
 if(NOT EMEX64LIB_STATIC)
     if(APPLE)
