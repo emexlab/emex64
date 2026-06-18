@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(EMEX64 LANGUAGES C)
+project(emex64Toolchain LANGUAGES C)
 
 option(EMEX64_BUILD_TOOLS "Builds tools that make interfacing the emex64 toolchain easy" ON)
 option(EMEX64_BUILD_EXAMPLES "Builds examples that showcase how to use the emex64 toolchain" OFF)

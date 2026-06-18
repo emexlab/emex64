@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(EMEX64HELLO LANGUAGES C)
+project(emex64hello LANGUAGES C)
 
 add_executable(emex64hello
     src/main.c
