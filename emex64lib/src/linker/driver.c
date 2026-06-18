@@ -141,7 +141,7 @@ linker_driver_t *linker_driver_alloc(const char **argv,
 
     if(driver->output_file == NULL)
     {
-        diag_warn(NULL, "no output binary specified, falling back to a.out");
+        diag_warn(NULL, "no output binary specified, falling back to 'a.out'\n");
         driver->output_file = emex_file_alloc("a.out", object_file_out_policy);
     }
 

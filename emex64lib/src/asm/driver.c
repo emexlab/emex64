@@ -372,6 +372,12 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
         }
     }
 
+    if(driver->input_path_count <= 0)
+    {
+        diag_error(NULL, "no input files\n");
+        return false;
+    }
+
     if(driver->output_path == NULL)
     {
         diag_warn(NULL, "no output path provided, falling back to 'a.out'\n");
@@ -430,11 +436,6 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
     if(driver->emit_object && driver->input_path_count > 1)
     {
         diag_error(NULL, "multiple input files were passed in object emit mode\n");
-        return false;
-    }
-    else if(driver->input_path_count <= 0)
-    {
-        diag_error(NULL, "no input files were passed\n");
         return false;
     }
 
@@ -819,7 +820,7 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
 
                 if(driver->verbose)
                 {
-                    printf("\nspawned job: %d\n", pid);
+                    printf("\nspawned job (command='%s' | pid=%d)\n", job->command, pid);
                 }
 
                 int rstatus = 0;
@@ -837,7 +838,7 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
                 }
                 else if(WIFSIGNALED(rstatus))
                 {
-                    diag_error(NULL, "job '%s' terminated by signal %d\n", job->command, WTERMSIG(rstatus));
+                    diag_error(NULL, "job (command='%s' | pid=%d) terminated by signal %d\n", job->command, pid, WTERMSIG(rstatus));
                     return false;
                 }
             }
