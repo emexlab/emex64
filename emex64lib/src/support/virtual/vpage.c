@@ -57,17 +57,33 @@ static vpage_t *vpage_get_last(vpage_t *p)
     return page;
 }
 
-vpage_t *vpage_alloc()
+void *__vpage_alloc(void *addr,
+                    size_t len,
+                    int prot,
+                    int flags,
+                    int fd,
+                    off_t offset)
 {
     vpage_t *p = calloc(1, sizeof(vpage_t));
-    p->len = EMEX64_PAGE_SIZE;
-    p->p = mmap(NULL, p->len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if(p == NULL)
+    {
+        return NULL;
+    }
+    
+    p->len = len;
+    p->p = mmap(addr, len, prot, flags, fd, offset);
     if(p->p == MAP_FAILED)
     {
         free(p);
         return NULL;
     }
+
     return p;
+}
+
+vpage_t *vpage_alloc()
+{
+    return __vpage_alloc(NULL, EMEX64_PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 }
 
 static void __vpage_dealloc(vpage_t *p)
@@ -233,35 +249,4 @@ size_t vpage_write(vpage_t *p, size_t off, const uint8_t *b, size_t len)
 size_t vpage_read(vpage_t *p, size_t off, uint8_t *b, size_t len)
 {
     return vpage_xfer(p, off, b, len, kVPXferRead);
-}
-
-void *vpage_mmap_anonymous_copy(vpage_t *p)
-{
-    /* allocating new map */
-    vpage_t *page = vpage_get_first(p);
-    size_t total_len = vpage_get_size(page);
-    uint8_t *newmap = mmap(NULL, total_len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-    if(newmap == MAP_FAILED)
-    {
-        return MAP_FAILED;
-    }
-
-    /* copying data from old pages to single page */
-    size_t loc = 0;
-    for(;;)
-    {
-        memcpy(newmap + loc, page->p, page->len);
-
-        vpage_t *next = page->next;
-        loc += page->len;
-
-        if(next == NULL)
-        {
-            break;
-        }
-
-        page = next;
-    }
-
-    return newmap;
 }

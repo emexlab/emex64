@@ -22,29 +22,51 @@
  * SOFTWARE.
  */
 
-#include <emex64lib/support/virtual/vmman.h>
+#include <emex64lib/support/virtual/vpageobj.h>
+#include <emex64lib/support/diag.h>
 
-void *vmmap(void *addr,
-            size_t len,
-            int prot,
-            int flags,
-            vfd_t *d,
-            off_t offset)
+DEFINE_EVOBJECT_MAIN_EVENT_HANDLER(vpageobj)
 {
-    if(d == NULL)
+    if(evarr == NULL)
     {
-        return mmap(addr, len, prot, flags, -1, offset);
+        return (int64_t)sizeof(vpageobj_t);
     }
 
-    switch(d->type)
+    vpageobj_t *vo = (vpageobj_t*)evarr[0];
+
+    switch(type)
     {
-        case kVFDTypeReal:
-            return mmap(addr, len, prot, flags, d->fd, offset);
-        case kVFDTypeVirtual:
-            return vpage_mmap_anonymous_copy(d->virtual.p);
+        case evObjEventCopy:
+        case evObjEventSnapshot:
+            diag_fatal(NULL, "vpageobj_t doesn't support being copied or snapshotted\n");
+            exit(1);
+        case evObjEventInit:
+            vo->root = vpage_alloc();
+            if(vo->root == NULL)
+            {
+                return -1;
+            }
+
+            return 0;
+        case evObjEventDeinit:
+            vpage_dealloc(vo->root);
+            [[fallthrough]];
         default:
-            break;
+            return 0;
     }
+}
 
-    return MAP_FAILED;
+void vpageobj_set_root(vpageobj_t *vo,
+                       vpage_t *p,
+                       vpage_t **old_out)
+{
+    if(old_out != NULL)
+    {
+        *old_out = vo->root;
+    }
+    else
+    {
+        vpage_dealloc(vo->root);
+    }
+    vo->root = p;
 }

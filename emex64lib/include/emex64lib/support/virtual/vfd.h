@@ -31,7 +31,7 @@
 #include <stdbool.h>
 #include <sys/stat.h>
 
-#include <emex64lib/support/virtual/vpage.h>
+#include <emex64lib/support/virtual/vpageobj.h>
 
 typedef enum: uint8_t {
     kVFDTypeReal,
@@ -48,7 +48,7 @@ typedef struct vfd {
             int flg;
             off_t off;
             size_t size;
-            vpage_t *p;
+            vpageobj_t *p;
         } virtual;
     };
 } vfd_t;

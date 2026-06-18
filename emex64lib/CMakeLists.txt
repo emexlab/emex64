@@ -57,9 +57,9 @@ endif()
 add_library(emex64 ${LIB_TYPE}
     # Support
 
-    src/support/virtual/vfd.c
     src/support/virtual/vpage.c
-    src/support/virtual/vmman.c
+    src/support/virtual/vpageobj.c
+    src/support/virtual/vfd.c
 
     src/support/parser.c
     src/support/bitwalker.c
@@ -135,7 +135,7 @@ target_include_directories(emex64
 )
 
 target_link_libraries(emex64
-    PRIVATE evObj
+    PUBLIC evObj
 )
 
 target_compile_features(emex64 PUBLIC c_std_23)

@@ -22,17 +22,28 @@
  * SOFTWARE.
  */
 
-#ifndef VMMAN_H
-#define VMMAN_H
+#ifndef VPAGEOBJ_H
+#define VPAGEOBJ_H
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <sys/mman.h>
+#include <sys/stat.h>
 
-#include <emex64lib/support/virtual/vfd.h>
+#include <evObj/defs.h>
+#include <evObj/alloc.h>
+#include <evObj/reference.h>
 
-void *vmmap(void *addr, size_t len, int prot, int flags, vfd_t *d, off_t offset);
+#include <emex64lib/support/virtual/vpage.h>
 
-#endif /* VMMAN_H */
+typedef struct vpageobj {
+    evobject_t header;
+    vpage_t *root;
+} vpageobj_t;
+
+DEFINE_EVOBJECT_MAIN_EVENT_HANDLER(vpageobj);
+
+void vpageobj_set_root(vpageobj_t *vo, vpage_t *p, vpage_t **old_out);
+
+#endif /* VPAGEOBJ_H */

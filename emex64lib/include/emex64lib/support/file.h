@@ -30,7 +30,6 @@
 
 #include <emex64lib/support/fdwalker.h>
 #include <emex64lib/support/virtual/vfd.h>
-#include <emex64lib/support/virtual/vmman.h>
 
 typedef enum: uint8_t {
     kEmexFileTypeUnknown,
@@ -74,6 +73,7 @@ typedef struct emex_file {
     const char *path;
     const char *content;    /* mapped file contents */
     vfd_t *d;               /* file descriptor that gets duped by emex_file_dup_fd */
+    vpageobj_t *vo;         /* virtual page object */
     size_t len;
     kEmexFileType type;
     kEmexFileInstanceType instance_type;

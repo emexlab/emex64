@@ -261,16 +261,56 @@ bool emex_file_map(emex_file_t *f)
 
     f->len = fdstat.st_size;
     /* TODO: check if UTF8 encoded or force UTF8 encoding */
-    f->content = vmmap(NULL, f->len, emex_file_policy_to_prot(f->policy.needed_permission), MAP_SHARED, f->d, 0);
+    switch(f->d->type)
+    {
+        case kVFDTypeReal:
+        {
+            vpage_t *p = __vpage_alloc(NULL, f->len, emex_file_policy_to_prot(f->policy.needed_permission), MAP_SHARED, f->d->fd, 0);
+            if(p == NULL)
+            {
+                return false;
+            }
 
-    return f->content != MAP_FAILED;
+            f->vo = evo_alloc_fastpath(vpageobj);
+            if(f->vo == NULL)
+            {
+                vpage_dealloc(p);
+                return false;
+            }
+
+            vpageobj_set_root(f->vo, p, NULL);
+            break;
+        }
+        case kVFDTypeVirtual:
+        {
+            if(!evo_retain(f->d->virtual.p))
+            {
+                return false;
+            }
+
+            vpageobj_t *vo = f->d->virtual.p;
+            if(!vpage_bind_page(vo->root))
+            {
+                evo_release(vo);
+                return false;
+            }
+
+            f->vo = vo;
+            break;
+        }
+    }
+
+    f->content = (char*)f->vo->root->p;
+    f->len = f->vo->root->len;
+
+    return true;
 }
 
 void emex_file_unmap(emex_file_t *f)
 {
     if(f->content != MAP_FAILED)
     {
-        munmap((void*)f->content, f->len);
+        evo_release(f->vo);
         f->content = MAP_FAILED;
         f->len = 0;
     }

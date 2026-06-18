@@ -38,6 +38,7 @@ typedef struct vpage {
     struct vpage *next;
 } vpage_t;
 
+void *__vpage_alloc(void *addr, size_t len, int prot, int flags, int fd, off_t offset);
 vpage_t *vpage_alloc();
 void vpage_dealloc(vpage_t *p);
 
@@ -47,7 +48,5 @@ bool vpage_bind_page(vpage_t *p);
 
 size_t vpage_write(vpage_t *p, size_t off, const uint8_t *b, size_t len);
 size_t vpage_read(vpage_t *p, size_t off, uint8_t *b, size_t len);
-
-void *vpage_mmap_anonymous_copy(vpage_t *p);
 
 #endif /* VPAGE_H */

@@ -31,6 +31,9 @@
 
 #include <emex64lib/vm/memory.h>
 
+#include <evObj/alloc.h>
+#include <evObj/reference.h>
+
 vfd_t *vfd_open(const char *path,
                 int flg,
                 ...)
@@ -89,7 +92,7 @@ vfd_t *vfd_vopen(int flg)
 
     d->type = kVFDTypeVirtual;
     d->virtual.flg = flg;
-    d->virtual.p = vpage_alloc();
+    d->virtual.p = evo_alloc_fastpath(vpageobj);
     d->virtual.off = 0;
 
     if(d->virtual.p == NULL)
@@ -109,7 +112,7 @@ int vfd_close(vfd_t *d)
             vret = close(d->fd);
             break;
         case kVFDTypeVirtual:
-            vpage_dealloc(d->virtual.p);
+            evo_release(d->virtual.p);
             vret = 0;
             break;
     }
@@ -141,7 +144,11 @@ vfd_t *vfd_dup(vfd_t *d)
             /* copy entire state */
             nd->virtual.flg = d->virtual.flg;
             nd->virtual.off = d->virtual.off;
-            nd->virtual.p = d->virtual.p;       /* this is fine! */
+            if(!evo_retain(d->virtual.p))
+            {
+                goto fail;
+            }
+            nd->virtual.p = d->virtual.p;
             nd->virtual.size = d->virtual.size; /* could require some vfd_vdatasource_t??? that is MRC ref counted?? */
             break;
         default:
@@ -163,7 +170,7 @@ ssize_t vfd_read(vfd_t *d,
             return read(d->fd, buf, count);
         case kVFDTypeVirtual:
         {
-            ssize_t vret = (ssize_t)vpage_read(d->virtual.p, (size_t)d->virtual.off, buf, count);
+            ssize_t vret = (ssize_t)vpage_read(d->virtual.p->root, (size_t)d->virtual.off, buf, count);
             if(vret > 0)
             {
                 d->virtual.off += vret;
@@ -187,16 +194,16 @@ ssize_t vfd_write(vfd_t *d,
             size_t start = (size_t)d->virtual.off;
             size_t end_off = start + count;
 
-            while(end_off > vpage_get_size(d->virtual.p))
+            while(end_off > vpage_get_size(d->virtual.p->root))
             {
-                if(!vpage_gib_page(d->virtual.p))
+                if(!vpage_gib_page(d->virtual.p->root))
                 {
                     errno = ENOMEM;
                     return -1;
                 }
             }
 
-            ssize_t vret = (ssize_t)vpage_write(d->virtual.p, start, buf, count);
+            ssize_t vret = (ssize_t)vpage_write(d->virtual.p->root, start, buf, count);
             if(vret < 0)
             {
                 return vret;
@@ -231,9 +238,9 @@ int vfd_truncate(vfd_t *d, off_t length)
             size_t oldlen = d->virtual.size;
 
             /* make sure the backing store can hold the new lenght */
-            while(vpage_get_size(d->virtual.p) < newlen)
+            while(vpage_get_size(d->virtual.p->root) < newlen)
             {
-                if(!vpage_gib_page(d->virtual.p)) { errno = ENOMEM; return -1; }
+                if(!vpage_gib_page(d->virtual.p->root)) { errno = ENOMEM; return -1; }
             }
 
             if(newlen < oldlen)
@@ -244,7 +251,7 @@ int vfd_truncate(vfd_t *d, off_t length)
                 {
                     size_t chunk = oldlen - pos;
                     if(chunk > sizeof(zeros)) chunk = sizeof(zeros);
-                    vpage_write(d->virtual.p, pos, zeros, chunk);
+                    vpage_write(d->virtual.p->root, pos, zeros, chunk);
                     pos += chunk;
                 }
             }
