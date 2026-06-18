@@ -323,12 +323,12 @@ bool emex_file_map(emex_file_t *f)
         }
         case kVFDTypeVirtual:
         {
-            if(!evo_retain(f->d->virtual.p))
+            if(!evo_retain(f->d->vd.p))
             {
                 return false;
             }
 
-            vpageobj_t *vo = f->d->virtual.p;
+            vpageobj_t *vo = f->d->vd.p;
             if(!vpage_bind_page(vo->root))
             {
                 evo_release(vo);

@@ -91,11 +91,11 @@ vfd_t *vfd_vopen(int flg)
     }
 
     d->type = kVFDTypeVirtual;
-    d->virtual.flg = flg;
-    d->virtual.p = evo_alloc_fastpath(vpageobj);
-    d->virtual.off = 0;
+    d->vd.flg = flg;
+    d->vd.p = evo_alloc_fastpath(vpageobj);
+    d->vd.off = 0;
 
-    if(d->virtual.p == NULL)
+    if(d->vd.p == NULL)
     {
         return NULL;
     }
@@ -112,7 +112,7 @@ int vfd_close(vfd_t *d)
             vret = close(d->fd);
             break;
         case kVFDTypeVirtual:
-            evo_release(d->virtual.p);
+            evo_release(d->vd.p);
             vret = 0;
             break;
     }
@@ -142,13 +142,13 @@ vfd_t *vfd_dup(vfd_t *d)
             break;
         case kVFDTypeVirtual:
             /* copy entire state */
-            nd->virtual.flg = d->virtual.flg;
-            nd->virtual.off = d->virtual.off;
-            if(!evo_retain(d->virtual.p))
+            nd->vd.flg = d->vd.flg;
+            nd->vd.off = d->vd.off;
+            if(!evo_retain(d->vd.p))
             {
                 goto fail;
             }
-            nd->virtual.p = d->virtual.p;
+            nd->vd.p = d->vd.p;
             break;
         default:
         fail:
@@ -169,10 +169,10 @@ ssize_t vfd_read(vfd_t *d,
             return read(d->fd, buf, count);
         case kVFDTypeVirtual:
         {
-            ssize_t vret = (ssize_t)vpage_read(d->virtual.p->root, (size_t)d->virtual.off, buf, count);
+            ssize_t vret = (ssize_t)vpage_read(d->vd.p->root, (size_t)d->vd.off, buf, count);
             if(vret > 0)
             {
-                d->virtual.off += vret;
+                d->vd.off += vret;
             }
             return vret;
         }
@@ -190,28 +190,28 @@ ssize_t vfd_write(vfd_t *d,
             return write(d->fd, buf, count);
         case kVFDTypeVirtual:
         {
-            size_t start = (size_t)d->virtual.off;
+            size_t start = (size_t)d->vd.off;
             size_t end_off = start + count;
 
-            while(end_off > vpage_get_size(d->virtual.p->root))
+            while(end_off > vpage_get_size(d->vd.p->root))
             {
-                if(!vpage_gib_page(d->virtual.p->root))
+                if(!vpage_gib_page(d->vd.p->root))
                 {
                     errno = ENOMEM;
                     return -1;
                 }
             }
 
-            ssize_t vret = (ssize_t)vpage_write(d->virtual.p->root, start, buf, count);
+            ssize_t vret = (ssize_t)vpage_write(d->vd.p->root, start, buf, count);
             if(vret < 0)
             {
                 return vret;
             }
 
-            d->virtual.off = (off_t)(start + (size_t)vret);
-            if((size_t)d->virtual.off > d->virtual.p->extra_size_marker)
+            d->vd.off = (off_t)(start + (size_t)vret);
+            if((size_t)d->vd.off > d->vd.p->extra_size_marker)
             {
-                d->virtual.p->extra_size_marker = (size_t)d->virtual.off;
+                d->vd.p->extra_size_marker = (size_t)d->vd.off;
             }
             return vret;
         }
@@ -234,12 +234,12 @@ int vfd_truncate(vfd_t *d, off_t length)
             }
 
             size_t newlen = (size_t)length;
-            size_t oldlen = d->virtual.p->extra_size_marker;
+            size_t oldlen = d->vd.p->extra_size_marker;
 
             /* make sure the backing store can hold the new lenght */
-            while(vpage_get_size(d->virtual.p->root) < newlen)
+            while(vpage_get_size(d->vd.p->root) < newlen)
             {
-                if(!vpage_gib_page(d->virtual.p->root)) { errno = ENOMEM; return -1; }
+                if(!vpage_gib_page(d->vd.p->root)) { errno = ENOMEM; return -1; }
             }
 
             if(newlen < oldlen)
@@ -250,12 +250,12 @@ int vfd_truncate(vfd_t *d, off_t length)
                 {
                     size_t chunk = oldlen - pos;
                     if(chunk > sizeof(zeros)) chunk = sizeof(zeros);
-                    vpage_write(d->virtual.p->root, pos, zeros, chunk);
+                    vpage_write(d->vd.p->root, pos, zeros, chunk);
                     pos += chunk;
                 }
             }
 
-            d->virtual.p->extra_size_marker = newlen;
+            d->vd.p->extra_size_marker = newlen;
             return 0;
         }
     }
@@ -281,10 +281,10 @@ off_t vfd_seek(vfd_t *d,
                     base = 0;
                     break;
                 case SEEK_CUR:
-                    base = d->virtual.off;
+                    base = d->vd.off;
                     break;
                 case SEEK_END:
-                    base = (off_t)d->virtual.p->extra_size_marker;
+                    base = (off_t)d->vd.p->extra_size_marker;
                     break;
                 default:
                     errno = EINVAL;
@@ -303,7 +303,7 @@ off_t vfd_seek(vfd_t *d,
                 return (off_t)-1;
             }
 
-            d->virtual.off = new_off;
+            d->vd.off = new_off;
             return new_off;
         }
     }
@@ -337,7 +337,7 @@ int vfd_stat(vfd_t *d,
         case kVFDTypeVirtual:
         {
             fflush(stdout);
-            stat->st_size = (off_t)d->virtual.p->extra_size_marker;
+            stat->st_size = (off_t)d->vd.p->extra_size_marker;
             return 0;
         }
     }

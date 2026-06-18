@@ -48,7 +48,7 @@ typedef struct vfd {
             int flg;
             off_t off;
             vpageobj_t *p;
-        } virtual;
+        } vd;
     };
 } vfd_t;
 
