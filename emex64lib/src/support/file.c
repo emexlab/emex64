@@ -47,13 +47,6 @@ emex_file_policy_t section_data_file_policy = {
     .create_on_open = false,
 };
 
-emex_file_policy_t assembly_unsaved_file_policy = {
-    .needed_permission = kEmexFilePolicyPermissionRead,
-    .must_exist = false,
-    .must_be_file = true,
-    .create_on_open = false,
-};
-
 emex_file_policy_t object_file_load_policy = {
     .needed_permission = kEmexFilePolicyPermissionRead,
     .must_exist = true,
@@ -117,7 +110,7 @@ static emex_file_t *__emex_file_alloc(const char *path,
     char *tmp_path = malloc(PATH_MAX);
     if(realpath(path, tmp_path) == NULL)
     {
-        if(policy.must_exist)
+        if(policy.must_exist && care_about_file_exist_policy)
         {
             free(tmp_path);
             free(f);
