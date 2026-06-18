@@ -33,7 +33,6 @@ typedef struct assembler_options {
     bool warning_deprecated;        /* default: true */
 } assembler_options_t;
 
-assembler_options_t *assembler_options_alloc(void);
-void assembler_options_dealloc(assembler_options_t *options);
+extern assembler_options_t assembler_options_default;
 
 #endif /* EMEX64ASM_OPTIONS_H */

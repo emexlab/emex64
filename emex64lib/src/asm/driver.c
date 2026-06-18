@@ -724,20 +724,14 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
 {
     if(driver->emit_object)
     {
-        assembler_options_t *options = assembler_options_alloc();
-        if(options == NULL)
-        {
-            return false;
-        }
-
-        options->page_align = driver->page_align;
-        options->warning_error = driver->warning_error;
-        options->warning_deprecated = driver->warning_deprecated;
+        assembler_options_t options = assembler_options_default;
+        options.page_align = driver->page_align;
+        options.warning_error = driver->warning_error;
+        options.warning_deprecated = driver->warning_deprecated;
 
         assembler_invocation_t *inv = assembler_invocation_alloc(options);
         if(inv == NULL)
         {
-            assembler_options_dealloc(options);
             return false;
         }
 
@@ -750,7 +744,6 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
         if(input == NULL)
         {
             assembler_invocation_dealloc(inv);
-            assembler_options_dealloc(options);
             return false;
         }
 
@@ -759,7 +752,6 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
         {
             emex_file_dealloc(output);
             assembler_invocation_dealloc(inv);
-            assembler_options_dealloc(options);
             return false;
         }
 
@@ -768,7 +760,6 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
         emex_file_dealloc(output);
         emex_file_dealloc(input);
         assembler_invocation_dealloc(inv);
-        assembler_options_dealloc(options);
 
         return success;
     }

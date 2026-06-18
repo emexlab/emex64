@@ -22,29 +22,10 @@
  * SOFTWARE.
  */
 
-#include <stdlib.h>
-#include <string.h>
-
-#include <emex64lib/support/diag.h>
-
 #include <emex64lib/asm/options.h>
 
-assembler_options_t *assembler_options_alloc(void)
-{
-    assembler_options_t *options = malloc(sizeof(assembler_options_t));
-    if(options == NULL)
-    {
-        return NULL;
-    }
-
-    options->page_align = true;
-    options->warning_error = false;
-    options->warning_deprecated = true;
-
-    return options;
-}
-
-void assembler_options_dealloc(assembler_options_t *options)
-{
-    free(options);
-}
+assembler_options_t assembler_options_default = {
+    .page_align = true,
+    .warning_error = false,
+    .warning_deprecated = true,
+};

@@ -245,7 +245,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
         inv->data_section_end = fdwalker_bytes_used(inv->fdwalker);
     }
 
-    if(inv->options->page_align)
+    if(inv->options.page_align)
     {
         inv->fdwalker->byte_pos = align_up(inv->fdwalker->byte_pos, 0x2000);
         inv->fdwalker->bit_idx = 0;
@@ -332,7 +332,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
         inv->bss_section_size = bss_end > inv->bss_section_start ? bss_end - inv->bss_section_start : 0;
     }
 
-    if(inv->options->page_align)
+    if(inv->options.page_align)
     {
         inv->fdwalker->byte_pos = align_up(inv->fdwalker->byte_pos, 0x2000);
         inv->fdwalker->bit_idx = 0;
