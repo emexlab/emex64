@@ -183,21 +183,30 @@ ssize_t vfd_write(vfd_t *d,
         case kVFDTypeReal:
             return write(d->fd, buf, count);
         case kVFDTypeVirtual:
-    try_pass:
         {
-            size_t end_off = (size_t)d->virtual.off + count;
-            if(end_off > vpage_get_size(d->virtual.p))
+            size_t start = (size_t)d->virtual.off;
+            size_t end_off = start + count;
+
+            while(end_off > vpage_get_size(d->virtual.p))
             {
-                vpage_gib_page(d->virtual.p);
-                goto try_pass;
+                if(!vpage_gib_page(d->virtual.p))
+                {
+                    errno = ENOMEM;
+                    return -1;
+                }
             }
-            d->virtual.off = (off_t)end_off;
-            ssize_t vret = (ssize_t)vpage_write(d->virtual.p, (size_t)d->virtual.off, buf, count);
+
+            ssize_t vret = (ssize_t)vpage_write(d->virtual.p, start, buf, count);
+            if(vret < 0)
+            {
+                return vret;
+            }
+
+            d->virtual.off = (off_t)(start + (size_t)vret);
             if((size_t)d->virtual.off > d->virtual.size)
             {
                 d->virtual.size = (size_t)d->virtual.off;
             }
-            d->virtual.off = end_off;
             return vret;
         }
     }

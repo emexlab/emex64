@@ -237,11 +237,6 @@ fdwalker_t *emex_file_dup_fdwalker(emex_file_t *f,
 
 bool emex_file_map(emex_file_t *f)
 {
-    if(f->instance_type == kEmexFileInstanceTypeUnsaved)
-    {
-        return true;
-    }
-
     if(f->content != MAP_FAILED)
     {
         /*
@@ -268,7 +263,7 @@ bool emex_file_map(emex_file_t *f)
     /* TODO: check if UTF8 encoded or force UTF8 encoding */
     f->content = vmmap(NULL, f->len, emex_file_policy_to_prot(f->policy.needed_permission), MAP_SHARED, f->d, 0);
 
-    return (f->content == MAP_FAILED) ? false : true;
+    return f->content != MAP_FAILED;
 }
 
 void emex_file_unmap(emex_file_t *f)
