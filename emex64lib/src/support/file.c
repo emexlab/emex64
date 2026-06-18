@@ -130,7 +130,6 @@ emex_file_t *emex_file_alloc(const char *path,
     
 
     /* setting standard values */
-    f->instance_type = kEmexFileInstanceTypeSaved;
     f->len = 0;
     f->content = MAP_FAILED;
     f->type = emex_file_type_for_path(path, policy.must_exist);
@@ -141,6 +140,31 @@ emex_file_t *emex_file_alloc(const char *path,
         return NULL;
     }
     f->d = NULL;
+
+    return f;
+}
+
+emex_file_t *emex_file_alloc_vfd(const char *path,
+                                 emex_file_policy_t policy,
+                                 vfd_t *d)
+{
+    emex_file_t *f = emex_file_alloc(path, policy);
+    if(f == NULL)
+    {
+        return NULL;
+    }
+
+    f->type = emex_file_type_for_path(path, policy.must_exist);
+    if(f->type == kEmexFileTypeDirectory)
+    {
+        free(f);
+        return NULL;
+    }
+
+    /* setting unsaved values */
+    f->len = 0;
+    f->content = MAP_FAILED;
+    f->d = d;
 
     return f;
 }
@@ -165,13 +189,6 @@ emex_file_t *emex_file_alloc_unsaved(const char *path,
     /* setting unsaved values */
     f->len = 0;
     f->content = MAP_FAILED;
-    f->path = strdup(path);
-    if(f->path == NULL)
-    {
-        free(f);
-        return NULL;
-    }
-    f->instance_type = kEmexFileInstanceTypeUnsaved;
     f->d = vfd_vopen(O_RDWR);
     if(f->d == NULL)
     {
@@ -208,12 +225,6 @@ bool emex_file_open(emex_file_t *f)
 
     if(f->type == kEmexFileTypeDirectory)
     {
-        return false;
-    }
-
-    if(f->instance_type == kEmexFileInstanceTypeUnsaved)
-    {
-        /* TODO: open via creating the file at unsaved location flipping unsaved off */
         return false;
     }
 

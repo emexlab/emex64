@@ -46,11 +46,6 @@ typedef enum: uint8_t {
 } kEmexFileType;
 
 typedef enum: uint8_t {
-    kEmexFileInstanceTypeSaved,
-    kEmexFileInstanceTypeUnsaved,
-} kEmexFileInstanceType;
-
-typedef enum: uint8_t {
     kEmexFilePolicyPermissionRead =     0b00000001,
     kEmexFilePolicyPermissionWrite =    0b00000010,
     kEmexFilePolicyPermissionExecute =  0b00000100,
@@ -77,11 +72,11 @@ typedef struct emex_file {
     vpageobj_t *vo;         /* virtual page object */
     size_t len;
     kEmexFileType type;
-    kEmexFileInstanceType instance_type;
     emex_file_policy_t policy;
 } emex_file_t;
 
 emex_file_t *emex_file_alloc(const char *path, emex_file_policy_t policy);
+emex_file_t *emex_file_alloc_vfd(const char *path, emex_file_policy_t policy, vfd_t *d);
 emex_file_t *emex_file_alloc_unsaved(const char *path, emex_file_policy_t policy, const char *content);
 void emex_file_dealloc(emex_file_t *f);
 
