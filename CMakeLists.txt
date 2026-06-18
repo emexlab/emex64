@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.16)
 
 project(emex64Toolchain LANGUAGES C)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
 option(EMEX64_BUILD_TOOLS "Builds tools that make interfacing the emex64 toolchain easy" ON)
 option(EMEX64_BUILD_EXAMPLES "Builds examples that showcase how to use the emex64 toolchain" OFF)
 option(EMEX64LIB_STATIC "Build emex64lib as a static library" OFF)
