@@ -256,7 +256,8 @@ bool linker_link(linker_options_t *options,
                  emex_file_t **input_file,
                  uint64_t input_file_cnt,
                  emex_file_t **linker_script_file,
-                 uint64_t linker_script_file_cnt)
+                 uint64_t linker_script_file_cnt,
+                 emex_file_t *output)
 {
     if(input_file_cnt <= 0)
     {
@@ -310,16 +311,9 @@ bool linker_link(linker_options_t *options,
         obj = obj->next;
     }
 
-    emex_file_t *file = emex_file_alloc(linker_options_get_output_path(options), object_file_out_policy);
-    if(file == NULL)
-    {
-        return false;
-    }
-
-    fdwalker_t *fw = emex_file_dup_fdwalker(file, BW_LITTLE_ENDIAN);
+    fdwalker_t *fw = emex_file_dup_fdwalker(output, BW_LITTLE_ENDIAN);
     if(fw == NULL)
     {
-        emex_file_dealloc(file);
         linker_invocation_dealloc(inv);
         return false;
     }
@@ -361,7 +355,6 @@ bool linker_link(linker_options_t *options,
         if(!obj_apply_relocs(inv, obj, fw))
         {
             fdwalker_dealloc(fw);
-            emex_file_dealloc(file);
             linker_invocation_dealloc(inv);
             return false;
         }
@@ -373,7 +366,6 @@ bool linker_link(linker_options_t *options,
     {
         diag_error(NULL, "entry symbol '%s' not found\n", linker_options_get_entry_name(options));
         fdwalker_dealloc(fw);
-        emex_file_dealloc(file);
         linker_invocation_dealloc(inv);
         return false;
     }
@@ -383,7 +375,6 @@ bool linker_link(linker_options_t *options,
 
     fdwalker_sync(fw);
     fdwalker_dealloc(fw);
-    emex_file_dealloc(file);
 
     if(options->verbose)
     {

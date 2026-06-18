@@ -174,5 +174,13 @@ void linker_driver_dealloc(linker_driver_t *driver)
 
 bool linker_driver_drive_the_fucking_car(linker_driver_t *driver)
 {
-    return linker_link(driver->options, driver->input_file, driver->input_file_cnt, driver->linker_script_file, driver->linker_script_file_cnt);
+    emex_file_t *output = emex_file_alloc(linker_options_get_output_path(driver->options), object_file_out_policy);
+    if(output == NULL)
+    {
+        return false;
+    }
+
+    bool succeeded = linker_link(driver->options, driver->input_file, driver->input_file_cnt, driver->linker_script_file, driver->linker_script_file_cnt, output);
+    emex_file_dealloc(output);
+    return succeeded;
 }

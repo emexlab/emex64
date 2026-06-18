@@ -169,11 +169,21 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    /* load firmware if applicable */
-    if(firmware_image_path != NULL && !emex64_memory_load_image(machine->memory, firmware_image_path))
+    if(firmware_image_path != NULL)
     {
-        diag_error(NULL, "failed to load firmware image\n");
-        return 1;
+        emex_file_t *file = emex_file_alloc(firmware_image_path, object_file_load_policy);
+        if(file == NULL)
+    fail:
+        {
+            diag_error(NULL, "failed to load firmware image\n");
+            return 1;
+        }
+
+        if(!emex64_memory_load_image(machine->memory, file))
+        {
+            emex_file_dealloc(file);
+            goto fail;
+        }
     }
     
     /* executing virtual machines 1st core TODO: Implement multicore */

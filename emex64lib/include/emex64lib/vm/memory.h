@@ -31,7 +31,8 @@
 #include <stddef.h>
 #include <string.h>
 
-#include <emex64lib/support/bitwalker.h>
+#include <emex64lib/support/file.h>
+
 #include <emex64lib/vm/core.h>
 
 #define EMEX64_PAGE_SIZE 0x2000
@@ -91,7 +92,7 @@ typedef enum: uint8_t {
 emex64_memory_t *emex64_memory_alloc(uint64_t size);
 void emex64_memory_dealloc(emex64_memory_t *memory);
 
-bool emex64_memory_load_image(emex64_memory_t *memory, const char *image_path);
+bool emex64_memory_load_image(emex64_memory_t *memory, emex_file_t *file);
 
 void emex64_memory_action(emex64_core_t *core, uint64_t addr, size_t size, uint64_t *value, kEmex64MemoryAction action);
 bool emex64_memory_cpy(emex64_core_t *core, uint8_t *dst, uint64_t addr, size_t len, kEmex64MemoryAction action);

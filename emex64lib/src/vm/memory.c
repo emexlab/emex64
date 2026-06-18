@@ -193,32 +193,27 @@ void emex64_memory_dealloc(emex64_memory_t *memory)
 }
 
 bool emex64_memory_load_image(emex64_memory_t *memory,
-                              const char *image_path)
+                              emex_file_t *file)
 {
-    /*
-     * opening firmware image with RO(read-only)
-     * access, which is because it is more efficient,
-     * atleast I think that x3.
-     */
-    int fd = open(image_path, O_RDONLY);
-    if(fd == -1)
+    vfd_t *d = emex_file_dup_fd(file);
+    if(d == NULL)
     {
-        diag_error(NULL, "failed to open firmware image at path \"%s\"\n", image_path);
+        diag_fatal(NULL, "failed to dup virtual file descriptor from file\n");
         return false;
     }
 
     struct stat image_stat;
-    if(fstat(fd, &image_stat) != 0)
+    if(vfd_stat(d, &image_stat) != 0)
     {
-        close(fd);
-        diag_error(NULL, "failed to gather size of file at path \"%s\"\n", image_path);
+        vfd_close(d);
+        diag_fatal(NULL, "failed to gather size of file at path \"%s\"\n", file->path);
         return false;
     }
 
     size_t image_size = image_stat.st_size;
+    vfd_close(d);
     if(image_size > memory->memory_size)
     {
-        close(fd);
         diag_error(NULL, "firmware image is too large\n");
         return false;
     }
@@ -230,9 +225,15 @@ bool emex64_memory_load_image(emex64_memory_t *memory,
      * to a writable page, this is much faster than copying it
      * our selves.
      */
-    void *mapped = mmap(memory->memory, image_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_FIXED, fd, 0);
-    close(fd);
-    if(mapped == MAP_FAILED)
+    if(!emex_file_map(file))
+    {
+        diag_error(NULL, "mapping firmware image failed\n");
+        return false;
+    }
+
+    ssize_t s = vpage_read(file->vo->root, 0, memory->memory, image_size);
+
+    if((size_t)s < image_size)
     {
         diag_error(NULL, "mapping boot image failed\n");
         return false;
