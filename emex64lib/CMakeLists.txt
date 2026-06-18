@@ -147,7 +147,7 @@ else()
 
     # Setting up compiler flags
     set(_EMEX64_WARN_FLAGS -Wall -Wextra -Wpedantic -Wno-unused-parameter)
-    set(_EMEX64_OPT_FLAGS )
+    set(_EMEX64_OPT_FLAGS -fPIC)
 
     if(EMEX64LIB_COMPILER_OPTIMIZATIONS)
         list(APPEND _EMEX64_OPT_FLAGS -O3 -fomit-frame-pointer -fstrict-aliasing -ffast-math -funroll-loops)
