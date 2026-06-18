@@ -129,6 +129,58 @@ static inline int put_float(double n)
     return count;
 }
 
+static void diag_print_caret_line(assembler_token_t *at)
+{
+    if(at == NULL || at->al == NULL || at->al->str == NULL)
+    {
+        return;
+    }
+
+    const char *src = at->al->str;
+    size_t line_num = at->al->line_num;
+    size_t start = (at->column_num > 0) ? at->column_num - 1 : 0;
+    size_t tok_len = 0;
+    if(at->str != NULL)
+    {
+        while(at->str[tok_len])
+        {
+            tok_len++;
+        }
+    }
+    if(tok_len == 0)
+    {
+        tok_len = 1;
+    }
+
+    size_t n = line_num;
+    int ndigits = 1;
+    while(n >= 10)
+    {
+        n /= 10; ndigits++;
+    }
+    int w = ndigits + 3;
+
+    printf("%*zu | %s\n", w, line_num, src);
+
+    for(int i = 0; i < w + 1; i++)
+    {
+        putchar(' ');
+    }
+    printf("| ");
+
+    for(size_t i = 0; i < start && src[i] != '\0'; i++)
+    {
+        putchar(src[i] == '\t' ? '\t' : ' ');
+    }
+
+    printf("\x1b[1m\x1b[32m^");
+    for(size_t i = 1; i < tok_len; i++)
+    {
+        putchar('~');
+    }
+    printf("\x1b[0m\n");
+}
+
 void diag_log(diag_level_t level,
               assembler_token_t *at,
               const char *msg,
@@ -235,4 +287,10 @@ void diag_log(diag_level_t level,
     }
 
     va_end(args);
+
+    if(at != NULL)
+    {
+        diag_print_caret_line(at);
+    }
+    fflush(stdout);
 }

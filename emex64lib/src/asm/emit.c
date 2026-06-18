@@ -266,25 +266,39 @@ bool assembler_emit_instruction(assembler_line_t *al)
 
 bool assembler_emit(assembler_invocation_t *inv)
 {
-    /* iterate through each token */
+    bool failed = false;
+    uint8_t errors = 0;
+
+    /* iterate through each line */
     for(uint64_t i = 0; i < inv->line_cnt; i++)
     {
-        /* checking for label */
-        if(inv->line[i]->type == kAssemblerLineTypeGlobalLabel ||
-           inv->line[i]->type == kAssemblerLineTypeLocalLabel)
+        switch(inv->line[i]->type)
         {
-            /* insert into labels */
-            if(!assembler_label_append(inv->line[i]->token[0]))
-            {
-                return false;
-            }
-        }
-        else if(inv->line[i]->type == kAssemblerLineTypeAssembly)
-        {
-            if(!assembler_emit_instruction(inv->line[i]))
-            {
-                return false;
-            }
+            case kAssemblerLineTypeGlobalLabel:
+            case kAssemblerLineTypeLocalLabel:
+                if(!assembler_label_append(inv->line[i]->token[0]))
+                {
+                    failed = true;
+                    if(++errors >= 10)
+                    {
+                        diag_fatal(NULL, "too many errors emitted, stopping now\n");
+                        return false;
+                    }
+                }
+                break;
+            case kAssemblerLineTypeAssembly:
+                if(!assembler_emit_instruction(inv->line[i]))
+                {
+                    failed = true;
+                    if(++errors >= 10)
+                    {
+                        diag_fatal(NULL, "too many errors emitted, stopping now\n");
+                        return false;
+                    }
+                }
+                break;
+            default:
+                break;
         }
     }
 
@@ -307,5 +321,5 @@ bool assembler_emit(assembler_invocation_t *inv)
 
     fdwalker_sync(inv->fdwalker);
 
-    return true;
+    return !failed;
 }
