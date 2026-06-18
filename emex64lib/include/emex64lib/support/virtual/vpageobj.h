@@ -40,6 +40,7 @@
 typedef struct vpageobj {
     evobject_t header;
     vpage_t *root;
+    size_t extra_size_marker;   /* for vfd */
 } vpageobj_t;
 
 DEFINE_EVOBJECT_MAIN_EVENT_HANDLER(vpageobj);

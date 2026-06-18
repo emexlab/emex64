@@ -47,6 +47,8 @@ DEFINE_EVOBJECT_MAIN_EVENT_HANDLER(vpageobj)
                 return -1;
             }
 
+            vo->extra_size_marker = 0;
+
             return 0;
         case evObjEventDeinit:
             vpage_dealloc(vo->root);

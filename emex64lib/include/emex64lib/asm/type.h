@@ -70,7 +70,7 @@ typedef struct {
 
 typedef struct reloc_table_entry {
     char *name;                             /* resolved label name */
-    bool relative;                          /* relative addressing */
+    bool local;                             /* must be resolved at assemble time */
     size_t byte_pos;                        /* position */
     struct assembler_token *at_link;        /* link to the originator of the entry */
     struct reloc_table_entry *next;         /* pointer to next entry */

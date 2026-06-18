@@ -149,7 +149,6 @@ vfd_t *vfd_dup(vfd_t *d)
                 goto fail;
             }
             nd->virtual.p = d->virtual.p;
-            nd->virtual.size = d->virtual.size; /* could require some vfd_vdatasource_t??? that is MRC ref counted?? */
             break;
         default:
         fail:
@@ -210,9 +209,9 @@ ssize_t vfd_write(vfd_t *d,
             }
 
             d->virtual.off = (off_t)(start + (size_t)vret);
-            if((size_t)d->virtual.off > d->virtual.size)
+            if((size_t)d->virtual.off > d->virtual.p->extra_size_marker)
             {
-                d->virtual.size = (size_t)d->virtual.off;
+                d->virtual.p->extra_size_marker = (size_t)d->virtual.off;
             }
             return vret;
         }
@@ -235,7 +234,7 @@ int vfd_truncate(vfd_t *d, off_t length)
             }
 
             size_t newlen = (size_t)length;
-            size_t oldlen = d->virtual.size;
+            size_t oldlen = d->virtual.p->extra_size_marker;
 
             /* make sure the backing store can hold the new lenght */
             while(vpage_get_size(d->virtual.p->root) < newlen)
@@ -256,7 +255,7 @@ int vfd_truncate(vfd_t *d, off_t length)
                 }
             }
 
-            d->virtual.size = newlen;
+            d->virtual.p->extra_size_marker = newlen;
             return 0;
         }
     }
@@ -285,7 +284,7 @@ off_t vfd_seek(vfd_t *d,
                     base = d->virtual.off;
                     break;
                 case SEEK_END:
-                    base = (off_t)d->virtual.size;
+                    base = (off_t)d->virtual.p->extra_size_marker;
                     break;
                 default:
                     errno = EINVAL;
@@ -338,7 +337,7 @@ int vfd_stat(vfd_t *d,
         case kVFDTypeVirtual:
         {
             fflush(stdout);
-            stat->st_size = (off_t)d->virtual.size;
+            stat->st_size = (off_t)d->virtual.p->extra_size_marker;
             return 0;
         }
     }

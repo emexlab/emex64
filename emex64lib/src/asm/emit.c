@@ -197,13 +197,16 @@ bool assembler_emit_instruction(assembler_line_t *al)
         else if(pr.type == emexParserValueTypeString)
         {
             /* the label is either local or global */
+            bool local;
             char *label = NULL;
             if(al->token[i]->str[0] == '.')
             {
+                local = true;
                 asprintf(&label, "%s%s", al->inv->label_scope, al->token[i]->str);
             }
             else
             {
+                local = false;
                 label = strdup(al->token[i]->str);
             }
 
@@ -223,6 +226,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
             rtbe->name = label;
             rtbe->byte_pos = al->inv->fdwalker->byte_pos;
             rtbe->at_link = al->token[i];
+            rtbe->local = local;
 
             /*
              * skip the 64bit the label occupies
@@ -284,22 +288,22 @@ bool assembler_emit(assembler_invocation_t *inv)
         }
     }
 
-    /* TODO: fix this so static vs exported symbols work */
-    /*reloc_table_entry_t *rtbe = inv->rtbe;
-    while(rtbe != NULL)
+    /* check if all local labels exist */
+    reloc_table_entry_t *reloc = inv->rtbe;
+    while(reloc != NULL)
     {
-        assembler_label_t *label = assembler_label_lookup(inv, rtbe->name);
-        if(label == NULL)
+        assembler_label_t *label = assembler_label_lookup(inv, reloc->name);
+        if(reloc->local && label == NULL)
         {
-            rtbe = rtbe->next;
-            continue;
+            /* local labels must be resolved at assembly time */
+            diag_error(reloc->at_link, "local label '%s' is undefined\n", reloc->name);
+            return false;
         }
 
-        fdwalker_seek(inv->fdwalker, rtbe->byte_pos, 0);
-        fdwalker_write(inv->fdwalker, label->addr, 64);
+        /* travel down the list */
+        reloc = reloc->next;
 
-        rtbe = rtbe->next;
-    }*/
+    }
 
     fdwalker_sync(inv->fdwalker);
 
