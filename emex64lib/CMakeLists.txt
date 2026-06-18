@@ -134,6 +134,10 @@ target_include_directories(emex64
         $<INSTALL_INTERFACE:include>
 )
 
+target_link_libraries(emex64
+    PRIVATE evObj
+)
+
 target_compile_features(emex64 PUBLIC c_std_23)
 
 if (MSVC)
