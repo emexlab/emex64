@@ -44,29 +44,13 @@ assembler_invocation_t *assembler_invocation_alloc(assembler_options_t *options)
     /* apply warning_error local thread variable */
     warning_error = options->warning_error;
 
-    vfd_t *d = vfd_open(assembler_options_get_output_path(options), O_RDWR | O_CREAT | O_TRUNC, 0777);
-    if(d == NULL)
-    {
-        return NULL;
-    }
-
     assembler_invocation_t *inv = calloc(1, sizeof(assembler_invocation_t));
     if(inv == NULL)
     {
-        vfd_close(d);
         return NULL;
     }
 
-    inv->fdwalker = fdwalker_alloc(d, BW_LITTLE_ENDIAN);
-    vfd_close(d);
-    if(inv->fdwalker == NULL)
-    {
-        diag_error(NULL, "couldn't create fdwalker\n");
-        free(inv);
-        return NULL;
-    }
-    fdwalker_seek(inv->fdwalker, 10, 0);
-
+    inv->fdwalker = NULL;
     inv->data_section_start = UINT64_MAX;
     inv->data_section_end = UINT64_MAX;
     inv->bss_section_start = UINT64_MAX;
@@ -120,13 +104,24 @@ void assembler_invocation_dealloc(assembler_invocation_t *inv)
 }
 
 bool assembler_invocation_emit(assembler_invocation_t *inv,
-                               emex_file_t *input)
+                               emex_file_t *input,
+                               emex_file_t *output)
 {
+    /* need input */
     if(input == NULL)
     {
         diag_error(NULL, "no input file provided\n");
         return false;
     }
+
+    /* need output */
+    inv->fdwalker = emex_file_dup_fdwalker(output, BW_LITTLE_ENDIAN);
+    if(inv->fdwalker == NULL)
+    {
+        diag_fatal(NULL, "couldn't allocate fdwalker\n");
+        return false;
+    }
+    fdwalker_seek(inv->fdwalker, 10, 0);
 
     if(!assembler_code_preparse(inv, input) ||
        !assembler_macro_expand(inv) ||
@@ -136,7 +131,7 @@ bool assembler_invocation_emit(assembler_invocation_t *inv,
        !assembler_emit(inv) ||
        !assembler_elf_emit(inv))
     {
-        unlink(inv->options->output_path);
+        unlink(output->path);
         return false;
     }
     

@@ -31,12 +31,9 @@ typedef struct assembler_options {
     bool page_align;                /* default: true */
     bool warning_error;             /* default: false */
     bool warning_deprecated;        /* default: true */
-    char *output_path;              /* default: a.o */
 } assembler_options_t;
 
 assembler_options_t *assembler_options_alloc(void);
 void assembler_options_dealloc(assembler_options_t *options);
-
-const char *assembler_options_get_output_path(assembler_options_t *options);
 
 #endif /* EMEX64ASM_OPTIONS_H */

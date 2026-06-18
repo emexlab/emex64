@@ -46,18 +46,5 @@ assembler_options_t *assembler_options_alloc(void)
 
 void assembler_options_dealloc(assembler_options_t *options)
 {
-    if(options->output_path != NULL)
-    {
-        free(options->output_path);
-    }
-}
-
-const char *assembler_options_get_output_path(assembler_options_t *options)
-{
-    if(options->output_path == NULL)
-    {
-        diag_warn(NULL, "no output binary specified, falling back to a.o\n");
-        options->output_path = strdup("a.o");
-    }
-    return options->output_path;
+    free(options);
 }

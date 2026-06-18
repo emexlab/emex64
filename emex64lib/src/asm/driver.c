@@ -733,7 +733,6 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
         options->page_align = driver->page_align;
         options->warning_error = driver->warning_error;
         options->warning_deprecated = driver->warning_deprecated;
-        options->output_path = strdup(driver->output_path);
 
         assembler_invocation_t *inv = assembler_invocation_alloc(options);
         if(inv == NULL)
@@ -747,17 +746,27 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
         inv->include_dir_cnt = driver->inc_dir_cnt;
         inv->include_dirs = driver->inc_dirs;
 
-        emex_file_t *file = emex_file_alloc(driver->input_path[0], assembly_file_policy);
-        if(file == NULL)
+        emex_file_t *input = emex_file_alloc(driver->input_path[0], assembly_file_policy);
+        if(input == NULL)
         {
             assembler_invocation_dealloc(inv);
             assembler_options_dealloc(options);
             return false;
         }
 
-        bool success = assembler_invocation_emit(inv, file);
+        emex_file_t *output = emex_file_alloc(driver->output_path, object_file_out_policy);
+        if(output == NULL)
+        {
+            emex_file_dealloc(output);
+            assembler_invocation_dealloc(inv);
+            assembler_options_dealloc(options);
+            return false;
+        }
 
-        emex_file_dealloc(file);
+        bool success = assembler_invocation_emit(inv, input, output);
+
+        emex_file_dealloc(output);
+        emex_file_dealloc(input);
         assembler_invocation_dealloc(inv);
         assembler_options_dealloc(options);
 
