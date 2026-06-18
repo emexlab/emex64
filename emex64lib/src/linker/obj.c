@@ -144,7 +144,6 @@ linker_object_t *linker_object_alloc(emex_file_t *object_file)
 
 void linker_object_dealloc(linker_object_t *obj)
 {
-    emex_file_dealloc(obj->file);
     free(obj);
 }
 

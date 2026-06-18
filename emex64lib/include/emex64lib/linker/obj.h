@@ -37,7 +37,7 @@
 typedef struct linker_invocation linker_invocation_t;
 
 typedef struct linker_object {
-    emex_file_t *file;
+    emex_file_t *file;  /* borrowed */
 
     ELF64_Ehdr *ehdr;
     ELF64_Shdr *shdrs;

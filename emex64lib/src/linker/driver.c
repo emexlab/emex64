@@ -157,7 +157,16 @@ failure:
 
 void linker_driver_dealloc(linker_driver_t *driver)
 {
+    for(uint64_t i = 0; i < driver->input_file_cnt; i++)
+    {
+        emex_file_dealloc(driver->input_file[i]);
+    }
     free(driver->input_file);
+
+    for(uint64_t i = 0; i < driver->linker_script_file_cnt; i++)
+    {
+        emex_file_dealloc(driver->linker_script_file[i]);
+    }
     free(driver->linker_script_file);
     linker_options_dealloc(driver->options);
     free(driver);
