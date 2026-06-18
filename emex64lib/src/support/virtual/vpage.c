@@ -101,7 +101,6 @@ vpage_t *vpage_copy(vpage_t *p)
     }
 
     /* copying data from old pages to single page */
-    vpage_t *oldpage = page;
     size_t loc = 0;
     for(;;)
     {
@@ -118,11 +117,7 @@ vpage_t *vpage_copy(vpage_t *p)
         page = next;
     }
 
-    /* setting to new map */
-    oldpage->next = NULL;
-    oldpage->p = newmap;
-    oldpage->len = total_len;
-
+    /* setting up copy page */
     vpage_t *copy = calloc(1, sizeof(vpage_t));
     if(copy == NULL)
     {
@@ -280,4 +275,35 @@ size_t vpage_write(vpage_t *p, size_t off, const uint8_t *b, size_t len)
 size_t vpage_read(vpage_t *p, size_t off, uint8_t *b, size_t len)
 {
     return vpage_xfer(p, off, b, len, kVPXferRead);
+}
+
+void *vpage_mmap_anonymous_copy(vpage_t *p)
+{
+    /* allocating new map */
+    vpage_t *page = vpage_get_first(p);
+    size_t total_len = vpage_get_size(page);
+    uint8_t *newmap = mmap(NULL, total_len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if(newmap == MAP_FAILED)
+    {
+        return NULL;
+    }
+
+    /* copying data from old pages to single page */
+    size_t loc = 0;
+    for(;;)
+    {
+        memcpy(newmap + loc, page->p, page->len);
+
+        vpage_t *next = page->next;
+        loc += page->len;
+
+        if(next == NULL)
+        {
+            break;
+        }
+
+        page = next;
+    }
+
+    return newmap;
 }

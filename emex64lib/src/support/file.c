@@ -151,17 +151,19 @@ emex_file_t *emex_file_alloc_unsaved(const char *path,
         return NULL;
     }
 
-    f->len = strlen(content);
-    f->content = strdup(content);
-    if(f->content == NULL)
+    /* setting unsaved values */
+    f->len = 0;
+    f->content = MAP_FAILED;
+    f->instance_type = kEmexFileInstanceTypeUnsaved;
+    f->d = vfd_vopen(O_RDWR);
+    if(f->d == NULL)
     {
         free(f);
         return NULL;
     }
 
-    /* setting unsaved values */
-    f->instance_type = kEmexFileInstanceTypeUnsaved;
-    f->d = NULL;
+    vfd_write(f->d, content, strlen(content));
+    vfd_seek(f->d, 0, SEEK_SET);
 
     return f;
 }
@@ -175,10 +177,6 @@ void emex_file_dealloc(emex_file_t *f)
 
     emex_file_unmap(f);
     emex_file_close(f);
-    if(f->instance_type == kEmexFileInstanceTypeUnsaved)
-    {
-        free((void*)f->content);
-    }
     free((void*)f->path);
     free(f);
 }
@@ -275,7 +273,7 @@ bool emex_file_map(emex_file_t *f)
 
 void emex_file_unmap(emex_file_t *f)
 {
-    if(f->instance_type == kEmexFileInstanceTypeSaved && f->content != MAP_FAILED)
+    if(f->content != MAP_FAILED)
     {
         munmap((void*)f->content, f->len);
         f->content = MAP_FAILED;

@@ -49,4 +49,6 @@ bool vpage_bind_page(vpage_t *p);
 size_t vpage_write(vpage_t *p, size_t off, const uint8_t *b, size_t len);
 size_t vpage_read(vpage_t *p, size_t off, uint8_t *b, size_t len);
 
+void *vpage_mmap_anonymous_copy(vpage_t *p);
+
 #endif /* VPAGE_H */

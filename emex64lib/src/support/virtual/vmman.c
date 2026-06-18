@@ -41,8 +41,7 @@ void *vmmap(void *addr,
         case kVFDTypeReal:
             return mmap(addr, len, prot, flags, d->fd, offset);
         case kVFDTypeVirtual:
-            vpage_bind_page(d->virtual.p);
-            return d->virtual.p;    /* add more checks if applicable */
+            return vpage_mmap_anonymous_copy(d->virtual.p);
         default:
             break;
     }
