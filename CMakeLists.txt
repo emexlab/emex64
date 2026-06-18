@@ -4,10 +4,10 @@ project(EMEX64 LANGUAGES C)
 
 add_subdirectory(evObj)
 add_subdirectory(emex64lib)
-add_subdirectory(emex64vm)
-add_subdirectory(emex64asm)
-add_subdirectory(emex64ld)
-add_subdirectory(emex64hello)
+add_subdirectory(tools/emex64vm)
+add_subdirectory(tools/emex64asm)
+add_subdirectory(tools/emex64ld)
+add_subdirectory(tools/emex64hello)
 
 option(EMEX64LIB_STATIC "Link statically against emex64lib" OFF)
 
