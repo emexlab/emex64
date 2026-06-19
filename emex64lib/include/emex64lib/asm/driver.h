@@ -52,6 +52,7 @@ typedef struct {
     bool page_align;
     bool warning_error;
     bool warning_deprecated;
+    bool caret_diagnostics;
 
     bool relocatable;
 

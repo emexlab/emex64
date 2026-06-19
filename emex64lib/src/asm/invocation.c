@@ -43,6 +43,7 @@ assembler_invocation_t *assembler_invocation_alloc(assembler_options_t options)
 {
     /* apply warning_error local thread variable */
     warning_error = options.warning_error;
+    caret_diagnostics = options.caret_diagnostics;
 
     assembler_invocation_t *inv = calloc(1, sizeof(assembler_invocation_t));
     if(inv == NULL)

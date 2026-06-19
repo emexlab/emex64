@@ -143,6 +143,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
     driver->page_align = true;
     driver->warning_error = false;
     driver->warning_deprecated = true;
+    driver->caret_diagnostics = true;
 
     driver->output_path = NULL;
     driver->input_path_count = 0;
@@ -178,13 +179,21 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
                 return false;
             }
 
-            if(strcmp(flag, "page_align") == 0)
+            if(strcmp(flag, "page-align") == 0)
             {
                 driver->page_align = true;
             }
-            else if(strcmp(flag, "no_page_align") == 0)
+            else if(strcmp(flag, "no-page-align") == 0)
             {
                 driver->page_align = false;
+            }
+            else if(strcmp(flag, "caret-diagnostics") == 0)
+            {
+                driver->caret_diagnostics = true;
+            }
+            else if(strcmp(flag, "no-caret-diagnostics") == 0)
+            {
+                driver->caret_diagnostics = false;
             }
             else
             {
@@ -237,7 +246,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
             {
                 driver->warning_error = true;
             }
-            else if(strcmp(flag, "no_error") == 0)
+            else if(strcmp(flag, "no-error") == 0)
             {
                 driver->warning_error = false;
             }
@@ -245,7 +254,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
             {
                 driver->warning_deprecated = true;
             }
-            else if(strcmp(flag, "no_deprecated") == 0)
+            else if(strcmp(flag, "no-deprecated") == 0)
             {
                 driver->warning_deprecated = false;
             }
@@ -462,9 +471,10 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
                 argv[argc++] = strdup("-o");
                 argv[argc++] = strdup(assembler_driver_tmppath(driver, driver->input_path[i]));
                 argv[argc++] = strdup(driver->input_path[i]);
-                argv[argc++] = driver->page_align ? strdup("-fpage_align") : strdup("-fno_page_align");
-                argv[argc++] = driver->warning_error ? strdup("-Werror") : strdup("-Wno_error");
-                argv[argc++] = driver->warning_deprecated ? strdup("-Wdeprecated") : strdup("-Wno_deprecated");
+                argv[argc++] = driver->page_align ? strdup("-fpage-align") : strdup("-fno-page-align");
+                argv[argc++] = driver->warning_error ? strdup("-Werror") : strdup("-Wno-error");
+                argv[argc++] = driver->warning_deprecated ? strdup("-Wdeprecated") : strdup("-Wno-deprecated");
+                argv[argc++] = driver->caret_diagnostics ? strdup("-fcaret-diagnostics") : strdup("-fno-caret-diagnostics");
                 for(size_t j = 0; j < driver->inc_dir_cnt; j++)
                 {
                     size_t ilen = strlen(driver->inc_dirs[j]);
@@ -729,6 +739,7 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
         options.page_align = driver->page_align;
         options.warning_error = driver->warning_error;
         options.warning_deprecated = driver->warning_deprecated;
+        options.caret_diagnostics = driver->caret_diagnostics;
 
         assembler_invocation_t *inv = assembler_invocation_alloc(options);
         if(inv == NULL)

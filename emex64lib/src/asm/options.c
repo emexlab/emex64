@@ -28,4 +28,5 @@ assembler_options_t assembler_options_default = {
     .page_align = true,
     .warning_error = false,
     .warning_deprecated = true,
+    .caret_diagnostics = true,
 };

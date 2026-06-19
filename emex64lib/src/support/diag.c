@@ -31,6 +31,7 @@
 #include <emex64lib/asm/invocation.h>
 
 _Thread_local bool warning_error = false;
+_Thread_local bool caret_diagnostics = true;
 
 static inline int putchar_c(char c)
 {
@@ -288,7 +289,7 @@ void diag_log(diag_level_t level,
 
     va_end(args);
 
-    if(at != NULL)
+    if(at != NULL && caret_diagnostics)
     {
         diag_print_caret_line(at);
     }

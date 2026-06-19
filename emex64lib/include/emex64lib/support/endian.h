@@ -22,18 +22,26 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64ASM_OPTIONS_H
-#define EMEX64ASM_OPTIONS_H
+#ifndef EMEX64ASM_ENDIAN_H
+#define EMEX64ASM_ENDIAN_H
 
-#include <stdbool.h>
+#define BW_LITTLE_ENDIAN 0
+#define BW_BIG_ENDIAN 1
 
-typedef struct assembler_options {
-    bool page_align;                /* default: true */
-    bool warning_error;             /* default: false */
-    bool warning_deprecated;        /* default: true */
-    bool caret_diagnostics;         /* default: true */
-} assembler_options_t;
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
+#define BW_HOST_ENDIAN  BW_BIG_ENDIAN
+#else
+#define BW_HOST_ENDIAN  BW_LITTLE_ENDIAN
+#endif
 
-extern assembler_options_t assembler_options_default;
+#if BW_HOST_ENDIAN == BW_BIG_ENDIAN
+#define TO_HOST16(x) __builtin_bswap16(x)
+#define TO_HOST32(x) __builtin_bswap32(x)
+#define TO_HOST64(x) __builtin_bswap64(x)
+#else
+#define TO_HOST16(x) (x)
+#define TO_HOST32(x) (x)
+#define TO_HOST64(x) (x)
+#endif
 
-#endif /* EMEX64ASM_OPTIONS_H */
+#endif /* EMEX64ASM_ENDIAN_H */

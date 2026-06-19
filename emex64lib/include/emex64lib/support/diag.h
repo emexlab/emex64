@@ -33,6 +33,7 @@
 #define diag_fatal(at, msg, ...) diag_log(DIAG_FATAL, at, msg __VA_OPT__(,) __VA_ARGS__)
 
 extern _Thread_local bool warning_error;
+extern _Thread_local bool caret_diagnostics;
 
 typedef enum {
     DIAG_NOTE,
