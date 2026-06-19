@@ -24,7 +24,7 @@
 
 #include <stdio.h>
 #include <fcntl.h>
-#include <emex64lib/support/diag.h>
+#include <emex64lib/support/diagnostic/legacy.h>
 #include <emex64lib/asm/invocation.h>
 #include <emex64lib/linker/linker.h>
 #include <emex64lib/vm/machine.h>
@@ -33,7 +33,7 @@ static inline emex_file_t *emex_file_alloc_vopen(const char *path,
                                                  emex_file_policy_t policy)
 {
     /* opening a virtual file descriptor */
-    vfd_t *d = vfd_vopen(O_RDWR);
+    vfd_t *d = vfd_vopen();
     if(d == NULL)
     {
         return NULL;
@@ -44,14 +44,13 @@ static inline emex_file_t *emex_file_alloc_vopen(const char *path,
      * which is backed by a vpageobj_t.
      */
     emex_file_t *file = emex_file_alloc_vfd("test.o", object_file_out_policy, d);
+    vfd_close(d);
     if(file == NULL)
     {
-        vfd_close(d);
         return NULL;
     }
 
     /* file made a duplication of it */
-    vfd_close(d);
     return file;
 }
 
