@@ -90,6 +90,11 @@ diagnostic_message_t *diagnostic_message_alloc_file(kDiagnosticMessageType type,
 
 void diagnostic_message_dealloc(diagnostic_message_t *message)
 {
+    if(message == NULL)
+    {
+        return;
+    }
+
     switch(message->source.type)
     {
         case kDiagnosticMessageSourceTypeFile:

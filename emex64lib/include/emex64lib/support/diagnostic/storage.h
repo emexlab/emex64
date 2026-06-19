@@ -28,7 +28,13 @@
 #include <emex64lib/support/diagnostic/message.h>
 
 typedef struct {
-    diagnostic_message_t *msg;
+    diagnostic_message_t *tail;
 } diagnostic_storage_t;
+
+diagnostic_storage_t *diagnostic_storage_alloc();
+void diagnostic_storage_dealloc(diagnostic_storage_t *storage);
+
+void diagnostic_storage_append_internal(diagnostic_storage_t *storage, kDiagnosticMessageType type, char *msg);
+void diagnostic_storage_append_file(diagnostic_storage_t *storage, kDiagnosticMessageType type, char *file, char *msg, uint64_t ln, uint64_t col);
 
 #endif /* DIAGNOSTIC_STORAGE_H */
