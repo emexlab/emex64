@@ -29,7 +29,7 @@
 #include <spawn.h>
 #include <sys/wait.h>
 
-#include <emex64lib/support/diag.h>
+#include <emex64lib/support/diagnostic/legacy.h>
 
 #include <emex64lib/asm/driver.h>
 #include <emex64lib/asm/invocation.h>

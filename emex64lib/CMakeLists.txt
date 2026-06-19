@@ -56,6 +56,9 @@ endif()
 
 add_library(emex64 ${LIB_TYPE}
     # Support
+    src/support/diagnostic/legacy.c
+    src/support/diagnostic/message.c
+    src/support/diagnostic/storage.c
 
     src/support/virtual/vpage.c
     src/support/virtual/vpageobj.c
@@ -64,12 +67,10 @@ add_library(emex64 ${LIB_TYPE}
     src/support/parser.c
     src/support/bitwalker.c
     src/support/fdwalker.c
-    src/support/diag.c
     src/support/file.c
     src/support/bitbolt.c
 
     # Virtual Machine
-
     src/vm/core.c
     src/vm/machine.c
     src/vm/memory.c
@@ -80,7 +81,6 @@ add_library(emex64 ${LIB_TYPE}
     src/vm/instruction/ctrl.c
 
     # Virtual Machine Devices
-
     src/vm/device/internal/controller/ic.c
     src/vm/device/internal/controller/mem.c
     src/vm/device/internal/timer.c
@@ -94,7 +94,6 @@ add_library(emex64 ${LIB_TYPE}
     src/vm/device/board/rtc.c
 
     # Assembler
-
     src/asm/driver.c
     src/asm/cmptok.c
     src/asm/code.c
@@ -109,7 +108,6 @@ add_library(emex64 ${LIB_TYPE}
     src/asm/elf.c
 
     # Linker
-
     src/linker/driver.c
     src/linker/linker.c
     src/linker/sym.c
@@ -119,7 +117,6 @@ add_library(emex64 ${LIB_TYPE}
     src/linker/emit.c
 
     # C Compiler
-
     src/c/ASTUnit.c
 )
 

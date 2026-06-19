@@ -22,10 +22,4 @@
  * SOFTWARE.
  */
 
-#include <emex64lib/linker/options.h>
-
-linker_options_t linker_options_default = {
-    .verbose = false,
-    .emit_mode = kEmitModeFirmware,
-    .entry_name = "_start",
-};
+#include <emex64lib/support/diagnostic/storage.h>

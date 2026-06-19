@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64ASM_DIAG_H
-#define EMEX64ASM_DIAG_H
+#ifndef EMEX64_DIAGNOSTIC_LEGACY_H
+#define EMEX64_DIAGNOSTIC_LEGACY_H
 
 #include <emex64lib/asm/type.h>
 
@@ -44,4 +44,4 @@ typedef enum {
 
 void diag_log(diag_level_t level, assembler_token_t *at, const char *msg, ...);
 
-#endif /* EMEX64ASM_DIAG_H */
+#endif /* EMEX64_DIAGNOSTIC_LEGACY_H */

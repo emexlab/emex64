@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <emex64lib/support/diag.h>
+#include <emex64lib/support/diagnostic/legacy.h>
 
 #include <emex64lib/linker/linker.h>
 #include <emex64lib/linker/driver.h>

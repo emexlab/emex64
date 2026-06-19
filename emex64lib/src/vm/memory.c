@@ -31,7 +31,7 @@
 #include <unistd.h>
 #include <assert.h>
 
-#include <emex64lib/support/diag.h>
+#include <emex64lib/support/diagnostic/legacy.h>
 #include <emex64lib/support/likely.h>
 #include <emex64lib/support/bitwalker.h>
 

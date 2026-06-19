@@ -27,7 +27,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#include <emex64lib/support/diag.h>
+#include <emex64lib/support/diagnostic/legacy.h>
 #include <emex64lib/support/parser.h>
 
 #include <emex64lib/asm/macro.h>

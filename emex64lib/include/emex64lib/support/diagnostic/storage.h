@@ -22,10 +22,13 @@
  * SOFTWARE.
  */
 
-#include <emex64lib/linker/options.h>
+#ifndef DIAGNOSTIC_STORAGE_H
+#define DIAGNOSTIC_STORAGE_H
 
-linker_options_t linker_options_default = {
-    .verbose = false,
-    .emit_mode = kEmitModeFirmware,
-    .entry_name = "_start",
-};
+#include <emex64lib/support/diagnostic/message.h>
+
+typedef struct {
+    diagnostic_message_t *msg;
+} diagnostic_storage_t;
+
+#endif /* DIAGNOSTIC_STORAGE_H */

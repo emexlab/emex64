@@ -29,7 +29,7 @@
 #include <fcntl.h>
 #include <limits.h>
 
-#include <emex64lib/support/diag.h>
+#include <emex64lib/support/diagnostic/legacy.h>
 
 #include <emex64lib/asm/code.h>
 #include <emex64lib/asm/cmptok.h>
