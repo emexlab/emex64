@@ -29,24 +29,7 @@
 #include <stddef.h>
 #include <string.h>
 
-#define BW_LITTLE_ENDIAN 0
-#define BW_BIG_ENDIAN 1
-
-#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
-#define BW_HOST_ENDIAN  BW_BIG_ENDIAN
-#else
-#define BW_HOST_ENDIAN  BW_LITTLE_ENDIAN
-#endif
-
-#if BW_HOST_ENDIAN == BW_BIG_ENDIAN
-#define TO_HOST16(x) __builtin_bswap16(x)
-#define TO_HOST32(x) __builtin_bswap32(x)
-#define TO_HOST64(x) __builtin_bswap64(x)
-#else
-#define TO_HOST16(x) (x)
-#define TO_HOST32(x) (x)
-#define TO_HOST64(x) (x)
-#endif
+#include <emex64lib/support/endian.h>
 
 typedef uint8_t bw_endian_t;
 
