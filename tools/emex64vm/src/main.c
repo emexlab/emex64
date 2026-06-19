@@ -131,6 +131,40 @@ int main(int argc, char *argv[])
             }
             i++;
         }
+        else if(strcmp(argv[i], "--keyboard") == 0 && i + 1 < argc)
+        {
+            if(strcmp(argv[i + 1], "off") == 0)
+            {
+                machine_options.keyboard_mode = kKeyboardModeOff;
+            }
+            else if(strcmp(argv[i + 1], "8042") == 0)
+            {
+                machine_options.keyboard_mode = kKeyboardMode8042;
+            }
+            else
+            {
+                diag_error(NULL, "unknown argument supplied to '--keyboard': '%s'\n", argv[i + 1]);
+                return 1;
+            }
+            i++;
+        }
+        else if(strcmp(argv[i], "--mouse") == 0 && i + 1 < argc)
+        {
+            if(strcmp(argv[i + 1], "off") == 0)
+            {
+                machine_options.mouse_mode = kMouseModeOff;
+            }
+            else if(strcmp(argv[i + 1], "8042") == 0)
+            {
+                machine_options.mouse_mode = kMouseMode8042;
+            }
+            else
+            {
+                diag_error(NULL, "unknown argument supplied to '--mouse': '%s'\n", argv[i + 1]);
+                return 1;
+            }
+            i++;
+        }
         else if(strcmp(argv[i], "--display:resolution") == 0 && i + 2 < argc)
         {
             parser_return_t pr_width = parse_value_from_string(argv[++i]);

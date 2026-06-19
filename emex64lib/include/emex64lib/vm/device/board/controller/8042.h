@@ -55,9 +55,12 @@ typedef struct {
 
     pthread_mutex_t lock;
     emex64_machine_t *machine;
+
+    bool keyboard_attached;
+    bool mouse_attached;
 } emex64_8042_t;
 
-emex64_8042_t *emex64_8042_alloc(emex64_machine_t *machine);
+emex64_8042_t *emex64_8042_alloc(emex64_machine_t *machine, bool keyboard_attached, bool mouse_attached);
 void emex64_8042_dealloc(emex64_8042_t *dev);
 
 /* for display backend */

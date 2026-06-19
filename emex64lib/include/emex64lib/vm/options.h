@@ -28,6 +28,16 @@
 #include <stdint.h>
 #include <stddef.h>
 
+typedef enum: uint8_t {
+    kKeyboardModeOff,
+    kKeyboardMode8042,
+} kKeyboardMode;
+
+typedef enum: uint8_t {
+    kMouseModeOff,
+    kMouseMode8042,
+} kMouseMode;
+
 typedef struct {
     bool display;
 } emex64_machine_support_t;
@@ -41,6 +51,8 @@ typedef struct {
 typedef struct {
     emex64_machine_display_options_t display;
     uint64_t memory_size;
+    kKeyboardMode keyboard_mode;
+    kMouseMode mouse_mode;
 } emex64_machine_options_t;
 
 #endif /* EMEX64VM_OPTIONS_H */

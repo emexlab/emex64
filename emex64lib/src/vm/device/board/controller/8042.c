@@ -144,13 +144,18 @@ static const ps2_scancode_t kEmexKeyPhysToPS2Set1[] = {
 #define STATUS_OBF          0x01
 #define STATUS_MOUSE_OBF    0x20
 
-emex64_8042_t *emex64_8042_alloc(emex64_machine_t *machine)
+emex64_8042_t *emex64_8042_alloc(emex64_machine_t *machine,
+                                 bool keyboard_attached,
+                                 bool mouse_attached)
 {
     emex64_8042_t *dev = calloc(1, sizeof(emex64_8042_t));
     if(!dev)
     {
         return NULL;
     }
+
+    dev->keyboard_attached = keyboard_attached;
+    dev->mouse_attached = mouse_attached;
 
     pthread_mutex_init(&dev->lock, NULL);
     dev->machine = machine;
@@ -201,77 +206,89 @@ static void update_8042_interrupt(emex64_8042_t *dev)
 
 void emex64_8042_send_keyboard(emex64_8042_t *dev, uint8_t scancode)
 {
-    pthread_mutex_lock(&dev->lock);
-
-    int next = (dev->kbd_tail + 1) % 64;
-
-    if(next == dev->kbd_head)
+    if(dev->keyboard_attached)
     {
-        dev->kbd_head = (dev->kbd_head + 1) % 64;
+        pthread_mutex_lock(&dev->lock);
+
+        int next = (dev->kbd_tail + 1) % 64;
+
+        if(next == dev->kbd_head)
+        {
+            dev->kbd_head = (dev->kbd_head + 1) % 64;
+        }
+
+        dev->kbd_buf[dev->kbd_tail] = scancode;
+        dev->kbd_tail = next;
+
+        update_8042_interrupt(dev);
+
+        pthread_mutex_unlock(&dev->lock);
     }
-
-    dev->kbd_buf[dev->kbd_tail] = scancode;
-    dev->kbd_tail = next;
-
-    update_8042_interrupt(dev);
-
-    pthread_mutex_unlock(&dev->lock);
 }
 
 void emex64_8042_send_keyboard_make(emex64_8042_t *dev, kEmexKeyPhys key)
 {
-    const ps2_scancode_t *sc = &kEmexKeyPhysToPS2Set1[key];
-    for(uint8_t i = 0; i < sc->length; i++)
+    if(dev->keyboard_attached)
     {
-        emex64_8042_send_keyboard(dev, sc->data[i]);
+        const ps2_scancode_t *sc = &kEmexKeyPhysToPS2Set1[key];
+        for(uint8_t i = 0; i < sc->length; i++)
+        {
+            emex64_8042_send_keyboard(dev, sc->data[i]);
+        }
     }
 }
 
 void emex64_8042_send_keyboard_break(emex64_8042_t *dev, kEmexKeyPhys key)
 {
-    const ps2_scancode_t *sc = &kEmexKeyPhysToPS2Set1[key];
+    if(dev->keyboard_attached)
+    {
+        const ps2_scancode_t *sc = &kEmexKeyPhysToPS2Set1[key];
 
-    if(key == kEmexKeyPhysPause)
-    {
-        /* pause has no normal break code */
-        return;
-    }
+        if(key == kEmexKeyPhysPause)
+        {
+            /* pause has no normal break code */
+            return;
+        }
 
-    if(sc->length == 1)
-    {
-        emex64_8042_send_keyboard(dev, 0x80 | sc->data[0]);
-    } 
-    else if(sc->length == 2)
-    {
-        emex64_8042_send_keyboard(dev, 0xE0);
-        emex64_8042_send_keyboard(dev, 0x80 | sc->data[1]);
-    } 
-    else if(key == kEmexKeyPhysPrintScreen)
-    {
-        emex64_8042_send_keyboard(dev, 0xE0);
-        emex64_8042_send_keyboard(dev, 0xB7);
-        emex64_8042_send_keyboard(dev, 0xE0);
-        emex64_8042_send_keyboard(dev, 0xAA);
-    }
+        if(sc->length == 1)
+        {
+            emex64_8042_send_keyboard(dev, 0x80 | sc->data[0]);
+        }
+        else if(sc->length == 2)
+        {
+            emex64_8042_send_keyboard(dev, 0xE0);
+            emex64_8042_send_keyboard(dev, 0x80 | sc->data[1]);
+        }
+        else if(key == kEmexKeyPhysPrintScreen)
+        {
+            emex64_8042_send_keyboard(dev, 0xE0);
+            emex64_8042_send_keyboard(dev, 0xB7);
+            emex64_8042_send_keyboard(dev, 0xE0);
+            emex64_8042_send_keyboard(dev, 0xAA);
+        }
+    }  
 }
 
 void emex64_8042_send_mouse(emex64_8042_t *dev, uint8_t byte)
 {
-    pthread_mutex_lock(&dev->lock);
-
-    int next = (dev->mouse_tail + 1) % 64;
-
-    if(next == dev->mouse_head)
+    if(dev->mouse_attached)
     {
-        dev->mouse_head = (dev->mouse_head + 1) % 64;
+        pthread_mutex_lock(&dev->lock);
+
+        int next = (dev->mouse_tail + 1) % 64;
+
+        if(next == dev->mouse_head)
+        {
+            dev->mouse_head = (dev->mouse_head + 1) % 64;
+        }
+
+        dev->mouse_buf[dev->mouse_tail] = byte;
+        dev->mouse_tail = next;
+
+        update_8042_interrupt(dev);
+
+        pthread_mutex_unlock(&dev->lock);
     }
-
-    dev->mouse_buf[dev->mouse_tail] = byte;
-    dev->mouse_tail = next;
-
-    update_8042_interrupt(dev);
-
-    pthread_mutex_unlock(&dev->lock);
 }
 
 uint64_t emex64_8042_read(emex64_core_t *core, void *device, uint64_t offset, int size)

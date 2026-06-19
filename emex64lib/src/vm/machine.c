@@ -74,7 +74,7 @@ emex64_machine_t *emex64_machine_alloc(emex64_machine_options_t options)
         goto out_release_timer;
     }
 
-    machine->emex8042 = emex64_8042_alloc(machine);
+    machine->emex8042 = emex64_8042_alloc(machine, options.keyboard_mode == kKeyboardMode8042, options.mouse_mode == kMouseMode8042);
     if(machine->emex8042 == NULL)
     {
         goto out_release_uart;
@@ -145,8 +145,12 @@ emex64_machine_options_t emex64_machine_options_default(void)
     emex64_machine_options_t options;
     #if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || defined(__APPLE__))
     options.display.enabled = true;
+    options.keyboard_mode = kKeyboardMode8042;
+    options.mouse_mode = kMouseMode8042;
     #else
     options.display.enabled = false;
+    options.keyboard_mode = kKeyboardModeOff;
+    options.mouse_mode = kMouseModeOff;
     #endif /* EMEX64VM_DEVICE_DISPLAY */
     options.display.width = 640;
     options.display.height = 480;
