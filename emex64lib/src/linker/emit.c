@@ -174,7 +174,7 @@ static uint64_t sym_resolve(linker_invocation_t *inv,
             }
         }
 
-        diag_error(NULL, "undefined symbol '%s', needed by \"%s\"\n", name, o->file->path);
+        diag_error(NULL, "undefined symbol '%s', needed by '%s'\n", name, o->file->path);
         exit(1); /* TODO: somehow make it not as strict, so it becomes embeddable */
     }
     return 0;

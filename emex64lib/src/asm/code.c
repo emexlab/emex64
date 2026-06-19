@@ -301,7 +301,7 @@ bool assembler_code_preparse(assembler_invocation_t *inv,
             at->al = inv->line[i];
             if(token.type == kAssemblerTokenTypeInvalid)
             {
-                diag_error(at, "\"%s\" is a invalid token\n", at->str);
+                diag_error(at, "'%s' is a invalid token\n", at->str);
                 return false;
             }
             at->type = token.type;
@@ -380,7 +380,7 @@ bool assembler_code_parse(assembler_invocation_t *inv)
                         inv->line[i]->type = kAssemblerLineTypeLocalLabel;
                         break;
                     default:
-                        diag_error(inv->line[i]->token[0], "illegal label definition \"%s\"\n", inv->line[i]->token[0]->str);
+                        diag_error(inv->line[i]->token[0], "illegal label definition '%s'\n", inv->line[i]->token[0]->str);
                         return false;
                 }
 

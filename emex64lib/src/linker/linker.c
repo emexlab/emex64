@@ -98,8 +98,8 @@ bool linker_symbol_append_definition(linker_invocation_t *inv,
     }
     if(sym->defined && sym->addr != addr)
     {
-        diag_error(NULL, "duplicate symbol '%s' in \"%s\"\n", name, object_path);
-        diag_note(NULL, "symbol '%s' also exists in \"%s\"\n", name, sym->object_path);
+        diag_error(NULL, "duplicate symbol '%s' in '%s'\n", name, object_path);
+        diag_note(NULL, "symbol '%s' also exists in '%s'\n", name, sym->object_path);
         return false;
     }
 

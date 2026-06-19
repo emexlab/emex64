@@ -110,7 +110,7 @@ bool assembler_label_append(assembler_token_t *at)
         /* checking if we are in a scope */
         if(inv->label_scope == NULL)
         {
-            diag_error(at, "defining a local label out of any global label is illegal \"%s\"\n", name);
+            diag_error(at, "defining a local label out of any global label is illegal '%s'\n", name);
             return false;
         }
     }
@@ -135,8 +135,8 @@ bool assembler_label_append(assembler_token_t *at)
     assembler_label_t *label = assembler_label_lookup(inv, name);
     if(label != NULL)
     {
-        diag_note(label->at_link, "label \"%s\" already defined here\n", name);
-        diag_error(at, "duplicated label \"%s\"\n", name);
+        diag_note(label->at_link, "label '%s' already defined here\n", name);
+        diag_error(at, "duplicated label '%s'\n", name);
         return false;
     }
 

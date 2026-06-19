@@ -206,7 +206,7 @@ bool emex64_memory_load_image(emex64_memory_t *memory,
     if(vfd_stat(d, &image_stat) != 0)
     {
         vfd_close(d);
-        diag_fatal(NULL, "failed to gather size of file at path \"%s\"\n", file->path);
+        diag_fatal(NULL, "failed to gather size of file at path '%s'\n", file->path);
         return false;
     }
 

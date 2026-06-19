@@ -150,7 +150,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
                                 char resolved[PATH_MAX];
                                 if(realpath(joined, resolved) == NULL)
                                 {
-                                    diag_error(inv->line[i]->token[a], "cannot resolve path \"%s\"\n", path_component);
+                                    diag_error(inv->line[i]->token[a], "cannot resolve path '%s'\n", path_component);
                                     free(path_component);
                                     return false;
                                 }
@@ -158,7 +158,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
                                 emex_file_t *file = emex_file_alloc(resolved, section_data_file_policy);
                                 if(file == NULL || !emex_file_map(file))
                                 {
-                                    diag_error(inv->line[i]->token[a], "cannot map file at \"%s\"\n", path_component);
+                                    diag_error(inv->line[i]->token[a], "cannot map file at '%s'\n", path_component);
                                     free(path_component);
                                     return false;
                                 }
@@ -170,7 +170,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
                                 continue;
                             }
 
-                            diag_error(inv->line[i]->token[1], "not a file path \"%s\"\n", inv->line[i]->token[1]->str);
+                            diag_error(inv->line[i]->token[1], "not a file path '%s'\n", inv->line[i]->token[1]->str);
                             return false;
                         }
 
@@ -178,7 +178,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
                     }
                     else if(strcmp(inv->line[i]->token[1]->str, "db") != 0)
                     {
-                        diag_error(inv->line[i]->token[1], "invalid data type for .data section entry \"%s\"\n", inv->line[i]->token[1]->str);
+                        diag_error(inv->line[i]->token[1], "invalid data type for .data section entry '%s'\n", inv->line[i]->token[1]->str);
                         return false;
                     }
 
@@ -303,7 +303,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
                     }
                     else if(strcmp(inv->line[i]->token[1]->str, "db") != 0)
                     {
-                        diag_error(inv->line[i]->token[1], "invalid data type for .bss section entry \"%s\"\n", inv->line[i]->token[1]->str);
+                        diag_error(inv->line[i]->token[1], "invalid data type for .bss section entry '%s'\n", inv->line[i]->token[1]->str);
                         return false;
                     }
 
@@ -314,7 +314,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
                     /* imagine you read that comment and you realise that you had the same idea before */
                     if(pr.type != emexParserValueTypeNumber)
                     {
-                        diag_error(inv->line[i]->token[2], "invalid size for .bss section entry \"%s\"\n", inv->line[i]->token[2]->str);
+                        diag_error(inv->line[i]->token[2], "invalid size for .bss section entry '%s'\n", inv->line[i]->token[2]->str);
                         return false;
                     }
 
