@@ -261,8 +261,6 @@ void *display_start(void *arg)
         return NULL;
     }
 
-    if(!glfwInit()) die("glfwInit failed");
-
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -478,6 +476,13 @@ emex64_display_t *emex64_display_alloc(emex64_machine_t *machine,
     display->enabled = install;
     if(install)
     {
+        if(!glfwInit())
+        {
+            diag_warn(NULL, "are we in a TTY? can't present window\n");
+            display->enabled = false;
+            return display;
+        }
+
         pthread_create(&(display->pthread), NULL, display_start, display);
     }
     #endif /* EMEX64VM_DEVICE_DISPLAY */
