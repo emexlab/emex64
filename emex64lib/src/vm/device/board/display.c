@@ -476,12 +476,14 @@ emex64_display_t *emex64_display_alloc(emex64_machine_t *machine,
     display->enabled = install;
     if(install)
     {
+        #if defined(__linux__)
         if(!glfwInit())
         {
             diag_warn(NULL, "are we in a TTY? can't present window\n");
             display->enabled = false;
             return display;
         }
+        #endif /* __linux__ */
 
         pthread_create(&(display->pthread), NULL, display_start, display);
     }
