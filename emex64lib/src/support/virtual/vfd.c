@@ -82,7 +82,7 @@ vfd_t *vfd_open_fd(int fd)
     return d;
 }
 
-vfd_t *vfd_vopen(int flg)
+vfd_t *vfd_vopen()
 {
     vfd_t *d = calloc(1, sizeof(vfd_t));
     if(d == NULL)
@@ -91,7 +91,6 @@ vfd_t *vfd_vopen(int flg)
     }
 
     d->type = kVFDTypeVirtual;
-    d->vd.flg = flg;
     d->vd.p = evo_alloc_fastpath(vpageobj);
     d->vd.off = 0;
 
@@ -142,7 +141,6 @@ vfd_t *vfd_dup(vfd_t *d)
             break;
         case kVFDTypeVirtual:
             /* copy entire state */
-            nd->vd.flg = d->vd.flg;
             nd->vd.off = d->vd.off;
             if(!evo_retain(d->vd.p))
             {

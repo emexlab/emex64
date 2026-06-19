@@ -197,7 +197,7 @@ emex_file_t *emex_file_alloc_unsaved(const char *path,
     /* setting unsaved values */
     f->len = 0;
     f->content = MAP_FAILED;
-    f->d = vfd_vopen(O_RDWR);
+    f->d = vfd_vopen();
     if(f->d == NULL)
     {
         free(f->path);

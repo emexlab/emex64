@@ -45,7 +45,6 @@ typedef struct vfd {
         int fd;
 
         struct {
-            int flg;
             off_t off;
             vpageobj_t *p;
         } vd;
@@ -54,7 +53,7 @@ typedef struct vfd {
 
 vfd_t *vfd_open(const char *path, int flg, ...);
 vfd_t *vfd_open_fd(int fd);
-vfd_t *vfd_vopen(int flg);
+vfd_t *vfd_vopen();
 int vfd_close(vfd_t *d);
 
 vfd_t *vfd_dup(vfd_t *d);
