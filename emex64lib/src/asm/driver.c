@@ -549,7 +549,7 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
                 ratchet_args_deinit(&ra);
                 if(new_tail == NULL)
                 {
-                    diag_fatal(NULL, "out of memory, can't allocate linker job\n");
+                    diag_fatal(NULL, "out of memory, can't allocate assembler job\n");
                     return false;
                 }
                 driver->job = new_tail;
