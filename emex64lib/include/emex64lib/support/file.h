@@ -88,6 +88,8 @@ fdwalker_t *emex_file_dup_fdwalker(emex_file_t *f, bw_endian_t endian);
 bool emex_file_map(emex_file_t *f);
 void emex_file_unmap(emex_file_t *f);
 
+void emex_file_unlink(emex_file_t *f);
+
 kEmexFileType emex_file_type_for_path(const char *path, bool must_exist);
 
 #endif /* EMEX64_FILE_H */

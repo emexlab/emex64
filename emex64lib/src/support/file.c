@@ -356,6 +356,17 @@ void emex_file_unmap(emex_file_t *f)
     }
 }
 
+void emex_file_unlink(emex_file_t *f)
+{
+    if(f->d != NULL && f->d->type == kVFDTypeVirtual)
+    {
+        /* is virtual anyways */
+        return;
+    }
+    
+    unlink(f->path);
+}
+
 static inline const char *get_extension(const char *path)
 {
     const char *base = strrchr(path, '/');
