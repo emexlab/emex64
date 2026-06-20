@@ -26,6 +26,7 @@
 #define EMEX64ASM_CMPTOK_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 #define CMPTOK_LENGHT_MAX               2048    /* if anyone comes close to that size, bro pls fix your variable naming style O.O */
 
