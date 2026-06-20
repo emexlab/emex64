@@ -22,70 +22,60 @@
  * SOFTWARE.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include <emex64lib/support/pack.h>
+
 #include <emex64lib/asm/register.h>
 
-register_entry_t register_table[] = {
-    /* special purpose register */
-    { .name = "pc", .reg = kEmex64RegisterPC },
-    { .name = "sp", .reg = kEmex64RegisterSP },
-    { .name = "fp", .reg = kEmex64RegisterFP },
-    { .name = "cf", .reg = kEmex64RegisterCF },
-    { .name = "fpc", .reg = kEmex64RegisterFPC },
-
-    /* general purpose register */
-    { .name = "r0", .reg = kEmex64RegisterR0 },
-    { .name = "r1", .reg = kEmex64RegisterR1 },
-    { .name = "r2", .reg = kEmex64RegisterR2 },
-    { .name = "r3", .reg = kEmex64RegisterR3 },
-    { .name = "r4", .reg = kEmex64RegisterR4 },
-    { .name = "r5", .reg = kEmex64RegisterR5 },
-    { .name = "r6", .reg = kEmex64RegisterR6 },
-    { .name = "r7", .reg = kEmex64RegisterR7 },
-    { .name = "r8", .reg = kEmex64RegisterR8 },
-    { .name = "r9", .reg = kEmex64RegisterR9 },
-    { .name = "r10", .reg = kEmex64RegisterR10 },
-    { .name = "r11", .reg = kEmex64RegisterR11 },
-    { .name = "r12", .reg = kEmex64RegisterR12 },
-    { .name = "r13", .reg = kEmex64RegisterR13 },
-    { .name = "r14", .reg = kEmex64RegisterR14 },
-    { .name = "r15", .reg = kEmex64RegisterR15 },
-    { .name = "r16", .reg = kEmex64RegisterR16 },
-    { .name = "r17", .reg = kEmex64RegisterR17 },
-    { .name = "r18", .reg = kEmex64RegisterR18 },
-    { .name = "r19", .reg = kEmex64RegisterR19 },
-    { .name = "r20", .reg = kEmex64RegisterR20 },
-    { .name = "r21", .reg = kEmex64RegisterR21 },
-    { .name = "r22", .reg = kEmex64RegisterR22 },
-    { .name = "r23", .reg = kEmex64RegisterR23 },
-    { .name = "r24", .reg = kEmex64RegisterR24 },
-    { .name = "r25", .reg = kEmex64RegisterR25 },
-    { .name = "rr",  .reg = kEmex64RegisterRR },
-
-    /* register nicknames */
-    { .name = "r26",  .reg = kEmex64RegisterRR },
-};
-
-register_entry_t *register_from_string(const char *name)
+enum kEmex64Register register_from_string(const char *name, bool *success)
 {
-    /* null pointer check */
     if(name == NULL)
     {
-        return NULL;
+        *success = false;
+        return kEmex64RegisterPC;
     }
 
-    /* iterating through table */
-    for(unsigned char reg = 0x00; reg < (sizeof(register_table) / sizeof(register_table[0])); reg++)
+    *success = true;
+
+    switch(pack_name(name))
     {
-        /* check if opcode name matches */
-        if(strcmp(register_table[reg].name, name) == 0)
-        {
-            return &register_table[reg];
-        }
+        case PACK2('p','c'): return kEmex64RegisterPC;
+        case PACK2('s','p'): return kEmex64RegisterSP;
+        case PACK2('f','p'): return kEmex64RegisterFP;
+        case PACK3('f','p','c'): return kEmex64RegisterFPC;
+        case PACK2('r','0'): return kEmex64RegisterR0;
+        case PACK2('r','1'): return kEmex64RegisterR1;
+        case PACK2('r','2'): return kEmex64RegisterR2;
+        case PACK2('r','3'): return kEmex64RegisterR3;
+        case PACK2('r','4'): return kEmex64RegisterR4;
+        case PACK2('r','5'): return kEmex64RegisterR5;
+        case PACK2('r','6'): return kEmex64RegisterR6;
+        case PACK2('r','7'): return kEmex64RegisterR7;
+        case PACK2('r','8'): return kEmex64RegisterR8;
+        case PACK2('r','9'): return kEmex64RegisterR9;
+        case PACK3('r','1','0'): return kEmex64RegisterR10;
+        case PACK3('r','1','1'): return kEmex64RegisterR11;
+        case PACK3('r','1','2'): return kEmex64RegisterR12;
+        case PACK3('r','1','3'): return kEmex64RegisterR13;
+        case PACK3('r','1','4'): return kEmex64RegisterR14;
+        case PACK3('r','1','5'): return kEmex64RegisterR15;
+        case PACK3('r','1','6'): return kEmex64RegisterR16;
+        case PACK3('r','1','7'): return kEmex64RegisterR17;
+        case PACK3('r','1','8'): return kEmex64RegisterR18;
+        case PACK3('r','1','9'): return kEmex64RegisterR19;
+        case PACK3('r','2','0'): return kEmex64RegisterR20;
+        case PACK3('r','2','1'): return kEmex64RegisterR21;
+        case PACK3('r','2','2'): return kEmex64RegisterR22;
+        case PACK3('r','2','3'): return kEmex64RegisterR23;
+        case PACK3('r','2','4'): return kEmex64RegisterR24;
+        case PACK3('r','2','5'): return kEmex64RegisterR25;
+        case PACK3('r','2','6'): return kEmex64RegisterRR;
+        case PACK2('r','r'): return kEmex64RegisterRR;
+        default:
+            *success = false;
+            return kEmex64RegisterPC;
     }
-
-    /* shouldnt happen if code is correct */
-    return NULL;
 }

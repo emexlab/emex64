@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <emex64lib/support/pack.h>
+
 #include <emex64lib/asm/opcode.h>
 #include <emex64lib/asm/emit.h>
 
@@ -98,464 +100,76 @@ const opcode_entry_t opcode_table[] = {
 
 const opcode_entry_t *opcode_from_string(const char *name)
 {
-    size_t name_len = strlen(name);
-
-    if(name_len == 1)
+    if(name == NULL)
     {
-        if(name[0] == 'b')
-        {
-            return &opcode_table[kEmex64OpcodeB];
-        }
-        return NULL;
-    }
-    else if(name_len == 2)
-    {
-        switch(name[0])
-        {
-            case 'b':
-                switch(name[1])
-                {
-                    case 'e': return &opcode_table[kEmex64OpcodeBE];
-                    case 'l': return &opcode_table[kEmex64OpcodeBL];
-                    case 'z': return &opcode_table[kEmex64OpcodeBZ];
-                }
-                return NULL;
-            case 'o':
-                switch(name[1])
-                {
-                    case 'r': return &opcode_table[kEmex64OpcodeOR];
-                }
-                return NULL;
-        }
-        return NULL;
-    }
-    else if(name_len == 3)
-    {
-        switch(name[0])
-        {
-            case 'a':
-                switch(name[1])
-                {
-                    case 'd':
-                        switch(name[2])
-                        {
-                            case 'd': return &opcode_table[kEmex64OpcodeADD];
-                        }
-                        return NULL;
-                    case 'n':
-                        switch(name[2])
-                        {
-                            case 'd': return &opcode_table[kEmex64OpcodeAND];
-                        }
-                        return NULL;
-                }
-                return NULL;
-            case 'b':
-                switch(name[1])
-                {
-                    case 'g':
-                        switch(name[2])
-                        {
-                            case 'e': return &opcode_table[kEmex64OpcodeBGE];
-                            case 't': return &opcode_table[kEmex64OpcodeBGT];
-                        }
-                        return NULL;
-                    case 'l':
-                        switch(name[2])
-                        {
-                            case 'e': return &opcode_table[kEmex64OpcodeBLE];
-                            case 't': return &opcode_table[kEmex64OpcodeBLT];
-                            case 'w': return &opcode_table[kEmex64OpcodeBLW];
-                        }
-                        return NULL;
-                    case 'n':
-                        switch(name[2])
-                        {
-                            case 'e': return &opcode_table[kEmex64OpcodeBNE];
-                            case 'z': return &opcode_table[kEmex64OpcodeBNZ];
-                        }
-                        return NULL;
-                }
-                return NULL;
-            case 'c':
-                switch(name[1])
-                {
-                    case 'l':
-                        switch(name[2])
-                        {
-                            case 'r': return &opcode_table[kEmex64OpcodeCLR];
-                        }
-                        return NULL;
-                    case 'm':
-                        switch(name[2])
-                        {
-                            case 'p': return &opcode_table[kEmex64OpcodeCMP];
-                        }
-                        return NULL;
-                }
-                return NULL;
-            case 'd':
-                switch(name[1])
-                {
-                    case 'e':
-                        switch(name[2])
-                        {
-                            case 'c': return &opcode_table[kEmex64OpcodeDEC];
-                        }
-                        return NULL;
-                    case 'i':
-                        switch(name[2])
-                        {
-                            case 'v': return &opcode_table[kEmex64OpcodeDIV];
-                        }
-                        return NULL;
-                }
-                return NULL;
-            case 'h':
-                switch(name[1])
-                {
-                    case 'l':
-                        switch(name[2])
-                        {
-                            case 't': return &opcode_table[kEmex64OpcodeHLT];
-                        }
-                        return NULL;
-                }
-                return NULL;
-            case 'i':
-                switch(name[1])
-                {
-                    case 'n':
-                        switch(name[2])
-                        {
-                            case 'c': return &opcode_table[kEmex64OpcodeINC];
-                        }
-                        return NULL;
-                }
-                return NULL;
-            case 'l':
-                switch(name[1])
-                {
-                    case 'd':
-                        switch(name[2])
-                        {
-                            case 'b': return &opcode_table[kEmex64OpcodeLDB];
-                            case 'd': return &opcode_table[kEmex64OpcodeLDD];
-                            case 'q': return &opcode_table[kEmex64OpcodeLDQ];
-                            case 'w': return &opcode_table[kEmex64OpcodeLDW];
-                        }
-                        return NULL;
-                }
-                return NULL;
-            case 'm':
-                switch(name[1])
-                {
-                    case 'u':
-                        switch(name[2])
-                        {
-                            case 'l': return &opcode_table[kEmex64OpcodeMUL];
-                        }
-                        return NULL;
-                    case 'o':
-                        switch(name[2])
-                        {
-                            case 'd': return &opcode_table[kEmex64OpcodeMOD];
-                            case 'v': return &opcode_table[kEmex64OpcodeMOV];
-                        }
-                        return NULL;
-                }
-                return NULL;
-            case 'n':
-                switch(name[1])
-                {
-                    case 'e':
-                        switch(name[2])
-                        {
-                            case 'g': return &opcode_table[kEmex64OpcodeNEG];
-                        }
-                        return NULL;
-                    case 'o':
-                        switch(name[2])
-                        {
-                            case 'p': return &opcode_table[kEmex64OpcodeNOP];
-                            case 't': return &opcode_table[kEmex64OpcodeNOT];
-                        }
-                        return NULL;
-                }
-                return NULL;
-            case 'p':
-                switch(name[1])
-                {
-                    case 'o':
-                        switch(name[2])
-                        {
-                            case 'p': return &opcode_table[kEmex64OpcodePOP];
-                        }
-                        return NULL;
-                }
-                return NULL;
-            case 'r':
-                switch(name[1])
-                {
-                    case 'e':
-                        switch(name[2])
-                        {
-                            case 't': return &opcode_table[kEmex64OpcodeRET];
-                        }
-                        return NULL;
-                    case 'o':
-                        switch(name[2])
-                        {
-                            case 'l': return &opcode_table[kEmex64OpcodeROL];
-                            case 'r': return &opcode_table[kEmex64OpcodeROR];
-                        }
-                        return NULL;
-                }
-                return NULL;
-            case 's':
-                switch(name[1])
-                {
-                    case 'a':
-                        switch(name[2])
-                        {
-                            case 'r': return &opcode_table[kEmex64OpcodeSAR];
-                        }
-                        return NULL;
-                    case 'h':
-                        switch(name[2])
-                        {
-                            case 'r': return &opcode_table[kEmex64OpcodeSHR];
-                            case 'l': return &opcode_table[kEmex64OpcodeSHL];
-                        }
-                        return NULL;
-                    case 't':
-                        switch(name[2])
-                        {
-                            case 'b': return &opcode_table[kEmex64OpcodeSTB];
-                            case 'd': return &opcode_table[kEmex64OpcodeSTD];
-                            case 'q': return &opcode_table[kEmex64OpcodeSTQ];
-                            case 'w': return &opcode_table[kEmex64OpcodeSTW];
-                        }
-                        return NULL;
-                    case 'u':
-                        switch(name[2])
-                        {
-                            case 'b': return &opcode_table[kEmex64OpcodeSUB];
-                        }
-                        return NULL;
-                    case 'w':
-                        switch(name[2])
-                        {
-                            case 'p': return &opcode_table[kEmex64OpcodeSWP];
-                        }
-                        return NULL;
-                }
-                return NULL;
-            case 'x':
-                switch(name[1])
-                {
-                    case 'o':
-                        switch(name[2])
-                        {
-                            case 'r': return &opcode_table[kEmex64OpcodeXOR];
-                        }
-                        return NULL;
-                }
-                return NULL;
-        }
-        return NULL;
-    }
-    else if(name_len == 4)
-    {
-        switch(name[0])
-        {
-            case 'c':
-                switch(name[1])
-                {
-                    case 'm':
-                        switch(name[2])
-                        {
-                            case 'o':
-                                switch(name[3])
-                                {
-                                    case 'v': return &opcode_table[kEmex64OpcodeCMOV];
-                                }
-                                return NULL;
-                        }
-                        return NULL;
-                }
-                return NULL;
-            case 'i':
-                switch(name[1])
-                {
-                    case 'd':
-                        switch(name[2])
-                        {
-                            case 'i':
-                                switch(name[3])
-                                {
-                                    case 'v': return &opcode_table[kEmex64OpcodeIDIV];
-                                }
-                                return NULL;
-                        }
-                        return NULL;
-                    case 'r':
-                        switch(name[2])
-                        {
-                            case 'e':
-                                switch(name[3])
-                                {
-                                    case 't': return &opcode_table[kEmex64OpcodeIRET];
-                                }
-                                return NULL;
-                        }
-                        return NULL;
-                }
-                return NULL;
-            case 'p':
-                switch(name[1])
-                {
-                    case 'd':
-                        switch(name[2])
-                        {
-                            case 'e':
-                                switch(name[3])
-                                {
-                                    case 'p': return &opcode_table[kEmex64OpcodePDEP];
-                                }
-                                return NULL;
-                        }
-                        return NULL;
-                    case 'e':
-                        switch(name[2])
-                        {
-                            case 'x':
-                                switch(name[3])
-                                {
-                                    case 't': return &opcode_table[kEmex64OpcodePEXT];
-                                }
-                                return NULL;
-                        }
-                        return NULL;
-                    case 'u':
-                        switch(name[2])
-                        {
-                            case 's':
-                                switch(name[3])
-                                {
-                                    case 'h': return &opcode_table[kEmex64OpcodePUSH];
-                                }
-                                return NULL;
-                        }
-                        return NULL;
-                }
-                return NULL;
-            case 's':
-                switch(name[1])
-                {
-                    case 'w':
-                        switch(name[2])
-                        {
-                            case 'p':
-                                switch(name[3])
-                                {
-                                    case 'z': return &opcode_table[kEmex64OpcodeSWPZ];
-                                }
-                                return NULL;
-                        }
-                        return NULL;
-                }
-                return NULL;
-            case 'w':
-                switch(name[1])
-                {
-                    case 'r':
-                        switch(name[2])
-                        {
-                            case 'e':
-                                switch(name[3])
-                                {
-                                    case 't': return &opcode_table[kEmex64OpcodeWRET];
-                                }
-                                return NULL;
-                        }
-                        return NULL;
-                }
-                return NULL;
-        }
-        return NULL;
-    }
-    else if(name_len == 5)
-    {
-        switch(name[0])
-        {
-            case 'c':
-                switch(name[1])
-                {
-                    case 'm':
-                        switch(name[2])
-                        {
-                            case 'o':
-                                switch(name[3])
-                                {
-                                    case 'v':
-                                        switch(name[4])
-                                        {
-                                            case 'b': return &opcode_table[kEmex64OpcodeCMOVB];
-                                        }
-                                        return NULL;
-                                }
-                                return NULL;
-                        }
-                        return NULL;
-                }
-                return NULL;
-        }
-        return NULL;
-    }
-    else if(name_len == 6)
-    {
-        switch(name[0])
-        {
-            case 'b':
-                switch(name[1])
-                {
-                    case 's':
-                        switch(name[2])
-                        {
-                            case 'w':
-                                switch(name[3])
-                                {
-                                    case 'a':
-                                        switch(name[4])
-                                        {
-                                            case 'p':
-                                                switch(name[5])
-                                                {
-                                                    case 'd': return &opcode_table[kEmex64OpcodeBSWAPD];
-                                                    case 'q': return &opcode_table[kEmex64OpcodeBSWAPQ];
-                                                    case 'w': return &opcode_table[kEmex64OpcodeBSWAPW];
-                                                }
-                                        }
-                                        return NULL;
-                                }
-                                return NULL;
-                        }
-                        return NULL;
-                }
-                return NULL;
-        }
         return NULL;
     }
 
-    /* shouldnt happen if code is correct */
-    return NULL;
+    switch(pack_name(name))
+    {
+        case PACK1('b'): return &opcode_table[kEmex64OpcodeB];
+        case PACK2('b','e'): return &opcode_table[kEmex64OpcodeBE];
+        case PACK2('b','l'): return &opcode_table[kEmex64OpcodeBL];
+        case PACK2('b','z'): return &opcode_table[kEmex64OpcodeBZ];
+        case PACK2('o','r'): return &opcode_table[kEmex64OpcodeOR];
+        case PACK3('a','d','d'): return &opcode_table[kEmex64OpcodeADD];
+        case PACK3('a','n','d'): return &opcode_table[kEmex64OpcodeAND];
+        case PACK3('b','g','e'): return &opcode_table[kEmex64OpcodeBGE];
+        case PACK3('b','g','t'): return &opcode_table[kEmex64OpcodeBGT];
+        case PACK3('b','l','e'): return &opcode_table[kEmex64OpcodeBLE];
+        case PACK3('b','l','t'): return &opcode_table[kEmex64OpcodeBLT];
+        case PACK3('b','l','w'): return &opcode_table[kEmex64OpcodeBLW];
+        case PACK3('b','n','e'): return &opcode_table[kEmex64OpcodeBNE];
+        case PACK3('b','n','z'): return &opcode_table[kEmex64OpcodeBNZ];
+        case PACK3('c','l','r'): return &opcode_table[kEmex64OpcodeCLR];
+        case PACK3('c','m','p'): return &opcode_table[kEmex64OpcodeCMP];
+        case PACK3('d','e','c'): return &opcode_table[kEmex64OpcodeDEC];
+        case PACK3('d','i','v'): return &opcode_table[kEmex64OpcodeDIV];
+        case PACK3('h','l','t'): return &opcode_table[kEmex64OpcodeHLT];
+        case PACK3('i','n','c'): return &opcode_table[kEmex64OpcodeINC];
+        case PACK3('l','d','b'): return &opcode_table[kEmex64OpcodeLDB];
+        case PACK3('l','d','d'): return &opcode_table[kEmex64OpcodeLDD];
+        case PACK3('l','d','q'): return &opcode_table[kEmex64OpcodeLDQ];
+        case PACK3('l','d','w'): return &opcode_table[kEmex64OpcodeLDW];
+        case PACK3('m','u','l'): return &opcode_table[kEmex64OpcodeMUL];
+        case PACK3('m','o','d'): return &opcode_table[kEmex64OpcodeMOD];
+        case PACK3('m','o','v'): return &opcode_table[kEmex64OpcodeMOV];
+        case PACK3('n','e','g'): return &opcode_table[kEmex64OpcodeNEG];
+        case PACK3('n','o','p'): return &opcode_table[kEmex64OpcodeNOP];
+        case PACK3('n','o','t'): return &opcode_table[kEmex64OpcodeNOT];
+        case PACK3('p','o','p'): return &opcode_table[kEmex64OpcodePOP];
+        case PACK3('r','e','t'): return &opcode_table[kEmex64OpcodeRET];
+        case PACK3('r','o','l'): return &opcode_table[kEmex64OpcodeROL];
+        case PACK3('r','o','r'): return &opcode_table[kEmex64OpcodeROR];
+        case PACK3('s','a','r'): return &opcode_table[kEmex64OpcodeSAR];
+        case PACK3('s','h','r'): return &opcode_table[kEmex64OpcodeSHR];
+        case PACK3('s','h','l'): return &opcode_table[kEmex64OpcodeSHL];
+        case PACK3('s','t','b'): return &opcode_table[kEmex64OpcodeSTB];
+        case PACK3('s','t','d'): return &opcode_table[kEmex64OpcodeSTD];
+        case PACK3('s','t','q'): return &opcode_table[kEmex64OpcodeSTQ];
+        case PACK3('s','t','w'): return &opcode_table[kEmex64OpcodeSTW];
+        case PACK3('s','u','b'): return &opcode_table[kEmex64OpcodeSUB];
+        case PACK3('s','w','p'): return &opcode_table[kEmex64OpcodeSWP];
+        case PACK3('x','o','r'): return &opcode_table[kEmex64OpcodeXOR];
+        case PACK4('c','m','o','v'): return &opcode_table[kEmex64OpcodeCMOV];
+        case PACK4('i','d','i','v'): return &opcode_table[kEmex64OpcodeIDIV];
+        case PACK4('i','r','e','t'): return &opcode_table[kEmex64OpcodeIRET];
+        case PACK4('p','d','e','p'): return &opcode_table[kEmex64OpcodePDEP];
+        case PACK4('p','e','x','t'): return &opcode_table[kEmex64OpcodePEXT];
+        case PACK4('p','u','s','h'): return &opcode_table[kEmex64OpcodePUSH];
+        case PACK4('s','w','p','z'): return &opcode_table[kEmex64OpcodeSWPZ];
+        case PACK4('w','r','e','t'): return &opcode_table[kEmex64OpcodeWRET];
+        case PACK5('c','m','o','v','b'): return &opcode_table[kEmex64OpcodeCMOVB];
+        case PACK6('b','s','w','a','p','d'): return &opcode_table[kEmex64OpcodeBSWAPD];
+        case PACK6('b','s','w','a','p','q'): return &opcode_table[kEmex64OpcodeBSWAPQ];
+        case PACK6('b','s','w','a','p','w'): return &opcode_table[kEmex64OpcodeBSWAPW];
+        default: return NULL;
+    }
 }
 
 bool opcode_arg_accepts_reg_only(const opcode_entry_t *opce,
                                  uint8_t arg)
 {
-    /* null pointer check */
     if(opce == NULL)
     {
         return false;

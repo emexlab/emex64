@@ -163,11 +163,12 @@ bool assembler_emit_instruction(assembler_line_t *al)
 
     for(uint64_t i = 1; i < al->token_cnt; i++)
     {
-        register_entry_t *reg = register_from_string(al->token[i]->str);
-        if(reg != NULL)
+        bool success = false;
+        enum kEmex64Register reg = register_from_string(al->token[i]->str, &success);
+        if(success)
         {
             /* registers are always allowed so far */
-            assembler_emit_register(al->inv, reg->reg);
+            assembler_emit_register(al->inv, reg);
             continue;
         }
 

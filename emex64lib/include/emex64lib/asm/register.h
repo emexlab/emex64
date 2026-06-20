@@ -27,11 +27,6 @@
 
 #include <emex64lib/vm/core.h>
 
-typedef struct {
-    const char *name;
-    unsigned char reg;
-} register_entry_t;
-
-register_entry_t *register_from_string(const char *name);
+enum kEmex64Register register_from_string(const char *name, bool *success);
 
 #endif /* EMEX64ASM_REGISTER_H */
