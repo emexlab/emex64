@@ -344,7 +344,8 @@ bool assembler_code_parse(assembler_invocation_t *inv)
             /* probably a whitespace or excluded by a macro */
             continue;
         }
-        else if(inv->line[i]->token_cnt < 2)
+        
+        if(inv->line[i]->token_cnt >= 1)
         {
             /* getting size of subtoken */
             size_t size = strlen(inv->line[i]->token[0]->str);
@@ -387,7 +388,8 @@ bool assembler_code_parse(assembler_invocation_t *inv)
                 continue;
             }
         }
-        else if(inv->line[i]->token_cnt < 3 && strcmp(inv->line[i]->token[0]->str, "section") == 0)
+        
+        if(inv->line[i]->token_cnt < 3 && strcmp(inv->line[i]->token[0]->str, "section") == 0)
         {
             section_mode = true;
             inv->line[i]->type = kAssemblerLineTypeSection;

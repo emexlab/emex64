@@ -82,6 +82,14 @@ assembler_label_t *assembler_label_lookup(assembler_invocation_t *inv,
 
 bool assembler_label_append(assembler_token_t *at)
 {
+    /* validate label definition */
+    bool failed_validity = false;
+    for(uint64_t i = 1; i < at->al->token_cnt; i++)
+    {
+        diag_error(at->al->token[i], "unknown token after label definition '%s'\n", at->al->token[i]->str);
+        failed_validity = true;
+    }
+
     /* accessing compiler line and invocation */
     assembler_invocation_t *inv = at->al->inv;
 
@@ -93,6 +101,13 @@ bool assembler_label_append(assembler_token_t *at)
     /* copying label name */
     if(at->al->type == kAssemblerLineTypeLocalLabel)
     {
+        /* checking if we are in a scope */
+        if(inv->label_scope == NULL)
+        {
+            diag_error(at, "defining a local label out of any global label is illegal '%s'\n", name);
+            return false;
+        }
+
         /* constructing scoped label */
         size_t label_scope_len = strlen(inv->label_scope);
         size_t ct_len = strlen(at->str);
@@ -106,13 +121,6 @@ bool assembler_label_append(assembler_token_t *at)
         memcpy(name, inv->label_scope, label_scope_len);
         memcpy(name + label_scope_len, at->str, ct_len - 1); /* minus 1 to ommit the ':' character */
         name[size - 1] = '\0';
-
-        /* checking if we are in a scope */
-        if(inv->label_scope == NULL)
-        {
-            diag_error(at, "defining a local label out of any global label is illegal '%s'\n", name);
-            return false;
-        }
     }
     else
     {
@@ -143,5 +151,5 @@ bool assembler_label_append(assembler_token_t *at)
     inv->label[inv->label_cnt].at_link = at;
     inv->label[inv->label_cnt++].name = name;
 
-    return true;
+    return !failed_validity;
 }

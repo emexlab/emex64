@@ -45,7 +45,6 @@ endif()
 
 option(EMEX64LIB_STATIC "Link statically against emex64lib" OFF)
 option(EMEX64LIB_NATIVE_ARCH "Optimizations for the host CPU" OFF)
-option(EMEX64LIB_DEBUG "Debugging" OFF)
 option(EMEX64LIB_COMPILER_OPTIMIZATIONS "Appends compiler optimization flags" ON)
 
 if(EMEX64LIB_STATIC)
@@ -174,7 +173,7 @@ else()
     set(_EMEX64_OPT_FLAGS -fPIC)
 
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        list(APPEND _EMEX64_OPT_FLAGS -g)
+        list(APPEND _EMEX64_OPT_FLAGS -g -O0)
     else()
         if(EMEX64LIB_COMPILER_OPTIMIZATIONS)
             list(APPEND _EMEX64_OPT_FLAGS -O3 -fomit-frame-pointer -fstrict-aliasing -ffast-math -funroll-loops)
