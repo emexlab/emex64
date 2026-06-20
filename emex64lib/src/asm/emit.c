@@ -129,12 +129,15 @@ void assembler_emit_end(assembler_invocation_t *inv)
 
 bool assembler_emit_instruction(assembler_line_t *al)
 {
-    const opcode_entry_t *opce = opcode_from_string(al->token[0]->str);
-    if(opce == NULL)
+    bool success = false;
+    enum kEmex64Opcode opcode = opcode_from_string(al->token[0]->str, &success);
+    if(!success)
     {
         diag_error(al->token[0], "illegal opcode '%s'\n", al->token[0]->str);
         return false;
     }
+
+    const emex64_opfunc_entry_t *entry = &kEmex64OpfuncTable[opcode];
 
     /* sanity checking all parameter count related things */
     if(al->token_cnt <= 0)
@@ -147,19 +150,19 @@ bool assembler_emit_instruction(assembler_line_t *al)
         diag_error(al->token[0], "holy smokes, why soo many operands, maximum is %d operands in emex64\n", EMEX64_MAX_ARGS);
         return false;
     }
-    if((al->token_cnt - 1) > opce->maxargs)
+    if((al->token_cnt - 1) > entry->maxargs)
     {
-        diag_error(al->token[al->token_cnt - 1], "too many operands for opcode '%s', expected %d operands, but got %d operands\n", al->token[0]->str, opce->maxargs, al->token_cnt - 1);
+        diag_error(al->token[al->token_cnt - 1], "too many operands for opcode '%s', expected %d operands, but got %d operands\n", al->token[0]->str, entry->maxargs, al->token_cnt - 1);
         return false;
     }
-    else if((al->token_cnt - 1) < opce->minargs)
+    else if((al->token_cnt - 1) < entry->minargs)
     {
-        diag_error(al->token[al->token_cnt - 1], "too few operands for opcode '%s', expected %d operands, but got %d operands\n", al->token[0]->str, opce->minargs, al->token_cnt - 1);
+        diag_error(al->token[al->token_cnt - 1], "too few operands for opcode '%s', expected %d operands, but got %d operands\n", al->token[0]->str, entry->minargs, al->token_cnt - 1);
         return false;
     }
 
     /* emitting the instruction */
-    assembler_emit_opcode(al->inv, opce->opcode);
+    assembler_emit_opcode(al->inv, opcode);
 
     for(uint64_t i = 1; i < al->token_cnt; i++)
     {
@@ -173,7 +176,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
         }
 
         /* checking if allowed to be something else than a register */
-        if(opcode_arg_accepts_reg_only(opce,  i - 1))
+        if(opcode_arg_accepts_reg_only(entry,  i - 1))
         {
             diag_error(al->token[i], "expected register, got intermediate or label '%s'\n", al->token[i]->str);
             return false;
@@ -240,10 +243,10 @@ bool assembler_emit_instruction(assembler_line_t *al)
         else
         {
             /* branches work different, they have offset branching */
-            if((i == 1 && (opce->opcode == kEmex64OpcodeB   || opce->opcode == kEmex64OpcodeBE  || opce->opcode == kEmex64OpcodeBNE   ||
-                           opce->opcode == kEmex64OpcodeBLE || opce->opcode == kEmex64OpcodeBGE || opce->opcode == kEmex64OpcodeBLT   ||
-                           opce->opcode == kEmex64OpcodeBGT || opce->opcode == kEmex64OpcodeBLW || opce->opcode == kEmex64OpcodeBLE)) ||
-               (i == 2 && (opce->opcode == kEmex64OpcodeBZ  || opce->opcode == kEmex64OpcodeBNZ)))
+            if((i == 1 && (opcode == kEmex64OpcodeB   || opcode == kEmex64OpcodeBE  || opcode == kEmex64OpcodeBNE   ||
+                           opcode == kEmex64OpcodeBLE || opcode == kEmex64OpcodeBGE || opcode == kEmex64OpcodeBLT   ||
+                           opcode == kEmex64OpcodeBGT || opcode == kEmex64OpcodeBLW || opcode == kEmex64OpcodeBLE)) ||
+               (i == 2 && (opcode == kEmex64OpcodeBZ  || opcode == kEmex64OpcodeBNZ)))
             {
                 assembler_emit_addr64(al->inv, pr.value);
             }
@@ -255,7 +258,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
         }
     }
 
-    if(opce->maxargs != (al->token_cnt - 1))
+    if(entry->maxargs != (al->token_cnt - 1))
     {
         assembler_emit_end(al->inv);
     }

@@ -40,15 +40,8 @@ typedef struct opcode_entry opcode_entry_t;
 /* handler for emitting instruction */
 typedef bool (*instruction_emit_handler)(const opcode_entry_t *opce, assembler_line_t *cl);
 
-typedef struct opcode_entry {
-    uint8_t opcode;                     /* opcode in machine code */
-    uint8_t minargs;                    /* minimum arguments count */
-    uint8_t maxargs;                    /* maximum arguments count */
-    uint32_t argmask;                   /* argument mask (0 means it doesnt matter what the operand is, 1 means it must be a register) */
-} opcode_entry_t;
-
 /* opcode entry gathering */
-const opcode_entry_t *opcode_from_string(const char *name);
-bool opcode_arg_accepts_reg_only(const opcode_entry_t *opce, uint8_t arg);
+enum kEmex64Opcode opcode_from_string(const char *name, bool *success);
+bool opcode_arg_accepts_reg_only(const emex64_opfunc_entry_t *opce, uint8_t arg);
 
 #endif /* EMEX64ASM_OPCODE_H */

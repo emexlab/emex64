@@ -398,7 +398,9 @@ typedef struct emex64_machine emex64_machine_t;
 
 typedef struct emex64_opfunc_entry {
     emex64_opfunc_t func;
+    uint8_t minargs;
     uint8_t maxargs;
+    uint32_t argmask;
 } emex64_opfunc_entry_t;
 
 extern const emex64_opfunc_entry_t kEmex64OpfuncTable[];
