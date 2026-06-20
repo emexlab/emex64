@@ -56,6 +56,8 @@ int main(int argc, char *argv[])
                 fprintf(stderr, "\t--display [on|off|required]                  : enables or disables display\n");
                 fprintf(stderr, "\t--display:resolution <height> <width>        : sets the resolution of the display\n");
             }
+            fprintf(stderr, "\t--keyboard [off|8042]                        : sets the resolution of the display\n");
+            fprintf(stderr, "\t--mouse [off|8042]                           : sets the resolution of the display\n");
             return 1;
         }
         else if(strcmp(argv[i], "--firmware") == 0 && i + 1 < argc)
