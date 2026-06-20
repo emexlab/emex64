@@ -69,6 +69,7 @@ static inline bool __ratchet_args_gib(ratchet_args_t *ra)
         {
             return false;
         }
+        ra->args = newp;
     }
     ra->csize = new_csize;
 
