@@ -122,7 +122,6 @@ bool assembler_invocation_emit(assembler_invocation_t *inv,
         diag_fatal(NULL, "couldn't allocate fdwalker\n");
         return false;
     }
-    fdwalker_seek(inv->fdwalker, 10, 0);
 
     if(!assembler_code_preparse(inv, input) ||
        !assembler_macro_expand(inv) ||
