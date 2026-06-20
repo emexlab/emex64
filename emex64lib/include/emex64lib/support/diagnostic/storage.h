@@ -29,6 +29,7 @@
 
 typedef struct {
     diagnostic_message_t *tail;
+    kDiagnosticMessageType most_severe_occured_message_type;
 } diagnostic_storage_t;
 
 diagnostic_storage_t *diagnostic_storage_alloc();

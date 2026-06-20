@@ -31,6 +31,7 @@ diagnostic_storage_t *diagnostic_storage_alloc()
 {
     diagnostic_storage_t *storage = malloc(sizeof(diagnostic_storage_t));
     storage->tail = NULL;
+    storage->most_severe_occured_message_type = kDiagnosticMessageTypeNote;
     return storage;
 }
 
@@ -84,10 +85,15 @@ void diagnostic_storage_append_internal(diagnostic_storage_t *storage,
                                         kDiagnosticMessageType type,
                                         char *msg)
 {
+    if(storage->most_severe_occured_message_type < type)
+    {
+        storage->most_severe_occured_message_type = type;
+    }
+
     diagnostic_message_t *next = diagnostic_message_alloc_internal(type, msg);
     if(next == NULL)
     {
-        diag_fatal(NULL, "coudln't allocate diagnostic\n");
+        diag_fatal(NULL, "coudln't allocate diagnostic message\n");
         return;
     }
     __diagnostic_storage_append_tail(storage, next);
@@ -100,10 +106,15 @@ void diagnostic_storage_append_file(diagnostic_storage_t *storage,
                                     uint64_t ln,
                                     uint64_t col)
 {
+    if(storage->most_severe_occured_message_type < type)
+    {
+        storage->most_severe_occured_message_type = type;
+    }
+    
     diagnostic_message_t *next = diagnostic_message_alloc_file(type, file, msg, ln, col);
     if(next == NULL)
     {
-        diag_fatal(NULL, "coudln't allocate diagnostic\n");
+        diag_fatal(NULL, "coudln't allocate diagnostic message\n");
         return;
     }
     __diagnostic_storage_append_tail(storage, next);

@@ -57,15 +57,18 @@ linker_driver_t *linker_driver_alloc(int argc,
     {
         if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0)
         {
-            fprintf(stderr, "Usage: %s [-o output] [-e entry] [-T script.e64ld] file1.e64o [...]\n", argv[0]);
-            fprintf(stderr, "  -o output        Output file (default: a.out)\n");
-            fprintf(stderr, "  -e entry         Entry symbol (default: _start)\n");
-            fprintf(stderr, "  -T script.e64ld  Linker script (or pass .e64ld files directly)\n");
-            fprintf(stderr, "  .e64ld files are auto-detected by extension\n");
-            fprintf(stderr, "  -v verbose       verbose mode\n");
-            fprintf(stderr, "  -r relocatable   emits relocatable object\n");
-            fprintf(stderr, "  -v               Prints verbose driver log.\n");
-            fprintf(stderr, "  --version        Prints version.\n");
+            fprintf(stderr, "Usage: %s [options] file...\n", argv[0]);
+            fprintf(stderr, "\n");
+            fprintf(stderr, "Options:\n");
+            fprintf(stderr, "  --help                 Shows this help menu.\n");
+            fprintf(stderr, "  --version              Prints version.\n");
+            fprintf(stderr, "\n");
+            fprintf(stderr, "  -o <output path>       Sets the output file path, is set to \"a.out\" when not passed.\n");
+            fprintf(stderr, "  -e <entry name>        Sets the entry symbol, is set to \"_start\" when not passed.\n");
+            fprintf(stderr, "  -T <script path>       Adds a linker script.\n");
+            fprintf(stderr, "  -v                     Prints verbose linker log.\n");
+            fprintf(stderr, "  -r                     Emits relocatable object.\n");
+            fprintf(stderr, "  -v                     Prints verbose driver log.\n");
             goto failure;
         }
         else if(strcmp(argv[i], "--version") == 0)
@@ -113,27 +116,13 @@ linker_driver_t *linker_driver_alloc(int argc,
         }
         else if (argv[i][0] != '-')
         {
-            size_t n = strlen(argv[i]);
-            if(n > 5 && strcmp(argv[i] + n - 5, ".e64ld") == 0)
+            emex_file_t *input_file = emex_file_alloc(argv[i], object_file_load_policy);
+            if(input_file == NULL)
             {
-                emex_file_t *script_file = emex_file_alloc(argv[i], linker_script_file_policy);
-                if(script_file == NULL)
-                {
-                    diag_error(NULL, "unknown or non existing script file '%s'\n", argv[i]);
-                    goto failure;
-                }
-                driver->linker_script_file[driver->linker_script_file_cnt++] = script_file;
+                diag_error(NULL, "unknown or non existing input file '%s'\n", argv[i]);
+                goto failure;
             }
-            else
-            {
-                emex_file_t *input_file = emex_file_alloc(argv[i], object_file_load_policy);
-                if(input_file == NULL)
-                {
-                    diag_error(NULL, "unknown or non existing input file '%s'\n", argv[i]);
-                    goto failure;
-                }
-                driver->input_file[driver->input_file_cnt++] = input_file;
-            }
+            driver->input_file[driver->input_file_cnt++] = input_file;
         }
         else
         {
