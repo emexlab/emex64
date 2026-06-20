@@ -28,65 +28,55 @@
 
 #include <emex64lib/asm/cmptok.h>
 
+_Thread_local static const char *stokptr;
 _Thread_local static const char *ltokptr;
 _Thread_local static char otoken[CMPTOK_LENGHT_MAX];
-_Thread_local static size_t column;
 
 static inline void cmptok_skip_triggers(void)
 {
     while(1)
     {
-        if(ltokptr[0] == ' ' ||
-           ltokptr[0] == ',' ||
-           ltokptr[0] == '\t')
+        switch(ltokptr[0])
         {
-            ltokptr++;
-            column++;
-            continue;
-        }
-
-        if(ltokptr[0] == ';')
-        {
-            while(ltokptr[0] != '\0')
-            {
+            case ' ':
+            case ',':
+            case '\t':
                 ltokptr++;
-                column++;
-            }
-            return;
+                break;
+            case ';':
+                ltokptr = NULL;
+                [[fallthrough]];
+            default:
+                return;
         }
-
-        break;
     }
 }
 
 static inline void cmptok_append(unsigned short *otoken_pos)
 {
-    otoken[(*otoken_pos)++] = ltokptr[0];
-    ltokptr++;
-    column++;
+    otoken[(*otoken_pos)++] = *(ltokptr++);
 }
 
 cmptok_token_t cmptok(const char *token)
 {
-    /* null pointer check */
     if(token != NULL)
     {
         /* if token is passed then this is the beginning of something we are meant to parse */
         ltokptr = token;
-        column = 0;
+        stokptr = token;
     }
-    else if(ltokptr == NULL || ltokptr[0] == '\0')
+
+    /* skip the junk in front of us */
+    cmptok_skip_triggers();
+    if(ltokptr == NULL || ltokptr[0] == '\0')
     {
         /* if ltokptr is nullified this or nullterminated then we shall not continue, there is nothing to tokenize */
         return (cmptok_token_t){ .token = NULL, .column = 0 };
     }
 
-    /* skip the junk in front of us */
-    cmptok_skip_triggers();
-
     cmptok_token_t retval;
     retval.type = kAssemblerTokenTypeStandard;
-    retval.column = column;
+    retval.column = ltokptr - stokptr;
 
     /* perform copy */
     unsigned short a = 0;
@@ -117,6 +107,8 @@ cmptok_token_t cmptok(const char *token)
                         token_mode = kCmptokTokenModeCharacter;
                         retval.type = kAssemblerTokenTypeInvalid;
                         break;
+                    
+                    /* handling static expression beginnings */
                     case '(':
                         token_mode = kCmptokTokenModeExpression;
                         retval.type = kAssemblerTokenTypeInvalid;
@@ -186,20 +178,13 @@ skip_break_out:
         otoken[a++] = ltokptr[0];
 
         /* check for nulltermination in ltokptr */
-        if(ltokptr[0] == '\0')
+        if(*(++ltokptr) == '\0')
         {
             break;
         }
-
-        /* incrementing */
-        ltokptr++;
-        column++;
     }
 
     otoken[a] = '\0';
-
-    /* dont overparse one token more, so we skip every iterration to the next token already */
-    cmptok_skip_triggers();
 
     retval.token = (a == 0) ? NULL : otoken;
     return retval;
