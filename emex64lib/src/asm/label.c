@@ -94,15 +94,11 @@ bool assembler_label_append(assembler_token_t *at)
         }
     }
 
-    /* accessing compiler line and invocation */
+    /* accessing compiler invocation */
     assembler_invocation_t *inv = at->al->inv;
 
-    /* assign address to label */
-    inv->label[inv->label_cnt].addr = fdwalker_bytes_used(inv->fdwalker);
-
-    char *name = NULL;
-
     /* copying label name */
+    char *name = NULL;
     if(at->al->type == kAssemblerLineTypeLocalLabel)
     {
         /* checking if we are in a scope */
@@ -181,6 +177,7 @@ bool assembler_label_append(assembler_token_t *at)
         return false;
     }
 
+    inv->label[inv->label_cnt].addr = fdwalker_bytes_used(inv->fdwalker);
     inv->label[inv->label_cnt].at_link = at;
     inv->label[inv->label_cnt].defined = at->al->type != kAssemblerLineTypeExternLabel;
     inv->label[inv->label_cnt++].name = name;
