@@ -280,6 +280,7 @@ bool assembler_emit(assembler_invocation_t *inv)
         {
             case kAssemblerLineTypeGlobalLabel:
             case kAssemblerLineTypeLocalLabel:
+            case kAssemblerLineTypeExternLabel:
                 if(!assembler_label_append(inv->line[i]->token[0]))
                 {
                     failed = true;
@@ -311,16 +312,15 @@ bool assembler_emit(assembler_invocation_t *inv)
     while(reloc != NULL)
     {
         assembler_label_t *label = assembler_label_lookup(inv, reloc->name);
-        if(reloc->local && label == NULL)
+        if(label == NULL)
         {
             /* local labels must be resolved at assembly time */
-            diag_error(reloc->at_link, "local label '%s' is undefined\n", reloc->name);
+            diag_error(reloc->at_link, "label '%s' is undefined\n", reloc->name);
             return false;
         }
 
         /* travel down the list */
         reloc = reloc->next;
-
     }
 
     fdwalker_sync(inv->fdwalker);

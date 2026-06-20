@@ -24,6 +24,10 @@
 
 %include% <emex64.e64inc>
 
+extern _putc
+extern _puts
+extern _putbase
+
 section .data
     time db "[fw] date: \0"
 

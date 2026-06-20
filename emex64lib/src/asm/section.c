@@ -79,6 +79,8 @@ bool assembler_section_parse(assembler_invocation_t *inv)
 
                     /* inserting address as label */
                     inv->label[inv->label_cnt].name = strdup(inv->line[i]->token[0]->str);
+                    inv->label[inv->label_cnt].at_link = inv->line[i]->token[0];
+                    inv->label[inv->label_cnt].defined = true;
                     inv->label[inv->label_cnt++].addr = fdwalker_bytes_used(inv->fdwalker);
 
                     /* checking if its known */
@@ -285,6 +287,8 @@ bool assembler_section_parse(assembler_invocation_t *inv)
 
                     /* insert label into label array */
                     inv->label[inv->label_cnt].name = strdup(inv->line[i]->token[0]->str);
+                    inv->label[inv->label_cnt].at_link = inv->line[i]->token[0];
+                    inv->label[inv->label_cnt].defined = true;
                     inv->label[inv->label_cnt++].addr = fdwalker_bytes_used(inv->fdwalker);
 
                     /* find out size */

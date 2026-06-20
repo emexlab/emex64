@@ -22,6 +22,9 @@
 ; SOFTWARE.
 ;
 
+extern _memcpy
+extern _kmalloc
+
 _strlen:
     clr rr                      ; clearing return register
 .loop:

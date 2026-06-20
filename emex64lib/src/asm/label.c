@@ -48,6 +48,7 @@ bool assembler_label_prealloc(assembler_invocation_t *inv)
     {
         if(inv->line[i]->type == kAssemblerLineTypeGlobalLabel ||
            inv->line[i]->type == kAssemblerLineTypeLocalLabel ||
+           inv->line[i]->type == kAssemblerLineTypeExternLabel ||
            inv->line[i]->type == kAssemblerLineTypeSectionData)
         {
             (inv->label_cnt)++;
@@ -84,7 +85,7 @@ bool assembler_label_append(assembler_token_t *at)
 {
     /* validate label definition */
     bool failed_validity = false;
-    for(uint64_t i = 1; i < at->al->token_cnt; i++)
+    for(uint64_t i = at->al->type == kAssemblerLineTypeExternLabel ? 2 : 1; i < at->al->token_cnt; i++)
     {
         diag_error(at->al->token[i], "unknown token after label definition '%s'\n", at->al->token[i]->str);
         failed_validity = true;
@@ -122,7 +123,7 @@ bool assembler_label_append(assembler_token_t *at)
         memcpy(name + label_scope_len, at->str, ct_len - 1); /* minus 1 to ommit the ':' character */
         name[size - 1] = '\0';
     }
-    else
+    else if(at->al->type == kAssemblerLineTypeGlobalLabel)
     {
         /* constructing global label */
         size_t size = strlen(at->str);
@@ -138,6 +139,22 @@ bool assembler_label_append(assembler_token_t *at)
         /* set it as scope */
         inv->label_scope = name;
     }
+    else
+    {
+        /* constructing extern label */
+        /* first we need the 2nd token, not the 1st */
+        at = at->al->token[1];
+
+        size_t size = strlen(at->str) + 1;
+        name = malloc(size);
+        if(name == NULL)
+        {
+            diag_error(at, "failed to allocate memory for this label\n");
+            return false;
+        }
+        memcpy(name, at->str, size - 1);
+        name[size - 1] = '\0';
+    }
 
     /* checking for duplicated labels */
     assembler_label_t *label = assembler_label_lookup(inv, name);
@@ -149,6 +166,7 @@ bool assembler_label_append(assembler_token_t *at)
     }
 
     inv->label[inv->label_cnt].at_link = at;
+    inv->label[inv->label_cnt].defined = at->al->type != kAssemblerLineTypeExternLabel;
     inv->label[inv->label_cnt++].name = name;
 
     return !failed_validity;

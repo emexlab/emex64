@@ -24,6 +24,8 @@
 
 %include% <emex64.e64inc>
 
+extern _pmm_alloc
+
 section .bss
     ivec dq 63
 

@@ -11,7 +11,7 @@ color brightgreen "\b(hlt|nop|mov|swp|swpz|push|pop|ldb|ldw|ldd|ldq|stb|stw|std|
 color brightgreen "\b(jmp|je|jne|jlt|jgt|jle|jge|jz|jnz)\b"
 
 # DIRECTIVES
-color magenta "\b(db|dw|dd|dq|df|section)\b"
+color magenta "\b(db|dw|dd|dq|df|section|extern)\b"
 color magenta "\.(data|bss)\b"
 
 # MACROS

@@ -24,6 +24,8 @@
 
 %include% <emex64.e64inc>
 
+extern _font_data
+
 section .data
     gui_line dw 0
     gui_column dw 0

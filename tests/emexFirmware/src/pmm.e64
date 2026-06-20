@@ -25,6 +25,10 @@
 
 %include% <emex64.e64inc>
 
+extern __emex64_exec_img_end
+extern _mc_get_mem_size
+extern _memset
+
 section .bss
     pmm_master_ptr dq 1                             ; address that points at the main page
     pmm_max_pages dq 1                              ; count of pages

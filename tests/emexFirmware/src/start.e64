@@ -24,6 +24,22 @@
 
 %include% <emex64.e64inc>
 
+extern _interrupt_init
+extern _slab_init
+extern _pmm_alloc
+extern _pmm_init
+extern _put_init
+extern _print_time
+extern _putc
+extern _put_mem
+extern _puts
+extern __emex64_exec_img_end
+extern _mc_get_mem_size
+extern _putbase
+extern _mc_lock_ktrr
+extern _interrupt_register_handler
+extern _exception_handler
+
 %define% FW_TONE_RATE   48000
 
 section .data

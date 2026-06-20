@@ -24,6 +24,11 @@
 
 %include% <emex64.e64inc>
 
+extern _interrupt_unregister_all
+extern _puts
+extern _putc
+extern _putbase
+
 ; generic code shit
 section .data
     exception_msg db "\n-- panic --\nexception code: 0x\0"

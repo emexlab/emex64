@@ -37,6 +37,7 @@ enum kAssemblerLineType: uint8_t {
     kAssemblerLineTypeNone,
     kAssemblerLineTypeIgnore,
     kAssemblerLineTypeAssembly,
+    kAssemblerLineTypeExternLabel,
     kAssemblerLineTypeGlobalLabel,
     kAssemblerLineTypeLocalLabel,
     kAssemblerLineTypeSection,
@@ -64,6 +65,7 @@ typedef struct assembler_line {
 
 typedef struct {
     char *name;                             /* name of resolved label */
+    bool defined;                           /* label definitions are defined */
     uint64_t addr;                          /* address of resolved label */
     struct assembler_token *at_link;        /* link to the originator of the label */
 } assembler_label_t;

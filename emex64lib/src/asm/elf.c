@@ -225,6 +225,11 @@ bool assembler_elf_emit(assembler_invocation_t *inv)
             continue;
         }
 
+        if(!lbl->defined)
+        {
+            continue;
+        }
+
         uint64_t addr = lbl->addr;
         uint16_t shndx;
         uint64_t st_value;

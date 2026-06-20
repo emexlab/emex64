@@ -388,6 +388,13 @@ bool assembler_code_parse(assembler_invocation_t *inv)
                 continue;
             }
         }
+
+        if(inv->line[i]->token_cnt >= 2 && strcmp(inv->line[i]->token[0]->str, "extern") == 0)
+        {
+            section_mode = true;
+            inv->line[i]->type = kAssemblerLineTypeExternLabel;
+            continue;
+        }
         
         if(inv->line[i]->token_cnt < 3 && strcmp(inv->line[i]->token[0]->str, "section") == 0)
         {
