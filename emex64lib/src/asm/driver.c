@@ -158,7 +158,26 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
 
     for(int i = 1; i < argc; i++)
     {
-        if(strcmp(argv[i], "-o") == 0 && i + 1 < argc)
+        if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0)
+        {
+            fprintf(stderr, "Usage: %s [options] file...\n", argv[0]);
+            fprintf(stderr, "  -o [output path]     Sets the output file path, set to \"a.out\" if not set.\n");
+            fprintf(stderr, "  -c                   Assemble the source files, but do not link.\n");
+            fprintf(stderr, "  -r                   Relocatable object mode, meaning a ELF object will be emitted out of all assembly files.\n");
+            fprintf(stderr, "  --in-process         All jobs are handled within the same process instead of executing subprocesses.\n");
+            fprintf(stderr, "  -D macro[=value]     Defines an assembler macro, set to 1 when no value is given.\n");
+            fprintf(stderr, "  -I dir, -Idir        Adds a directory to the include search path.\n");
+            fprintf(stderr, "\n");
+            fprintf(stderr, "  -fpage-align         The assembler will align sections to a page boundary.\n");
+            fprintf(stderr, "  -fcaret-diagnostics  The assembler will print diagnostics showing their caret positions.\n");
+            fprintf(stderr, "                       Each feature flag can be reversed by prefixing it with a \"no\" (i.e -fno-page-align).\n");
+            fprintf(stderr, "\n");
+            fprintf(stderr, "  -Werror              The assembler will treat every warning as a error.\n");
+            fprintf(stderr, "  -Wdeprecated         The assembler will print a warning on every as deprecated marked symbol or internal features.\n");
+            fprintf(stderr, "                       Each warning flag can be reversed by prefixing it with a \"no\" (i.e -Wno-error).\n");
+            return false;
+        }
+        else if(strcmp(argv[i], "-o") == 0 && i + 1 < argc)
         {
             driver->output_path = strdup(argv[++i]);
         }
