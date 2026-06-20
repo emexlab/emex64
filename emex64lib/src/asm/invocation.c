@@ -113,6 +113,8 @@ bool assembler_invocation_emit(assembler_invocation_t *inv,
         return false;
     }
 
+    vbitwalker_seek(inv->out_vbitwalker, 10, 0);
+
     if(!assembler_code_preparse(inv, input) ||
        !assembler_macro_expand(inv) ||
        !assembler_code_parse(inv) ||
