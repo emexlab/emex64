@@ -25,6 +25,9 @@
 #ifndef EMEX64ASM_ENDIAN_H
 #define EMEX64ASM_ENDIAN_H
 
+#include <stddef.h>
+#include <stdint.h>
+
 #define BW_LITTLE_ENDIAN 0
 #define BW_BIG_ENDIAN 1
 
