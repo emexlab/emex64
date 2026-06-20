@@ -41,7 +41,7 @@ typedef enum: uint8_t {
 
 typedef struct assembler_job {
     kAssemblerJobType type;
-    char *command;
+    const char *command;        /* borrowed */
     char **argv;
     int argc;
     struct assembler_job *prev;
@@ -57,7 +57,7 @@ typedef struct {
     bool in_process;
 
     const char *output_path;    /* borrowed */
-    
+
     int input_path_count;
     char **input_path;
     kEmexFileType *input_path_type;

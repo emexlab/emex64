@@ -67,20 +67,14 @@ assembler_job_t *assembler_job_alloc(assembler_job_t *prev,
 
     job->type = type;
 
-    /* copy command */
-    job->command = strdup(command);
-    if(job->command == NULL)
-    {
-        free(job);
-        return NULL;
-    }
+    /* set command */
+    job->command = command;
 
     /* copy arguments */
     job->argc = argc;
     job->argv = calloc(argc + 1, sizeof(char*));
     if(job->argv == NULL)
     {
-        free(job->command);
         free(job);
         return NULL;
     }
@@ -96,7 +90,6 @@ assembler_job_t *assembler_job_alloc(assembler_job_t *prev,
                 free(job->argv[--i]);
             }
 
-            free(job->command);
             free(job);
             return NULL;
         }
@@ -134,7 +127,6 @@ void assembler_job_dealloc(assembler_job_t *job)
         job->next->prev = job->prev;
     }
 
-    free(job->command);
     free(job);
 }
 
