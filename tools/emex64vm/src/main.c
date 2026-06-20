@@ -215,9 +215,10 @@ int main(int argc, char *argv[])
             return 1;
         }
 
-        if(!emex64_memory_load_image(machine->memory, file))
+        bool success = emex64_memory_load_image(machine->memory, file);
+        emex_file_dealloc(file);
+        if(!success)
         {
-            emex_file_dealloc(file);
             goto fail;
         }
     }
