@@ -26,7 +26,7 @@
 
 int main(int argc, const char *argv[])
 {
-    assembler_driver_t *driver = assembler_driver_alloc(argv, argc);
+    assembler_driver_t *driver = assembler_driver_alloc(argc, argv);
     if(driver == NULL)
     {
         return 1;

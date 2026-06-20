@@ -33,8 +33,8 @@
 #include <emex64lib/linker/driver.h>
 #include <emex64lib/linker/emit.h>
 
-linker_driver_t *linker_driver_alloc(const char **argv,
-                                     int argc)
+linker_driver_t *linker_driver_alloc(int argc,
+                                     const char **argv)
 {
     /* slightly different from the assembler driver lol */
     linker_driver_t *driver = calloc(1, sizeof(linker_driver_t));

@@ -80,10 +80,10 @@ typedef struct {
     assembler_job_t *job;
 } assembler_driver_t;
 
-assembler_job_t *assembler_job_alloc(assembler_job_t *prev, kAssemblerJobType type, const char *command, const char **argv, int argc);
+assembler_job_t *assembler_job_alloc(assembler_job_t *prev, kAssemblerJobType type, const char *command, int argc, const char **argv);
 void assembler_job_dealloc(assembler_job_t *job);
 
-assembler_driver_t *assembler_driver_alloc(const char **argv, int argc);
+assembler_driver_t *assembler_driver_alloc(int argc, const char **argv);
 void assembler_driver_dealloc(assembler_driver_t *driver);
 
 bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver);

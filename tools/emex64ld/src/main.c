@@ -26,7 +26,7 @@
 
 int main(int argc, const char *argv[])
 {
-    linker_driver_t *driver = linker_driver_alloc(argv, argc);
+    linker_driver_t *driver = linker_driver_alloc(argc, argv);
     if(driver == NULL)
     {
         return 1;

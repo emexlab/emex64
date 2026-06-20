@@ -42,8 +42,8 @@ extern char **environ;
 assembler_job_t *assembler_job_alloc(assembler_job_t *prev,
                                      kAssemblerJobType type,
                                      const char *command,
-                                     const char **argv,
-                                     int argc)
+                                     int argc,
+                                     const char **argv)
 {
     /* whitelisting job types */
     switch(type)
@@ -138,8 +138,8 @@ void assembler_job_dealloc(assembler_job_t *job)
 }
 
 bool assembler_driver_predrive(assembler_driver_t *driver,
-                               const char **argv,
-                               int argc)
+                               int argc,
+                               const char **argv)
 {
     driver->page_align = true;
     driver->warning_error = false;
@@ -525,7 +525,7 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
                     argv[argc++] = buf;
                 }
 
-                driver->job = assembler_job_alloc(driver->job, (driver->emit_object) ? kAssemblerJobTypeAssembler : kAssemblerJobTypeDriver, "emex64asm", (const char**)argv, argc);
+                driver->job = assembler_job_alloc(driver->job, (driver->emit_object) ? kAssemblerJobTypeAssembler : kAssemblerJobTypeDriver, "emex64asm", argc, (const char**)argv);
 
                 for(int j = 0; j < argc; j++)
                 {
@@ -572,7 +572,7 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
             argv[argc++] = strdup(driver->linker_flags[i]);
         }
 
-        driver->job = assembler_job_alloc(driver->job, kAssemblerJobTypeLinker, "emex64ld", (const char**)argv, argc);
+        driver->job = assembler_job_alloc(driver->job, kAssemblerJobTypeLinker, "emex64ld", argc, (const char**)argv);
 
         for(int j = 0; j < argc; j++)
         {
@@ -606,8 +606,8 @@ const char *assembler_job_string_for_type(kAssemblerJobType type)
     }
 }
 
-assembler_driver_t *assembler_driver_alloc(const char **argv,
-                                           int argc)
+assembler_driver_t *assembler_driver_alloc(int argc,
+                                           const char **argv)
 {
     assembler_driver_t *driver = calloc(1, sizeof(assembler_driver_t));
     if(driver == NULL)
@@ -615,7 +615,7 @@ assembler_driver_t *assembler_driver_alloc(const char **argv,
         return NULL;
     }
 
-    if(!assembler_driver_predrive(driver, argv, argc) ||
+    if(!assembler_driver_predrive(driver, argc, argv) ||
        !assembler_driver_jobgen(driver))
     {
         assembler_driver_dealloc(driver);
@@ -815,7 +815,7 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
                     printf("\n");
                 }
 
-                assembler_driver_t *subdriver = assembler_driver_alloc((const char**)job->argv, job->argc);
+                assembler_driver_t *subdriver = assembler_driver_alloc(job->argc, (const char**)job->argv);
                 if(subdriver == NULL)
                 {
                     return false;
@@ -835,7 +835,7 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
                     printf("\n");
                 }
 
-                linker_driver_t *subdriver = linker_driver_alloc((const char**)job->argv, job->argc);
+                linker_driver_t *subdriver = linker_driver_alloc(job->argc, (const char**)job->argv);
                 if(subdriver == NULL)
                 {
                     return false;
