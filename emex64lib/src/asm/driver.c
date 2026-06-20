@@ -135,7 +135,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
                                const char **argv)
 {
     /* better starting with the default assembler options ^^ */
-    driver->options = assembler_options_default;
+    driver->invocation_options = assembler_options_default;
 
     driver->output_path = NULL;
     driver->input_path_count = 0;
@@ -210,19 +210,19 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
 
             if(strcmp(flag, "page-align") == 0)
             {
-                driver->options.page_align = true;
+                driver->invocation_options.page_align = true;
             }
             else if(strcmp(flag, "no-page-align") == 0)
             {
-                driver->options.page_align = false;
+                driver->invocation_options.page_align = false;
             }
             else if(strcmp(flag, "caret-diagnostics") == 0)
             {
-                driver->options.caret_diagnostics = true;
+                driver->invocation_options.caret_diagnostics = true;
             }
             else if(strcmp(flag, "no-caret-diagnostics") == 0)
             {
-                driver->options.caret_diagnostics = false;
+                driver->invocation_options.caret_diagnostics = false;
             }
             else
             {
@@ -273,19 +273,19 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
 
             if(strcmp(flag, "error") == 0)
             {
-                driver->options.warning_error = true;
+                driver->invocation_options.warning_error = true;
             }
             else if(strcmp(flag, "no-error") == 0)
             {
-                driver->options.warning_error = false;
+                driver->invocation_options.warning_error = false;
             }
             else if(strcmp(flag, "deprecated") == 0)
             {
-                driver->options.warning_deprecated = true;
+                driver->invocation_options.warning_deprecated = true;
             }
             else if(strcmp(flag, "no-deprecated") == 0)
             {
-                driver->options.warning_deprecated = false;
+                driver->invocation_options.warning_deprecated = false;
             }
             else
             {
@@ -384,19 +384,19 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
         }
         else if(strncmp(argv[i], "-c", 2) == 0)
         {
-            driver->emit_object = true;
+            driver->options.assemble_only = true;
         }
         else if(strncmp(argv[i], "-v", 2) == 0)
         {
-            driver->verbose = true;
-        }
-        else if(strncmp(argv[i], "-r", 2) == 0)
-        {
-            driver->relocatable = true;
+            driver->options.verbose = true;
         }
         else if(strncmp(argv[i], "--in-process", 12) == 0)
         {
-            driver->in_process = true;
+            driver->options.in_process = true;
+        }
+        else if(strncmp(argv[i], "-r", 2) == 0)
+        {
+            driver->emit_mode = kEmitModeObject;
         }
         else if(argv[i][0] != '-')
         {
@@ -472,7 +472,7 @@ static void assembler_driver_append_additional_linker_flag(assembler_driver_t *d
 bool assembler_driver_jobgen(assembler_driver_t *driver)
 {
     /* -c is only meant to assemble one assembly file to a object file */
-    if(driver->emit_object && driver->input_path_count > 1)
+    if(driver->emit_mode == kEmitModeObject && driver->input_path_count > 1)
     {
         diag_error(NULL, "multiple input files were passed in object emit mode\n");
         return false;
@@ -490,7 +490,7 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
                 ratchet_args_init(&ra);
 
                 ratchet_args_append(&ra, "emex64asm");
-                if(driver->verbose)
+                if(driver->options.verbose)
                 {
                     ratchet_args_append(&ra, "-v");
                 }
@@ -500,12 +500,12 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
                 ratchet_args_append(&ra, driver->input_path[i]);
 
                 /* feature flags */
-                ratchet_args_append(&ra, driver->options.page_align ? "-fpage-align" : "-fno-page-align");
-                ratchet_args_append(&ra, driver->options.caret_diagnostics ? "-fcaret-diagnostics" : "-fno-caret-diagnostics");
+                ratchet_args_append(&ra, driver->invocation_options.page_align ? "-fpage-align" : "-fno-page-align");
+                ratchet_args_append(&ra, driver->invocation_options.caret_diagnostics ? "-fcaret-diagnostics" : "-fno-caret-diagnostics");
 
                 /* warning flags */
-                ratchet_args_append(&ra, driver->options.warning_error ? "-Werror" : "-Wno-error");
-                ratchet_args_append(&ra, driver->options.warning_deprecated ? "-Wdeprecated" : "-Wno-deprecated");
+                ratchet_args_append(&ra, driver->invocation_options.warning_error ? "-Werror" : "-Wno-error");
+                ratchet_args_append(&ra, driver->invocation_options.warning_deprecated ? "-Wdeprecated" : "-Wno-deprecated");
 
 
                 for(size_t j = 0; j < driver->inc_dir_cnt; j++)
@@ -545,7 +545,7 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
                     return false;
                 }
 
-                assembler_job_t *new_tail = assembler_job_alloc(driver->job, (driver->emit_object) ? kAssemblerJobTypeAssembler : kAssemblerJobTypeDriver, "emex64asm", ra.argc, (const char**)ra.args);
+                assembler_job_t *new_tail = assembler_job_alloc(driver->job, (driver->options.assemble_only) ? kAssemblerJobTypeAssembler : kAssemblerJobTypeDriver, "emex64asm", ra.argc, (const char**)ra.args);
                 ratchet_args_deinit(&ra);
                 if(new_tail == NULL)
                 {
@@ -565,17 +565,17 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
     }
 
     /* we only need a linker job when we got objects to link */
-    if(!driver->emit_object && driver->tmp_path_cnt > 0)
+    if(!driver->options.assemble_only && driver->tmp_path_cnt > 0)
     {
         ratchet_args_t ra;
         ratchet_args_init(&ra);
 
         ratchet_args_append(&ra, "emex64ld");
-        if(driver->verbose)
+        if(driver->options.verbose)
         {
             ratchet_args_append(&ra, "-v");
         }
-        if(driver->relocatable)
+        if(driver->emit_mode == kEmitModeObject)
         {
             ratchet_args_append(&ra, "-r");
         }
@@ -648,15 +648,15 @@ assembler_driver_t *assembler_driver_alloc(int argc,
         return NULL;
     }
 
-    if(driver->verbose)
+    if(driver->options.verbose)
     {
         fprintf(stderr, "---- driver ----\n");
-        fprintf(stderr, "page_align: %d\n", driver->options.page_align);
-        fprintf(stderr, "warning_error: %d\n", driver->options.warning_error);
-        fprintf(stderr, "warning_deprecated: %d\n", driver->options.warning_deprecated);
-        fprintf(stderr, "emit_object: %d\n", driver->emit_object);
-        fprintf(stderr, "verbose: %d\n", driver->verbose);
-        fprintf(stderr, "in_process: %d\n", driver->in_process || driver->emit_object);
+        fprintf(stderr, "page_align: %d\n", driver->invocation_options.page_align);
+        fprintf(stderr, "warning_error: %d\n", driver->invocation_options.warning_error);
+        fprintf(stderr, "warning_deprecated: %d\n", driver->invocation_options.warning_deprecated);
+        fprintf(stderr, "assemble_only: %d\n", driver->options.assemble_only);
+        fprintf(stderr, "verbose: %d\n", driver->options.verbose);
+        fprintf(stderr, "in_process: %d\n", driver->options.in_process || driver->options.assemble_only);
         fprintf(stderr, "output_path: %s\n", driver->output_path);
 
         fprintf(stderr, "input_path[%d]: { ", driver->input_path_count);
@@ -785,9 +785,9 @@ void assembler_driver_dealloc(assembler_driver_t *driver)
 
 bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
 {
-    if(driver->emit_object)
+    if(driver->options.assemble_only)
     {
-        assembler_invocation_t *inv = assembler_invocation_alloc(driver->options);
+        assembler_invocation_t *inv = assembler_invocation_alloc(driver->invocation_options);
         if(inv == NULL)
         {
             return false;
@@ -826,9 +826,9 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
         assembler_job_t *job = driver->job;
         while(job != NULL)
         {
-            if(job->type == kAssemblerJobTypeDriver && driver->in_process)
+            if(job->type == kAssemblerJobTypeDriver && driver->options.in_process)
             {
-                if(driver->verbose)
+                if(driver->options.verbose)
                 {
                     printf("\n");
                 }
@@ -846,9 +846,9 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
                     return false;
                 }
             }
-            else if(job->type == kAssemblerJobTypeLinker && driver->in_process)
+            else if(job->type == kAssemblerJobTypeLinker && driver->options.in_process)
             {
-                if(driver->verbose)
+                if(driver->options.verbose)
                 {
                     printf("\n");
                 }
@@ -875,7 +875,7 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
                     return false;
                 }
 
-                if(driver->verbose)
+                if(driver->options.verbose)
                 {
                     printf("\nspawned job (command='%s' | pid=%d)\n", job->command, pid);
                 }

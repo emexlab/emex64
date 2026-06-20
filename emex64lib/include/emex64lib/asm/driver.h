@@ -33,6 +33,8 @@
 
 #include <emex64lib/asm/invocation.h>
 
+#include <emex64lib/linker/type.h>
+
 typedef enum: uint8_t {
     kAssemblerJobTypeAssembler,
     kAssemblerJobTypeDriver,
@@ -49,12 +51,15 @@ typedef struct assembler_job {
 } assembler_job_t;
 
 typedef struct {
-    assembler_options_t options;
-
-    bool relocatable;
-    bool emit_object;
+    bool assemble_only;
     bool verbose;
     bool in_process;
+} assembler_driver_options_t;
+
+typedef struct {
+    assembler_driver_options_t options;
+    assembler_options_t invocation_options;
+    kEmitMode emit_mode;
 
     const char *output_path;    /* borrowed */
 
