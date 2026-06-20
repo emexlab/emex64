@@ -132,7 +132,7 @@ bool assembler_invocation_emit(assembler_invocation_t *inv,
        !assembler_emit(inv) ||
        !assembler_elf_emit(inv))
     {
-        unlink(output->path);
+        emex_file_unlink(output);
         return false;
     }
     
