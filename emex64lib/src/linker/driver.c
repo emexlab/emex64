@@ -68,7 +68,6 @@ linker_driver_t *linker_driver_alloc(int argc,
             fprintf(stderr, "  -T <script path>       Adds a linker script.\n");
             fprintf(stderr, "  -v                     Prints verbose linker log.\n");
             fprintf(stderr, "  -r                     Emits relocatable object.\n");
-            fprintf(stderr, "  -v                     Prints verbose driver log.\n");
             goto failure;
         }
         else if(strcmp(argv[i], "--version") == 0)

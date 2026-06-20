@@ -174,7 +174,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
             fprintf(stderr, "  -r                     Relocatable object mode, meaning a ELF object will be emitted out of all assembly files.\n");
             fprintf(stderr, "  -v                     Prints verbose driver log.\n");
             fprintf(stderr, "  -D macro[=<value>]     Defines an assembler macro, set to 1 when no value is given.\n");
-            fprintf(stderr, "  -I dir                 Adds a directory to the include search path.\n");
+            fprintf(stderr, "  -I <dir>               Adds a directory to the include search path.\n");
             fprintf(stderr, "  -Wl,<arg>,...          Pass the comma separated arguments to the linker.\n");
             fprintf(stderr, "\n");
             fprintf(stderr, "  -fpage-align           The assembler will align sections to a page boundary.\n");
