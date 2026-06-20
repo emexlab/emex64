@@ -471,12 +471,14 @@ static void assembler_driver_append_additional_linker_flag(assembler_driver_t *d
 
 bool assembler_driver_jobgen(assembler_driver_t *driver)
 {
+    /* -c is only meant to assemble one assembly file to a object file */
     if(driver->emit_object && driver->input_path_count > 1)
     {
         diag_error(NULL, "multiple input files were passed in object emit mode\n");
         return false;
     }
 
+    /* creating assembler jobs */
     for(int i = 0; i < driver->input_path_count; i++)
     {
         switch(driver->input_path_type[i])
@@ -538,15 +540,19 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
 
                 if(ra.failed)
                 {
-                    diag_fatal(NULL, "out of memory, can't create arguments array for assembler job\n");
+                    diag_fatal(NULL, "out of memory, can't allocate arguments array for assembler job\n");
                     ratchet_args_deinit(&ra);
                     return false;
                 }
 
-                /* TODO: check for succession correctly */
-                driver->job = assembler_job_alloc(driver->job, (driver->emit_object) ? kAssemblerJobTypeAssembler : kAssemblerJobTypeDriver, "emex64asm", ra.argc, (const char**)ra.args);
-
+                assembler_job_t *new_tail = assembler_job_alloc(driver->job, (driver->emit_object) ? kAssemblerJobTypeAssembler : kAssemblerJobTypeDriver, "emex64asm", ra.argc, (const char**)ra.args);
                 ratchet_args_deinit(&ra);
+                if(new_tail == NULL)
+                {
+                    diag_fatal(NULL, "out of memory, can't allocate linker job\n");
+                    return false;
+                }
+                driver->job = new_tail;
                 break;
             }
             case kEmexFileTypeObject:
@@ -558,7 +564,8 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
         }
     }
 
-    if(!driver->emit_object)
+    /* we only need a linker job when we got objects to link */
+    if(!driver->emit_object && driver->tmp_path_cnt > 0)
     {
         ratchet_args_t ra;
         ratchet_args_init(&ra);
@@ -585,15 +592,19 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
 
         if(ra.failed)
         {
-            diag_fatal(NULL, "out of memory, can't create arguments array for linker job\n");
+            diag_fatal(NULL, "out of memory, can't allocate arguments array for linker job\n");
             ratchet_args_deinit(&ra);
             return false;
         }
 
-        /* TODO: check for succession correctly */
-        driver->job = assembler_job_alloc(driver->job, kAssemblerJobTypeLinker, "emex64ld", ra.argc, (const char**)ra.args);
-
+        assembler_job_t *new_tail = assembler_job_alloc(driver->job, kAssemblerJobTypeLinker, "emex64ld", ra.argc, (const char**)ra.args);
         ratchet_args_deinit(&ra);
+        if(new_tail == NULL)
+        {
+            diag_fatal(NULL, "out of memory, can't allocate linker job\n");
+            return false;
+        }
+        driver->job = new_tail;
     }
 
     assembler_job_t *job = driver->job;
