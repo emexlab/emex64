@@ -177,7 +177,7 @@ bool assembler_label_append(assembler_token_t *at)
         return false;
     }
 
-    inv->label[inv->label_cnt].addr = fdwalker_bytes_used(inv->fdwalker);
+    inv->label[inv->label_cnt].addr = vbitwalker_bytes_used(inv->out_vbitwalker);
     inv->label[inv->label_cnt].at_link = at;
     inv->label[inv->label_cnt].defined = at->al->type != kAssemblerLineTypeExternLabel;
     inv->label[inv->label_cnt++].name = name;

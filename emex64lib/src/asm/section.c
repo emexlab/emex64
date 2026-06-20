@@ -31,7 +31,6 @@
 #include <errno.h>
 
 #include <emex64lib/support/parser.h>
-#include <emex64lib/support/bitwalker.h>
 #include <emex64lib/support/diagnostic/legacy.h>
 #include <emex64lib/support/file.h>
 
@@ -54,12 +53,12 @@ bool assembler_section_parse(assembler_invocation_t *inv)
             if(strcmp(inv->line[i]->token[1]->str, ".data") == 0)
             {
                 /* so relocation never breaks */
-                fdwalker_align_byte(inv->fdwalker);
+                vbitwalker_align_byte(inv->out_vbitwalker);
 
                 /* record data section start for ELF emit */
                 if(inv->data_section_start == UINT64_MAX)
                 {
-                    inv->data_section_start = fdwalker_bytes_used(inv->fdwalker);
+                    inv->data_section_start = vbitwalker_bytes_used(inv->out_vbitwalker);
                 }
 
                 /* iterating till section data is over */
@@ -163,7 +162,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
                                     return false;
                                 }
 
-                                fdwalker_write_buf(inv->fdwalker, file->content, file->len);
+                                vbitwalker_write_buf(inv->out_vbitwalker, file->content, file->len);
 
                                 emex_file_dealloc(file);
                                 free(path_component);
@@ -193,7 +192,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
                         {
                             /* its a buffer so we copy the buffer into section */
                             char *buffer = (char*)pr.value;
-                            fdwalker_write_buf(inv->fdwalker, buffer, pr.len);
+                            vbitwalker_write_buf(inv->out_vbitwalker, buffer, pr.len);
                         }
                         else if(pr.type == emexParserValueTypeString)
                         {
@@ -224,13 +223,13 @@ bool assembler_section_parse(assembler_invocation_t *inv)
 
                             rtbe->name = strdup(inv->line[i]->token[a]->str);
                             rtbe->at_link = inv->line[i]->token[a];
-                            rtbe->byte_pos = inv->fdwalker->byte_pos;
-                            fdwalker_skip(inv->fdwalker, 64);
+                            rtbe->byte_pos = inv->out_vbitwalker->byte_pos;
+                            vbitwalker_skip(inv->out_vbitwalker, 64);
                         }
                         else
                         {
                             /* storing value */
-                            fdwalker_write(inv->fdwalker, pr.value, dbs);
+                            vbitwalker_write(inv->out_vbitwalker, pr.value, dbs);
                         }
                     }
                 }
@@ -242,13 +241,13 @@ bool assembler_section_parse(assembler_invocation_t *inv)
     /* record data section end */
     if(inv->data_section_start != UINT64_MAX)
     {
-        inv->data_section_end = fdwalker_bytes_used(inv->fdwalker);
+        inv->data_section_end = vbitwalker_bytes_used(inv->out_vbitwalker);
     }
 
     if(inv->options.page_align)
     {
-        inv->fdwalker->byte_pos = align_up(inv->fdwalker->byte_pos, 0x2000);
-        inv->fdwalker->bit_idx = 0;
+        inv->out_vbitwalker->byte_pos = align_up(inv->out_vbitwalker->byte_pos, 0x2000);
+        inv->out_vbitwalker->bit_idx = 0;
     }
 
     /* iterating for section token type and creating bss section */
@@ -259,12 +258,12 @@ bool assembler_section_parse(assembler_invocation_t *inv)
             if(strcmp(inv->line[i]->token[1]->str, ".bss") == 0)
             {
                 /* so relocation never breaks */
-                fdwalker_align_byte(inv->fdwalker);
+                vbitwalker_align_byte(inv->out_vbitwalker);
 
                 /* record bss start */
                 if(inv->bss_section_start == UINT64_MAX)
                 {
-                    inv->bss_section_start = fdwalker_bytes_used(inv->fdwalker);
+                    inv->bss_section_start = vbitwalker_bytes_used(inv->out_vbitwalker);
                 }
                 
                 /* finding variable type */
@@ -317,7 +316,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
                         return false;
                     }
 
-                    inv->fdwalker->byte_pos += (dbs / 8) * pr.value;
+                    inv->out_vbitwalker->byte_pos += (dbs / 8) * pr.value;
                 }
                 i--;
             }
@@ -327,14 +326,14 @@ bool assembler_section_parse(assembler_invocation_t *inv)
     /* record bss section size */
     if(inv->bss_section_start != UINT64_MAX)
     {
-        uint64_t bss_end = fdwalker_bytes_used(inv->fdwalker);
+        uint64_t bss_end = vbitwalker_bytes_used(inv->out_vbitwalker);
         inv->bss_section_size = bss_end > inv->bss_section_start ? bss_end - inv->bss_section_start : 0;
     }
 
     if(inv->options.page_align)
     {
-        inv->fdwalker->byte_pos = align_up(inv->fdwalker->byte_pos, 0x2000);
-        inv->fdwalker->bit_idx = 0;
+        inv->out_vbitwalker->byte_pos = align_up(inv->out_vbitwalker->byte_pos, 0x2000);
+        inv->out_vbitwalker->bit_idx = 0;
     }
 
     return true;

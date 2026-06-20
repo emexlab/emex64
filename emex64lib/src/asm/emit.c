@@ -31,7 +31,7 @@
 #include <unistd.h>
 
 #include <emex64lib/support/parser.h>
-#include <emex64lib/support/fdwalker.h>
+#include <emex64lib/support/virtual/vbitwalker.h>
 #include <emex64lib/support/diagnostic/legacy.h>
 
 #include <emex64lib/asm/invocation.h>
@@ -42,7 +42,7 @@
 void assembler_emit_opcode(assembler_invocation_t *inv,
                            uint8_t op)
 {
-    fdwalker_write(inv->fdwalker, op, 8);
+    vbitwalker_write(inv->out_vbitwalker, op, 8);
 }
 
 void assembler_emit_register(assembler_invocation_t *inv,
@@ -50,51 +50,51 @@ void assembler_emit_register(assembler_invocation_t *inv,
 {
     assert(reg <= kEmex64RegisterMAX);
 
-    fdwalker_write(inv->fdwalker, kEmex64ParameterCodingReg, 3);
-    fdwalker_write(inv->fdwalker, reg, 5);
+    vbitwalker_write(inv->out_vbitwalker, kEmex64ParameterCodingReg, 3);
+    vbitwalker_write(inv->out_vbitwalker, reg, 5);
 }
 
 void assembler_emit_imm5(assembler_invocation_t *inv,
                          uint8_t imm)
 {
-    fdwalker_write(inv->fdwalker, kEmex64ParameterCodingImm5, 3);
-    fdwalker_write(inv->fdwalker, imm, 5);
+    vbitwalker_write(inv->out_vbitwalker, kEmex64ParameterCodingImm5, 3);
+    vbitwalker_write(inv->out_vbitwalker, imm, 5);
 }
 
 void assembler_emit_imm8(assembler_invocation_t *inv,
                          uint8_t imm)
 {
-    fdwalker_write(inv->fdwalker, kEmex64ParameterCodingImm8, 3);
-    fdwalker_write(inv->fdwalker, imm, 8);
+    vbitwalker_write(inv->out_vbitwalker, kEmex64ParameterCodingImm8, 3);
+    vbitwalker_write(inv->out_vbitwalker, imm, 8);
 }
 
 void assembler_emit_imm16(assembler_invocation_t *inv,
                           uint16_t imm)
 {
-    fdwalker_write(inv->fdwalker, kEmex64ParameterCodingImm16, 3);
-    fdwalker_write(inv->fdwalker, imm, 16);
+    vbitwalker_write(inv->out_vbitwalker, kEmex64ParameterCodingImm16, 3);
+    vbitwalker_write(inv->out_vbitwalker, imm, 16);
 }
 
 void assembler_emit_imm32(assembler_invocation_t *inv,
                           uint32_t imm)
 {
-    fdwalker_write(inv->fdwalker, kEmex64ParameterCodingImm32, 3);
-    fdwalker_write(inv->fdwalker, imm, 32);
+    vbitwalker_write(inv->out_vbitwalker, kEmex64ParameterCodingImm32, 3);
+    vbitwalker_write(inv->out_vbitwalker, imm, 32);
 }
 
 void assembler_emit_imm64(assembler_invocation_t *inv,
                           uint64_t imm)
 {
-    fdwalker_write(inv->fdwalker, kEmex64ParameterCodingImm64, 3);
-    fdwalker_write(inv->fdwalker, imm, 64);
+    vbitwalker_write(inv->out_vbitwalker, kEmex64ParameterCodingImm64, 3);
+    vbitwalker_write(inv->out_vbitwalker, imm, 64);
 }
 
 void assembler_emit_addr64(assembler_invocation_t *inv,
                            uint64_t addr)
 {
-    fdwalker_write(inv->fdwalker, kEmex64ParameterCodingAddr64, 3);
-    fdwalker_align_byte(inv->fdwalker);
-    fdwalker_write(inv->fdwalker, addr, 64);
+    vbitwalker_write(inv->out_vbitwalker, kEmex64ParameterCodingAddr64, 3);
+    vbitwalker_align_byte(inv->out_vbitwalker);
+    vbitwalker_write(inv->out_vbitwalker, addr, 64);
 }
 
 void assembler_emit_imm(assembler_invocation_t *inv,
@@ -124,7 +124,7 @@ void assembler_emit_imm(assembler_invocation_t *inv,
 
 void assembler_emit_end(assembler_invocation_t *inv)
 {
-    fdwalker_write(inv->fdwalker, kEmex64ParameterCodingEnd, 3);
+    vbitwalker_write(inv->out_vbitwalker, kEmex64ParameterCodingEnd, 3);
 }
 
 bool assembler_emit_instruction(assembler_line_t *al)
@@ -214,8 +214,8 @@ bool assembler_emit_instruction(assembler_line_t *al)
                 label = strdup(al->token[i]->str);
             }
 
-            fdwalker_write(al->inv->fdwalker, kEmex64ParameterCodingAddr64, 3);
-            fdwalker_align_byte(al->inv->fdwalker);
+            vbitwalker_write(al->inv->out_vbitwalker, kEmex64ParameterCodingAddr64, 3);
+            vbitwalker_align_byte(al->inv->out_vbitwalker);
 
             /*
              * append label callsite to relocation
@@ -228,7 +228,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
             }
             al->inv->rtbe = rtbe;
             rtbe->name = label;
-            rtbe->byte_pos = al->inv->fdwalker->byte_pos;
+            rtbe->byte_pos = al->inv->out_vbitwalker->byte_pos;
             rtbe->at_link = al->token[i];
             rtbe->local = local;
 
@@ -238,7 +238,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
              * already. the relocation table later will
              * fill this space with the address.
              */
-            fdwalker_skip(al->inv->fdwalker, 64);
+            vbitwalker_skip(al->inv->out_vbitwalker, 64);
         }
         else
         {
@@ -263,7 +263,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
         assembler_emit_end(al->inv);
     }
 
-    fdwalker_align_byte(al->inv->fdwalker);
+    vbitwalker_align_byte(al->inv->out_vbitwalker);
 
     return true;
 }
@@ -323,7 +323,7 @@ bool assembler_emit(assembler_invocation_t *inv)
         reloc = reloc->next;
     }
 
-    fdwalker_sync(inv->fdwalker);
+    vbitwalker_sync(inv->out_vbitwalker);
 
     return !failed;
 }

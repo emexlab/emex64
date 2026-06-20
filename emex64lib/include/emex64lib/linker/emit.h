@@ -25,6 +25,7 @@
 #ifndef EMEX64LD_EMIT_H
 #define EMEX64LD_EMIT_H
 
+#include <emex64lib/support/virtual/vbitwalker.h>
 #include <emex64lib/support/file.h>
 
 #include <emex64lib/linker/type.h>

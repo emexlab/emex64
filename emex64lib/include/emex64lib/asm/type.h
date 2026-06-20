@@ -29,7 +29,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include <emex64lib/support/fdwalker.h>
+#include <emex64lib/support/virtual/vbitwalker.h>
 
 #include <emex64lib/asm/cmptok.h>
 

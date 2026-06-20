@@ -57,7 +57,7 @@ typedef struct assembler_invocation {
     size_t include_dir_cnt;                     /* borrowed */
 
     reloc_table_entry_t *rtbe;
-    fdwalker_t *fdwalker;
+    vbitwalker_t *out_vbitwalker;
 
     uint64_t data_section_start;
     uint64_t data_section_end;

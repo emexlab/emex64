@@ -32,7 +32,7 @@
 #include <sys/stat.h>
 
 #include <emex64lib/support/diagnostic/legacy.h>
-#include <emex64lib/support/fdwalker.h>
+#include <emex64lib/support/virtual/vbitwalker.h>
 #include <emex64lib/support/parser.h>
 
 #include <emex64lib/asm/invocation.h>
@@ -115,7 +115,7 @@ bool assembler_elf_emit(assembler_invocation_t *inv)
 {
     bool ok = false;
 
-    vfd_t *d = inv->fdwalker->d;
+    vfd_t *d = inv->out_vbitwalker->d;
 
     struct stat st;
     if(vfd_stat(d, &st) != 0)

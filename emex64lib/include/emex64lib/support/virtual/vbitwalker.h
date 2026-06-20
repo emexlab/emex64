@@ -22,39 +22,37 @@
  * SOFTWARE.
  */
 
-#ifndef EMEXUTILS_BITWALKER_H
-#define EMEXUTILS_BITWALKER_H
+#ifndef VBITWALKER_H
+#define VBITWALKER_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <string.h>
-
+#include <emex64lib/support/virtual/vfd.h>
 #include <emex64lib/support/endian.h>
 
-typedef uint8_t bw_endian_t;
-
 typedef struct {
-    uint8_t *buffer;
+    vfd_t *d;
     size_t byte_pos;
     uint8_t bit_idx;
-    size_t capacity;
     bw_endian_t endian;
-} bitwalker_t;
+} vbitwalker_t;
 
-uint64_t bw_swap_n(uint64_t v, uint8_t num_bytes);
-void bitwalker_init(bitwalker_t *bw, uint8_t *buf, size_t capacity, bw_endian_t endian);
+vbitwalker_t *vbitwalker_alloc(vfd_t *d, bw_endian_t endian);
+void vbitwalker_dealloc(vbitwalker_t *fw);
 
-void bitwalker_init_read(bitwalker_t *bw, const uint8_t *buf, size_t len, bw_endian_t endian);
-void bitwalker_reset(bitwalker_t *bw);
+void vbitwalker_reset(vbitwalker_t *fw);
 
-int bitwalker_write(bitwalker_t *bw, uint64_t value, uint8_t num_bits);
+int vbitwalker_write(vbitwalker_t *fw, uint64_t value, uint8_t num_bits);
+uint64_t vbitwalker_read(vbitwalker_t *fw, uint8_t num_bits);
+int vbitwalker_write_buf(vbitwalker_t *fw, const char *buf, size_t len);
+int vbitwalker_read_buf(vbitwalker_t *fw, char *buf, size_t len);
 
-uint64_t bitwalker_read(bitwalker_t *bw, uint8_t num_bits);
+void vbitwalker_seek(vbitwalker_t *fw, size_t byte_pos, uint8_t bit_idx);
 
-void bitwalker_skip(bitwalker_t *bw, size_t num_bits);
+void vbitwalker_skip(vbitwalker_t *fw, size_t num_bits);
 
-size_t bitwalker_bytes_used(const bitwalker_t *bw);
+size_t vbitwalker_bytes_used(const vbitwalker_t *fw);
 
-void bitwalker_align_byte(bitwalker_t *bw);
+void vbitwalker_align_byte(vbitwalker_t *fw);
 
-#endif /* EMEXUTILS_BITWALKER_H */
+void vbitwalker_sync(vbitwalker_t *fw);
+
+#endif /* VBITWALKER_H */

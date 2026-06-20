@@ -62,12 +62,11 @@ add_library(emex64 ${LIB_TYPE}
     src/support/virtual/vpage.c
     src/support/virtual/vpageobj.c
     src/support/virtual/vfd.c
+    src/support/virtual/vbitwalker.c
 
     src/support/ratchet/args.c
 
     src/support/parser.c
-    src/support/bitwalker.c
-    src/support/fdwalker.c
     src/support/file.c
     src/support/bitbolt.c
 

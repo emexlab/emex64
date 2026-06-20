@@ -34,7 +34,7 @@
 #include <emex64lib/asm/invocation.h>
 #include <stdbool.h>
 
-#include <emex64lib/support/fdwalker.h>
+#include <emex64lib/support/virtual/vbitwalker.h>
 
 /* opcode emit */
 void assembler_emit_opcode(assembler_invocation_t *inv, uint8_t op);

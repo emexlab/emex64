@@ -186,7 +186,7 @@ static uint64_t sym_resolve(linker_invocation_t *inv,
 
 static bool obj_apply_relocs(linker_invocation_t *inv,
                              const linker_object_t *o,
-                             fdwalker_t *fw)
+                             vbitwalker_t *vb)
 {
     if(o->idx_rela_text >= 0)
     {
@@ -216,8 +216,8 @@ static bool obj_apply_relocs(linker_invocation_t *inv,
             }
             uint64_t value = sym_addr + (uint64_t)addend;
 
-            fdwalker_seek(fw, o->base_text + offset, 0);
-            fdwalker_write(fw, value, 64);
+            vbitwalker_seek(vb, o->base_text + offset, 0);
+            vbitwalker_write(vb, value, 64);
         }
     }
 
@@ -249,8 +249,8 @@ static bool obj_apply_relocs(linker_invocation_t *inv,
             }
             uint64_t value = sym_addr + (uint64_t)addend;
 
-            fdwalker_seek(fw, o->base_data + offset, 0);
-            fdwalker_write(fw, value, 64);
+            vbitwalker_seek(vb, o->base_data + offset, 0);
+            vbitwalker_write(vb, value, 64);
         }
     }
 
@@ -259,13 +259,13 @@ static bool obj_apply_relocs(linker_invocation_t *inv,
 
 /* barely ported end */
 
-static void emit_boot_header(fdwalker_t *fw,
+static void emit_boot_header(vbitwalker_t *vb,
                              uint64_t entry)
 {
-    fdwalker_seek(fw, 0, 0);
-    fdwalker_write(fw, kEmex64OpcodeB, 8);
-    fdwalker_write(fw, kEmex64ParameterCodingImm64, 3);
-    fdwalker_write(fw, entry, 64);
+    vbitwalker_seek(vb, 0, 0);
+    vbitwalker_write(vb, kEmex64OpcodeB, 8);
+    vbitwalker_write(vb, kEmex64ParameterCodingImm64, 3);
+    vbitwalker_write(vb, entry, 64);
 }
 
 bool linker_link(linker_options_t options,
@@ -321,8 +321,8 @@ bool linker_link(linker_options_t options,
         obj = obj->next;
     }
 
-    fdwalker_t *fw = emex_file_dup_fdwalker(output, BW_LITTLE_ENDIAN);
-    if(fw == NULL)
+    vbitwalker_t *vb = emex_file_dup_vbitwalker(output, BW_LITTLE_ENDIAN);
+    if(vb == NULL)
     {
         linker_invocation_dealloc(inv);
         return false;
@@ -338,8 +338,8 @@ bool linker_link(linker_options_t options,
             continue;
         }
         ELF64_Shdr *sh = &obj->shdrs[obj->idx_text];
-        fdwalker_seek(fw, obj->base_text, 0);
-        fdwalker_write_buf(fw, obj->file->content + sh->sh_offset, sh->sh_size);
+        vbitwalker_seek(vb, obj->base_text, 0);
+        vbitwalker_write_buf(vb, obj->file->content + sh->sh_offset, sh->sh_size);
         obj = obj->next;
     }
 
@@ -353,8 +353,8 @@ bool linker_link(linker_options_t options,
             continue;
         }
         ELF64_Shdr *sh = &obj->shdrs[obj->idx_data];
-        fdwalker_seek(fw, obj->base_data, 0);
-        fdwalker_write_buf(fw, obj->file->content + sh->sh_offset, sh->sh_size);
+        vbitwalker_seek(vb, obj->base_data, 0);
+        vbitwalker_write_buf(vb, obj->file->content + sh->sh_offset, sh->sh_size);
         obj = obj->next;
     }
 
@@ -362,9 +362,9 @@ bool linker_link(linker_options_t options,
     obj = inv->obj;
     while(obj != NULL)
     {
-        if(!obj_apply_relocs(inv, obj, fw))
+        if(!obj_apply_relocs(inv, obj, vb))
         {
-            fdwalker_dealloc(fw);
+            vbitwalker_dealloc(vb);
             linker_invocation_dealloc(inv);
             return false;
         }
@@ -375,16 +375,16 @@ bool linker_link(linker_options_t options,
     if(!gsym || !gsym->defined)
     {
         diag_error(NULL, "entry symbol '%s' not found\n", options.entry_name);
-        fdwalker_dealloc(fw);
+        vbitwalker_dealloc(vb);
         linker_invocation_dealloc(inv);
         return false;
     }
 
     uint64_t entry_addr = gsym->addr;
-    emit_boot_header(fw, entry_addr);
+    emit_boot_header(vb, entry_addr);
 
-    fdwalker_sync(fw);
-    fdwalker_dealloc(fw);
+    vbitwalker_sync(vb);
+    vbitwalker_dealloc(vb);
 
     if(options.verbose)
     {

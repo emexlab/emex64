@@ -44,4 +44,43 @@
 #define TO_HOST64(x) (x)
 #endif
 
+typedef uint8_t bw_endian_t;
+
+static inline uint64_t bswap_n(uint64_t v,
+                               uint8_t num_bytes)
+{
+    switch(num_bytes)
+    {
+        case 2: return __builtin_bswap16((uint16_t)v);
+        case 3: return ((v >> 16) & 0xFF) | (v & 0xFF00) | ((v & 0xFF) << 16);
+        case 4: return __builtin_bswap32((uint32_t)v);
+        case 5:
+        case 6:
+        case 7:
+        case 8: return __builtin_bswap64(v) >> ((8 - num_bytes) * 8);
+        default: return v;
+    }
+}
+
+static inline __uint128_t load_window_le(const uint8_t *p,
+                                         size_t n)
+{
+    __uint128_t v = 0;
+    for(size_t i = 0; i < n; i++)
+    {
+        v |= (__uint128_t)p[i] << (8 * i);
+    }
+    return v;
+}
+
+static inline void store_window_le(uint8_t *p,
+                                   __uint128_t v,
+                                   size_t n)
+{
+    for(size_t i = 0; i < n; i++)
+    {
+        p[i] = (uint8_t)(v >> (8 * i));
+    }
+}
+
 #endif /* EMEX64ASM_ENDIAN_H */

@@ -51,13 +51,10 @@ assembler_invocation_t *assembler_invocation_alloc(assembler_options_t options)
         return NULL;
     }
 
-    inv->fdwalker = NULL;
+    inv->options = options;
     inv->data_section_start = UINT64_MAX;
     inv->data_section_end = UINT64_MAX;
     inv->bss_section_start = UINT64_MAX;
-    inv->bss_section_size = 0;
-
-    inv->options = options;
 
     return inv;
 }
@@ -100,7 +97,7 @@ void assembler_invocation_dealloc(assembler_invocation_t *inv)
         rtbe = next;
     }
 
-    fdwalker_dealloc(inv->fdwalker);
+    vbitwalker_dealloc(inv->out_vbitwalker);
     free(inv);
 }
 
@@ -108,16 +105,9 @@ bool assembler_invocation_emit(assembler_invocation_t *inv,
                                emex_file_t *input,
                                emex_file_t *output)
 {
-    /* need input */
-    if(input == NULL)
-    {
-        diag_error(NULL, "no input file provided\n");
-        return false;
-    }
-
     /* need output */
-    inv->fdwalker = emex_file_dup_fdwalker(output, BW_LITTLE_ENDIAN);
-    if(inv->fdwalker == NULL)
+    inv->out_vbitwalker = emex_file_dup_vbitwalker(output, BW_LITTLE_ENDIAN);
+    if(inv->out_vbitwalker == NULL)
     {
         diag_fatal(NULL, "couldn't allocate fdwalker\n");
         return false;

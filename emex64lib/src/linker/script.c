@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <errno.h>
+#include <string.h>
 
 #include <emex64lib/support/diagnostic/legacy.h>
 
@@ -41,7 +42,7 @@ bool linker_script_parse(linker_invocation_t *inv,
         return false;
     }
 
-    vfd_t *d = emex_file_dup_fd(script_file);
+    vfd_t *d = emex_file_dup_vfd(script_file);
     if(d == NULL)
     {
         /* couldn't dup descriptor */

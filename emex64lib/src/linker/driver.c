@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include <emex64lib/support/version.h>
 #include <emex64lib/support/diagnostic/legacy.h>

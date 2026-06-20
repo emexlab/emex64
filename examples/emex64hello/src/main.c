@@ -116,7 +116,7 @@ int main(void)
     }
     else
     {
-        vfd_t *d = emex_file_dup_fd(object_file);
+        vfd_t *d = emex_file_dup_vfd(object_file);
         if(d != NULL)
         {
             struct stat fdstat;

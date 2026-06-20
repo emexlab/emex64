@@ -33,7 +33,6 @@
 
 #include <emex64lib/support/diagnostic/legacy.h>
 #include <emex64lib/support/likely.h>
-#include <emex64lib/support/bitwalker.h>
 
 #include <emex64lib/vm/memory.h>
 #include <emex64lib/vm/core.h>
@@ -195,7 +194,7 @@ void emex64_memory_dealloc(emex64_memory_t *memory)
 bool emex64_memory_load_image(emex64_memory_t *memory,
                               emex_file_t *file)
 {
-    vfd_t *d = emex_file_dup_fd(file);
+    vfd_t *d = emex_file_dup_vfd(file);
     if(d == NULL)
     {
         diag_fatal(NULL, "failed to dup virtual file descriptor from file\n");

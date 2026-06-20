@@ -255,7 +255,7 @@ void emex_file_close(emex_file_t *f)
     }
 }
 
-vfd_t *emex_file_dup_fd(emex_file_t *f)
+vfd_t *emex_file_dup_vfd(emex_file_t *f)
 {
     if(!emex_file_open(f))
     {
@@ -264,15 +264,15 @@ vfd_t *emex_file_dup_fd(emex_file_t *f)
     return vfd_dup(f->d);
 }
 
-fdwalker_t *emex_file_dup_fdwalker(emex_file_t *f,
-                                   bw_endian_t endian)
+vbitwalker_t *emex_file_dup_vbitwalker(emex_file_t *f,
+                                       bw_endian_t endian)
 {
     if(!emex_file_open(f))
     {
         return NULL;
     }
 
-    return fdwalker_alloc(f->d, endian);
+    return vbitwalker_alloc(f->d, endian);
 }
 
 bool emex_file_map(emex_file_t *f)
