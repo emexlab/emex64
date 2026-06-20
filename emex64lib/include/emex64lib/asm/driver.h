@@ -56,7 +56,8 @@ typedef struct {
     bool verbose;
     bool in_process;
 
-    char *output_path;
+    const char *output_path;    /* borrowed */
+    
     int input_path_count;
     char **input_path;
     kEmexFileType *input_path_type;

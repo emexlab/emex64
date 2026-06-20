@@ -197,7 +197,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
         }
         else if(strcmp(argv[i], "-o") == 0 && i + 1 < argc)
         {
-            driver->output_path = strdup(argv[++i]);
+            driver->output_path = argv[++i];
         }
         else if(strncmp(argv[i], "-f", 2) == 0)
         {
@@ -427,7 +427,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
     if(driver->output_path == NULL)
     {
         diag_warn(NULL, "no output path provided, falling back to 'a.out'\n");
-        driver->output_path = strdup("a.out");
+        driver->output_path = "a.out";
     }
 
     return true;
@@ -747,8 +747,6 @@ assembler_driver_t *assembler_driver_alloc(int argc,
 
 void assembler_driver_dealloc(assembler_driver_t *driver)
 {
-    free(driver->output_path);
-
     for(int i = 0; i < driver->input_path_count; i++)
     {
         free(driver->input_path[i]);
