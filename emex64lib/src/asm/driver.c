@@ -148,7 +148,17 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
     driver->output_path = NULL;
     driver->input_path_count = 0;
     driver->input_path = calloc(argc, sizeof(char *));
+    if(driver->input_path == NULL)
+    {
+        return false;
+    }
+
     driver->input_path_type = calloc(argc, sizeof(kEmexFileType));
+    if(driver->input_path_type == NULL)
+    {
+        free(driver->input_path);
+        return false;
+    }
 
     driver->inc_dir_cnt = 0;
     driver->inc_dirs = NULL;

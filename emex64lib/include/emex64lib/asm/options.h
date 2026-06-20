@@ -28,10 +28,13 @@
 #include <stdbool.h>
 
 typedef struct assembler_options {
+    /* features */
     bool page_align;                /* default: true */
+    bool caret_diagnostics;         /* default: true */
+
+    /* warnings */
     bool warning_error;             /* default: false */
     bool warning_deprecated;        /* default: true */
-    bool caret_diagnostics;         /* default: true */
 } assembler_options_t;
 
 extern assembler_options_t assembler_options_default;
