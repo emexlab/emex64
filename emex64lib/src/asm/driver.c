@@ -31,6 +31,7 @@
 
 #include <emex64lib/support/version.h>
 #include <emex64lib/support/diagnostic/legacy.h>
+#include <emex64lib/support/ratchet/args.h>
 
 #include <emex64lib/asm/driver.h>
 #include <emex64lib/asm/invocation.h>
@@ -483,32 +484,40 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
             case kEmexFileTypeAssembly:
             case kEmexFileTypeAssemblyIncludation:
             {
-                int argc = 0;
-                char **argv = calloc(1024, sizeof(char*));
-                if(argv == NULL)
-                {
-                    return false;
-                }
+                ratchet_args_t ra;
+                ratchet_args_init(&ra);
 
-                argv[argc++] = strdup("emex64asm");
+                ratchet_args_append(&ra, "emex64asm");
                 if(driver->verbose)
                 {
-                    argv[argc++] = strdup("-v");
+                    ratchet_args_append(&ra, "-v");
                 }
-                argv[argc++] = strdup("-c");
-                argv[argc++] = strdup("-o");
-                argv[argc++] = strdup(assembler_driver_tmppath(driver, driver->input_path[i]));
-                argv[argc++] = strdup(driver->input_path[i]);
-                argv[argc++] = driver->page_align ? strdup("-fpage-align") : strdup("-fno-page-align");
-                argv[argc++] = driver->warning_error ? strdup("-Werror") : strdup("-Wno-error");
-                argv[argc++] = driver->warning_deprecated ? strdup("-Wdeprecated") : strdup("-Wno-deprecated");
-                argv[argc++] = driver->caret_diagnostics ? strdup("-fcaret-diagnostics") : strdup("-fno-caret-diagnostics");
+                ratchet_args_append(&ra, "-c");
+                ratchet_args_append(&ra, "-o");
+                ratchet_args_append(&ra, assembler_driver_tmppath(driver, driver->input_path[i]));
+                ratchet_args_append(&ra, driver->input_path[i]);
+
+                /* feature flags */
+                ratchet_args_append(&ra, driver->page_align ? "-fpage-align" : "-fno-page-align");
+                ratchet_args_append(&ra, driver->caret_diagnostics ? "-fcaret-diagnostics" : "-fno-caret-diagnostics");
+
+                /* warning flags */
+                ratchet_args_append(&ra, driver->warning_error ? "-Werror" : "-Wno-error");
+                ratchet_args_append(&ra, driver->warning_deprecated ? "-Wdeprecated" : "-Wno-deprecated");
+
+
                 for(size_t j = 0; j < driver->inc_dir_cnt; j++)
                 {
                     size_t ilen = strlen(driver->inc_dirs[j]);
                     char *new_buf = malloc(ilen + 3);
+                    if(new_buf == NULL)
+                    {
+                        ratchet_args_deinit(&ra);
+                        return false;
+                    }
                     snprintf(new_buf, ilen + 3, "-I%s", driver->inc_dirs[j]);
-                    argv[argc++] = new_buf;
+                    ratchet_args_append(&ra, new_buf);
+                    free(new_buf);
                 }
                 for(uint64_t j = 0; j < driver->macro_cnt; j++)
                 {
@@ -519,19 +528,25 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
                     char *buf = malloc(blen);
                     if(buf == NULL)
                     {
+                        ratchet_args_deinit(&ra);
                         return false;
                     }
                     snprintf(buf, blen, "-D%s=%s", m, v);
-                    argv[argc++] = buf;
+                    ratchet_args_append(&ra, buf);
+                    free(buf);
                 }
 
-                driver->job = assembler_job_alloc(driver->job, (driver->emit_object) ? kAssemblerJobTypeAssembler : kAssemblerJobTypeDriver, "emex64asm", argc, (const char**)argv);
-
-                for(int j = 0; j < argc; j++)
+                if(ra.failed)
                 {
-                    free(argv[j]);
+                    diag_fatal(NULL, "out of memory, can't create arguments array for assembler job\n");
+                    ratchet_args_deinit(&ra);
+                    return false;
                 }
-                free(argv);
+
+                /* TODO: check for succession correctly */
+                driver->job = assembler_job_alloc(driver->job, (driver->emit_object) ? kAssemblerJobTypeAssembler : kAssemblerJobTypeDriver, "emex64asm", ra.argc, (const char**)ra.args);
+
+                ratchet_args_deinit(&ra);
                 break;
             }
             case kEmexFileTypeObject:
@@ -545,40 +560,40 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
 
     if(!driver->emit_object)
     {
-        int argc = 0;
-        char **argv = calloc(1024, sizeof(char*));
-        if(argv == NULL)
-        {
-            return false;
-        }
+        ratchet_args_t ra;
+        ratchet_args_init(&ra);
 
-        argv[argc++] = strdup("emex64ld");
-        if(driver->relocatable)
-        {
-            argv[argc++] = strdup("-r");
-        }
+        ratchet_args_append(&ra, "emex64ld");
         if(driver->verbose)
         {
-            argv[argc++] = strdup("-v");
+            ratchet_args_append(&ra, "-v");
         }
-        argv[argc++] = strdup("-o");
-        argv[argc++] = strdup(driver->output_path);
+        if(driver->relocatable)
+        {
+            ratchet_args_append(&ra, "-r");
+        }
+        ratchet_args_append(&ra, "-o");
+        ratchet_args_append(&ra, driver->output_path);
         for(size_t i = 0; i < driver->tmp_path_cnt; i++)
         {
-            argv[argc++] = strdup(driver->tmp_paths[i]);
+            ratchet_args_append(&ra, driver->tmp_paths[i]);
         }
         for(int i = 0; i < driver->linker_flags_cnt; i++)
         {
-            argv[argc++] = strdup(driver->linker_flags[i]);
+            ratchet_args_append(&ra, driver->linker_flags[i]);
         }
 
-        driver->job = assembler_job_alloc(driver->job, kAssemblerJobTypeLinker, "emex64ld", argc, (const char**)argv);
-
-        for(int j = 0; j < argc; j++)
+        if(ra.failed)
         {
-            free(argv[j]);
+            diag_fatal(NULL, "out of memory, can't create arguments array for linker job\n");
+            ratchet_args_deinit(&ra);
+            return false;
         }
-        free(argv);
+
+        /* TODO: check for succession correctly */
+        driver->job = assembler_job_alloc(driver->job, kAssemblerJobTypeLinker, "emex64ld", ra.argc, (const char**)ra.args);
+
+        ratchet_args_deinit(&ra);
     }
 
     assembler_job_t *job = driver->job;
