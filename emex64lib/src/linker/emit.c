@@ -112,8 +112,11 @@ static bool obj_register_symbols(linker_invocation_t *inv,
 
 static uint64_t sym_resolve(linker_invocation_t *inv,
                             const linker_object_t *o,
-                            uint32_t sym_idx)
+                            uint32_t sym_idx,
+                            bool *success)
 {
+    *success = true;
+
     if(o->idx_symtab < 0)
     {
         return 0;
@@ -170,12 +173,13 @@ static uint64_t sym_resolve(linker_invocation_t *inv,
             }
             if((int32_t)sym->st_shndx == o->idx_bss)
             {
-                return o->base_bss  + sym->st_value;
+                return o->base_bss + sym->st_value;
             }
         }
 
         diag_error(NULL, "undefined symbol '%s', needed by '%s'\n", name, o->file->path);
-        exit(1); /* TODO: somehow make it not as strict, so it becomes embeddable */
+        *success = false;
+        return 0;
     }
     return 0;
 }
@@ -203,7 +207,13 @@ static bool obj_apply_relocs(linker_invocation_t *inv,
                 return false;
             }
 
-            uint64_t sym_addr = sym_resolve(inv, o, sym_idx);
+            bool success = false;
+            uint64_t sym_addr = sym_resolve(inv, o, sym_idx, &success);
+            if(!success)
+            {
+                /* error printed by callee */
+                return false;
+            }
             uint64_t value = sym_addr + (uint64_t)addend;
 
             fdwalker_seek(fw, o->base_text + offset, 0);
@@ -230,7 +240,13 @@ static bool obj_apply_relocs(linker_invocation_t *inv,
                 return false;
             }
 
-            uint64_t sym_addr = sym_resolve(inv, o, sym_idx);
+            bool success = false;
+            uint64_t sym_addr = sym_resolve(inv, o, sym_idx, &success);
+            if(!success)
+            {
+                /* error printed by callee */
+                return false;
+            }
             uint64_t value = sym_addr + (uint64_t)addend;
 
             fdwalker_seek(fw, o->base_data + offset, 0);

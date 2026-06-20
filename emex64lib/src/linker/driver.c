@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include <emex64lib/support/version.h>
 #include <emex64lib/support/diagnostic/legacy.h>
@@ -191,5 +192,10 @@ void linker_driver_dealloc(linker_driver_t *driver)
 
 bool linker_driver_drive_the_fucking_car(linker_driver_t *driver)
 {
-    return linker_link(driver->options, driver->input_file, driver->input_file_cnt, driver->linker_script_file, driver->linker_script_file_cnt, driver->output_file);
+    bool success = linker_link(driver->options, driver->input_file, driver->input_file_cnt, driver->linker_script_file, driver->linker_script_file_cnt, driver->output_file);
+    if(!success)
+    {
+        unlink(driver->output_file->path);
+    }
+    return success;
 }
