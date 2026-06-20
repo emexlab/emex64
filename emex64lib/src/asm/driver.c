@@ -29,6 +29,7 @@
 #include <spawn.h>
 #include <sys/wait.h>
 
+#include <emex64lib/support/version.h>
 #include <emex64lib/support/diagnostic/legacy.h>
 
 #include <emex64lib/asm/driver.h>
@@ -164,6 +165,8 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
             fprintf(stderr, "  -o [output path]     Sets the output file path, set to \"a.out\" if not set.\n");
             fprintf(stderr, "  -c                   Assemble the source files, but do not link.\n");
             fprintf(stderr, "  -r                   Relocatable object mode, meaning a ELF object will be emitted out of all assembly files.\n");
+            fprintf(stderr, "  -v                   Prints verbose driver log.\n");
+            fprintf(stderr, "  --version            Prints version.\n");
             fprintf(stderr, "  --in-process         All jobs are handled within the same process instead of executing subprocesses.\n");
             fprintf(stderr, "  -D macro[=value]     Defines an assembler macro, set to 1 when no value is given.\n");
             fprintf(stderr, "  -I dir               Adds a directory to the include search path.\n");
@@ -176,6 +179,11 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
             fprintf(stderr, "  -Werror              The assembler will treat every warning as a error.\n");
             fprintf(stderr, "  -Wdeprecated         The assembler will print a warning on every as deprecated marked symbol or internal features.\n");
             fprintf(stderr, "                       Each warning flag can be reversed by prefixing it with a \"no\" (i.e -Wno-error).\n");
+            return false;
+        }
+        else if(strcmp(argv[i], "--version") == 0)
+        {
+            fprintf(stderr, "%s version %d.%d.%d (%s)\n", argv[0], EMEX64_VERSION_MAJOR, EMEX64_VERSION_MINOR, EMEX64_VERSION_PATCH, EMEX64_VERSION_STRING);
             return false;
         }
         else if(strcmp(argv[i], "-o") == 0 && i + 1 < argc)

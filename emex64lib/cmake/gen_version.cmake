@@ -1,0 +1,19 @@
+find_package(Git QUIET)
+
+set(EMEX64_BUILD_NUMBER "0")
+set(EMEX64_GIT_HASH "unknown")
+
+if(GIT_FOUND)
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} rev-list --count HEAD
+        OUTPUT_VARIABLE EMEX64_BUILD_NUMBER
+        OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
+        OUTPUT_VARIABLE EMEX64_GIT_HASH
+        OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+endif()
+
+set(EMEX64_VERSION_FULL "emex64lib-${EMEX64_VERSION}-${EMEX64_VERSION_TAG}+${EMEX64_BUILD_NUMBER}.g${EMEX64_GIT_HASH}")
+
+configure_file(${SRC} ${DST} @ONLY)

@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <emex64lib/support/version.h>
 #include <emex64lib/support/diagnostic/legacy.h>
 
 #include <emex64lib/linker/linker.h>
@@ -62,6 +63,13 @@ linker_driver_t *linker_driver_alloc(const char **argv,
             fprintf(stderr, "  .e64ld files are auto-detected by extension\n");
             fprintf(stderr, "  -v verbose       verbose mode\n");
             fprintf(stderr, "  -r relocatable   emits relocatable object\n");
+            fprintf(stderr, "  -v               Prints verbose driver log.\n");
+            fprintf(stderr, "  --version        Prints version.\n");
+            goto failure;
+        }
+        else if(strcmp(argv[i], "--version") == 0)
+        {
+            fprintf(stderr, "%s version %d.%d.%d (%s)\n", argv[0], EMEX64_VERSION_MAJOR, EMEX64_VERSION_MINOR, EMEX64_VERSION_PATCH, EMEX64_VERSION_STRING);
             goto failure;
         }
         else if(strcmp(argv[i], "-o") == 0 && i + 1 < argc)

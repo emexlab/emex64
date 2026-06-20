@@ -125,11 +125,36 @@ target_compile_definitions(emex64 PRIVATE
     EMEX64VM_DEVICE_AUDIO=$<BOOL:${EMEX64VM_DEVICE_AUDIO}>
 )
 
+set(EMEX64_VERSION_TAG "INDEV")
+set(EMEX64_VERSION_HEADER ${CMAKE_CURRENT_BINARY_DIR}/include/emex64lib/support/version.h)
+add_custom_target(emex64_version_header
+    BYPRODUCTS ${EMEX64_VERSION_HEADER}
+    COMMAND ${CMAKE_COMMAND}
+        -DEMEX64_VERSION=${PROJECT_VERSION}
+        -DEMEX64_VERSION_TAG=${EMEX64_VERSION_TAG}
+        -DPROJECT_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}
+        -DPROJECT_VERSION_MINOR=${PROJECT_VERSION_MINOR}
+        -DPROJECT_VERSION_PATCH=${PROJECT_VERSION_PATCH}
+        -DSRC=${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.h.in
+        -DDST=${CMAKE_CURRENT_BINARY_DIR}/include/emex64lib/support/version.h
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/gen_version.cmake
+    COMMENT "Generating version header")
+
+set_source_files_properties(${EMEX64_VERSION_HEADER} PROPERTIES GENERATED TRUE)
+set_source_files_properties(src/asm/driver.c PROPERTIES OBJECT_DEPENDS ${EMEX64_VERSION_HEADER})
+set_source_files_properties(src/linker/driver.c PROPERTIES OBJECT_DEPENDS ${EMEX64_VERSION_HEADER})
+
+add_dependencies(emex64 emex64_version_header)
+
 target_include_directories(emex64
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
         $<INSTALL_INTERFACE:include>
 )
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/emex64lib/support/version.h
+    DESTINATION include/emex64lib/support)
 
 target_link_libraries(emex64
     PUBLIC evObj
