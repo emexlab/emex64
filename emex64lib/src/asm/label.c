@@ -85,10 +85,13 @@ bool assembler_label_append(assembler_token_t *at)
 {
     /* validate label definition */
     bool failed_validity = false;
-    for(uint64_t i = at->al->type == kAssemblerLineTypeExternLabel ? 2 : 1; i < at->al->token_cnt; i++)
+    if(at->al->type != kAssemblerLineTypeSectionData)
     {
-        diag_error(at->al->token[i], "unknown token after label definition '%s'\n", at->al->token[i]->str);
-        failed_validity = true;
+        for(uint64_t i = at->al->type == kAssemblerLineTypeExternLabel ? 2 : 1; i < at->al->token_cnt; i++)
+        {
+            diag_error(at->al->token[i], "unknown token after label definition '%s'\n", at->al->token[i]->str);
+            failed_validity = true;
+        }
     }
 
     /* accessing compiler line and invocation */
@@ -138,6 +141,19 @@ bool assembler_label_append(assembler_token_t *at)
 
         /* set it as scope */
         inv->label_scope = name;
+    }
+    else if(at->al->type == kAssemblerLineTypeSectionData)
+    {
+        /* constructing global label */
+        size_t size = strlen(at->str) + 1;
+        name = malloc(size);
+        if(name == NULL)
+        {
+            diag_error(at, "failed to allocate memory for this label\n");
+            return false;
+        }
+        memcpy(name, at->str, size - 1);
+        name[size - 1] = '\0';
     }
     else
     {

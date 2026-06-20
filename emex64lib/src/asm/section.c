@@ -35,6 +35,7 @@
 #include <emex64lib/support/diagnostic/legacy.h>
 #include <emex64lib/support/file.h>
 
+#include <emex64lib/asm/label.h>
 #include <emex64lib/asm/section.h>
 #include <emex64lib/asm/code.h>
 
@@ -78,10 +79,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
                     }
 
                     /* inserting address as label */
-                    inv->label[inv->label_cnt].name = strdup(inv->line[i]->token[0]->str);
-                    inv->label[inv->label_cnt].at_link = inv->line[i]->token[0];
-                    inv->label[inv->label_cnt].defined = true;
-                    inv->label[inv->label_cnt++].addr = fdwalker_bytes_used(inv->fdwalker);
+                    assembler_label_append(inv->line[i]->token[0]);
 
                     /* checking if its known */
                     int dbs = 8;
@@ -286,10 +284,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
                     }
 
                     /* insert label into label array */
-                    inv->label[inv->label_cnt].name = strdup(inv->line[i]->token[0]->str);
-                    inv->label[inv->label_cnt].at_link = inv->line[i]->token[0];
-                    inv->label[inv->label_cnt].defined = true;
-                    inv->label[inv->label_cnt++].addr = fdwalker_bytes_used(inv->fdwalker);
+                    assembler_label_append(inv->line[i]->token[0]);
 
                     /* find out size */
                     int dbs = 8;
