@@ -24,6 +24,7 @@
 
 #include <stdlib.h>
 #include <strings.h>
+#include <string.h>
 #include <emex64lib/support/ratchet/args.h>
 
 void ratchet_args_init(ratchet_args_t *ra)
