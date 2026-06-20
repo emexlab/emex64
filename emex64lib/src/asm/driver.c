@@ -142,10 +142,8 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
                                int argc,
                                const char **argv)
 {
-    driver->page_align = true;
-    driver->warning_error = false;
-    driver->warning_deprecated = true;
-    driver->caret_diagnostics = true;
+    /* better starting with the default assembler options ^^ */
+    driver->options = assembler_options_default;
 
     driver->output_path = NULL;
     driver->input_path_count = 0;
@@ -210,19 +208,19 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
 
             if(strcmp(flag, "page-align") == 0)
             {
-                driver->page_align = true;
+                driver->options.page_align = true;
             }
             else if(strcmp(flag, "no-page-align") == 0)
             {
-                driver->page_align = false;
+                driver->options.page_align = false;
             }
             else if(strcmp(flag, "caret-diagnostics") == 0)
             {
-                driver->caret_diagnostics = true;
+                driver->options.caret_diagnostics = true;
             }
             else if(strcmp(flag, "no-caret-diagnostics") == 0)
             {
-                driver->caret_diagnostics = false;
+                driver->options.caret_diagnostics = false;
             }
             else
             {
@@ -273,19 +271,19 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
 
             if(strcmp(flag, "error") == 0)
             {
-                driver->warning_error = true;
+                driver->options.warning_error = true;
             }
             else if(strcmp(flag, "no-error") == 0)
             {
-                driver->warning_error = false;
+                driver->options.warning_error = false;
             }
             else if(strcmp(flag, "deprecated") == 0)
             {
-                driver->warning_deprecated = true;
+                driver->options.warning_deprecated = true;
             }
             else if(strcmp(flag, "no-deprecated") == 0)
             {
-                driver->warning_deprecated = false;
+                driver->options.warning_deprecated = false;
             }
             else
             {
@@ -500,12 +498,12 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
                 ratchet_args_append(&ra, driver->input_path[i]);
 
                 /* feature flags */
-                ratchet_args_append(&ra, driver->page_align ? "-fpage-align" : "-fno-page-align");
-                ratchet_args_append(&ra, driver->caret_diagnostics ? "-fcaret-diagnostics" : "-fno-caret-diagnostics");
+                ratchet_args_append(&ra, driver->options.page_align ? "-fpage-align" : "-fno-page-align");
+                ratchet_args_append(&ra, driver->options.caret_diagnostics ? "-fcaret-diagnostics" : "-fno-caret-diagnostics");
 
                 /* warning flags */
-                ratchet_args_append(&ra, driver->warning_error ? "-Werror" : "-Wno-error");
-                ratchet_args_append(&ra, driver->warning_deprecated ? "-Wdeprecated" : "-Wno-deprecated");
+                ratchet_args_append(&ra, driver->options.warning_error ? "-Werror" : "-Wno-error");
+                ratchet_args_append(&ra, driver->options.warning_deprecated ? "-Wdeprecated" : "-Wno-deprecated");
 
 
                 for(size_t j = 0; j < driver->inc_dir_cnt; j++)
@@ -651,9 +649,9 @@ assembler_driver_t *assembler_driver_alloc(int argc,
     if(driver->verbose)
     {
         fprintf(stderr, "---- driver ----\n");
-        fprintf(stderr, "page_align: %d\n", driver->page_align);
-        fprintf(stderr, "warning_error: %d\n", driver->warning_error);
-        fprintf(stderr, "warning_deprecated: %d\n", driver->warning_deprecated);
+        fprintf(stderr, "page_align: %d\n", driver->options.page_align);
+        fprintf(stderr, "warning_error: %d\n", driver->options.warning_error);
+        fprintf(stderr, "warning_deprecated: %d\n", driver->options.warning_deprecated);
         fprintf(stderr, "emit_object: %d\n", driver->emit_object);
         fprintf(stderr, "verbose: %d\n", driver->verbose);
         fprintf(stderr, "in_process: %d\n", driver->in_process || driver->emit_object);
@@ -789,13 +787,7 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
 {
     if(driver->emit_object)
     {
-        assembler_options_t options = assembler_options_default;
-        options.page_align = driver->page_align;
-        options.warning_error = driver->warning_error;
-        options.warning_deprecated = driver->warning_deprecated;
-        options.caret_diagnostics = driver->caret_diagnostics;
-
-        assembler_invocation_t *inv = assembler_invocation_alloc(options);
+        assembler_invocation_t *inv = assembler_invocation_alloc(driver->options);
         if(inv == NULL)
         {
             return false;

@@ -49,12 +49,12 @@ typedef struct assembler_job {
 } assembler_job_t;
 
 typedef struct {
-    bool page_align;
-    bool warning_error;
-    bool warning_deprecated;
-    bool caret_diagnostics;
+    assembler_options_t options;
 
     bool relocatable;
+    bool emit_object;
+    bool verbose;
+    bool in_process;
 
     char *output_path;
     int input_path_count;
@@ -72,10 +72,6 @@ typedef struct {
 
     int linker_flags_cnt;
     char **linker_flags;
-
-    bool emit_object;
-    bool verbose;
-    bool in_process;
 
     assembler_job_t *job;
 } assembler_driver_t;
