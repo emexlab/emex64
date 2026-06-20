@@ -23,7 +23,7 @@
  */
 
 #include <stdlib.h>
-#include <string.h>
+#include <strings.h>
 #include <emex64lib/support/ratchet/args.h>
 
 void ratchet_args_init(ratchet_args_t *ra)
@@ -77,7 +77,7 @@ static inline bool __ratchet_args_gib(ratchet_args_t *ra)
 }
 
 void ratchet_args_append(ratchet_args_t *ra,
-                        const char *arg)
+                         const char *arg)
 {
     if(ra->failed || arg == NULL)
     {

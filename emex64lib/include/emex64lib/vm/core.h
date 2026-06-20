@@ -417,9 +417,14 @@ typedef struct emex64_core {
     /* data of currently decoding or decoded operation */
     struct {
         /*
-         * 145 bytes instruction cache
+         * the instruction cache holds all bytes a instruction
+         * can contain at a maximum at the current PC address,
+         * it exists for clean synchronisation later when
+         * multithreading gets added. for a future reader:
+         * it is necessary to count + 8, otherwise bb_read
+         * might overread the inscache.
          */
-        uint8_t inscache[EMEX64_MAX_ILEN];
+        uint8_t inscache[EMEX64_MAX_ILEN + 8];
 
         /*
          * lenght of decoded instruction so that the cpu
