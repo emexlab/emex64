@@ -173,6 +173,12 @@ bool assembler_label_append(assembler_token_t *at)
         /* label can be defined after using 'extern' too */
         if(!label->defined)
         {
+            if(at->al->type == kAssemblerLineTypeGlobalLabel)
+            {
+                /* set it as scope */
+                inv->label_scope = name;
+            }
+            
             label->defined = true;
             label->at_link = at;
             label->addr = vbitwalker_bytes_used(inv->out_vbitwalker);
