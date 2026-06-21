@@ -94,7 +94,7 @@ int main(void)
     }
 
     /* we need the invocation to assemble */
-    assembler_options_t asm_options = assembler_options_default;
+    assembler_invocation_options_t asm_options = assembler_invocation_options_default;
     asm_options.page_align = false; /* makes images way smaller and it is only a hello world */
     assembler_invocation_t *inv = assembler_invocation_alloc(asm_options);
     if(inv == NULL)

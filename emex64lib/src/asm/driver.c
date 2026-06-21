@@ -135,7 +135,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
                                const char **argv)
 {
     /* better starting with the default assembler options ^^ */
-    driver->invocation_options = assembler_options_default;
+    driver->invocation_options = assembler_invocation_options_default;
 
     driver->output_path = NULL;
     driver->input_path_count = 0;

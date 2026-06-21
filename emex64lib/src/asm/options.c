@@ -24,7 +24,13 @@
 
 #include <emex64lib/asm/options.h>
 
-assembler_options_t assembler_options_default = {
+assembler_driver_options_t assembler_driver_options_default = {
+    .assemble_only = false,
+    .verbose = false,
+    .in_process = false,
+};
+
+assembler_invocation_options_t assembler_invocation_options_default = {
     .page_align = true,
     .warning_error = false,
     .warning_deprecated = true,

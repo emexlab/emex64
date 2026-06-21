@@ -39,7 +39,7 @@
 #include <emex64lib/asm/macro.h>
 #include <emex64lib/asm/elf.h>
 
-assembler_invocation_t *assembler_invocation_alloc(assembler_options_t options)
+assembler_invocation_t *assembler_invocation_alloc(assembler_invocation_options_t options)
 {
     /* apply warning_error local thread variable */
     warning_error = options.warning_error;

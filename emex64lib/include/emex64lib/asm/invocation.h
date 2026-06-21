@@ -38,7 +38,7 @@ typedef struct {
 } assembler_macro_definition_t;
 
 typedef struct assembler_invocation {
-    assembler_options_t options;                /* borrowed */
+    assembler_invocation_options_t options;     /* borrowed */
     
     char **file;
     size_t file_cnt;
@@ -65,7 +65,7 @@ typedef struct assembler_invocation {
     uint64_t bss_section_size;
 } assembler_invocation_t;
 
-assembler_invocation_t *assembler_invocation_alloc(assembler_options_t options);
+assembler_invocation_t *assembler_invocation_alloc(assembler_invocation_options_t options);
 void assembler_invocation_dealloc(assembler_invocation_t *inv);
 
 bool assembler_invocation_emit(assembler_invocation_t *inv, emex_file_t *input, emex_file_t *output);

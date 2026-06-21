@@ -51,14 +51,8 @@ typedef struct assembler_job {
 } assembler_job_t;
 
 typedef struct {
-    bool assemble_only;
-    bool verbose;
-    bool in_process;
-} assembler_driver_options_t;
-
-typedef struct {
     assembler_driver_options_t options;
-    assembler_options_t invocation_options;
+    assembler_invocation_options_t invocation_options;
     kEmitMode emit_mode;
 
     const char *output_path;    /* borrowed */

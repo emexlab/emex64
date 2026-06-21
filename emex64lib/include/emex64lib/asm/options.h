@@ -27,7 +27,13 @@
 
 #include <stdbool.h>
 
-typedef struct assembler_options {
+typedef struct assembler_driver_options {
+    bool assemble_only;
+    bool verbose;
+    bool in_process;
+} assembler_driver_options_t;
+
+typedef struct assembler_invocation_options {
     /* features */
     bool page_align;                /* default: true */
     bool caret_diagnostics;         /* default: true */
@@ -35,8 +41,9 @@ typedef struct assembler_options {
     /* warnings */
     bool warning_error;             /* default: false */
     bool warning_deprecated;        /* default: true */
-} assembler_options_t;
+} assembler_invocation_options_t;
 
-extern assembler_options_t assembler_options_default;
+extern assembler_driver_options_t assembler_driver_options_default;
+extern assembler_invocation_options_t assembler_invocation_options_default;
 
 #endif /* EMEX64ASM_OPTIONS_H */
