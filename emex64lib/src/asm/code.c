@@ -322,15 +322,16 @@ bool assembler_code_preparse(assembler_invocation_t *inv,
 
         if(strcmp(inv->line[i]->token[0]->str, "%define%") == 0)
         {
-            inv->line[i]->type = kAssemblerLineTypeMacroDefinition;
+            inv->line[i]->type = kAssemblerLineTypeDefinitionDirective;
         }
         else if(strcmp(inv->line[i]->token[0]->str, "%if%") == 0 ||
-                strcmp(inv->line[i]->token[0]->str, "%elseif%") == 0 ||
+                strcmp(inv->line[i]->token[0]->str, "%elif%") == 0 ||
                 strcmp(inv->line[i]->token[0]->str, "%else%") == 0 ||
                 strcmp(inv->line[i]->token[0]->str, "%endif%") == 0 ||
-                strcmp(inv->line[i]->token[0]->str, "%ifdef%") == 0)
+                strcmp(inv->line[i]->token[0]->str, "%ifdef%") == 0 ||
+                strcmp(inv->line[i]->token[0]->str, "%ifndef%") == 0)
         {
-            inv->line[i]->type = kAssemblerLineTypeMacroCondition;
+            inv->line[i]->type = kAssemblerLineTypeConditionDirective;
         }
     }
 

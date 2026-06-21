@@ -42,8 +42,9 @@ enum kAssemblerLineType: uint8_t {
     kAssemblerLineTypeLocalLabel,
     kAssemblerLineTypeSection,
     kAssemblerLineTypeSectionData,
-    kAssemblerLineTypeMacroDefinition,
-    kAssemblerLineTypeMacroCondition,
+    kAssemblerLineTypeDefinitionDirective,
+    kAssemblerLineTypeConditionDirective,
+    kAssemblerLineTypeIncludeDirective,     /* TODO: the preprocessor shall include */
 };
 
 typedef struct assembler_token {
