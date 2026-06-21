@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef EMEXUTILS_PARSER_H
-#define EMEXUTILS_PARSER_H
+#ifndef EMEX64_PARSER_H
+#define EMEX64_PARSER_H
 
 #include <stdint.h>
 
@@ -42,4 +42,4 @@ typedef struct parsed_type_return {
 
 parser_return_t parse_value_from_string(const char *str);
 
-#endif /* EMEXUTILS_PARSER_H */
+#endif /* EMEX64_PARSER_H */

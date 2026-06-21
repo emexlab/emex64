@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef VPAGEOBJ_H
-#define VPAGEOBJ_H
+#ifndef EMEX64_VPAGEOBJ_H
+#define EMEX64_VPAGEOBJ_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,4 +47,4 @@ DEFINE_EVOBJECT_MAIN_EVENT_HANDLER(vpageobj);
 
 void vpageobj_set_root(vpageobj_t *vo, vpage_t *p, vpage_t **old_out);
 
-#endif /* VPAGEOBJ_H */
+#endif /* EMEX64_VPAGEOBJ_H */

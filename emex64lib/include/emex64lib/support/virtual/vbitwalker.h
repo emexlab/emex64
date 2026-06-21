@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef VBITWALKER_H
-#define VBITWALKER_H
+#ifndef EMEX64_VBITWALKER_H
+#define EMEX64_VBITWALKER_H
 
 #include <emex64lib/support/virtual/vfd.h>
 #include <emex64lib/support/endian.h>
@@ -55,4 +55,4 @@ void vbitwalker_align_byte(vbitwalker_t *fw);
 
 void vbitwalker_sync(vbitwalker_t *fw);
 
-#endif /* VBITWALKER_H */
+#endif /* EMEX64_VBITWALKER_H */

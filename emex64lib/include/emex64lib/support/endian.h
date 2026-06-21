@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64ASM_ENDIAN_H
-#define EMEX64ASM_ENDIAN_H
+#ifndef EMEX64_ENDIAN_H
+#define EMEX64_ENDIAN_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -86,4 +86,4 @@ static inline void store_window_le(uint8_t *p,
     }
 }
 
-#endif /* EMEX64ASM_ENDIAN_H */
+#endif /* EMEX64_ENDIAN_H */

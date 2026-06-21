@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef VPAGE_H
-#define VPAGE_H
+#ifndef EMEX64_VPAGE_H
+#define EMEX64_VPAGE_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,4 +49,4 @@ bool vpage_bind_page(vpage_t *p);
 size_t vpage_write(vpage_t *p, size_t off, const uint8_t *b, size_t len);
 size_t vpage_read(vpage_t *p, size_t off, uint8_t *b, size_t len);
 
-#endif /* VPAGE_H */
+#endif /* EMEX64_VPAGE_H */

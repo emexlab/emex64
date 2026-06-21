@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef BITBOLT_H
-#define BITBOLT_H
+#ifndef EMEX64_BITBOLT_H
+#define EMEX64_BITBOLT_H
 
 #include <stdint.h>
 #include <string.h>
@@ -69,4 +69,4 @@ static inline void bb_align(bitbolt_t *bb)
     bb->pos = (bb->pos + 7u) & ~7u;
 }
 
-#endif /* BITBOLT_H */
+#endif /* EMEX64_BITBOLT_H */

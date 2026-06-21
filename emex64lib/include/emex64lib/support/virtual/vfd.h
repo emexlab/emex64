@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef VFD_H
-#define VFD_H
+#ifndef EMEX64_VFD_H
+#define EMEX64_VFD_H
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,4 +68,4 @@ int vfd_stat(vfd_t *d, struct stat *stat);
 
 char *vfd_gets(vfd_t *d, char *s, int n);
 
-#endif /* VFD_H */
+#endif /* EMEX64_VFD_H */

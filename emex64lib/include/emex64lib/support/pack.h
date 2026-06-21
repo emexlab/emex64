@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef PACK_H
-#define PACK_H
+#ifndef EMEX64_PACK_H
+#define EMEX64_PACK_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -57,4 +57,4 @@ static inline uint64_t pack_name(const char *s)
     return s[i] ? (1ull << 63) : v;
 }
 
-#endif /* PACK_H */
+#endif /* EMEX64_PACK_H */
