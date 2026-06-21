@@ -33,10 +33,11 @@
 #include <emex64lib/asm/macro.h>
 #include <emex64lib/asm/code.h>
 
-typedef struct {
+typedef struct assembler_macro {
     const char *match;
     char **inject_token;
     uint64_t inject_token_cnt;
+    struct assembler_macro *next;
 } assembler_macro_t;
 
 bool assembler_macro_expand(assembler_invocation_t *inv)
@@ -51,7 +52,7 @@ bool assembler_macro_expand(assembler_invocation_t *inv)
         }
     }
 
-    /* allocating */
+    /* allocating macro storage */
     assembler_macro_t *am = calloc(c, sizeof(assembler_macro_t));
     if(am == NULL)
     {
@@ -59,8 +60,17 @@ bool assembler_macro_expand(assembler_invocation_t *inv)
         return false;
     }
 
-    /* adding macro definitions */
+    /* adding predefined macro definitions */
     c = 0;
+    for(uint64_t i = 0; i < inv->definition_cnt; i++)
+    {
+        am[c].match = inv->definition[i].match;
+        am[c].inject_token_cnt = 1;
+        am[c].inject_token = calloc(1, sizeof(char*));
+        am[c].inject_token[0] = inv->definition[i].value;
+        c++;
+    }
+
     for(uint64_t i = 0; i < inv->line_cnt; i++)
     {
         if(inv->line[i]->type == kAssemblerLineTypeMacroDefinition)
@@ -75,15 +85,6 @@ bool assembler_macro_expand(assembler_invocation_t *inv)
             inv->line[i]->type = kAssemblerLineTypeIgnore;
             c++;
         }
-    }
-
-    for(uint64_t i = 0; i < inv->definition_cnt; i++)
-    {
-        am[c].match = inv->definition[i].match;
-        am[c].inject_token_cnt = 1;
-        am[c].inject_token = calloc(1, sizeof(char*));
-        am[c].inject_token[0] = inv->definition[i].value;
-        c++;
     }
 
     /* expand macro definitions */
