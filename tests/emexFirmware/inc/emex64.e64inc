@@ -32,3 +32,7 @@
 %include% <regs.e64inc>
 %include% <timer.e64inc>
 %include% <8042.e64inc>
+
+extern _putc
+extern _puts
+extern _putm

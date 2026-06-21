@@ -27,6 +27,8 @@
 section .data
     msg db "hello, world!\r\n\0"
 
+extern _start
+
 _start:
     mov r0, msg
 .loop:

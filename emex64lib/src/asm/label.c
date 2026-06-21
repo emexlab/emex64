@@ -36,13 +36,7 @@
 
 bool assembler_label_prealloc(assembler_invocation_t *inv)
 {
-    /*
-     * counting labels caught at token parsing
-     * the reason it starts at 1 is because of
-     * a inbuilt relocation value called
-     * __emex64_exec_img_end which is appended in
-     * the end of code emitting.
-     */
+    /* preallocate all labels that are possible */
     inv->label_cnt = 0;
     for(uint64_t i = 0; i < inv->line_cnt; i++)
     {
@@ -134,9 +128,6 @@ bool assembler_label_append(assembler_token_t *at)
         }
         memcpy(name, at->str, size - 1);
         name[size - 1] = '\0';
-
-        /* set it as scope */
-        inv->label_scope = name;
     }
     else if(at->al->type == kAssemblerLineTypeSectionData)
     {
@@ -172,9 +163,33 @@ bool assembler_label_append(assembler_token_t *at)
     assembler_label_t *label = assembler_label_lookup(inv, name);
     if(label != NULL)
     {
+        /* can be redeclared using 'extern' safely */
+        if(at->al->type == kAssemblerLineTypeExternLabel)
+        {
+            free(name);
+            return !failed_validity;
+        }
+
+        /* label can be defined after using 'extern' too */
+        if(!label->defined)
+        {
+            label->defined = true;
+            label->at_link = at;
+            label->addr = vbitwalker_bytes_used(inv->out_vbitwalker);
+            free(name);
+            return !failed_validity;
+        }
+
         diag_note(label->at_link, "label '%s' already defined here\n", name);
         diag_error(at, "duplicated label '%s'\n", name);
+        free(name);
         return false;
+    }
+
+    if(at->al->type == kAssemblerLineTypeGlobalLabel)
+    {
+        /* set it as scope */
+        inv->label_scope = name;
     }
 
     inv->label[inv->label_cnt].addr = vbitwalker_bytes_used(inv->out_vbitwalker);
