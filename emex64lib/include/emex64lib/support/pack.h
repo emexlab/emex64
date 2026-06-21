@@ -27,24 +27,26 @@
 
 #include <stdint.h>
 
-#define PACK1(a) ((uint64_t)(a))
-#define PACK2(a,b) (PACK1(a) | ((uint64_t)(b) << 8))
-#define PACK3(a,b,c) (PACK2(a,b) | ((uint64_t)(c) << 16))
-#define PACK4(a,b,c,d) (PACK3(a,b,c) | ((uint64_t)(d) << 24))
-#define PACK5(a,b,c,d,e) (PACK4(a,b,c,d) | ((uint64_t)(e) << 32))
-#define PACK6(a,b,c,d,e,f) (PACK5(a,b,c,d,e) | ((uint64_t)(f) << 40))
-#define PACK7(a,b,c,d,e,f,g) (PACK6(a,b,c,d,e,f) | ((uint64_t)(g) << 48))
-#define PACK8(a,b,c,d,e,f,g,h) (PACK7(a,b,c,d,e,f,g) | ((uint64_t)(h) << 56))
+#define P7(a) ((uint64_t)((a) & 0x7F))
+#define PACK1(a) P7(a)
+#define PACK2(a,b) (PACK1(a) | (P7(b) << 7))
+#define PACK3(a,b,c) (PACK2(a,b) | (P7(c) << 14))
+#define PACK4(a,b,c,d) (PACK3(a,b,c) | (P7(d) << 21))
+#define PACK5(a,b,c,d,e) (PACK4(a,b,c,d) | (P7(e) << 28))
+#define PACK6(a,b,c,d,e,f) (PACK5(a,b,c,d,e) | (P7(f) << 35))
+#define PACK7(a,b,c,d,e,f,g) (PACK6(a,b,c,d,e,f) | (P7(g) << 42))
+#define PACK8(a,b,c,d,e,f,g,h) (PACK7(a,b,c,d,e,f,g) | (P7(h) << 49))
+#define PACK9(a,b,c,d,e,f,g,h,i) (PACK8(a,b,c,d,e,f,g,h) | (P7(i) << 56))
 
 static inline uint64_t pack_name(const char *s)
 {
     uint64_t v = 0;
     int i = 0;
-    for(; i < 8 && s[i]; i++)
+    for(; i < 9 && s[i]; i++)
     {
-        v |= (uint64_t)(unsigned char)s[i] << (i * 8);
+        v |= (uint64_t)(s[i] & 0x7F) << (i * 7);
     }
-    return s[i] ? 0xFFFFFFFFFFFFFFFFull : v;
+    return s[i] ? (1ull << 63) : v;
 }
 
 #endif /* PACK_H */
