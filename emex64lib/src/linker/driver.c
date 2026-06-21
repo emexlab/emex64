@@ -79,7 +79,12 @@ linker_driver_t *linker_driver_alloc(int argc,
         else if(strcmp(argv[i], "-o") == 0 && i + 1 < argc)
         {
             emex_file_dealloc(driver->output_file);
-            driver->output_file = emex_file_alloc(argv[++i], object_file_out_policy);
+            driver->output_file = emex_file_alloc(argv[++i], out_data_file_policy);
+            if(driver->output_file == NULL)
+            {
+                diag_error(NULL, "don't have permission to open file at '%s'\n", argv[i]);
+                goto failure;
+            }
         }
         else if (strcmp(argv[i], "-e") == 0 && i + 1 < argc)
         {
@@ -87,7 +92,7 @@ linker_driver_t *linker_driver_alloc(int argc,
         }
         else if((strcmp(argv[i], "-T") == 0 || strcmp(argv[i], "--script") == 0) && i + 1 < argc)
         {
-            emex_file_t *script_file = emex_file_alloc(argv[++i], linker_script_file_policy);
+            emex_file_t *script_file = emex_file_alloc(argv[++i], in_data_file_policy);
             if(script_file == NULL)
             {
                 diag_error(NULL, "unknown or non existing script file '%s'\n", argv[i]);
@@ -97,7 +102,7 @@ linker_driver_t *linker_driver_alloc(int argc,
         }
         else if (strncmp(argv[i], "-T", 2) == 0 && argv[i][2])
         {
-            emex_file_t *script_file = emex_file_alloc(argv[i] + 2, linker_script_file_policy);
+            emex_file_t *script_file = emex_file_alloc(argv[i] + 2, in_data_file_policy);
             if(script_file == NULL)
             {
                 diag_error(NULL, "unknown or non existing script file '%s'\n", argv[i] + 2);
@@ -116,7 +121,7 @@ linker_driver_t *linker_driver_alloc(int argc,
         }
         else if (argv[i][0] != '-')
         {
-            emex_file_t *input_file = emex_file_alloc(argv[i], object_file_load_policy);
+            emex_file_t *input_file = emex_file_alloc(argv[i], in_data_file_policy);
             if(input_file == NULL)
             {
                 diag_error(NULL, "unknown or non existing input file '%s'\n", argv[i]);
@@ -137,10 +142,16 @@ linker_driver_t *linker_driver_alloc(int argc,
         goto failure;
     }
 
+    /* fallback to a.out if not passed */
     if(driver->output_file == NULL)
     {
         diag_warn(NULL, "no output binary specified, falling back to 'a.out'\n");
-        driver->output_file = emex_file_alloc("a.out", object_file_out_policy);
+        driver->output_file = emex_file_alloc("a.out", out_data_file_policy);
+
+        if(driver->output_file == NULL)
+        {
+            diag_error(NULL, "don't have permission to open file at 'a.out'\n");
+        }
     }
 
     return driver;

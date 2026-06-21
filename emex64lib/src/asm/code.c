@@ -175,7 +175,7 @@ static bool expand_file(emex_file_t *file,
 
             free(line);
 
-            emex_file_t *file = emex_file_alloc(hdr_path, assembly_file_policy);
+            emex_file_t *file = emex_file_alloc(hdr_path, in_data_file_policy);
             free(hdr_path);
             if(file == NULL)
             {

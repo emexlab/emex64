@@ -43,7 +43,7 @@ static inline emex_file_t *emex_file_alloc_vopen(const char *path,
      * creating a file backed by the virtual file descriptor
      * which is backed by a vpageobj_t.
      */
-    emex_file_t *file = emex_file_alloc_vfd("test.o", object_file_out_policy, d);
+    emex_file_t *file = emex_file_alloc_vfd("test.o", policy, d);
     vfd_close(d);
     if(file == NULL)
     {
@@ -61,7 +61,7 @@ int main(void)
      * assemble to a virtual object file we can
      * then link.
      */
-    emex_file_t *unsaved_file = emex_file_alloc_unsaved("test.e64", assembly_file_policy,
+    emex_file_t *unsaved_file = emex_file_alloc_unsaved("test.e64", in_data_file_policy,
         "section .data\n"
         "    msg db \"hello, world!\\r\\n\\0\"\n"
         "\n"
@@ -85,7 +85,7 @@ int main(void)
         return 1;
     }
 
-    emex_file_t *object_file = emex_file_alloc_vopen("test.o", object_file_out_policy);
+    emex_file_t *object_file = emex_file_alloc_vopen("test.o", out_data_file_policy);
     if(object_file == NULL)
     {
         diag_fatal(NULL, "failed to allocate virtual object file\n");
@@ -138,7 +138,7 @@ int main(void)
     }
     input_file[0] = object_file;
 
-    emex_file_t *firmware_file = emex_file_alloc_vopen("test.img", object_file_out_policy);
+    emex_file_t *firmware_file = emex_file_alloc_vopen("test.img", out_data_file_policy);
     if(firmware_file == NULL)
     {
         diag_fatal(NULL, "failed to allocate virtual firmware file\n");

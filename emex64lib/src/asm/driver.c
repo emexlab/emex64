@@ -397,7 +397,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
         }
         else if(argv[i][0] != '-')
         {
-            emex_file_t *file = emex_file_alloc(argv[i], assembly_file_policy);
+            emex_file_t *file = emex_file_alloc(argv[i], in_data_file_policy);
             if(file == NULL || !(file->type == kEmexFileTypeAssembly || file->type == kEmexFileTypeAssemblyIncludation || file->type == kEmexFileTypeObject))
             {
                 diag_error(NULL, "unknown or non existing input file '%s'\n", argv[0]);
@@ -802,7 +802,7 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
         inv->include_dir_cnt = driver->inc_dir_cnt;
         inv->include_dirs = driver->inc_dirs;
 
-        emex_file_t *output = emex_file_alloc(driver->output_path, object_file_out_policy);
+        emex_file_t *output = emex_file_alloc(driver->output_path, out_data_file_policy);
         if(output == NULL)
         {
             emex_file_dealloc(output);

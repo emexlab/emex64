@@ -219,7 +219,7 @@ int main(int argc, char *argv[])
 
     if(firmware_image_path != NULL)
     {
-        emex_file_t *file = emex_file_alloc(firmware_image_path, object_file_load_policy);
+        emex_file_t *file = emex_file_alloc(firmware_image_path, in_data_file_policy);
         if(file == NULL)
     fail:
         {

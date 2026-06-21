@@ -33,37 +33,23 @@
 
 #include <emex64lib/support/file.h>
 
-emex_file_policy_t assembly_file_policy = {
+emex_file_policy_t in_data_file_policy = {
     .needed_permission = kEmexFilePolicyPermissionRead,
     .must_exist = true,
     .must_be_file = true,
     .create_on_open = false,
 };
 
-emex_file_policy_t section_data_file_policy = {
-    .needed_permission = kEmexFilePolicyPermissionRead,
-    .must_exist = true,
-    .must_be_file = true,
-    .create_on_open = false,
-};
-
-emex_file_policy_t object_file_load_policy = {
-    .needed_permission = kEmexFilePolicyPermissionRead,
-    .must_exist = true,
-    .must_be_file = true,
-    .create_on_open = false,
-};
-
-emex_file_policy_t object_file_out_policy = {
+emex_file_policy_t out_data_file_policy = {
     .needed_permission = kEmexFilePolicyPermissionRead | kEmexFilePolicyPermissionWrite,
     .must_exist = false,
     .must_be_file = true,
     .create_on_open = true,
 };
 
-emex_file_policy_t linker_script_file_policy = {
-    .needed_permission = kEmexFilePolicyPermissionRead,
-    .must_exist = true,
+emex_file_policy_t out_nocreate_file_policy = {
+    .needed_permission = kEmexFilePolicyPermissionRead | kEmexFilePolicyPermissionWrite,
+    .must_exist = false,
     .must_be_file = true,
     .create_on_open = false,
 };
