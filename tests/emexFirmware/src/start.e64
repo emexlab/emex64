@@ -24,6 +24,10 @@
 
 %include% <emex64.e64inc>
 
+%ifndef% FW_TEST_EXCEPTION
+%define% FW_TEST_EXCEPTION 0
+%endif% ; FW_TEST_EXCEPTION
+
 extern _interrupt_init
 extern _slab_init
 extern _pmm_alloc
