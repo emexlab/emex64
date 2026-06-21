@@ -273,7 +273,7 @@ bool assembler_code_preparse(assembler_invocation_t *inv,
     for(unsigned long i = 0; i < inv->line_cnt; i++)
     {
         /* using cmptok in first pass to get token count */
-        for(cmptok_token_t token = cmptok(inv->line[i]->str); token.token != NULL;)
+        for(lextok_token_t token = lextok(inv->line[i]->str); token.token != NULL;)
         {
             /*
              * until this is not null i will not move
@@ -281,7 +281,7 @@ bool assembler_code_preparse(assembler_invocation_t *inv,
              * is this while loop :3
              */
             inv->line[i]->token_cnt++;
-            token = cmptok(NULL);
+            token = lextok(NULL);
         }
 
         /* copy subtokens */
@@ -293,7 +293,7 @@ bool assembler_code_preparse(assembler_invocation_t *inv,
          * and over again, is this a carousell or
          * why am I getting ill rn.
          */
-        for(cmptok_token_t token = cmptok(inv->line[i]->str); token.token != NULL;)
+        for(lextok_token_t token = lextok(inv->line[i]->str); token.token != NULL;)
         {
             assembler_token_t *at = calloc(1, sizeof(assembler_token_t));
             at->str = strdup(token.token);
@@ -306,7 +306,7 @@ bool assembler_code_preparse(assembler_invocation_t *inv,
             }
             at->type = token.type;
             inv->line[i]->token[inv->line[i]->token_cnt++] = at;
-            token = cmptok(NULL);
+            token = lextok(NULL);
         }
     }
 

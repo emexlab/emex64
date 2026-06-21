@@ -65,8 +65,8 @@ typedef struct {
     const char *token;
     size_t column;
     enum kAssemblerTokenType type;
-} cmptok_token_t;
+} lextok_token_t;
 
-cmptok_token_t cmptok(const char *token);
+lextok_token_t lextok(const char *token);
 
 #endif /* EMEX64ASM_LEXER_H */

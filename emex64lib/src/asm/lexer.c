@@ -57,7 +57,7 @@ static inline void cmptok_append(unsigned short *otoken_pos)
     otoken[(*otoken_pos)++] = *(ltokptr++);
 }
 
-cmptok_token_t cmptok(const char *token)
+lextok_token_t lextok(const char *token)
 {
     if(token != NULL)
     {
@@ -71,10 +71,10 @@ cmptok_token_t cmptok(const char *token)
     if(ltokptr == NULL || ltokptr[0] == '\0')
     {
         /* if ltokptr is nullified this or nullterminated then we shall not continue, there is nothing to tokenize */
-        return (cmptok_token_t){ .token = NULL, .column = 0 };
+        return (lextok_token_t){ .token = NULL, .column = 0 };
     }
 
-    cmptok_token_t retval;
+    lextok_token_t retval;
     retval.type = kAssemblerTokenTypeStandard;
     retval.column = ltokptr - stokptr;
 
