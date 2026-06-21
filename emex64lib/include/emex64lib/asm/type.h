@@ -31,7 +31,7 @@
 
 #include <emex64lib/support/virtual/vbitwalker.h>
 
-#include <emex64lib/asm/cmptok.h>
+#include <emex64lib/asm/lexer.h>
 
 enum kAssemblerLineType: uint8_t {
     kAssemblerLineTypeNone,

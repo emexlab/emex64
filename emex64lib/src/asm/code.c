@@ -32,7 +32,7 @@
 #include <emex64lib/support/diagnostic/legacy.h>
 
 #include <emex64lib/asm/code.h>
-#include <emex64lib/asm/cmptok.h>
+#include <emex64lib/asm/lexer.h>
 
 typedef struct expand_entry {
     char *source_path;

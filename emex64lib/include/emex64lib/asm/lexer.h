@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64ASM_CMPTOK_H
-#define EMEX64ASM_CMPTOK_H
+#ifndef EMEX64ASM_LEXER_H
+#define EMEX64ASM_LEXER_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -69,4 +69,4 @@ typedef struct {
 
 cmptok_token_t cmptok(const char *token);
 
-#endif /* EMEX64ASM_CMPTOK_H */
+#endif /* EMEX64ASM_LEXER_H */
