@@ -653,7 +653,7 @@ assembler_driver_t *assembler_driver_alloc(int argc,
         return NULL;
     }
 
-    /*if(driver->options.verbose)
+    if(driver->options.verbose)
     {
         fprintf(stderr, "---- driver ----\n");
         fprintf(stderr, "page_align: %d\n", driver->invocation_options.page_align);
@@ -664,14 +664,14 @@ assembler_driver_t *assembler_driver_alloc(int argc,
         fprintf(stderr, "in_process: %d\n", driver->options.in_process || driver->options.assemble_only);
         fprintf(stderr, "output_path: %s\n", driver->output_path);
 
-        fprintf(stderr, "input_path[%d]: { ", driver->input_file_cnt);
-        for(int i = 0; i < driver->input_path_count; i++)
+        fprintf(stderr, "input_file[%d]: { ", driver->input_file_count);
+        for(int i = 0; i < driver->input_file_count; i++)
         {
             if(i != 0)
             {
                 fprintf(stderr, ", ");
             }
-            fprintf(stderr, "%s", driver->input_path[i]);
+            fprintf(stderr, "%s", driver->input_file[i]->path);
         }
         fprintf(stderr, " }\n");
 
@@ -737,7 +737,7 @@ assembler_driver_t *assembler_driver_alloc(int argc,
             job = job->next;
         }
         fprintf(stderr, "}\n");
-    }*/
+    }
 
     return driver;
 }
