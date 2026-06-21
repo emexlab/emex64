@@ -57,9 +57,8 @@ typedef struct {
 
     const char *output_path;    /* borrowed */
 
-    int input_path_count;
-    char **input_path;
-    kEmexFileType *input_path_type;
+    int input_file_count;
+    emex_file_t **input_file;
 
     size_t inc_dir_cnt;
     char **inc_dirs;

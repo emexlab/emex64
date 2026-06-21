@@ -138,17 +138,10 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
     driver->invocation_options = assembler_invocation_options_default;
 
     driver->output_path = NULL;
-    driver->input_path_count = 0;
-    driver->input_path = calloc(argc, sizeof(char *));
-    if(driver->input_path == NULL)
+    driver->input_file_count = 0;
+    driver->input_file = calloc(argc, sizeof(emex_file_t*));
+    if(driver->input_file == NULL)
     {
-        return false;
-    }
-
-    driver->input_path_type = calloc(argc, sizeof(kEmexFileType));
-    if(driver->input_path_type == NULL)
-    {
-        free(driver->input_path);
         return false;
     }
 
@@ -404,8 +397,14 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
         }
         else if(argv[i][0] != '-')
         {
-            driver->input_path[driver->input_path_count] = strdup(argv[i]);
-            driver->input_path_type[driver->input_path_count++] = emex_file_type_for_path(argv[i], true);
+            emex_file_t *file = emex_file_alloc(argv[i], assembly_file_policy);
+            if(file == NULL || !(file->type == kEmexFileTypeAssembly || file->type == kEmexFileTypeAssemblyIncludation || file->type == kEmexFileTypeObject))
+            {
+                diag_error(NULL, "unknown or non existing input file '%s'\n", argv[0]);
+                return false;
+            }
+
+            driver->input_file[driver->input_file_count++] = file;
         }
         else
         {
@@ -414,7 +413,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
         }
     }
 
-    if(driver->input_path_count <= 0)
+    if(driver->input_file_count <= 0)
     {
         diag_error(NULL, "no input files\n");
         return false;
@@ -467,7 +466,7 @@ static char *assembler_driver_tmppath(assembler_driver_t *driver,
 }
 
 static void assembler_driver_append_additional_linker_flag(assembler_driver_t *driver,
-                                                           char *flag)
+                                                           const char *flag)
 {
     driver->linker_flags = realloc(driver->linker_flags, (driver->linker_flags_cnt + 1) * sizeof(char *));
     driver->linker_flags[driver->linker_flags_cnt++] = strdup(flag);
@@ -476,16 +475,19 @@ static void assembler_driver_append_additional_linker_flag(assembler_driver_t *d
 bool assembler_driver_jobgen(assembler_driver_t *driver)
 {
     /* -c is only meant to assemble one assembly file to a object file */
-    if(driver->emit_mode == kEmitModeObject && driver->input_path_count > 1)
+    if(driver->emit_mode == kEmitModeObject && driver->input_file_count > 1)
     {
         diag_error(NULL, "multiple input files were passed in object emit mode\n");
         return false;
     }
 
     /* creating assembler jobs */
-    for(int i = 0; i < driver->input_path_count; i++)
+    for(int i = 0; i < driver->input_file_count; i++)
     {
-        switch(driver->input_path_type[i])
+        const char *input_path = driver->input_file[i]->path;
+        kEmexFileType input_type = driver->input_file[i]->type;
+
+        switch(input_type)
         {
             case kEmexFileTypeAssembly:
             case kEmexFileTypeAssemblyIncludation:
@@ -500,8 +502,8 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
                 }
                 ratchet_args_append(&ra, "-c");
                 ratchet_args_append(&ra, "-o");
-                ratchet_args_append(&ra, assembler_driver_tmppath(driver, driver->input_path[i]));
-                ratchet_args_append(&ra, driver->input_path[i]);
+                ratchet_args_append(&ra, assembler_driver_tmppath(driver, input_path));
+                ratchet_args_append(&ra, input_path);
 
                 /* feature flags */
                 ratchet_args_append(&ra, driver->invocation_options.page_align ? "-fpage-align" : "-fno-page-align");
@@ -560,10 +562,9 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
                 break;
             }
             case kEmexFileTypeObject:
-                assembler_driver_append_additional_linker_flag(driver, driver->input_path[i]);
+                assembler_driver_append_additional_linker_flag(driver, input_path);
                 break;
             default:
-                diag_error(NULL, "unknown or non existing input file '%s'\n", driver->input_path[i]);
                 return false;
         }
     }
@@ -652,7 +653,7 @@ assembler_driver_t *assembler_driver_alloc(int argc,
         return NULL;
     }
 
-    if(driver->options.verbose)
+    /*if(driver->options.verbose)
     {
         fprintf(stderr, "---- driver ----\n");
         fprintf(stderr, "page_align: %d\n", driver->invocation_options.page_align);
@@ -663,7 +664,7 @@ assembler_driver_t *assembler_driver_alloc(int argc,
         fprintf(stderr, "in_process: %d\n", driver->options.in_process || driver->options.assemble_only);
         fprintf(stderr, "output_path: %s\n", driver->output_path);
 
-        fprintf(stderr, "input_path[%d]: { ", driver->input_path_count);
+        fprintf(stderr, "input_path[%d]: { ", driver->input_file_cnt);
         for(int i = 0; i < driver->input_path_count; i++)
         {
             if(i != 0)
@@ -736,19 +737,18 @@ assembler_driver_t *assembler_driver_alloc(int argc,
             job = job->next;
         }
         fprintf(stderr, "}\n");
-    }
+    }*/
 
     return driver;
 }
 
 void assembler_driver_dealloc(assembler_driver_t *driver)
 {
-    for(int i = 0; i < driver->input_path_count; i++)
+    for(int i = 0; i < driver->input_file_count; i++)
     {
-        free(driver->input_path[i]);
+        emex_file_dealloc(driver->input_file[i]);
     }
-    free(driver->input_path);
-    free(driver->input_path_type);
+    free(driver->input_file);
 
     for(size_t i = 0; i < driver->inc_dir_cnt; i++)
     {
@@ -802,13 +802,6 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
         inv->include_dir_cnt = driver->inc_dir_cnt;
         inv->include_dirs = driver->inc_dirs;
 
-        emex_file_t *input = emex_file_alloc(driver->input_path[0], assembly_file_policy);
-        if(input == NULL)
-        {
-            assembler_invocation_dealloc(inv);
-            return false;
-        }
-
         emex_file_t *output = emex_file_alloc(driver->output_path, object_file_out_policy);
         if(output == NULL)
         {
@@ -817,10 +810,9 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
             return false;
         }
 
-        bool success = assembler_invocation_emit(inv, input, output);
+        bool success = assembler_invocation_emit(inv, driver->input_file[0], output);
 
         emex_file_dealloc(output);
-        emex_file_dealloc(input);
         assembler_invocation_dealloc(inv);
 
         return success;
