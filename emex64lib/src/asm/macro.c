@@ -185,15 +185,7 @@ typedef struct assembler_directive_condition_frame {
 
 static inline assembler_condition_frame_t *__assembler_condition_frame_alloc()
 {
-    assembler_condition_frame_t *frame = malloc(sizeof(assembler_condition_frame_t));
-    if(frame == NULL)
-    {
-        return frame;
-    }
-    
-    frame->prev = NULL;
-    
-    return frame;
+    return calloc(1, sizeof(assembler_condition_frame_t));
 }
 
 void assembler_condition_frame_dealloc(assembler_condition_frame_t **frame)
@@ -273,7 +265,6 @@ bool assembler_condition_state_push(assembler_condition_state_t *state)
     state->condition_met = false;
     state->in_a_condition = false;
     state->in_a_else_condition = false;
-    state->finalized = false;
     state->last_condition_line = NULL;
     
     return true;
@@ -289,6 +280,15 @@ void assembler_condition_state_pop(assembler_condition_state_t *state)
     
     assembler_condition_frame_pop(&state->frame);
 }
+
+typedef enum: uint64_t {
+    kAssemblerDirectiveConditionTypeIf = PACK('%','i','f','%'),
+    kAssemblerDirectiveConditionTypeIfdef = PACK('%','i','f','d','e','f','%'),
+    kAssemblerDirectiveConditionTypeIfndef = PACK('%','i','f','n','d','e','f','%'),
+    kAssemblerDirectiveConditionTypeElif = PACK('%','e','l','i','f','%'),
+    kAssemblerDirectiveConditionTypeElse = PACK('%','e','l','s','e','%'),
+    kAssemblerDirectiveConditionTypeEndif = PACK('%','e','n','d','i','f','%'),
+} kAssemblerDirectiveConditionType;
 
 bool assembler_macro_expand(assembler_invocation_t *inv)
 {
@@ -453,128 +453,127 @@ bool assembler_macro_expand(assembler_invocation_t *inv)
                 inv->line[li]->type = kAssemblerLineTypeIgnore;
                 break;
             case kAssemblerLineTypeConditionDirective:
-                if(!state.finalized)
+                kAssemblerDirectiveConditionType type = pack_name(inv->line[li]->token[0]->str);
+                switch(type)
                 {
-                    switch(pack_name(inv->line[li]->token[0]->str))
-                    {
-                        case PACK('%','i','f','%'):
-                            if(!assembler_condition_state_push(&state))
-                            {
-                                diag_fatal(inv->line[li]->token[0], "failed to push condition frame onto condition state\n");
-                                assembler_condition_state_deinit(&state);
-                                assembler_macro_storage_dealloc(storage);
-                                return false;
-                            }
-                            
-                        if_macro_condition_expand:
+                    case kAssemblerDirectiveConditionTypeIf:
+                        if(!assembler_condition_state_push(&state))
                         {
-                            if(inv->line[li]->token_cnt >= 2 && strlen(inv->line[li]->token[1]->str) > 0)
-                            {
-                                parser_return_t pret = parse_value_from_string(inv->line[li]->token[1]->str);
-                                state.condition_met = pret.type == emexParserValueTypeNumber ? (pret.value != 0) : true;
-                            }
-                            else
-                            {
-                                state.condition_met = false;
-                            }
-                            
-                            state.in_a_condition = true;
+                            diag_fatal(inv->line[li]->token[0], "failed to push condition frame onto condition state\n");
+                            assembler_condition_state_deinit(&state);
+                            assembler_macro_storage_dealloc(storage);
+                            return false;
                         }
-                            break;
-                        case PACK('%','i','f','d','e','f','%'):
-                            if(!assembler_condition_state_push(&state))
-                            {
-                                diag_fatal(inv->line[li]->token[0], "failed to push condition frame onto condition state\n");
-                                assembler_condition_state_deinit(&state);
-                                assembler_macro_storage_dealloc(storage);
-                                return false;
-                            }
-                            
+                        
+                    express_if_directive:
+                    {
+                        if(inv->line[li]->token_cnt >= 2 && strlen(inv->line[li]->token[1]->str) > 0)
+                        {
+                            parser_return_t pret = parse_value_from_string(inv->line[li]->token[1]->str);
+                            state.condition_met = pret.type == emexParserValueTypeNumber ? (pret.value != 0) : true;
+                        }
+                        else
+                        {
                             state.condition_met = false;
-                            if(inv->line[li]->token_cnt >= 2 && strlen(inv->line[li]->token[1]->str) > 0)
-                            {
-                                assembler_macro_t *found_match = assembler_macro_storage_lookup(storage, inv->line[li]->token[1]->str);
-                                state.condition_met = found_match != NULL;
-                            }
-                            
-                            state.in_a_condition = true;
-                            break;
-                        case PACK('%','i','f','n','d','e','f','%'):
-                            if(!assembler_condition_state_push(&state))
-                            {
-                                diag_fatal(inv->line[li]->token[0], "failed to push condition frame onto condition state\n");
-                                assembler_condition_state_deinit(&state);
-                                assembler_macro_storage_dealloc(storage);
-                                return false;
-                            }
-                            
-                            state.condition_met = true;
-                            if(inv->line[li]->token_cnt >= 2 && strlen(inv->line[li]->token[1]->str) > 0)
-                            {
-                                assembler_macro_t *found_match = assembler_macro_storage_lookup(storage, inv->line[li]->token[1]->str);
-                                state.condition_met = found_match == NULL;
-                            }
-                            
-                            state.in_a_condition = true;
-                            break;
-                        case PACK('%','e','l','i','f','%'):
-                            if(state.in_a_condition == false)
-                            {
-                                diag_error(inv->line[li]->token[0], "%%elif%% was defined but no %%if%% was defined prior.\n");
-                                assembler_condition_state_deinit(&state);
-                                assembler_macro_storage_dealloc(storage);
-                                return false;
-                            }
-                            
-                            if(!state.condition_met)
-                            {
-                                goto if_macro_condition_expand;
-                            }
-                            else
-                            {
-                                state.finalized = true;
-                                state.condition_met = false;
-                            }
-                            break;
-                        case PACK('%','e','l','s','e','%'):
-                            if(state.in_a_condition == false)
-                            {
-                                diag_error(inv->line[li]->token[0], "%%elseif%% was defined but no %%if%% was defined prior.\n");
-                                assembler_condition_state_deinit(&state);
-                                assembler_macro_storage_dealloc(storage);
-                                return false;
-                            }
-                            
-                            if(!state.condition_met)
-                            {
-                                state.condition_met = true;
-                            }
-                            else
-                            {
-                                state.finalized = true;
-                                state.condition_met = false;
-                            }
-                            break;
-                        default:
-                            break;
+                        }
+                        
+                        state.in_a_condition = true;
                     }
+                        break;
+                    case kAssemblerDirectiveConditionTypeIfdef:
+                        if(!assembler_condition_state_push(&state))
+                        {
+                            diag_fatal(inv->line[li]->token[0], "failed to push condition frame onto condition state\n");
+                            assembler_condition_state_deinit(&state);
+                            assembler_macro_storage_dealloc(storage);
+                            return false;
+                        }
+                        
+                        state.condition_met = false;
+                        if(inv->line[li]->token_cnt >= 2 && strlen(inv->line[li]->token[1]->str) > 0)
+                        {
+                            assembler_macro_t *found_match = assembler_macro_storage_lookup(storage, inv->line[li]->token[1]->str);
+                            state.condition_met = found_match != NULL;
+                        }
+                        
+                        state.in_a_condition = true;
+                        break;
+                    case kAssemblerDirectiveConditionTypeIfndef:
+                        if(!assembler_condition_state_push(&state))
+                        {
+                            diag_fatal(inv->line[li]->token[0], "failed to push condition frame onto condition state\n");
+                            assembler_condition_state_deinit(&state);
+                            assembler_macro_storage_dealloc(storage);
+                            return false;
+                        }
+                        
+                        state.condition_met = true;
+                        if(inv->line[li]->token_cnt >= 2 && strlen(inv->line[li]->token[1]->str) > 0)
+                        {
+                            assembler_macro_t *found_match = assembler_macro_storage_lookup(storage, inv->line[li]->token[1]->str);
+                            state.condition_met = found_match == NULL;
+                        }
+                        
+                        state.in_a_condition = true;
+                        break;
+                    case kAssemblerDirectiveConditionTypeElif:
+                        if(state.in_a_condition == false)
+                        {
+                            diag_error(inv->line[li]->token[0], "%%elif%% directive was defined, but no %%if%% directive was defined before.\n");
+                            assembler_condition_state_deinit(&state);
+                            assembler_macro_storage_dealloc(storage);
+                            return false;
+                        }
+                        
+                        if(state.finalized || state.condition_met)
+                        {
+                            state.finalized = true;
+                            state.condition_met = false;
+                        }
+                        else
+                        {
+                            goto express_if_directive;
+                        }
+                        break;
+                    case kAssemblerDirectiveConditionTypeElse:
+                        if(!state.in_a_condition)
+                        {
+                            diag_error(inv->line[li]->token[0], "%%elseif%% directive was defined, but no %%if%% directive was defined before.\n");
+                            assembler_condition_state_deinit(&state);
+                            assembler_macro_storage_dealloc(storage);
+                            return false;
+                        }
+                        
+                        if(state.in_a_else_condition)
+                        {
+                            diag_error(inv->line[li]->token[0], "%%elseif%% directive was defined inside another %%elseif%% directive.\n");
+                            assembler_condition_state_deinit(&state);
+                            assembler_macro_storage_dealloc(storage);
+                            return false;
+                        }
+                        
+                        state.condition_met = (!state.finalized && !state.condition_met);
+                        state.in_a_else_condition = true;
+                        break;
+                    case kAssemblerDirectiveConditionTypeEndif:
+                        if(state.in_a_condition == false)
+                        {
+                            diag_error(inv->line[li]->token[0], "%%endif%% directive was defined but no %%if%% directive was defined before.\n");
+                            assembler_condition_state_deinit(&state);
+                            assembler_macro_storage_dealloc(storage);
+                            return false;
+                        }
+                        assembler_condition_state_pop(&state);
+                        break;
+                    default:
+                        break;
                 }
                 
-                if(strcmp(inv->line[li]->token[0]->str, "%endif%") == 0)
+                if(type != kAssemblerDirectiveConditionTypeEndif)
                 {
-                    if(state.in_a_condition == false)
-                    {
-                        diag_error(inv->line[li]->token[0], "%%endif%% was defined but no %%if%% was defined prior.\n");
-                        assembler_condition_state_deinit(&state);
-                        assembler_macro_storage_dealloc(storage);
-                        return false;
-                    }
-                    assembler_condition_state_pop(&state);
+                    state.last_condition_line = inv->line[li];
                 }
-
-                state.last_condition_line = inv->line[li];
                 inv->line[li]->type = kAssemblerLineTypeIgnore;
-
                 break;
             default:
                 break;
