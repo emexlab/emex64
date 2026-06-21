@@ -179,6 +179,7 @@ typedef struct assembler_directive_condition_frame {
     bool condition_met;
     bool in_a_else_condition;
     bool finalized;
+    bool parent_active;
     assembler_line_t *last_condition_line;
     struct assembler_directive_condition_frame *prev;
 } assembler_condition_frame_t;
@@ -235,6 +236,7 @@ typedef struct assembler_directive_condition_state {
     bool condition_met;
     bool in_a_else_condition;
     bool finalized;
+    bool parent_active;
     assembler_line_t *last_condition_line;
 } assembler_condition_state_t;
 
@@ -260,11 +262,13 @@ bool assembler_condition_state_push(assembler_condition_state_t *state)
     state->frame->in_a_condition = state->in_a_condition;
     state->frame->in_a_else_condition = state->in_a_else_condition;
     state->frame->finalized = state->finalized;
+    state->frame->parent_active = state->parent_active;
     state->frame->last_condition_line = state->last_condition_line;
     
     state->condition_met = false;
     state->in_a_condition = false;
     state->in_a_else_condition = false;
+    state->finalized = false;
     state->last_condition_line = NULL;
     
     return true;
@@ -276,6 +280,7 @@ void assembler_condition_state_pop(assembler_condition_state_t *state)
     state->in_a_condition = state->frame->in_a_condition;
     state->in_a_else_condition = state->frame->in_a_else_condition;
     state->finalized = state->frame->finalized;
+    state->parent_active = state->frame->parent_active;
     state->last_condition_line = state->frame->last_condition_line;
     
     assembler_condition_frame_pop(&state->frame);
@@ -457,6 +462,8 @@ bool assembler_macro_expand(assembler_invocation_t *inv)
                 switch(type)
                 {
                     case kAssemblerDirectiveConditionTypeIf:
+                    {
+                        bool parent_active = !state.in_a_condition || state.condition_met;
                         if(!assembler_condition_state_push(&state))
                         {
                             diag_fatal(inv->line[li]->token[0], "failed to push condition frame onto condition state\n");
@@ -464,23 +471,34 @@ bool assembler_macro_expand(assembler_invocation_t *inv)
                             assembler_macro_storage_dealloc(storage);
                             return false;
                         }
+                        state.parent_active = parent_active;
                         
                     express_if_directive:
-                    {
-                        if(inv->line[li]->token_cnt >= 2 && strlen(inv->line[li]->token[1]->str) > 0)
                         {
-                            parser_return_t pret = parse_value_from_string(inv->line[li]->token[1]->str);
-                            state.condition_met = pret.type == emexParserValueTypeNumber ? (pret.value != 0) : true;
+                            bool raw;
+                            if(inv->line[li]->token_cnt >= 2 && strlen(inv->line[li]->token[1]->str) > 0)
+                            {
+                                parser_return_t pret = parse_value_from_string(inv->line[li]->token[1]->str);
+                                raw = pret.type == emexParserValueTypeNumber ? (pret.value != 0) : true;
+                            }
+                            else
+                            {
+                                raw = false;
+                            }
+                            
+                            state.condition_met = raw && state.parent_active;
+                            if(raw)
+                            {
+                                state.finalized = true;
+                            }
+                            
+                            state.in_a_condition = true;
                         }
-                        else
-                        {
-                            state.condition_met = false;
-                        }
-                        
-                        state.in_a_condition = true;
+                        break;
                     }
-                        break;
                     case kAssemblerDirectiveConditionTypeIfdef:
+                    {
+                        bool parent_active = !state.in_a_condition || state.condition_met;
                         if(!assembler_condition_state_push(&state))
                         {
                             diag_fatal(inv->line[li]->token[0], "failed to push condition frame onto condition state\n");
@@ -488,17 +506,27 @@ bool assembler_macro_expand(assembler_invocation_t *inv)
                             assembler_macro_storage_dealloc(storage);
                             return false;
                         }
+                        state.parent_active = parent_active;
                         
-                        state.condition_met = false;
+                        bool raw = false;
                         if(inv->line[li]->token_cnt >= 2 && strlen(inv->line[li]->token[1]->str) > 0)
                         {
                             assembler_macro_t *found_match = assembler_macro_storage_lookup(storage, inv->line[li]->token[1]->str);
-                            state.condition_met = found_match != NULL;
+                            raw = found_match != NULL;
+                        }
+                        
+                        state.condition_met = raw && state.parent_active;
+                        if(raw)
+                        {
+                            state.finalized = true;
                         }
                         
                         state.in_a_condition = true;
                         break;
+                    }
                     case kAssemblerDirectiveConditionTypeIfndef:
+                    {
+                        bool parent_active = !state.in_a_condition || state.condition_met;
                         if(!assembler_condition_state_push(&state))
                         {
                             diag_fatal(inv->line[li]->token[0], "failed to push condition frame onto condition state\n");
@@ -506,16 +534,24 @@ bool assembler_macro_expand(assembler_invocation_t *inv)
                             assembler_macro_storage_dealloc(storage);
                             return false;
                         }
+                        state.parent_active = parent_active;
                         
-                        state.condition_met = true;
+                        bool raw = true;
                         if(inv->line[li]->token_cnt >= 2 && strlen(inv->line[li]->token[1]->str) > 0)
                         {
                             assembler_macro_t *found_match = assembler_macro_storage_lookup(storage, inv->line[li]->token[1]->str);
-                            state.condition_met = found_match == NULL;
+                            raw = found_match == NULL;
+                        }
+                        
+                        state.condition_met = raw && state.parent_active;
+                        if(raw)
+                        {
+                            state.finalized = true;
                         }
                         
                         state.in_a_condition = true;
                         break;
+                    }
                     case kAssemblerDirectiveConditionTypeElif:
                         if(state.in_a_condition == false)
                         {
@@ -538,7 +574,7 @@ bool assembler_macro_expand(assembler_invocation_t *inv)
                     case kAssemblerDirectiveConditionTypeElse:
                         if(!state.in_a_condition)
                         {
-                            diag_error(inv->line[li]->token[0], "%%elseif%% directive was defined, but no %%if%% directive was defined before.\n");
+                            diag_error(inv->line[li]->token[0], "%%else%% directive was defined, but no %%if%% directive was defined before.\n");
                             assembler_condition_state_deinit(&state);
                             assembler_macro_storage_dealloc(storage);
                             return false;
@@ -546,19 +582,19 @@ bool assembler_macro_expand(assembler_invocation_t *inv)
                         
                         if(state.in_a_else_condition)
                         {
-                            diag_error(inv->line[li]->token[0], "%%elseif%% directive was defined inside another %%elseif%% directive.\n");
+                            diag_error(inv->line[li]->token[0], "%%else%% directive was defined inside another %%else%% directive.\n");
                             assembler_condition_state_deinit(&state);
                             assembler_macro_storage_dealloc(storage);
                             return false;
                         }
                         
-                        state.condition_met = (!state.finalized && !state.condition_met);
+                        state.condition_met = (!state.finalized && !state.condition_met) && state.parent_active;
                         state.in_a_else_condition = true;
                         break;
                     case kAssemblerDirectiveConditionTypeEndif:
                         if(state.in_a_condition == false)
                         {
-                            diag_error(inv->line[li]->token[0], "%%endif%% directive was defined but no %%if%% directive was defined before.\n");
+                            diag_error(inv->line[li]->token[0], "%%end%% directive was defined but no %%if%% directive was defined before.\n");
                             assembler_condition_state_deinit(&state);
                             assembler_macro_storage_dealloc(storage);
                             return false;
