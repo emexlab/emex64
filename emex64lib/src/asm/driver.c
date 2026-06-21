@@ -400,7 +400,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
             emex_file_t *file = emex_file_alloc(argv[i], in_data_file_policy);
             if(file == NULL || !(file->type == kEmexFileTypeAssembly || file->type == kEmexFileTypeAssemblyIncludation || file->type == kEmexFileTypeObject))
             {
-                diag_error(NULL, "unknown or non existing input file '%s'\n", argv[0]);
+                diag_error(NULL, "unknown or non existing input file '%s'\n", argv[i]);
                 return false;
             }
 
