@@ -30,7 +30,7 @@
 
 _Thread_local static const char *stokptr;
 _Thread_local static const char *ltokptr;
-_Thread_local static char otoken[LEXTOK_LENGHT_MAX];
+_Thread_local static char otoken[LEXTOK_LENGHT_MAX + 1];
 
 static inline void __lextok_skip_ignore_spaces(void)
 {
