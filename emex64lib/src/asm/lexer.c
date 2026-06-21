@@ -175,12 +175,6 @@ lextok_token_t lextok(const char *token)
                 break;
         }
 
-        goto skip_break_out;
-
-break_out:
-        break;
-skip_break_out:
-
         otoken[a++] = ltokptr[0];
 
         /* check for nulltermination in ltokptr */
@@ -188,6 +182,11 @@ skip_break_out:
         {
             break;
         }
+
+        continue;
+
+    break_out:
+        break;
     }
 
     otoken[a] = '\0';
