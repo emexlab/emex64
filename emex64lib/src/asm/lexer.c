@@ -30,9 +30,9 @@
 
 _Thread_local static const char *stokptr;
 _Thread_local static const char *ltokptr;
-_Thread_local static char otoken[CMPTOK_LENGHT_MAX];
+_Thread_local static char otoken[LEXTOK_LENGHT_MAX];
 
-static inline void cmptok_skip_triggers(void)
+static inline void __lextok_skip_ignore_spaces(void)
 {
     while(1)
     {
@@ -52,7 +52,7 @@ static inline void cmptok_skip_triggers(void)
     }
 }
 
-static inline void cmptok_append(unsigned short *otoken_pos)
+static inline void __lextok_append(unsigned short *otoken_pos)
 {
     otoken[(*otoken_pos)++] = *(ltokptr++);
 }
@@ -67,7 +67,7 @@ lextok_token_t lextok(const char *token)
     }
 
     /* skip the junk in front of us */
-    cmptok_skip_triggers();
+    __lextok_skip_ignore_spaces();
     if(ltokptr == NULL || ltokptr[0] == '\0')
     {
         /* if ltokptr is nullified this or nullterminated then we shall not continue, there is nothing to tokenize */
@@ -81,8 +81,14 @@ lextok_token_t lextok(const char *token)
     /* perform copy */
     unsigned short a = 0;
     unsigned char token_mode = kCmptokTokenModeNone;
-    while(a < CMPTOK_LENGHT_MAX - 1)
+    while(a <= LEXTOK_LENGHT_MAX)
     {
+        if(a == LEXTOK_LENGHT_MAX)
+        {
+            retval.type = kAssemblerTokenTypeTooLong;
+            break;
+        }
+
         /* processing string */
         switch(token_mode)
         {
@@ -128,7 +134,7 @@ lextok_token_t lextok(const char *token)
                             break;
                         }
 
-                        cmptok_append(&a);
+                        __lextok_append(&a);
                         retval.type = kAssemblerTokenTypeStandard;
                         goto break_out;
                     default:
@@ -146,7 +152,7 @@ lextok_token_t lextok(const char *token)
                             break;
                         }
                         
-                        cmptok_append(&a);
+                        __lextok_append(&a);
                         retval.type = kAssemblerTokenTypeStandard;
                         goto break_out;
                     default:
@@ -158,7 +164,7 @@ lextok_token_t lextok(const char *token)
                 {
                     /* handling character ends */
                     case ')':                        
-                        cmptok_append(&a);
+                        __lextok_append(&a);
                         retval.type = kAssemblerTokenTypeStaticExpression;
                         goto break_out;
                     default:

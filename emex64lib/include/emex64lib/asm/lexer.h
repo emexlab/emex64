@@ -28,7 +28,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define CMPTOK_LENGHT_MAX               2048    /* if anyone comes close to that size, bro pls fix your variable naming style O.O */
+#define LEXTOK_LENGHT_MAX   2048    /* if anyone comes close to that size, bro pls fix your variable naming style O.O */
 
 enum kCmptokTokenMode: uint8_t {
     /* the nothing mode */
@@ -57,6 +57,7 @@ enum kCmptokTokenMode: uint8_t {
 
 enum kAssemblerTokenType: uint8_t {
     kAssemblerTokenTypeInvalid,
+    kAssemblerTokenTypeTooLong,
     kAssemblerTokenTypeStandard,
     kAssemblerTokenTypeStaticExpression,
 };

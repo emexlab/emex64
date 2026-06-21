@@ -301,7 +301,12 @@ bool assembler_code_preparse(assembler_invocation_t *inv,
             at->al = inv->line[i];
             if(token.type == kAssemblerTokenTypeInvalid)
             {
-                diag_error(at, "'%s' is a invalid token\n", at->str);
+                diag_error(at, "Token '%s' is not valid\n", at->str);
+                return false;
+            }
+            else if(token.type == kAssemblerTokenTypeTooLong)
+            {
+                diag_error(at, "Token is too long, token lenght limit is %d characters\n", LEXTOK_LENGHT_MAX);
                 return false;
             }
             at->type = token.type;
