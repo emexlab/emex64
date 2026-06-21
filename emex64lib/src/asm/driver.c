@@ -84,11 +84,11 @@ assembler_job_t *assembler_job_alloc(assembler_job_t *prev,
         job->argv[i] = strdup(argv[i]);
         if(job->argv[i] == NULL)
         {
-            i--;
-            while(i < 0)
+            for(int j = 0; j < i; j++)
             {
-                free(job->argv[--i]);
+                free(job->argv[j]);
             }
+            free(job->argv);
 
             free(job);
             return NULL;
