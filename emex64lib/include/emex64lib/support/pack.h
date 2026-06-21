@@ -26,6 +26,7 @@
 #define PACK_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 #define P7(a) ((uint64_t)((a) & 0x7F))
 #define PACK1(a) P7(a)
@@ -37,6 +38,13 @@
 #define PACK7(a,b,c,d,e,f,g) (PACK6(a,b,c,d,e,f) | (P7(g) << 42))
 #define PACK8(a,b,c,d,e,f,g,h) (PACK7(a,b,c,d,e,f,g) | (P7(h) << 49))
 #define PACK9(a,b,c,d,e,f,g,h,i) (PACK8(a,b,c,d,e,f,g,h) | (P7(i) << 56))
+
+#define PACK_CAT_(a,b) a##b
+#define PACK_CAT(a,b)  PACK_CAT_(a,b)
+#define PACK_NARG(...) PACK_NARG_(__VA_ARGS__, e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e,e, 9,8,7,6,5,4,3,2,1,0)
+#define PACK_NARG_( _1,_2,_3,_4,_5,_6,_7,_8,_9,_10,_11,_12,_13,_14,_15,_16, _17,_18,_19,_20,_21,_22,_23,_24,_25,_26,_27,_28,_29,_30,_31,_32, N, ...) N
+#define PACKe(...) ((uint64_t)0 * sizeof(struct { static_assert(0, "PACK: name has more than 9 characters"); char _c; }))
+#define PACK(...) PACK_CAT(PACK, PACK_NARG(__VA_ARGS__))(__VA_ARGS__)
 
 static inline uint64_t pack_name(const char *s)
 {
