@@ -29,24 +29,24 @@
 
 typedef enum: uint8_t {
     /* sentinel */
-    kAssemblerDirectiveTypeUnknown, /* the preprocessor shall flag this */
+    kAssemblerPreprocessorDirectiveTypeUnknown, /* the preprocessor shall flag this */
 
     /* importer  */
-    kAssemblerDirectiveTypeInclude,
+    kAssemblerPreprocessorDirectiveTypeInclude,
 
     /* macro */
-    kAssemblerDirectiveTypeDefine,
-    kAssemblerDirectiveTypeUndefine,
+    kAssemblerPreprocessorDirectiveTypeDefine,
+    kAssemblerPreprocessorDirectiveTypeUndefine,
 
     /* conditions */
-    kAssemblerDirectiveTypeIf,
-    kAssemblerDirectiveTypeIfDefined,
-    kAssemblerDirectiveTypeIfNotDefined,
-    kAssemblerDirectiveTypeElseIf,
-    kAssemblerDirectiveTypeElse,
-    kAssemblerDirectiveTypeEndIf,
-} kAssemblerDirectiveType;
+    kAssemblerPreprocessorDirectiveTypeIf,
+    kAssemblerPreprocessorDirectiveTypeIfDefined,
+    kAssemblerPreprocessorDirectiveTypeIfNotDefined,
+    kAssemblerPreprocessorDirectiveTypeElseIf,
+    kAssemblerPreprocessorDirectiveTypeElse,
+    kAssemblerPreprocessorDirectiveTypeEndIf,
+} kAssemblerPreprocessorDirectiveType;
 
-kAssemblerDirectiveType assembler_directive_type_for_str(const char *str);
+kAssemblerPreprocessorDirectiveType assembler_directive_type_for_str(const char *str);
 
 #endif /* EMEX64ASM_DIRECTIVE_H */

@@ -26,24 +26,24 @@
 
 #include <emex64lib/asm/preprocessor/directive.h>
 
-kAssemblerDirectiveType assembler_directive_type_for_str(const char *str)
+kAssemblerPreprocessorDirectiveType assembler_directive_type_for_str(const char *str)
 {
     if(str == NULL)
     {
-        return kAssemblerDirectiveTypeUnknown;
+        return kAssemblerPreprocessorDirectiveTypeUnknown;
     }
 
     switch(pack_name(str))
     {
-        case PACK('%','i','n','c','l','u','d','e','%'): return kAssemblerDirectiveTypeDefine;
-        case PACK('%','d','e','f','i','n','e','%'): return kAssemblerDirectiveTypeDefine;
-        case PACK('%','u','n','d','e','f','%'): return kAssemblerDirectiveTypeUndefine;
-        case PACK('%','i','f','%'): return kAssemblerDirectiveTypeIf;
-        case PACK('%','i','f','d','e','f','%'): return kAssemblerDirectiveTypeIfDefined;
-        case PACK('%','i','f','n','d','e','f','%'): return kAssemblerDirectiveTypeIfNotDefined;
-        case PACK('%','e','l','i','f','%'): return kAssemblerDirectiveTypeElseIf;
-        case PACK('%','e','l','s','e','%'): return kAssemblerDirectiveTypeElse;
-        case PACK('%','e','n','d','i','f','%'): return kAssemblerDirectiveTypeEndIf;
-        default: return kAssemblerDirectiveTypeUnknown;
+        case PACK('%','i','n','c','l','u','d','e','%'): return kAssemblerPreprocessorDirectiveTypeDefine;
+        case PACK('%','d','e','f','i','n','e','%'): return kAssemblerPreprocessorDirectiveTypeDefine;
+        case PACK('%','u','n','d','e','f','%'): return kAssemblerPreprocessorDirectiveTypeUndefine;
+        case PACK('%','i','f','%'): return kAssemblerPreprocessorDirectiveTypeIf;
+        case PACK('%','i','f','d','e','f','%'): return kAssemblerPreprocessorDirectiveTypeIfDefined;
+        case PACK('%','i','f','n','d','e','f','%'): return kAssemblerPreprocessorDirectiveTypeIfNotDefined;
+        case PACK('%','e','l','i','f','%'): return kAssemblerPreprocessorDirectiveTypeElseIf;
+        case PACK('%','e','l','s','e','%'): return kAssemblerPreprocessorDirectiveTypeElse;
+        case PACK('%','e','n','d','i','f','%'): return kAssemblerPreprocessorDirectiveTypeEndIf;
+        default: return kAssemblerPreprocessorDirectiveTypeUnknown;
     }
 }

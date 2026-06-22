@@ -191,10 +191,10 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                 inv->line[li]->type = kAssemblerLineTypeIgnore;
                 break;
             case kAssemblerLineTypeConditionDirective:
-                kAssemblerDirectiveType type = assembler_directive_type_for_str(inv->line[li]->token[0]->str);
+                kAssemblerPreprocessorDirectiveType type = assembler_directive_type_for_str(inv->line[li]->token[0]->str);
                 switch(type)
                 {
-                    case kAssemblerDirectiveTypeIf:
+                    case kAssemblerPreprocessorDirectiveTypeIf:
                     {
                         bool parent_active = !state.in_a_condition || state.condition_met;
                         if(!assembler_condition_state_push(&state))
@@ -229,7 +229,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         }
                         break;
                     }
-                    case kAssemblerDirectiveTypeIfDefined:
+                    case kAssemblerPreprocessorDirectiveTypeIfDefined:
                     {
                         bool parent_active = !state.in_a_condition || state.condition_met;
                         if(!assembler_condition_state_push(&state))
@@ -257,7 +257,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         state.in_a_condition = true;
                         break;
                     }
-                    case kAssemblerDirectiveTypeIfNotDefined:
+                    case kAssemblerPreprocessorDirectiveTypeIfNotDefined:
                     {
                         bool parent_active = !state.in_a_condition || state.condition_met;
                         if(!assembler_condition_state_push(&state))
@@ -285,7 +285,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         state.in_a_condition = true;
                         break;
                     }
-                    case kAssemblerDirectiveTypeElseIf:
+                    case kAssemblerPreprocessorDirectiveTypeElseIf:
                         if(state.in_a_condition == false)
                         {
                             diag_error(inv->line[li]->token[0], "%%elif%% directive was defined, but no %%if%% directive was defined before.\n");
@@ -304,7 +304,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                             goto express_if_directive;
                         }
                         break;
-                    case kAssemblerDirectiveTypeElse:
+                    case kAssemblerPreprocessorDirectiveTypeElse:
                         if(!state.in_a_condition)
                         {
                             diag_error(inv->line[li]->token[0], "%%else%% directive was defined, but no %%if%% directive was defined before.\n");
@@ -324,7 +324,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         state.condition_met = (!state.finalized && !state.condition_met) && state.parent_active;
                         state.in_a_else_condition = true;
                         break;
-                    case kAssemblerDirectiveTypeEndIf:
+                    case kAssemblerPreprocessorDirectiveTypeEndIf:
                         if(state.in_a_condition == false)
                         {
                             diag_error(inv->line[li]->token[0], "%%end%% directive was defined but no %%if%% directive was defined before.\n");
@@ -338,7 +338,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         break;
                 }
                 
-                if(type != kAssemblerDirectiveTypeEndIf)
+                if(type != kAssemblerPreprocessorDirectiveTypeEndIf)
                 {
                     state.last_condition_line = inv->line[li];
                 }
