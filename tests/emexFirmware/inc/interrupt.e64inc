@@ -22,22 +22,12 @@
 ; SOFTWARE.
 ;
 
-%define% INTC_BASE          0x0020000000000000
-%define% INTC_REG_PENDING   0x0020000000000000
-%define% INTC_REG_ENABLED   0x0020000000000008
-%define% INTC_REG_CTRL      0x0020000000000010
-%define% INTC_REG_VECTOR    0x0020000000000018
-%define% INTC_REG_ACK       0x0020000000000020
-%define% INTC_REG_CURRENT   0x0020000000000028
+%ifndef% INTERRUPT_E64INC
+%define% INTERRUPT_E64INC
 
-%define% INTC_CTRL_ENABLE   0x1
-%define% INTC_CTRL_NESTING  0x2
+extern _interrupt_init
+extern _interrupt_register_handler
+extern _interrupt_unregister_handler
+extern _interrupt_unregister_all
 
-%define% IRQ_EXCEPTION  0
-%define% IRQ_TIMER      1
-%define% IRQ_DISK       2
-%define% IRQ_NETWORK    3
-%define% IRQ_SOFTWARE   4
-%define% IRQ_UART       5
-%define% IRQ_8042       6   ; spicy x3 silly keyboard controller
-%define% IRQ_UART       7
+%endif% ; INTERRUPT_E64INC

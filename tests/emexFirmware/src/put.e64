@@ -28,10 +28,6 @@
 %define% PUT_DRAW_LOGO 0
 %endif% ; PUT_DRAW_LOGO
 
-extern gui_line
-extern _uart_putc
-extern _gui_putc
-
 ; normal ass data for the system
 section .data
 %if% PUT_DRAW_LOGO

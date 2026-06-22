@@ -22,10 +22,13 @@
 ; SOFTWARE.
 ;
 
-%ifndef% MC_E64INC
-%define% MC_E64INC
+%ifndef% GUI_E64INC
+%define% GUI_E64INC
 
-extern _mc_get_mem_size
-extern _mc_lock_ktrr
+; data section
+extern gui_line     ; word
+extern gui_column   ; word
 
-%endif% ; MC_E64INC
+extern _gui_putc
+
+%endif% ; GUI_E64INC

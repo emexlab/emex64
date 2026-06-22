@@ -22,10 +22,7 @@
 ; SOFTWARE.
 ;
 
-%ifndef% MC_E64INC
-%define% MC_E64INC
-
-extern _mc_get_mem_size
-extern _mc_lock_ktrr
-
-%endif% ; MC_E64INC
+%define% MC_BASE        0x002000000000A000
+%define% MCSIZE         0x002000000000A000
+%define% MCKTRR_SIZE    0x002000000000A008
+%define% MCKTRR_LOCKED  0x002000000000A010

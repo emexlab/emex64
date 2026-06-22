@@ -22,17 +22,37 @@
 ; SOFTWARE.
 ;
 
-%include% <interrupt.e64inc>
-%include% <uart.e64inc>
-%include% <rtc.e64inc>
-%include% <mc.e64inc>
-%include% <platform.e64inc>
-%include% <display.e64inc>
-%include% <mm.e64inc>
-%include% <regs.e64inc>
-%include% <timer.e64inc>
-%include% <8042.e64inc>
+%ifndef% EMEX64_E64INC
+%define% EMEX64_E64INC
 
-extern _putc
-extern _puts
-extern _putm
+%ifndef% USES_FW_LDSCRIPT
+%define% USES_FW_LDSCRIPT 0
+%endif% ; USES_FW_LDSCRIPT
+
+; basic information about the architecture
+%include% "arch/arch.e64inc"
+
+; needs the firmware
+%include% "put.e64inc"
+%include% "uart.e64inc"
+%include% "mc.e64inc"
+%include% "mem.e64inc"
+%include% "interrupt.e64inc"
+%include% "pmm.e64inc"
+%include% "exc.e64inc"
+%include% "font.e64inc"
+%include% "gui.e64inc"
+%include% "slab.e64inc"
+%include% "rtc.e64inc"
+
+%if% USES_FW_LDSCRIPT
+; needs the linker script of the firmware
+extern __emex64_exec_img_end
+extern __image_start
+extern __text_start
+extern __data_start
+extern __bss_start
+extern __bss_end
+%endif% ; USES_FW_LDSCRIPT
+
+%endif% ; EMEX64_E64INC

@@ -22,10 +22,11 @@
 ; SOFTWARE.
 ;
 
-%ifndef% MC_E64INC
-%define% MC_E64INC
-
-extern _mc_get_mem_size
-extern _mc_lock_ktrr
-
-%endif% ; MC_E64INC
+%define% RTC_BASE       0x0020000000006000
+%define% RTC_SECONDS    RTC_BASE
+%define% RTC_MINUTES    0x0020000000006008
+%define% RTC_HOURS      0x0020000000006010
+%define% RTC_DAY        0x0020000000006018
+%define% RTC_MONTH      0x0020000000006020
+%define% RTC_YEAR       0x0020000000006028
+%define% RTC_WEEKDAY    0x0020000000006030

@@ -22,10 +22,12 @@
 ; SOFTWARE.
 ;
 
-%ifndef% MC_E64INC
-%define% MC_E64INC
+%ifndef% SLAB_E64INC
+%define% SLAB_E64INC
 
-extern _mc_get_mem_size
-extern _mc_lock_ktrr
+extern _slab_init
+extern _kmalloc
+extern _kfree
+extern _kcalloc
 
-%endif% ; MC_E64INC
+%endif% ; SLAB_E64INC

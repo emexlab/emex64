@@ -22,16 +22,10 @@
 ; SOFTWARE.
 ;
 
-%define% UART_BASE      0x0020000000008000
-%define% UART_DATA      0x0020000000008000
-%define% UART_STATUS    0x0020000000008008
-%define% UART_CONTROL   0x0020000000008010
+%ifndef% UART_E64INC
+%define% UART_E64INC
 
-%define% UART_STATUS_RX_READY    0x01
-%define% UART_STATUS_TX_EMPTY    0x02
-%define% UART_STATUS_RX_FULL     0x04
-%define% UART_STATUS_OVERFLOW    0x08
+extern _uart_putc
+extern _uart_getc
 
-%define% UART_CTRL_RX_IRQ_EN     0x01
-%define% UART_CTRL_TX_IRQ_EN     0x02
-%define% UART_CTRL_RESET         0x04
+%endif% ; UART_E64INC

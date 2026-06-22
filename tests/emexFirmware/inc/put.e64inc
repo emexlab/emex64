@@ -22,10 +22,13 @@
 ; SOFTWARE.
 ;
 
-%ifndef% MC_E64INC
-%define% MC_E64INC
+%ifndef% PUT_E64INC
+%define% PUT_E64INC
 
-extern _mc_get_mem_size
-extern _mc_lock_ktrr
+extern _put_init
+extern _putc
+extern _puts
+extern _put_mem
+extern _putbase
 
-%endif% ; MC_E64INC
+%endif% ; PUT_E64INC

@@ -24,10 +24,6 @@
 
 %include% <emex64.e64inc>
 
-extern _memset
-extern _pmm_alloc
-extern _pmm_free
-
 %define% SLAB_META_SIZE         64                              ; size of slab metadata
 
 %define% SLAB_OFF_BASE          0x00

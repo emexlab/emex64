@@ -22,10 +22,18 @@
 ; SOFTWARE.
 ;
 
-%ifndef% MC_E64INC
-%define% MC_E64INC
+%ifndef% ARCH_E64INC
+%define% ARCH_E64INC
 
-extern _mc_get_mem_size
-extern _mc_lock_ktrr
+%include% "interrupt.e64inc"
+%include% "uart.e64inc"
+%include% "rtc.e64inc"
+%include% "mc.e64inc"
+%include% "platform.e64inc"
+%include% "display.e64inc"
+%include% "mm.e64inc"
+%include% "regs.e64inc"
+%include% "timer.e64inc"
+%include% "8042.e64inc"
 
-%endif% ; MC_E64INC
+%endif% ; ARCH_E64INC

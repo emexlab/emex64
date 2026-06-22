@@ -22,10 +22,9 @@
 ; SOFTWARE.
 ;
 
-%ifndef% MC_E64INC
-%define% MC_E64INC
+%ifndef% EXC_E64INC
+%define% EXC_E64INC
 
-extern _mc_get_mem_size
-extern _mc_lock_ktrr
+extern _exception_handler
 
-%endif% ; MC_E64INC
+%endif% ; EXC_E64INC

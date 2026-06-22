@@ -22,8 +22,7 @@
 ; SOFTWARE.
 ;
 
-extern _memcpy
-extern _kmalloc
+%include% <emex64.e64inc>
 
 _strlen:
     clr rr                      ; clearing return register
