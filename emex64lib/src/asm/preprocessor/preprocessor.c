@@ -272,13 +272,13 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
 
                         /* now openup a file */
                         emex_file_t *file = emex_file_alloc(hdr_path, in_data_file_policy);
-                        free(hdr_path);
                         if(file == NULL)
                         {
-                            diag_error(inv->line[li]->token[1], "couldn't open header at path '%s'\n", hdr_token);
+                            diag_error(inv->line[li]->token[1], "couldn't open header at path '%s'\n", hdr_path);
                             free(hdr_path);
                             goto failure;
                         }
+                        free(hdr_path);
 
                         if(!assembler_code_inject_file(inv, li, file))
                         {
