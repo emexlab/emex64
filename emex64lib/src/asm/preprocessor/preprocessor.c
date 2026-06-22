@@ -108,9 +108,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                     if(inv->line[li]->token[ti]->type == kAssemblerTokenTypeStaticExpression)
                     {
                         diag_error(inv->line[li]->token[ti], "static expressions aren't supported yet!\n");
-                        assembler_condition_state_deinit(&state);
-                        assembler_macro_storage_dealloc(storage);
-                        return false;
+                        goto failure;
                     }
 
                     assembler_macro_t *found_match = assembler_macro_storage_lookup(storage, inv->line[li]->token[ti]->str);
@@ -135,9 +133,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         if(grown == NULL)
                         {
                             diag_fatal(NULL, "out of memory expanding macro\n");
-                            assembler_condition_state_deinit(&state);
-                            assembler_macro_storage_dealloc(storage);
-                            return false;
+                            goto failure;
                         }
                         inv->line[li]->token = grown;
 
@@ -165,9 +161,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         if(at == NULL)
                         {
                             diag_fatal(NULL, "out of memory expanding macro\n");
-                            assembler_condition_state_deinit(&state);
-                            assembler_macro_storage_dealloc(storage);
-                            return false;
+                            goto failure;
                         }
                         at->al = inv->line[li];
                         at->str = strdup(found_match->inject_token[k]);
@@ -179,9 +173,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                     if(macro_nest_remaining == 0)
                     {
                         diag_error(inv->line[li]->token[ti], "macro nesting limit of %d was reached\n", UINT16_MAX);
-                        assembler_condition_state_deinit(&state);
-                        assembler_macro_storage_dealloc(storage);
-                        return false;
+                        goto failure;
                     }
                     
                     goto repeat;
@@ -203,9 +195,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         if(!assembler_macro_storage_append_macro(storage, inv->line[li]->token[1]->str, &inv->line[li]->token[2], inv->line[li]->token_cnt - 2))
                         {
                             diag_fatal(NULL, "out of memory, can't append macro to macro storage\n");
-                            assembler_condition_state_deinit(&state);
-                            assembler_macro_storage_dealloc(storage);
-                            return false;
+                            goto failure;
                         }
                         break;
                     case kAssemblerPreprocessorDirectiveTypeIf:
@@ -214,9 +204,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         if(!assembler_condition_state_push(&state))
                         {
                             diag_fatal(inv->line[li]->token[0], "failed to push condition frame onto condition state\n");
-                            assembler_condition_state_deinit(&state);
-                            assembler_macro_storage_dealloc(storage);
-                            return false;
+                            goto failure;
                         }
                         state.parent_active = parent_active;
                         
@@ -249,9 +237,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         if(!assembler_condition_state_push(&state))
                         {
                             diag_fatal(inv->line[li]->token[0], "failed to push condition frame onto condition state\n");
-                            assembler_condition_state_deinit(&state);
-                            assembler_macro_storage_dealloc(storage);
-                            return false;
+                            goto failure;
                         }
                         state.parent_active = parent_active;
                         
@@ -277,9 +263,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         if(!assembler_condition_state_push(&state))
                         {
                             diag_fatal(inv->line[li]->token[0], "failed to push condition frame onto condition state\n");
-                            assembler_condition_state_deinit(&state);
-                            assembler_macro_storage_dealloc(storage);
-                            return false;
+                            goto failure;
                         }
                         state.parent_active = parent_active;
                         
@@ -303,9 +287,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         if(state.in_a_condition == false)
                         {
                             diag_error(inv->line[li]->token[0], "%%elif%% directive was defined, but no %%if%% directive was defined before.\n");
-                            assembler_condition_state_deinit(&state);
-                            assembler_macro_storage_dealloc(storage);
-                            return false;
+                            goto failure;
                         }
                         
                         if(state.finalized || state.condition_met)
@@ -322,17 +304,13 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         if(!state.in_a_condition)
                         {
                             diag_error(inv->line[li]->token[0], "%%else%% directive was defined, but no %%if%% directive was defined before.\n");
-                            assembler_condition_state_deinit(&state);
-                            assembler_macro_storage_dealloc(storage);
-                            return false;
+                            goto failure;
                         }
                         
                         if(state.in_a_else_condition)
                         {
                             diag_error(inv->line[li]->token[0], "%%else%% directive was defined inside another %%else%% directive.\n");
-                            assembler_condition_state_deinit(&state);
-                            assembler_macro_storage_dealloc(storage);
-                            return false;
+                            goto failure;
                         }
                         
                         state.condition_met = (!state.finalized && !state.condition_met) && state.parent_active;
@@ -342,9 +320,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         if(state.in_a_condition == false)
                         {
                             diag_error(inv->line[li]->token[0], "%%end%% directive was defined but no %%if%% directive was defined before.\n");
-                            assembler_condition_state_deinit(&state);
-                            assembler_macro_storage_dealloc(storage);
-                            return false;
+                            goto failure;
                         }
                         assembler_condition_state_pop(&state);
                         break;
@@ -373,5 +349,10 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
     assembler_condition_state_deinit(&state);
     assembler_macro_storage_dealloc(storage);
     return !in_a_condition;
+
+failure:
+    assembler_condition_state_deinit(&state);
+    assembler_macro_storage_dealloc(storage);
+    return false;
 }
 
