@@ -78,7 +78,10 @@ bool assembler_section_parse(assembler_invocation_t *inv)
                     }
 
                     /* inserting address as label */
-                    assembler_label_append(inv->line[i]->token[0]);
+                    if(!assembler_label_append(inv->line[i]->token[0]))
+                    {
+                        return false;
+                    }
 
                     /* checking if its known */
                     int dbs = 8;
@@ -283,7 +286,10 @@ bool assembler_section_parse(assembler_invocation_t *inv)
                     }
 
                     /* insert label into label array */
-                    assembler_label_append(inv->line[i]->token[0]);
+                    if(!assembler_label_append(inv->line[i]->token[0]))
+                    {
+                        return false;
+                    }
 
                     /* find out size */
                     int dbs = 8;
