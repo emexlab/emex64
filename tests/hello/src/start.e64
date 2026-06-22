@@ -22,7 +22,9 @@
 ; SOFTWARE.
 ;
 
+%if% 1
 %include% <emex64.e64inc>
+%endif% ; 1
 
 section .data
     msg db "hello, world!\r\n\0"

@@ -61,9 +61,10 @@ void assembler_invocation_dealloc(assembler_invocation_t *inv)
 {
     /* options have to be freed by who allocated them */
 
-    for(size_t i = 0; i < inv->file_cnt; i++)
+    /* skipping the tool managed input file object */
+    for(size_t i = 1; i < inv->file_cnt; i++)
     {
-        free(inv->file[i]);
+        emex_file_dealloc(inv->file[i]);
     }
     free(inv->file);
 

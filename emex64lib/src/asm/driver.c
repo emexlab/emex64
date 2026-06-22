@@ -891,7 +891,7 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
                 }
                 else if(WIFSIGNALED(rstatus))
                 {
-                    diag_error(NULL, "job (command='%s' | pid=%d) terminated by signal %d\n", job->command, pid, WTERMSIG(rstatus));
+                    diag_fatal(NULL, "job (command='%s' | pid=%d) terminated by signal %d\n", job->command, pid, WTERMSIG(rstatus));
                     return false;
                 }
             }

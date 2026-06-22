@@ -40,7 +40,7 @@ typedef struct {
 typedef struct assembler_invocation {
     assembler_invocation_options_t options;     /* borrowed */
     
-    char **file;
+    emex_file_t **file;
     size_t file_cnt;
 
     assembler_line_t **line;

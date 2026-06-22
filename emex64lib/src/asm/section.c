@@ -99,7 +99,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
                     }
                     else if(strcmp(inv->line[i]->token[1]->str, "df") == 0)
                     {
-                        const char *base_file_path = inv->file[inv->line[i]->file_idx];
+                        const char *base_file_path = inv->file[inv->line[i]->file_idx]->path;
 
                         /* need directory path */
                         char base_dir[PATH_MAX];

@@ -29,10 +29,15 @@
 %define% USES_FW_LDSCRIPT 0
 %endif% ; USES_FW_LDSCRIPT
 
+%ifndef% USES_FW_CODE
+%define% USES_FW_CODE 0
+%endif% ; USES_FW_CODE
+
 ; basic information about the architecture
 %include% "arch/arch.e64inc"
 
-; needs the firmware
+%if% USES_FW_CODE
+; needs firmware code
 %include% "put.e64inc"
 %include% "uart.e64inc"
 %include% "mc.e64inc"
@@ -44,6 +49,7 @@
 %include% "gui.e64inc"
 %include% "slab.e64inc"
 %include% "rtc.e64inc"
+%endif% ; USES_FW_CODE
 
 %if% USES_FW_LDSCRIPT
 ; needs the linker script of the firmware

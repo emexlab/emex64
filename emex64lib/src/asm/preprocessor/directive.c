@@ -35,7 +35,7 @@ kAssemblerPreprocessorDirectiveType assembler_directive_type_for_str(const char 
 
     switch(pack_name(str))
     {
-        case PACK('%','i','n','c','l','u','d','e','%'): return kAssemblerPreprocessorDirectiveTypeDefine;
+        case PACK('%','i','n','c','l','u','d','e','%'): return kAssemblerPreprocessorDirectiveTypeInclude;
         case PACK('%','d','e','f','i','n','e','%'): return kAssemblerPreprocessorDirectiveTypeDefine;
         case PACK('%','u','n','d','e','f','%'): return kAssemblerPreprocessorDirectiveTypeUndefine;
         case PACK('%','i','f','%'): return kAssemblerPreprocessorDirectiveTypeIf;

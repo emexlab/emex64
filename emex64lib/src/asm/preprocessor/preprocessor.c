@@ -23,10 +23,51 @@
  */
 
 #include <string.h>
-#include <emex64lib/asm/preprocessor/preprocessor.h>
+#include <assert.h>
 #include <emex64lib/support/parser.h>
 #include <emex64lib/support/diagnostic/legacy.h>
+#include <emex64lib/asm/preprocessor/preprocessor.h>
 #include <emex64lib/asm/invocation.h>
+#include <emex64lib/asm/code.h>
+
+static inline char *__assembler_preprocessor_include_directive_get_token(const char *token,
+                                                                         bool *system_hdr)
+{
+    assert(token != NULL && system_hdr != NULL);
+
+    size_t len = strlen(token);
+    if(len <= 2)
+    {
+        return NULL;
+    }
+
+    /* checking type of hdr */
+    if(token[0] == '"' && token[len - 1] == '"')
+    {
+        *system_hdr = false;
+    }
+    else if(token[0] == '<' && token[len - 1] == '>')
+    {
+        *system_hdr = true;
+    }
+    else
+    {
+        /* unknown token */
+        return NULL;
+    }
+
+    /* extract hdr path */
+    char *hdr = malloc(len - 1);
+    if(hdr == NULL)
+    {
+        return NULL;
+    }
+
+    memcpy(hdr, token + 1, len - 2);
+    hdr[len - 2] = '\0';
+
+    return hdr;
+}
 
 bool assembler_preprocessor_run(assembler_invocation_t *inv)
 {
@@ -191,6 +232,64 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
             case kAssemblerLineTypePreprocessorDirective:
                 switch(type)
                 {
+                    case kAssemblerPreprocessorDirectiveTypeInclude:
+                    {
+                        if(!(!state.in_a_condition || state.condition_met))
+                        {
+                            /* ignore includation */
+                            inv->line[li]->type = kAssemblerLineTypeIgnore;
+                            break;
+                        }
+
+                        /* extracting hdr path token and type of hdr path token */
+                        bool system_hdr = false;
+                        char *hdr_token = __assembler_preprocessor_include_directive_get_token(inv->line[li]->token[1]->str, &system_hdr);
+                        if(hdr_token == NULL)
+                        {
+                            diag_error(inv->line[li]->token[1], "invalid token passed after %%include%% directive\n");
+                            goto failure;
+                        }
+
+                        /* looking for da cat in the file system ^^ */
+                        char *hdr_path;
+                        if(system_hdr)
+                        {
+                            hdr_path = assembler_code_find_system_header(hdr_token, (const char**)inv->include_dirs, inv->include_dir_cnt);
+                        }
+                        else
+                        {
+                            hdr_path = assembler_code_find_header(hdr_token, inv->file[inv->line[li]->file_idx]->path);
+                        }
+
+                        /* did I catch this cat >:3 */
+                        if(hdr_path == NULL)
+                        {
+                            diag_error(inv->line[li]->token[1], "couldn't find header at path '%s'\n", hdr_token);
+                            free(hdr_token);
+                            goto failure;
+                        }
+                        free(hdr_token);
+
+                        /* now openup a file */
+                        emex_file_t *file = emex_file_alloc(hdr_path, in_data_file_policy);
+                        free(hdr_path);
+                        if(file == NULL)
+                        {
+                            diag_error(inv->line[li]->token[1], "couldn't open header at path '%s'\n", hdr_token);
+                            free(hdr_path);
+                            goto failure;
+                        }
+
+                        if(!assembler_code_inject_file(inv, li, file))
+                        {
+                            diag_fatal(inv->line[li]->token[1], "couldn't inject header into invocation\n");
+                            emex_file_dealloc(file);
+                            goto failure;
+                        }
+
+                        li--; /* file was inseted at this location */
+                        break;
+                    }
                     case kAssemblerPreprocessorDirectiveTypeDefine:
                         if(!assembler_macro_storage_append_macro(storage, inv->line[li]->token[1]->str, &inv->line[li]->token[2], inv->line[li]->token_cnt - 2))
                         {
@@ -333,7 +432,12 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                 {
                     state.last_condition_line = inv->line[li];
                 }
-                inv->line[li]->type = kAssemblerLineTypeIgnore;
+
+                /* include doesn't exist anymore at that offset */
+                if(type != kAssemblerPreprocessorDirectiveTypeInclude)
+                {
+                    inv->line[li]->type = kAssemblerLineTypeIgnore;
+                }
                 break;
             default:
                 break;

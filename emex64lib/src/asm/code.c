@@ -34,54 +34,16 @@
 #include <emex64lib/asm/lexer.h>
 
 typedef struct expand_entry {
-    char *source_path;
     char *code;
     size_t len;
     size_t line_num;
 } expand_entry_t;
 
-char *find_header(const char *name,
-                  const char *source_dir,
-                  const char **inc_dirs,
-                  size_t inc_cnt)
+static bool __assembler_code_fastline(emex_file_t *file,
+                                      expand_entry_t **entries,
+                                      size_t *cnt,
+                                      size_t *cap)
 {
-    char buf[PATH_MAX];
-
-    if(source_dir)
-    {
-        snprintf(buf, sizeof(buf), "%s/%s", source_dir, name);
-        if(access(buf, R_OK) == 0)
-        {
-            return strdup(buf);
-        }
-    }
-
-    for(size_t i = 0; i < inc_cnt; i++)
-    {
-        snprintf(buf, sizeof(buf), "%s/%s", inc_dirs[i], name);
-        if(access(buf, R_OK) == 0)
-        {
-            return strdup(buf);
-        }
-    }
-
-    return NULL;
-}
-
-static bool expand_file(emex_file_t *file,
-                        expand_entry_t **entries,
-                        size_t *cnt,
-                        size_t *cap,
-                        const char **inc_dirs,
-                        size_t inc_cnt,
-                        int depth)
-{
-    if(depth > 1024)
-    {
-        diag_error(NULL, "include recurse limit exceeded near '%s'\n", file->path);
-        return false;
-    }
-
     if(!emex_file_map(file))
     {
         diag_error(NULL, "failed to map assembly file '%s'\n", file->path);
@@ -90,11 +52,6 @@ static bool expand_file(emex_file_t *file,
 
     size_t len = file->len;
     const char *code = file->content;
-
-    char dir_buf[PATH_MAX];
-    snprintf(dir_buf, sizeof(dir_buf), "%s", file->path);
-    char *slash = strrchr(dir_buf, '/');
-    const char *source_dir = slash ? (slash[0] = '\0', dir_buf) : ".";
 
     size_t start = 0;
     size_t phys_line = 0;
@@ -119,84 +76,11 @@ static bool expand_file(emex_file_t *file,
             trimmed++;
         }
 
-        if(strncmp(trimmed, "%include%", 9) == 0)
-        {
-            char *arg = trimmed + 9;
-            while(*arg == ' ' || *arg == '\t')
-            {
-                arg++;
-            }
-
-            char hdr_name[PATH_MAX] = {0};
-            bool is_system = false;
-            if(*arg == '<')
-            {
-                is_system = true;
-                char *end = strchr(arg + 1, '>');
-                if(!end)
-                {
-                    diag_error(NULL, "malformed %%include%% (missing '>') in '%s'\n", file->path);
-                    free(line);
-                    return false;
-                }
-                size_t nlen = (size_t)(end - arg - 1);
-                memcpy(hdr_name, arg + 1, nlen);
-                hdr_name[nlen] = '\0';
-            }
-            else if(*arg == '"')
-            {
-                char *end = strchr(arg + 1, '"');
-                if(!end)
-                {
-                    diag_error(NULL, "malformed %%include%% (missing '\"') in '%s'\n", file->path);
-                    free(line);
-                    return false;
-                }
-                size_t nlen = (size_t)(end - arg - 1);
-                memcpy(hdr_name, arg + 1, nlen);
-                hdr_name[nlen] = '\0';
-            }
-            else
-            {
-                diag_error(NULL, "malformed %%include%% directive in '%s'\n", file->path);
-                free(line);
-                return false;
-            }
-
-            /* resolve path */
-            char *hdr_path = find_header(hdr_name, is_system ? NULL : source_dir, inc_dirs, inc_cnt);
-            if(!hdr_path)
-            {
-                diag_error(NULL, "header '%s' not found (included from '%s')\n", hdr_name, file->path);
-                free(line);
-                return false;
-            }
-
-            free(line);
-
-            emex_file_t *file = emex_file_alloc(hdr_path, in_data_file_policy);
-            free(hdr_path);
-            if(file == NULL)
-            {
-                return false;
-            }
-
-            /* recurse */
-            bool ok = expand_file(file, entries, cnt, cap, inc_dirs, inc_cnt, depth + 1);
-            emex_file_dealloc(file);
-            if(!ok)
-            {
-                return false;
-            }
-            continue;
-        }
-
         if(*cnt >= *cap)
         {
             *cap = (*cap) ? (*cap) * 2 : 64;
             *entries = realloc(*entries, (*cap) * sizeof(expand_entry_t));
         }
-        (*entries)[*cnt].source_path = strdup(file->path);
         (*entries)[*cnt].code = line;
         (*entries)[*cnt].len = line_len;
         (*entries)[*cnt].line_num = phys_line;
@@ -206,127 +90,295 @@ static bool expand_file(emex_file_t *file,
     return true;
 }
 
-bool assembler_code_preparse(assembler_invocation_t *inv,
-                             emex_file_t *input)
+char *assembler_code_find_header(const char *name,
+                                 const char *source_file)
 {
-    /*
-     * preparing compiler invocation to
-     * map and parse files.
-     */
+    char dir_buf[PATH_MAX];
+    snprintf(dir_buf, sizeof(dir_buf), "%s", source_file);
+    char *slash = strrchr(dir_buf, '/');
+    const char *source_dir = slash ? (slash[0] = '\0', dir_buf) : ".";
+
+    char buf[PATH_MAX];
+    if(source_dir)
+    {
+        snprintf(buf, sizeof(buf), "%s/%s", source_dir, name);
+        if(access(buf, R_OK) == 0)
+        {
+            return strdup(buf);
+        }
+    }
+    return NULL;
+}
+
+char *assembler_code_find_system_header(const char *name,
+                                        const char **inc_dirs,
+                                        size_t inc_cnt)
+{
+    char buf[PATH_MAX];
+    for(size_t i = 0; i < inc_cnt; i++)
+    {
+        snprintf(buf, sizeof(buf), "%s/%s", inc_dirs[i], name);
+        if(access(buf, R_OK) == 0)
+        {
+            return strdup(buf);
+        }
+    }
+    return NULL;
+}
+
+static inline bool __assembler_splice_line(assembler_invocation_t *inv,
+                                           uint64_t idx,
+                                           size_t count)
+{
+    /* bounds check */
+    if(idx >= inv->line_cnt)
+    {
+        return false;
+    }
+
+    /* realloc */
+    size_t new_cnt = inv->line_cnt - 1 + count;
+    if(new_cnt > inv->line_cnt)
+    {
+        assembler_line_t **tmp = realloc(inv->line, (new_cnt + 1) * sizeof *tmp);
+        if(!tmp)
+        {
+            return false;
+        }
+        inv->line = tmp;
+    }
+
+    /* deallocating the idx */
+    free(inv->line[idx]->str);
+    for(uint64_t i = 0; i < inv->line[idx]->token_cnt; i++)
+    {
+        free(inv->line[idx]->token[i]->str);
+    }
+    free(inv->line[idx]->token);
+
+    /* shift the tail */
+    memmove(&inv->line[idx + count], &inv->line[idx + 1], (inv->line_cnt - idx - 1) * sizeof *inv->line);
+    for(size_t i = 0; i < count; i++)
+    {
+        inv->line[idx + i] = NULL;
+    }
+
+    inv->line_cnt = new_cnt;
+    return true;
+}
+
+bool assembler_code_inject_file(assembler_invocation_t *inv,
+                                uint64_t at_line_index,
+                                emex_file_t *inj_file)
+{
+    /* getting code */
     expand_entry_t *entries = NULL;
     size_t entry_cnt = 0, entry_cap = 0;
 
-    if(!expand_file(input, &entries, &entry_cnt, &entry_cap, (const char **)inv->include_dirs, inv->include_dir_cnt, 0))
+    if(!__assembler_code_fastline(inj_file, &entries, &entry_cnt, &entry_cap))
     {
         free(entries);
         return false;
     }
 
-    inv->file_cnt = 0;
-    inv->file = NULL;
-
-    for(size_t i = 0; i < entry_cnt; i++)
+    /* injecting file into array */
+    uint64_t inj_file_idx;
+    if(inv->file == NULL)
     {
-        const char *sp = entries[i].source_path;
-        bool found = false;
-        for(size_t j = 0; j < inv->file_cnt; j++)
+        inv->file = malloc(sizeof(emex_file_t*));
+        if(inv->file == NULL)
         {
-            if(strcmp(inv->file[j], sp) == 0)
-            {
-                found = true; break;
-            }
+            free(entries);
+            return false;
         }
-        if(!found)
-        {
-            inv->file = realloc(inv->file, (inv->file_cnt + 1) * sizeof(emex_file_t*));
-            inv->file[inv->file_cnt++] = strdup(sp);
-        }
+        inv->file[inv->file_cnt] = inj_file;
     }
-
-    inv->line = calloc(entry_cnt + 1, sizeof(assembler_line_t*));
-    inv->line_cnt = 0;
-
-    for(size_t i = 0; i < entry_cnt; i++)
+    else
     {
-        size_t file_idx = 0;
-        for(size_t j = 0; j < inv->file_cnt; j++)
+        emex_file_t **newp = realloc(inv->file, (inv->file_cnt + 1) *  sizeof(emex_file_t*));
+        if(newp == NULL)
         {
-            if(strcmp(inv->file[j], entries[i].source_path) == 0)
-            {
-                file_idx = j;
-                break;
-            }
+            free(entries);
+            return false;
+        }
+        inv->file = newp;
+        inv->file[inv->file_cnt] = inj_file;
+    }
+    inj_file_idx = inv->file_cnt++;
+
+    /* handling preparse */
+    if(inv->line_cnt != 0)
+    {
+        if(!__assembler_splice_line(inv, at_line_index, entry_cnt))
+        {
+            free(entries);
+            return false;
         }
 
-        assembler_line_t *al = calloc(1, sizeof(assembler_line_t));
-        al->str = entries[i].code;
-        al->line_num = entries[i].line_num;
-        al->file_idx = file_idx;
-        al->inv = inv;
-        inv->line[inv->line_cnt++] = al;
-        free(entries[i].source_path);
-    }
-    free(entries);
-
-    /* getting subtokens of each token */
-    for(unsigned long i = 0; i < inv->line_cnt; i++)
-    {
-        /* using cmptok in first pass to get token count */
-        for(lextok_token_t token = lextok(inv->line[i]->str); token.token != NULL;)
+        /* inject additional lines */
+        for(size_t i = 0; i < entry_cnt; i++)
         {
+            assembler_line_t *al = calloc(1, sizeof(assembler_line_t));
+            al->str = entries[i].code;
+            al->line_num = entries[i].line_num;
+            al->file_idx = inj_file_idx;
+            al->inv = inv;
+            inv->line[at_line_index + i] = al;
+        }
+
+        /* getting subtokens of each token */
+        for(size_t i = 0; i < entry_cnt; i++)
+        {
+            /* using cmptok in first pass to get token count */
+            for(lextok_token_t token = lextok(inv->line[at_line_index + i]->str); token.token != NULL;)
+            {
+                /*
+                 * until this is not null i will not move
+                 * anywhere else than my safe space which
+                 * is this while loop :3
+                 */
+                inv->line[at_line_index + i]->token_cnt++;
+                token = lextok(NULL);
+            }
+
+            /* copy subtokens */
+            inv->line[at_line_index + i]->token = calloc(inv->line[at_line_index + i]->token_cnt, sizeof(assembler_token_t*));
+            inv->line[at_line_index + i]->token_cnt = 0;
+
             /*
-             * until this is not null i will not move
-             * anywhere else than my safe space which
-             * is this while loop :3
+             * again doing the same dance, over and over
+             * and over again, is this a carousell or
+             * why am I getting ill rn.
              */
-            inv->line[i]->token_cnt++;
-            token = lextok(NULL);
+            for(lextok_token_t token = lextok(inv->line[at_line_index + i]->str); token.token != NULL;)
+            {
+                assembler_token_t *at = calloc(1, sizeof(assembler_token_t));
+                at->str = strdup(token.token);
+                at->column_num = token.column + 1;
+                at->al = inv->line[at_line_index + i];
+                if(token.type == kAssemblerTokenTypeInvalid)
+                {
+                    diag_error(at, "Token '%s' is not valid\n", at->str);
+                    free(entries);
+                    return false;
+                }
+                else if(token.type == kAssemblerTokenTypeTooLong)
+                {
+                    diag_error(at, "Token is too long, token lenght limit is %d characters\n", LEXTOK_LENGHT_MAX);
+                    free(entries);
+                    return false;
+                }
+                at->type = token.type;
+                inv->line[at_line_index + i]->token[inv->line[at_line_index + i]->token_cnt++] = at;
+                token = lextok(NULL);
+            }
         }
 
-        /* copy subtokens */
-        inv->line[i]->token = calloc(inv->line[i]->token_cnt, sizeof(assembler_token_t*));
-        inv->line[i]->token_cnt = 0;
-
-        /*
-         * again doing the same dance, over and over
-         * and over again, is this a carousell or
-         * why am I getting ill rn.
-         */
-        for(lextok_token_t token = lextok(inv->line[i]->str); token.token != NULL;)
+        /* token pretype evaluation (for macros) */
+        for(size_t i = 0; i < entry_cnt; i++)
         {
-            assembler_token_t *at = calloc(1, sizeof(assembler_token_t));
-            at->str = strdup(token.token);
-            at->column_num = token.column + 1;
-            at->al = inv->line[i];
-            if(token.type == kAssemblerTokenTypeInvalid)
+            if(inv->line[at_line_index + i]->token_cnt == 0)
             {
-                diag_error(at, "Token '%s' is not valid\n", at->str);
-                return false;
+                continue;
             }
-            else if(token.type == kAssemblerTokenTypeTooLong)
+
+            /* if it has a valid preprocessor directive type then it is a preprocessor directive */
+            if(assembler_directive_type_for_str(inv->line[at_line_index + i]->token[0]->str) != kAssemblerPreprocessorDirectiveTypeUnknown)
             {
-                diag_error(at, "Token is too long, token lenght limit is %d characters\n", LEXTOK_LENGHT_MAX);
-                return false;
+                inv->line[at_line_index + i]->type = kAssemblerLineTypePreprocessorDirective;
             }
-            at->type = token.type;
-            inv->line[i]->token[inv->line[i]->token_cnt++] = at;
-            token = lextok(NULL);
+        }
+    }
+    else
+    {
+        inv->line = calloc(entry_cnt, sizeof(assembler_line_t*));
+
+        /* inject all lines */
+        for(size_t i = 0; i < entry_cnt; i++)
+        {
+            assembler_line_t *al = calloc(1, sizeof(assembler_line_t));
+            al->str = entries[i].code;
+            al->line_num = entries[i].line_num;
+            al->file_idx = inj_file_idx;
+            al->inv = inv;
+            inv->line[inv->line_cnt++] = al;
+        }
+
+        /* getting subtokens of each token */
+        for(uint64_t i = 0; i < inv->line_cnt; i++)
+        {
+            /* using cmptok in first pass to get token count */
+            for(lextok_token_t token = lextok(inv->line[i]->str); token.token != NULL;)
+            {
+                /*
+                 * until this is not null i will not move
+                 * anywhere else than my safe space which
+                 * is this while loop :3
+                 */
+                inv->line[i]->token_cnt++;
+                token = lextok(NULL);
+            }
+
+            /* copy subtokens */
+            inv->line[i]->token = calloc(inv->line[i]->token_cnt, sizeof(assembler_token_t*));
+            inv->line[i]->token_cnt = 0;
+
+            /*
+             * again doing the same dance, over and over
+             * and over again, is this a carousell or
+             * why am I getting ill rn.
+             */
+            for(lextok_token_t token = lextok(inv->line[i]->str); token.token != NULL;)
+            {
+                assembler_token_t *at = calloc(1, sizeof(assembler_token_t));
+                at->str = strdup(token.token);
+                at->column_num = token.column + 1;
+                at->al = inv->line[i];
+                if(token.type == kAssemblerTokenTypeInvalid)
+                {
+                    diag_error(at, "Token '%s' is not valid\n", at->str);
+                    free(entries);
+                    return false;
+                }
+                else if(token.type == kAssemblerTokenTypeTooLong)
+                {
+                    diag_error(at, "Token is too long, token lenght limit is %d characters\n", LEXTOK_LENGHT_MAX);
+                    free(entries);
+                    return false;
+                }
+                at->type = token.type;
+                inv->line[i]->token[inv->line[i]->token_cnt++] = at;
+                token = lextok(NULL);
+            }
+        }
+
+        /* token pretype evaluation (for macros) */
+        for(uint64_t i = 0; i < inv->line_cnt; i++)
+        {
+            if(inv->line[i]->token_cnt == 0)
+            {
+                continue;
+            }
+
+            /* if it has a valid preprocessor directive type then it is a preprocessor directive */
+            if(assembler_directive_type_for_str(inv->line[i]->token[0]->str) != kAssemblerPreprocessorDirectiveTypeUnknown)
+            {
+                inv->line[i]->type = kAssemblerLineTypePreprocessorDirective;
+            }
         }
     }
 
-    /* token pretype evaluation (for macros) */
-    for(unsigned long i = 0; i < inv->line_cnt; i++)
-    {
-        if(inv->line[i]->token_cnt == 0)
-        {
-            continue;
-        }
+    free(entries);
+    return true;
+}
 
-        /* if it has a valid preprocessor directive type then it is a preprocessor directive */
-        if(assembler_directive_type_for_str(inv->line[i]->token[0]->str) != kAssemblerPreprocessorDirectiveTypeUnknown)
-        {
-            inv->line[i]->type = kAssemblerLineTypePreprocessorDirective;
-        }
+bool assembler_code_preparse(assembler_invocation_t *inv,
+                             emex_file_t *input)
+{
+    if(!assembler_code_inject_file(inv, 0, input))
+    {
+        diag_fatal(NULL, "couldn't parse file at '%s'\n", input->path);
+        return false;
     }
 
     return true;
