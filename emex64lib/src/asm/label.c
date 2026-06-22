@@ -95,6 +95,13 @@ bool assembler_label_append(assembler_token_t *at)
     char *name = NULL;
     if(at->al->type == kAssemblerLineTypeLocalLabel)
     {
+        /* checking if we are in a scope (required) */
+        if(inv->label_scope == NULL)
+        {
+            diag_error(at, "local label '%s' was defined out of the scope of a global label, which is illegal\n", at->str);
+            return false;
+        }
+
         /* constructing scoped label */
         size_t label_scope_len = strlen(inv->label_scope);
         size_t ct_len = strlen(at->str);
@@ -108,13 +115,6 @@ bool assembler_label_append(assembler_token_t *at)
         memcpy(name, inv->label_scope, label_scope_len);
         memcpy(name + label_scope_len, at->str, ct_len - 1); /* minus 1 to ommit the ':' character */
         name[size - 1] = '\0';
-
-        /* checking if we are in a scope */
-        if(inv->label_scope == NULL)
-        {
-            diag_error(at, "defining a local label out of any global label is illegal '%s'\n", name);
-            return false;
-        }
     }
     else if(at->al->type == kAssemblerLineTypeGlobalLabel)
     {
