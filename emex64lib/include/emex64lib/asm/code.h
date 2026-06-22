@@ -36,6 +36,6 @@
 char *find_header(const char *name, const char *source_dir, const char **inc_dirs, size_t inc_cnt);
 
 bool assembler_code_preparse(assembler_invocation_t *inv, emex_file_t *input);
-bool assembler_code_parse(assembler_invocation_t *inv);
+bool assembler_code_postparse(assembler_invocation_t *inv);
 
 #endif /* EMEX64ASM_CODE_H */

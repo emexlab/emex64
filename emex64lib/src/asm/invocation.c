@@ -115,7 +115,7 @@ bool assembler_invocation_emit(assembler_invocation_t *inv,
 
     if(!assembler_code_preparse(inv, input) ||
        !assembler_preprocessor_run(inv) ||
-       !assembler_code_parse(inv) ||
+       !assembler_code_postparse(inv) ||
        !assembler_label_prealloc(inv) ||
        !assembler_section_parse(inv) ||
        !assembler_emit(inv) ||

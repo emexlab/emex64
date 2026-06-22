@@ -66,21 +66,40 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
 
     for(uint64_t li = 0; li < inv->line_cnt; li++)
     {
-        if(!state.in_a_condition || state.condition_met || inv->line[li]->type == kAssemblerLineTypeConditionDirective)
+        if(inv->line[li]->token_cnt <= 0 || /* whitespaces stay this type if im not wrong UwU */
+           inv->line[li]->type == kAssemblerLineTypeIgnore)
         {
+            /* whitespaces don't matter in emex64asm lol >:3 */
+            continue;
+        }
+
+        kAssemblerPreprocessorDirectiveType type = assembler_directive_type_for_str(inv->line[li]->token[0]->str);
+        if(!state.in_a_condition || state.condition_met || (type != kAssemblerPreprocessorDirectiveTypeUnknown && type != kAssemblerPreprocessorDirectiveTypeDefine))
+        {
+            if(type == kAssemblerPreprocessorDirectiveTypeIfDefined ||
+               type == kAssemblerPreprocessorDirectiveTypeIfNotDefined)
+            {
+                /* the values they cary shall be ignored as they shall not be resolved */
+                goto handle_preprocessor_directive;
+            }
+
             for(uint64_t ti = 0; ti < inv->line[li]->token_cnt; ti++)
             {
-                if(ti == 0 && (strcmp(inv->line[li]->token[ti]->str, "%ifdef%") == 0 || strcmp(inv->line[li]->token[ti]->str, "%ifndef%") == 0))
+                if(ti == 1 && type == kAssemblerPreprocessorDirectiveTypeDefine)
                 {
-                    /* definition check directives shall not be touched */
-                    break;
-                }
-                else if(ti == 1 && strcmp(inv->line[li]->token[0]->str, "%define%") == 0)
-                {
-                    /* definition directives match value shall not be touched */
+                    /*
+                     * definition directives match value shall not be touched
+                     * but the values they carry them selves shall be expanded
+                     * do that a macro definition like this resolves:
+                     * 
+                     * %define% MEOW 2
+                     * 
+                     * %define% UWU MEOW
+                     * 
+                     */
                     continue;
                 }
-            
+
                 /* matching macro */
                 uint16_t macro_nest_remaining = UINT16_MAX;
 
@@ -93,7 +112,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         assembler_macro_storage_dealloc(storage);
                         return false;
                     }
-                    
+
                     assembler_macro_t *found_match = assembler_macro_storage_lookup(storage, inv->line[li]->token[ti]->str);
                     if(found_match == NULL)
                     {
@@ -174,26 +193,21 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
             inv->line[li]->type = kAssemblerLineTypeIgnore;
         }
 
+    handle_preprocessor_directive:
         switch(inv->line[li]->type)
         {
-            case kAssemblerLineTypeIgnore:
-                break;
-            case kAssemblerLineTypeDefinitionDirective:
-                if(!assembler_macro_storage_append_macro(storage, inv->line[li]->token[1]->str, &inv->line[li]->token[2], inv->line[li]->token_cnt - 2))
-                {
-                    diag_fatal(NULL, "out of memory, can't append macro to macro storage\n");
-                    assembler_condition_state_deinit(&state);
-                    assembler_macro_storage_dealloc(storage);
-                    return false;
-                }
-
-                /* macros shall not interfere with the code */
-                inv->line[li]->type = kAssemblerLineTypeIgnore;
-                break;
-            case kAssemblerLineTypeConditionDirective:
-                kAssemblerPreprocessorDirectiveType type = assembler_directive_type_for_str(inv->line[li]->token[0]->str);
+            case kAssemblerLineTypePreprocessorDirective:
                 switch(type)
                 {
+                    case kAssemblerPreprocessorDirectiveTypeDefine:
+                        if(!assembler_macro_storage_append_macro(storage, inv->line[li]->token[1]->str, &inv->line[li]->token[2], inv->line[li]->token_cnt - 2))
+                        {
+                            diag_fatal(NULL, "out of memory, can't append macro to macro storage\n");
+                            assembler_condition_state_deinit(&state);
+                            assembler_macro_storage_dealloc(storage);
+                            return false;
+                        }
+                        break;
                     case kAssemblerPreprocessorDirectiveTypeIf:
                     {
                         bool parent_active = !state.in_a_condition || state.condition_met;
@@ -338,7 +352,8 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         break;
                 }
                 
-                if(type != kAssemblerPreprocessorDirectiveTypeEndIf)
+                if(type != kAssemblerPreprocessorDirectiveTypeEndIf &&
+                   type != kAssemblerPreprocessorDirectiveTypeDefine)
                 {
                     state.last_condition_line = inv->line[li];
                 }

@@ -28,9 +28,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <limits.h>
-
 #include <emex64lib/support/diagnostic/legacy.h>
-
+#include <emex64lib/asm/preprocessor/directive.h>
 #include <emex64lib/asm/code.h>
 #include <emex64lib/asm/lexer.h>
 
@@ -318,27 +317,22 @@ bool assembler_code_preparse(assembler_invocation_t *inv,
     /* token pretype evaluation (for macros) */
     for(unsigned long i = 0; i < inv->line_cnt; i++)
     {
-        if(inv->line[i]->token_cnt == 0) continue;
-
-        if(strcmp(inv->line[i]->token[0]->str, "%define%") == 0)
+        if(inv->line[i]->token_cnt == 0)
         {
-            inv->line[i]->type = kAssemblerLineTypeDefinitionDirective;
+            continue;
         }
-        else if(strcmp(inv->line[i]->token[0]->str, "%if%") == 0 ||
-                strcmp(inv->line[i]->token[0]->str, "%elif%") == 0 ||
-                strcmp(inv->line[i]->token[0]->str, "%else%") == 0 ||
-                strcmp(inv->line[i]->token[0]->str, "%endif%") == 0 ||
-                strcmp(inv->line[i]->token[0]->str, "%ifdef%") == 0 ||
-                strcmp(inv->line[i]->token[0]->str, "%ifndef%") == 0)
+
+        /* if it has a valid preprocessor directive type then it is a preprocessor directive */
+        if(assembler_directive_type_for_str(inv->line[i]->token[0]->str) != kAssemblerPreprocessorDirectiveTypeUnknown)
         {
-            inv->line[i]->type = kAssemblerLineTypeConditionDirective;
+            inv->line[i]->type = kAssemblerLineTypePreprocessorDirective;
         }
     }
 
     return true;
 }
 
-bool assembler_code_parse(assembler_invocation_t *inv)
+bool assembler_code_postparse(assembler_invocation_t *inv)
 {
     /* token type evaluation */
     bool section_mode = false;
