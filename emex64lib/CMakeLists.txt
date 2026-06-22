@@ -54,46 +54,53 @@ else()
 endif()
 
 add_library(emex64 ${LIB_TYPE}
-    # Support
-    src/support/diagnostic/legacy.c
-    src/support/diagnostic/message.c
-    src/support/diagnostic/storage.c
-
-    src/support/virtual/vpage.c
-    src/support/virtual/vpageobj.c
-    src/support/virtual/vfd.c
-    src/support/virtual/vbitwalker.c
-
-    src/support/ratchet/args.c
-
+    # Support API
     src/support/parser.c
     src/support/file.c
     src/support/bitbolt.c
 
-    # Virtual Machine
+        ## Diagnostic API (Errors, Warnings, Notes, etc ^^)
+        src/support/diagnostic/legacy.c
+        src/support/diagnostic/message.c
+        src/support/diagnostic/storage.c
+
+        ## Virtual API (Virtualized UNIX Primitives)
+        src/support/virtual/vpage.c
+        src/support/virtual/vpageobj.c
+        src/support/virtual/vfd.c
+        src/support/virtual/vbitwalker.c
+
+        ## Ratchet API (Safe argument array construction, etc)
+        src/support/ratchet/args.c
+
+    # Virtual Machine API
     src/vm/core.c
     src/vm/machine.c
     src/vm/memory.c
     src/vm/mmio.c
-    src/vm/instruction/core.c
-    src/vm/instruction/data.c
-    src/vm/instruction/alu.c
-    src/vm/instruction/ctrl.c
 
-    # Virtual Machine Devices
-    src/vm/device/internal/controller/ic.c
-    src/vm/device/internal/controller/mem.c
-    src/vm/device/internal/timer.c
+        ## Instruction Handlers
+        src/vm/instruction/core.c
+        src/vm/instruction/data.c
+        src/vm/instruction/alu.c
+        src/vm/instruction/ctrl.c
 
-    src/vm/device/board/controller/power.c
-    src/vm/device/board/controller/8042.c
-    # src/vm/device/board/controller/gfx.c
-    # src/vm/device/board/gfx/vimmio.c
-    src/vm/device/board/display.c
-    src/vm/device/board/uart.c
-    src/vm/device/board/rtc.c
+        ## Devices
+            ### SoC internal devices
+            src/vm/device/internal/controller/ic.c
+            src/vm/device/internal/controller/mem.c
+            src/vm/device/internal/timer.c
 
-    # Assembler
+            ### Board devices
+            src/vm/device/board/controller/power.c
+            src/vm/device/board/controller/8042.c
+            #src/vm/device/board/controller/gfx.c
+            #src/vm/device/board/gfx/vimmio.c
+            src/vm/device/board/display.c
+            src/vm/device/board/uart.c
+            src/vm/device/board/rtc.c
+
+    # Assembler API
     src/asm/driver.c
     src/asm/lexer.c
     src/asm/code.c
@@ -104,10 +111,15 @@ add_library(emex64 ${LIB_TYPE}
     src/asm/opcode.c
     src/asm/register.c
     src/asm/section.c
-    src/asm/macro.c
     src/asm/elf.c
 
-    # Linker
+        ## Preprocessor API
+        src/asm/preprocessor/directive.c
+        src/asm/preprocessor/macro.c
+        src/asm/preprocessor/condition.c
+        src/asm/preprocessor/preprocessor.c
+
+    # Linker API
     src/linker/driver.c
     src/linker/linker.c
     src/linker/sym.c

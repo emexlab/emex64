@@ -27,17 +27,15 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdint.h>
-
 #include <emex64lib/support/diagnostic/legacy.h>
 #include <emex64lib/support/file.h>
-
 #include <emex64lib/asm/invocation.h>
 #include <emex64lib/asm/code.h>
 #include <emex64lib/asm/label.h>
 #include <emex64lib/asm/emit.h>
 #include <emex64lib/asm/section.h>
-#include <emex64lib/asm/macro.h>
 #include <emex64lib/asm/elf.h>
+#include <emex64lib/asm/preprocessor/preprocessor.h>
 
 assembler_invocation_t *assembler_invocation_alloc(assembler_invocation_options_t options)
 {
@@ -116,7 +114,7 @@ bool assembler_invocation_emit(assembler_invocation_t *inv,
     vbitwalker_seek(inv->out_vbitwalker, 10, 0);
 
     if(!assembler_code_preparse(inv, input) ||
-       !assembler_macro_expand(inv) ||
+       !assembler_preprocessor_run(inv) ||
        !assembler_code_parse(inv) ||
        !assembler_label_prealloc(inv) ||
        !assembler_section_parse(inv) ||

@@ -22,280 +22,13 @@
  * SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <stdint.h>
-#include <stdbool.h>
-
-#include <emex64lib/support/diagnostic/legacy.h>
+#include <emex64lib/asm/preprocessor/preprocessor.h>
 #include <emex64lib/support/parser.h>
-#include <emex64lib/support/pack.h>
+#include <emex64lib/support/diagnostic/legacy.h>
+#include <emex64lib/asm/invocation.h>
 
-#include <emex64lib/asm/macro.h>
-#include <emex64lib/asm/code.h>
-
-typedef struct assembler_macro {
-    const char *match;          /* borrowed */
-    const char **inject_token;  /* borrowed */
-    uint64_t inject_token_cnt;
-    struct assembler_macro *next;
-} assembler_macro_t;
-
-typedef struct assembler_macro_storage {
-    assembler_macro_t *head;
-    assembler_macro_t *tail;
-} assembler_macro_storage_t;
-
-assembler_macro_t *assembler_macro_alloc(const char *match,
-                                         const char **inject_token,
-                                         uint64_t token_cnt)
-{
-    assembler_macro_t *macro = malloc(sizeof(assembler_macro_t));
-    if(macro == NULL)
-    {
-        return NULL;
-    }
-
-    macro->inject_token = inject_token;
-    macro->inject_token_cnt = token_cnt;
-    macro->match = match;
-    macro->next = NULL;
-
-    return macro;
-}
-
-void assembler_macro_dealloc(assembler_macro_t *macro)
-{
-    free(macro);
-}
-
-assembler_macro_storage_t *assembler_macro_storage_alloc()
-{
-    assembler_macro_storage_t *storage = malloc(sizeof(assembler_macro_storage_t));
-    if(storage == NULL)
-    {
-        return NULL;
-    }
-
-    storage->head = NULL;
-    storage->tail = NULL;
-
-    return storage;
-}
-
-void assembler_macro_storage_dealloc(assembler_macro_storage_t *storage)
-{
-    while(storage->head != NULL)
-    {
-        assembler_macro_t *next = storage->head->next;
-        free(storage->head->inject_token);
-        assembler_macro_dealloc(storage->head);
-        storage->head = next;
-    }
-
-    free(storage);
-}
-
-assembler_macro_t *assembler_macro_storage_lookup(assembler_macro_storage_t *storage,
-                                                  const char *match)
-{
-    assembler_macro_t *head = storage->head; 
-    while(head != NULL)
-    {
-        if(strcmp(head->match, match) == 0)
-        {
-            return head;
-        }
-        head = head->next;
-    }
-    return NULL;
-}
-
-bool assembler_macro_storage_append_macro_char(assembler_macro_storage_t *storage,
-                                               const char *match,
-                                               const char **token,
-                                               uint64_t token_cnt)
-{
-    /* checking if it is already defined */
-    assembler_macro_t *found = assembler_macro_storage_lookup(storage, match);
-    if(found != NULL)
-    {
-        /* inject information */
-        free(found->inject_token);
-        found->inject_token = token;
-        found->inject_token_cnt = token_cnt;
-        return true;
-    }
-
-    /* need new macro */
-    assembler_macro_t *macro = assembler_macro_alloc(match, token, token_cnt);
-    if(macro == NULL)
-    {
-        return false;
-    }
-
-    /* stich the linked list ^^ */
-    if(storage->head == NULL)
-    {
-        storage->head = macro;
-    }
-    else
-    {
-        storage->tail->next = macro;
-    }
-    storage->tail = macro;
-
-    return true;
-}
-
-bool assembler_macro_storage_append_macro(assembler_macro_storage_t *storage,
-                                          const char *match,
-                                          assembler_token_t **token,
-                                          uint64_t token_cnt)
-{
-    /* checking if it is already defined */
-    const char **token_char = calloc(token_cnt, sizeof(const char *));
-    if(token_char == NULL)
-    {
-        return false;
-    }
-
-    for(uint64_t i = 0; i < token_cnt; i++)
-    {
-        token_char[i] = token[i]->str;
-    }
-
-    bool success = assembler_macro_storage_append_macro_char(storage, match, token_char, token_cnt);
-    if(!success)
-    {
-        free(token_char);
-    }
-    return success;
-}
-
-typedef struct assembler_directive_condition_frame {
-    bool in_a_condition;
-    bool condition_met;
-    bool in_a_else_condition;
-    bool finalized;
-    bool parent_active;
-    assembler_line_t *last_condition_line;
-    struct assembler_directive_condition_frame *prev;
-} assembler_condition_frame_t;
-
-static inline assembler_condition_frame_t *__assembler_condition_frame_alloc()
-{
-    return calloc(1, sizeof(assembler_condition_frame_t));
-}
-
-void assembler_condition_frame_dealloc(assembler_condition_frame_t **frame)
-{
-    assembler_condition_frame_t *tail = *frame;
-    while(tail != NULL)
-    {
-        assembler_condition_frame_t *prev = tail->prev;
-        free(tail);
-        tail = prev;
-    }
-}
-
-bool assembler_condition_frame_push(assembler_condition_frame_t **frame)
-{
-    assembler_condition_frame_t *new = __assembler_condition_frame_alloc();
-    if(new == NULL)
-    {
-        goto out_failure;
-    }
-    
-    new->prev = *frame;
-    *frame = new;
-    
-    return true;
-    
-out_failure:
-    assembler_condition_frame_dealloc(frame);
-    return false;
-}
-
-void assembler_condition_frame_pop(assembler_condition_frame_t **frame)
-{
-    if(*frame == NULL)
-    {
-        return;
-    }
-    
-    assembler_condition_frame_t *prev = (*frame)->prev;
-    free(*frame);
-    *frame = prev;
-}
-
-typedef struct assembler_directive_condition_state {
-    assembler_condition_frame_t *frame;
-    bool in_a_condition;
-    bool condition_met;
-    bool in_a_else_condition;
-    bool finalized;
-    bool parent_active;
-    assembler_line_t *last_condition_line;
-} assembler_condition_state_t;
-
-void assembler_condition_state_init(assembler_condition_state_t *state)
-{
-    bzero(state, sizeof(assembler_condition_state_t));
-}
-
-void assembler_condition_state_deinit(assembler_condition_state_t *state)
-{
-    assembler_condition_frame_dealloc(&state->frame);
-    bzero(state, sizeof(assembler_condition_state_t));
-}
-
-bool assembler_condition_state_push(assembler_condition_state_t *state)
-{
-    if(!assembler_condition_frame_push(&state->frame))
-    {
-        return false;
-    }
-    
-    state->frame->condition_met = state->condition_met;
-    state->frame->in_a_condition = state->in_a_condition;
-    state->frame->in_a_else_condition = state->in_a_else_condition;
-    state->frame->finalized = state->finalized;
-    state->frame->parent_active = state->parent_active;
-    state->frame->last_condition_line = state->last_condition_line;
-    
-    state->condition_met = false;
-    state->in_a_condition = false;
-    state->in_a_else_condition = false;
-    state->finalized = false;
-    state->last_condition_line = NULL;
-    
-    return true;
-}
-
-void assembler_condition_state_pop(assembler_condition_state_t *state)
-{
-    state->condition_met = state->frame->condition_met;
-    state->in_a_condition = state->frame->in_a_condition;
-    state->in_a_else_condition = state->frame->in_a_else_condition;
-    state->finalized = state->frame->finalized;
-    state->parent_active = state->frame->parent_active;
-    state->last_condition_line = state->frame->last_condition_line;
-    
-    assembler_condition_frame_pop(&state->frame);
-}
-
-typedef enum: uint64_t {
-    kAssemblerDirectiveConditionTypeIf = PACK('%','i','f','%'),
-    kAssemblerDirectiveConditionTypeIfdef = PACK('%','i','f','d','e','f','%'),
-    kAssemblerDirectiveConditionTypeIfndef = PACK('%','i','f','n','d','e','f','%'),
-    kAssemblerDirectiveConditionTypeElif = PACK('%','e','l','i','f','%'),
-    kAssemblerDirectiveConditionTypeElse = PACK('%','e','l','s','e','%'),
-    kAssemblerDirectiveConditionTypeEndif = PACK('%','e','n','d','i','f','%'),
-} kAssemblerDirectiveConditionType;
-
-bool assembler_macro_expand(assembler_invocation_t *inv)
+bool assembler_preprocessor_run(assembler_invocation_t *inv)
 {
     /* allocating macro storage */
     assembler_macro_storage_t *storage = assembler_macro_storage_alloc();
@@ -458,10 +191,10 @@ bool assembler_macro_expand(assembler_invocation_t *inv)
                 inv->line[li]->type = kAssemblerLineTypeIgnore;
                 break;
             case kAssemblerLineTypeConditionDirective:
-                kAssemblerDirectiveConditionType type = pack_name(inv->line[li]->token[0]->str);
+                kAssemblerDirectiveType type = assembler_directive_type_for_str(inv->line[li]->token[0]->str);
                 switch(type)
                 {
-                    case kAssemblerDirectiveConditionTypeIf:
+                    case kAssemblerDirectiveTypeIf:
                     {
                         bool parent_active = !state.in_a_condition || state.condition_met;
                         if(!assembler_condition_state_push(&state))
@@ -496,7 +229,7 @@ bool assembler_macro_expand(assembler_invocation_t *inv)
                         }
                         break;
                     }
-                    case kAssemblerDirectiveConditionTypeIfdef:
+                    case kAssemblerDirectiveTypeIfDefined:
                     {
                         bool parent_active = !state.in_a_condition || state.condition_met;
                         if(!assembler_condition_state_push(&state))
@@ -524,7 +257,7 @@ bool assembler_macro_expand(assembler_invocation_t *inv)
                         state.in_a_condition = true;
                         break;
                     }
-                    case kAssemblerDirectiveConditionTypeIfndef:
+                    case kAssemblerDirectiveTypeIfNotDefined:
                     {
                         bool parent_active = !state.in_a_condition || state.condition_met;
                         if(!assembler_condition_state_push(&state))
@@ -552,7 +285,7 @@ bool assembler_macro_expand(assembler_invocation_t *inv)
                         state.in_a_condition = true;
                         break;
                     }
-                    case kAssemblerDirectiveConditionTypeElif:
+                    case kAssemblerDirectiveTypeElseIf:
                         if(state.in_a_condition == false)
                         {
                             diag_error(inv->line[li]->token[0], "%%elif%% directive was defined, but no %%if%% directive was defined before.\n");
@@ -571,7 +304,7 @@ bool assembler_macro_expand(assembler_invocation_t *inv)
                             goto express_if_directive;
                         }
                         break;
-                    case kAssemblerDirectiveConditionTypeElse:
+                    case kAssemblerDirectiveTypeElse:
                         if(!state.in_a_condition)
                         {
                             diag_error(inv->line[li]->token[0], "%%else%% directive was defined, but no %%if%% directive was defined before.\n");
@@ -591,7 +324,7 @@ bool assembler_macro_expand(assembler_invocation_t *inv)
                         state.condition_met = (!state.finalized && !state.condition_met) && state.parent_active;
                         state.in_a_else_condition = true;
                         break;
-                    case kAssemblerDirectiveConditionTypeEndif:
+                    case kAssemblerDirectiveTypeEndIf:
                         if(state.in_a_condition == false)
                         {
                             diag_error(inv->line[li]->token[0], "%%end%% directive was defined but no %%if%% directive was defined before.\n");
@@ -605,7 +338,7 @@ bool assembler_macro_expand(assembler_invocation_t *inv)
                         break;
                 }
                 
-                if(type != kAssemblerDirectiveConditionTypeEndif)
+                if(type != kAssemblerDirectiveTypeEndIf)
                 {
                     state.last_condition_line = inv->line[li];
                 }
@@ -626,3 +359,4 @@ bool assembler_macro_expand(assembler_invocation_t *inv)
     assembler_macro_storage_dealloc(storage);
     return !in_a_condition;
 }
+

@@ -41,10 +41,10 @@ typedef struct expand_entry {
     size_t line_num;
 } expand_entry_t;
 
-static char *find_header(const char *name,
-                         const char *source_dir,
-                         const char **inc_dirs,
-                         size_t inc_cnt)
+char *find_header(const char *name,
+                  const char *source_dir,
+                  const char **inc_dirs,
+                  size_t inc_cnt)
 {
     char buf[PATH_MAX];
 

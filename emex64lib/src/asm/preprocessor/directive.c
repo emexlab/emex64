@@ -22,20 +22,28 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64ASM_CODE_H
-#define EMEX64ASM_CODE_H
+#include <emex64lib/support/pack.h>
 
-#include <stdlib.h>
-#include <stdbool.h>
+#include <emex64lib/asm/preprocessor/directive.h>
 
-#include <emex64lib/support/file.h>
+kAssemblerDirectiveType assembler_directive_type_for_str(const char *str)
+{
+    if(str == NULL)
+    {
+        return kAssemblerDirectiveTypeUnknown;
+    }
 
-#include <emex64lib/asm/type.h>
-#include <emex64lib/asm/invocation.h>
-
-char *find_header(const char *name, const char *source_dir, const char **inc_dirs, size_t inc_cnt);
-
-bool assembler_code_preparse(assembler_invocation_t *inv, emex_file_t *input);
-bool assembler_code_parse(assembler_invocation_t *inv);
-
-#endif /* EMEX64ASM_CODE_H */
+    switch(pack_name(str))
+    {
+        case PACK('%','i','n','c','l','u','d','e','%'): return kAssemblerDirectiveTypeDefine;
+        case PACK('%','d','e','f','i','n','e','%'): return kAssemblerDirectiveTypeDefine;
+        case PACK('%','u','n','d','e','f','%'): return kAssemblerDirectiveTypeUndefine;
+        case PACK('%','i','f','%'): return kAssemblerDirectiveTypeIf;
+        case PACK('%','i','f','d','e','f','%'): return kAssemblerDirectiveTypeIfDefined;
+        case PACK('%','i','f','n','d','e','f','%'): return kAssemblerDirectiveTypeIfNotDefined;
+        case PACK('%','e','l','i','f','%'): return kAssemblerDirectiveTypeElseIf;
+        case PACK('%','e','l','s','e','%'): return kAssemblerDirectiveTypeElse;
+        case PACK('%','e','n','d','i','f','%'): return kAssemblerDirectiveTypeEndIf;
+        default: return kAssemblerDirectiveTypeUnknown;
+    }
+}

@@ -22,14 +22,31 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64ASM_MACRO_H
-#define EMEX64ASM_MACRO_H
+#ifndef EMEX64ASM_DIRECTIVE_H
+#define EMEX64ASM_DIRECTIVE_H
 
-#include <stdlib.h>
+#include <stdint.h>
 
-#include <emex64lib/asm/type.h>
-#include <emex64lib/asm/invocation.h>
+typedef enum: uint8_t {
+    /* sentinel */
+    kAssemblerDirectiveTypeUnknown, /* the preprocessor shall flag this */
 
-bool assembler_macro_expand(assembler_invocation_t *inv);
+    /* importer  */
+    kAssemblerDirectiveTypeInclude,
 
-#endif /* EMEX64ASM_MACRO_H */
+    /* macro */
+    kAssemblerDirectiveTypeDefine,
+    kAssemblerDirectiveTypeUndefine,
+
+    /* conditions */
+    kAssemblerDirectiveTypeIf,
+    kAssemblerDirectiveTypeIfDefined,
+    kAssemblerDirectiveTypeIfNotDefined,
+    kAssemblerDirectiveTypeElseIf,
+    kAssemblerDirectiveTypeElse,
+    kAssemblerDirectiveTypeEndIf,
+} kAssemblerDirectiveType;
+
+kAssemblerDirectiveType assembler_directive_type_for_str(const char *str);
+
+#endif /* EMEX64ASM_DIRECTIVE_H */

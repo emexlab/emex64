@@ -22,20 +22,16 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64ASM_CODE_H
-#define EMEX64ASM_CODE_H
+#ifndef EMEX64ASM_PREPROCESSOR_H
+#define EMEX64ASM_PREPROCESSOR_H
 
-#include <stdlib.h>
 #include <stdbool.h>
+#include <emex64lib/asm/preprocessor/condition.h>
+#include <emex64lib/asm/preprocessor/macro.h>
+#include <emex64lib/asm/preprocessor/directive.h>
 
-#include <emex64lib/support/file.h>
+typedef struct assembler_invocation assembler_invocation_t;
 
-#include <emex64lib/asm/type.h>
-#include <emex64lib/asm/invocation.h>
+bool assembler_preprocessor_run(assembler_invocation_t *inv);
 
-char *find_header(const char *name, const char *source_dir, const char **inc_dirs, size_t inc_cnt);
-
-bool assembler_code_preparse(assembler_invocation_t *inv, emex_file_t *input);
-bool assembler_code_parse(assembler_invocation_t *inv);
-
-#endif /* EMEX64ASM_CODE_H */
+#endif /* EMEX64ASM_PREPROCESSOR_H */
