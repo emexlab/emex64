@@ -49,6 +49,13 @@ assembler_invocation_t *assembler_invocation_alloc(assembler_invocation_options_
         return NULL;
     }
 
+    inv->label_hashmap = hashmap_alloc();
+    if(inv->label_hashmap == NULL)
+    {
+        free(inv);
+        return NULL;
+    }
+
     inv->options = options;
     inv->data_section_start = UINT64_MAX;
     inv->data_section_end = UINT64_MAX;
@@ -79,11 +86,13 @@ void assembler_invocation_dealloc(assembler_invocation_t *inv)
     }
     free(inv->line);
 
-    for(uint64_t i = 0; i < inv->label_cnt; i++)
+    const void *key; size_t klen; assembler_label_t *val;
+    for(hashmap_iter_t it = hashmap_iter_create(inv->label_hashmap); hashmap_next(&it, &key, &klen, (void**)&val);)
     {
-        free(inv->label[i].name);
+        free(val->name);
+        free(val);
     }
-    free(inv->label);
+    hashmap_dealloc(inv->label_hashmap); 
 
     /* definitions and include directories have to be released by who allocated them */
 
@@ -117,7 +126,6 @@ bool assembler_invocation_emit(assembler_invocation_t *inv,
     if(!assembler_code_preparse(inv, input) ||
        !assembler_preprocessor_run(inv) ||
        !assembler_code_postparse(inv) ||
-       !assembler_label_prealloc(inv) ||
        !assembler_section_parse(inv) ||
        !assembler_emit(inv) ||
        !assembler_elf_emit(inv))

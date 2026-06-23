@@ -32,45 +32,10 @@
 #include <emex64lib/asm/label/label.h>
 #include <emex64lib/asm/invocation.h>
 
-bool assembler_label_prealloc(assembler_invocation_t *inv)
-{
-    /* preallocate all labels that are possible */
-    inv->label_cnt = 0;
-    for(uint64_t i = 0; i < inv->line_cnt; i++)
-    {
-        if(inv->line[i]->type == kAssemblerLineTypeGlobalLabel ||
-           inv->line[i]->type == kAssemblerLineTypeLocalLabel ||
-           inv->line[i]->type == kAssemblerLineTypeExternLabel ||
-           inv->line[i]->type == kAssemblerLineTypeSectionData)
-        {
-            (inv->label_cnt)++;
-        }
-    }
-
-    /* allocating memory for those */
-    inv->label = calloc(inv->label_cnt, sizeof(assembler_label_t));
-    inv->label_cnt = 0;
-
-    if(inv->label == NULL)
-    {
-        return false;
-    }
-
-    return true;
-}
-
 assembler_label_t *assembler_label_lookup(assembler_invocation_t *inv,
                                           const char *name)
 {
-    for(uint64_t i = 0; i < inv->label_cnt; i++)
-    {
-        if(strcmp(inv->label[i].name, name) == 0)
-        {
-            return &(inv->label[i]);
-        }
-    }
-
-    return NULL;
+    return (assembler_label_t*)hashmap_gets(inv->label_hashmap, name);
 }
 
 bool assembler_label_append(assembler_token_t *at)
@@ -206,10 +171,25 @@ bool assembler_label_append(assembler_token_t *at)
         inv->label_scope = name;
     }
 
-    inv->label[inv->label_cnt].addr = vbitwalker_bytes_used(inv->out_vbitwalker);
-    inv->label[inv->label_cnt].at_link = at;
-    inv->label[inv->label_cnt].defined = at->al->type != kAssemblerLineTypeExternLabel;
-    inv->label[inv->label_cnt++].name = name;
+    label = calloc(1, sizeof(assembler_label_t));
+    if(label == NULL)
+    {
+        diag_fatal(NULL, "out of memory, failed to allocate assembler label\n");
+        free(name);
+        return false;
+    }
+
+    label->addr = vbitwalker_bytes_used(inv->out_vbitwalker);
+    label->at_link = at;
+    label->defined = at->al->type != kAssemblerLineTypeExternLabel;
+    label->name = name;
+    if(!hashmap_puts(inv->label_hashmap, name, label))
+    {
+        diag_fatal(NULL, "out of memory, failed to insert label into hashmap\n");
+        free(label);
+        free(name);
+        return false;
+    }
 
     return !failed_validity;
 }

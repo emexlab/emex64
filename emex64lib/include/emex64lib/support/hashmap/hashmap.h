@@ -22,23 +22,33 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64ASM_LABEL_LABEL_H
-#define EMEX64ASM_LABEL_LABEL_H
+#ifndef EMEX64_HASHMAP_HASHMAP_H
+#define EMEX64_HASHMAP_HASHMAP_H
 
+#include <stdlib.h>
+#include <stdint.h>
 #include <stdbool.h>
-#include <emex64lib/asm/type.h>
 
-typedef struct assembler_invocation assembler_invocation_t;
+typedef struct hashmap hashmap_t;
+typedef struct hm_iter {
+    hashmap_t *m;
+    size_t i;
+} hashmap_iter_t;
 
-typedef struct {
-    char *name;                             /* name of resolved label */
-    bool defined;                           /* label definitions are defined */
-    uint64_t addr;                          /* address of resolved label */
-    assembler_token_t *at_link;             /* link to the originator of the label */
-} assembler_label_t;
+hashmap_t *hashmap_alloc(void);
+void hashmap_dealloc(hashmap_t *m);
 
-bool assembler_label_append(assembler_token_t *at);
+void *hashmap_get(hashmap_t *m, const void *key, size_t klen);
+bool hashmap_put(hashmap_t *m, const void *key, size_t klen, void *val);
+bool hashmap_del(hashmap_t *m, const void *key, size_t klen);
+size_t hashmap_count(const hashmap_t *m);
 
-assembler_label_t *assembler_label_lookup(assembler_invocation_t *inv, const char *name);
+void *hashmap_gets(hashmap_t *m, const char *k);
+bool hashmap_puts(hashmap_t *m, const char *k, void *v);
+bool hashmap_dels(hashmap_t *m, const char *k);
 
-#endif /* EMEX64ASM_LABEL_LABEL_H */
+hashmap_iter_t hashmap_iter_create(hashmap_t *m);
+
+bool hashmap_next(hashmap_iter_t *it, const void **key, size_t *klen, void **val);
+
+#endif /* EMEX64_HASHMAP_HASHMAP_H */

@@ -27,6 +27,7 @@
 
 #include <stdbool.h>
 #include <emex64lib/support/file.h>
+#include <emex64lib/support/hashmap/hashmap.h>
 #include <emex64lib/asm/label/label.h>
 #include <emex64lib/asm/label/relocate.h>
 #include <emex64lib/asm/type.h>
@@ -47,8 +48,7 @@ typedef struct assembler_invocation {
     uint64_t line_cnt;
 
     char *label_scope;
-    assembler_label_t *label;
-    uint64_t label_cnt;
+    hashmap_t *label_hashmap;
 
     uint64_t definition_cnt;                    /* borrowed */
     assembler_macro_definition_t *definition;   /* borrowed */

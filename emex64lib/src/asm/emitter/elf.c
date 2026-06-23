@@ -214,9 +214,9 @@ bool assembler_elf_emit(assembler_invocation_t *inv)
 
     uint32_t first_global = (uint32_t)(sym_buf.len / sizeof(ELF64_Sym));
 
-    for(uint64_t i = 0; i < inv->label_cnt; i++)
+    const void *key; size_t klen; assembler_label_t *lbl;
+    for(hashmap_iter_t it = hashmap_iter_create(inv->label_hashmap); hashmap_next(&it, &key, &klen, (void**)&lbl);)
     {
-        assembler_label_t *lbl = &inv->label[i];
         if(!lbl->name)
         {
             continue;

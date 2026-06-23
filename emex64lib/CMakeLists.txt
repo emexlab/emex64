@@ -73,6 +73,9 @@ add_library(emex64 ${LIB_TYPE}
         ## Ratchet API (Safe argument array construction, etc)
         src/support/ratchet/args.c
 
+        ## Hashmap API
+        src/support/hashmap/hashmap.c
+
     # Virtual Machine API
     src/vm/core.c
     src/vm/machine.c
