@@ -306,8 +306,13 @@ bool assembler_emit(assembler_invocation_t *inv)
         if(label == NULL)
         {
             /* local labels must be resolved at assembly time */
+            failed = true;
             diag_error(reloc->at_link, "use of undeclared identifier '%s'\n", reloc->name);
-            return false;
+            if(++errors >= 10)
+            {
+                diag_fatal(NULL, "too many errors emitted, stopping now\n");
+                return false;
+            }
         }
 
         /* travel down the list */
