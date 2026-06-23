@@ -33,6 +33,7 @@
 #include <emex64lib/asm/emitter/immediate.h>
 
 void assembler_emit_end(assembler_invocation_t *inv);
+
 bool assembler_emit_instruction(assembler_line_t *al);
 bool assembler_emit(assembler_invocation_t *inv);
 

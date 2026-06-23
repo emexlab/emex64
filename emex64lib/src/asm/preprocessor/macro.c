@@ -151,3 +151,31 @@ bool assembler_macro_storage_append_macro(assembler_macro_storage_t *storage,
     }
     return success;
 }
+
+void assembler_macro_storage_remove_macro(assembler_macro_storage_t *storage,
+                                          const char *match)
+{
+    if(storage->head != NULL)
+    {
+        if(strcmp(storage->head->match, match) == 0)
+        {
+            assembler_macro_t *next = storage->head;
+            assembler_macro_dealloc(storage->head);
+            storage->head = next;
+            return;
+        }
+    }
+
+    assembler_macro_t *current = storage->head;
+    while(current != NULL)
+    {
+        if(current->next != NULL && strcmp(current->next->match, match) == 0)
+        {
+            assembler_macro_t *next = current->next->next;
+            assembler_macro_dealloc(current->next);
+            current->next = next;
+            return;
+        }
+        current = current->next;
+    }
+}

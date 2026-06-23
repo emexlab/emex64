@@ -26,7 +26,6 @@
 #define EMEX64ASM_CONDITION_H
 
 #include <stdbool.h>
-
 #include <emex64lib/asm/type.h>
 
 typedef struct assembler_directive_condition_frame {

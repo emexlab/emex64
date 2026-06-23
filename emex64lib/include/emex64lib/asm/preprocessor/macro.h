@@ -50,5 +50,6 @@ void assembler_macro_storage_dealloc(assembler_macro_storage_t *storage);
 assembler_macro_t *assembler_macro_storage_lookup(assembler_macro_storage_t *storage, const char *match);
 bool assembler_macro_storage_append_macro_char(assembler_macro_storage_t *storage, const char *match, const char **token, uint64_t token_cnt);
 bool assembler_macro_storage_append_macro(assembler_macro_storage_t *storage, const char *match, assembler_token_t **token, uint64_t token_cnt);
+void assembler_macro_storage_remove_macro(assembler_macro_storage_t *storage, const char *match);
 
 #endif /* EMEX64ASM_MACRO_H */

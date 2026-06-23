@@ -115,7 +115,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
         }
 
         kAssemblerPreprocessorDirectiveType type = assembler_directive_type_for_str(inv->line[li]->token[0]->str);
-        if(!state.in_a_condition || state.condition_met || (type != kAssemblerPreprocessorDirectiveTypeUnknown && type != kAssemblerPreprocessorDirectiveTypeDefine))
+        if(!state.in_a_condition || state.condition_met || (type != kAssemblerPreprocessorDirectiveTypeUnknown && type != kAssemblerPreprocessorDirectiveTypeDefine && type != kAssemblerPreprocessorDirectiveTypeUndefine))
         {
             if(type == kAssemblerPreprocessorDirectiveTypeIfDefined ||
                type == kAssemblerPreprocessorDirectiveTypeIfNotDefined)
@@ -126,7 +126,8 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
 
             for(uint64_t ti = 0; ti < inv->line[li]->token_cnt; ti++)
             {
-                if(ti == 1 && type == kAssemblerPreprocessorDirectiveTypeDefine)
+                if((ti == 1 && type == kAssemblerPreprocessorDirectiveTypeDefine) ||
+                   (ti == 1 && type == kAssemblerPreprocessorDirectiveTypeUndefine))
                 {
                     /*
                      * definition directives match value shall not be touched
@@ -296,6 +297,9 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                             diag_fatal(NULL, "out of memory, can't append macro to macro storage\n");
                             goto failure;
                         }
+                        break;
+                    case kAssemblerPreprocessorDirectiveTypeUndefine:
+                        assembler_macro_storage_remove_macro(storage, inv->line[li]->token[1]->str);
                         break;
                     case kAssemblerPreprocessorDirectiveTypeIf:
                     {
