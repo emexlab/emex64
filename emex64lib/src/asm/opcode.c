@@ -30,11 +30,6 @@
 
 kEmex64Opcode opcode_from_string(const char *name)
 {
-    if(name == NULL)
-    {
-        return kEmex64OpcodeInvalid;
-    }
-
     switch(pack_name(name))
     {
         case PACK('b'): return kEmex64OpcodeB;
@@ -100,11 +95,5 @@ kEmex64Opcode opcode_from_string(const char *name)
 bool opcode_arg_accepts_reg_only(const emex64_opfunc_entry_t *opce,
                                  uint8_t arg)
 {
-    if(opce == NULL)
-    {
-        return false;
-    }
-
-    /* lol how tiny that operation is */
-    return (opce->argmask & (1u << (31 - arg))) != 0;
+    return opce != NULL && (opce->argmask & (1u << (31 - arg))) != 0;
 }
