@@ -24,20 +24,8 @@
 
 %include% <emex64.e64inc>
 
-%define% GREET_NORMAL 0
-
-%ifndef% GREET_NORMAL
-%define% GREET_NORMAL 1
-%endif% ; GREET_NORMAL
-
 section .data
-%if% GREET_NORMAL
     msg db "hello, world!\r\n\0"
-%else%
-    msg db "meow!\r\n\0"
-%endif% ; GREET_NORMAL
-
-extern _start
 
 _start:
     mov r0, msg

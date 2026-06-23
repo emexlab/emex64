@@ -93,70 +93,80 @@ bool assembler_label_append(assembler_token_t *at)
 
     /* copying label name */
     char *name = NULL;
-    if(at->al->type == kAssemblerLineTypeLocalLabel)
+    switch(at->al->type)
     {
-        /* checking if we are in a scope (required) */
-        if(inv->label_scope == NULL)
+        case kAssemblerLineTypeLocalLabel:
         {
-            diag_error(at, "local label '%s' was defined out of the scope of a global label, which is illegal\n", at->str);
-            return false;
-        }
+            if(inv->label_scope == NULL)
+            {
+                diag_error(at, "local label '%s' was defined out of the scope of a global label, which is illegal\n", at->str);
+                return false;
+            }
 
-        /* constructing scoped label */
-        size_t label_scope_len = strlen(inv->label_scope);
-        size_t ct_len = strlen(at->str);
-        size_t size = label_scope_len + ct_len;
-        name = malloc(size);
-        if(name == NULL)
-        {
-            diag_error(at, "failed to allocate memory for this label\n");
-            return false;
-        }
-        memcpy(name, inv->label_scope, label_scope_len);
-        memcpy(name + label_scope_len, at->str, ct_len - 1); /* minus 1 to ommit the ':' character */
-        name[size - 1] = '\0';
-    }
-    else if(at->al->type == kAssemblerLineTypeGlobalLabel)
-    {
-        /* constructing global label */
-        size_t size = strlen(at->str);
-        name = malloc(size);
-        if(name == NULL)
-        {
-            diag_error(at, "failed to allocate memory for this label\n");
-            return false;
-        }
-        memcpy(name, at->str, size - 1);
-        name[size - 1] = '\0';
-    }
-    else if(at->al->type == kAssemblerLineTypeSectionData)
-    {
-        /* constructing global label */
-        size_t size = strlen(at->str) + 1;
-        name = malloc(size);
-        if(name == NULL)
-        {
-            diag_error(at, "failed to allocate memory for this label\n");
-            return false;
-        }
-        memcpy(name, at->str, size - 1);
-        name[size - 1] = '\0';
-    }
-    else
-    {
-        /* constructing extern label */
-        /* first we need the 2nd token, not the 1st */
-        at = at->al->token[1];
+            /* constructing scoped label */
+            size_t label_scope_len = strlen(inv->label_scope);
+            size_t ct_len = strlen(at->str);
+            size_t size = label_scope_len + ct_len;
+            name = malloc(size);
+            if(name == NULL)
+            {
+                diag_error(at, "failed to allocate memory for this label\n");
+                return false;
+            }
 
-        size_t size = strlen(at->str) + 1;
-        name = malloc(size);
-        if(name == NULL)
-        {
-            diag_error(at, "failed to allocate memory for this label\n");
-            return false;
+            memcpy(name, inv->label_scope, label_scope_len);
+            memcpy(name + label_scope_len, at->str, ct_len - 1); /* minus 1 to ommit the ':' character */
+            name[size - 1] = '\0';
+            break;
         }
-        memcpy(name, at->str, size - 1);
-        name[size - 1] = '\0';
+        case kAssemblerLineTypeGlobalLabel:
+        {
+            /* constructing global label */
+            size_t size = strlen(at->str);
+            name = malloc(size);
+            if(name == NULL)
+            {
+                diag_error(at, "failed to allocate memory for this label\n");
+                return false;
+            }
+            memcpy(name, at->str, size - 1);
+            name[size - 1] = '\0';
+            break;
+        }
+        case kAssemblerLineTypeSectionData:
+        {
+            /* constructing global label */
+            size_t size = strlen(at->str) + 1;
+            name = malloc(size);
+            if(name == NULL)
+            {
+                diag_error(at, "failed to allocate memory for this label\n");
+                return false;
+            }
+            memcpy(name, at->str, size - 1);
+            name[size - 1] = '\0';
+            break;
+        }
+        case kAssemblerLineTypeExternLabel:
+        {
+            /* constructing extern label */
+            /* first we need the 2nd token, not the 1st */
+            at = at->al->token[1];
+
+            size_t size = strlen(at->str) + 1;
+            name = malloc(size);
+            if(name == NULL)
+            {
+                diag_error(at, "failed to allocate memory for this label\n");
+                return false;
+            }
+            memcpy(name, at->str, size - 1);
+            name[size - 1] = '\0';
+            break;
+        }
+        default:
+            diag_fatal(at, "this is not a label, report this at 'https://github.com/emexlab/emex64'\n");
+            exit(1);
     }
 
     /* checking for duplicated labels */
