@@ -66,7 +66,7 @@ linker_driver_t *linker_driver_alloc(int argc,
             fprintf(stderr, "  -e <entry name>        Sets the entry symbol, is set to \"_start\" when not passed.\n");
             fprintf(stderr, "  -T <script path>       Adds a linker script.\n");
             fprintf(stderr, "  -v                     Prints verbose linker log.\n");
-            fprintf(stderr, "  -r                     Emits relocatable object.\n");
+            fprintf(stderr, "  -r                     Emits relocatable ELF object.\n");
             goto failure;
         }
         else if(strcmp(argv[i], "--version") == 0)
@@ -114,8 +114,7 @@ linker_driver_t *linker_driver_alloc(int argc,
         }
         else if(strcmp(argv[i], "-r") == 0)
         {
-            diag_error(NULL, "relocatable object emission is not supported yet\n");
-            goto failure;
+            driver->options.emit_mode = kEmitModeRelocatableObject;
         }
         else if (argv[i][0] != '-')
         {
@@ -145,7 +144,6 @@ linker_driver_t *linker_driver_alloc(int argc,
     {
         diag_warn(NULL, "no output binary specified, falling back to 'a.out'\n");
         driver->output_file = emex_file_alloc("a.out", out_data_file_policy);
-
         if(driver->output_file == NULL)
         {
             diag_error(NULL, "don't have permission to open file at 'a.out'\n");

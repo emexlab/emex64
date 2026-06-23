@@ -103,7 +103,7 @@ typedef enum: uint16_t {
 typedef enum: uint8_t {
     kEmitModeNone,
     kEmitModeFirmware,
-    kEmitModeObject,
+    kEmitModeRelocatableObject,
 } kEmitMode;
 
 #define R_EMEX64_ABS64  1

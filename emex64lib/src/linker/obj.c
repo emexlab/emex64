@@ -179,7 +179,10 @@ bool linker_load_object(linker_invocation_t *inv,
     else
     {
         linker_object_t *tail = inv->obj;
-        while (tail->next) tail = tail->next;
+        while(tail->next)
+        {
+            tail = tail->next;
+        }
         tail->next = obj;
     }
 

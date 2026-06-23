@@ -395,7 +395,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
         }
         else if(strncmp(argv[i], "-r", 2) == 0)
         {
-            driver->emit_mode = kEmitModeObject;
+            driver->emit_mode = kEmitModeRelocatableObject;
         }
         else if(argv[i][0] != '-')
         {
@@ -477,7 +477,7 @@ static void assembler_driver_append_additional_linker_flag(assembler_driver_t *d
 bool assembler_driver_jobgen(assembler_driver_t *driver)
 {
     /* -c is only meant to assemble one assembly file to a object file */
-    if(driver->emit_mode == kEmitModeObject && driver->input_file_count > 1)
+    if(driver->options.assemble_only && driver->input_file_count > 1)
     {
         diag_error(NULL, "multiple input files were passed in object emit mode\n");
         return false;
@@ -582,7 +582,7 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
         {
             ratchet_args_append(&ra, "-v");
         }
-        if(driver->emit_mode == kEmitModeObject)
+        if(driver->emit_mode == kEmitModeRelocatableObject)
         {
             ratchet_args_append(&ra, "-r");
         }
