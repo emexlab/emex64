@@ -236,7 +236,7 @@ bool assembler_code_inject_file(assembler_invocation_t *inv,
     for(size_t i = 0; i < entry_cnt; i++)
     {
         /* using cmptok in first pass to get token count */
-        for(lextok_token_t token = lextok(inv->line[at_line_index + i]->str); token.token != NULL;)
+        for(lextok_token_t token = lextok(inv->line[at_line_index + i]->str); token.token != NULL; token = lextok(NULL))
         {
             /*
              * until this is not null i will not move
@@ -244,7 +244,6 @@ bool assembler_code_inject_file(assembler_invocation_t *inv,
              * is this while loop :3
              */
             inv->line[at_line_index + i]->token_cnt++;
-            token = lextok(NULL);
         }
 
         /* copy subtokens */
@@ -256,7 +255,7 @@ bool assembler_code_inject_file(assembler_invocation_t *inv,
          * and over again, is this a carousell or
          * why am I getting ill rn.
          */
-        for(lextok_token_t token = lextok(inv->line[at_line_index + i]->str); token.token != NULL;)
+        for(lextok_token_t token = lextok(inv->line[at_line_index + i]->str); token.token != NULL; token = lextok(NULL))
         {
             assembler_token_t *at = calloc(1, sizeof(assembler_token_t));
             at->str = strdup(token.token);
@@ -264,17 +263,16 @@ bool assembler_code_inject_file(assembler_invocation_t *inv,
             at->al = inv->line[at_line_index + i];
             if(token.type == kAssemblerTokenTypeInvalid)
             {
-                diag_error(at, "Token '%s' is not valid\n", at->str);
+                diag_error(at, "token '%s' is not valid\n", at->str);
                 goto out_failure;
             }
             else if(token.type == kAssemblerTokenTypeTooLong)
             {
-                diag_error(at, "Token is too long, token lenght limit is %d characters\n", LEXTOK_LENGHT_MAX);
+                diag_error(at, "token is too long, token lenght limit is %d characters\n", LEXTOK_LENGHT_MAX);
                 goto out_failure;
             }
             at->type = token.type;
             inv->line[at_line_index + i]->token[inv->line[at_line_index + i]->token_cnt++] = at;
-            token = lextok(NULL);
         }
     }
 
