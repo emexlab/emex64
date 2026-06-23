@@ -24,7 +24,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
 #include <emex64lib/vm/device/board/controller/power.h>
 #include <emex64lib/vm/machine.h>
 

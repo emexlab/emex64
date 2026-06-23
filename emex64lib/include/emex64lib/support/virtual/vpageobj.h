@@ -30,11 +30,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <sys/stat.h>
-
-#include <evObj/defs.h>
-#include <evObj/alloc.h>
-#include <evObj/reference.h>
-
+#include <evObj/evObj.h>
 #include <emex64lib/support/virtual/vpage.h>
 
 typedef struct vpageobj {

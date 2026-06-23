@@ -26,7 +26,6 @@
 #define EMEX64VM_DEVICE_PLATFORM_H
 
 #include <stdint.h>
-
 #include <emex64lib/vm/device/base.h>
 
 #define EMEX64_PLATFORM_SIZE    0x08

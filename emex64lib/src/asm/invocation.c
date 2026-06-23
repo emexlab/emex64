@@ -29,9 +29,9 @@
 #include <stdint.h>
 #include <emex64lib/support/diagnostic/legacy.h>
 #include <emex64lib/support/file.h>
+#include <emex64lib/asm/label/label.h>
 #include <emex64lib/asm/invocation.h>
 #include <emex64lib/asm/code.h>
-#include <emex64lib/asm/label.h>
 #include <emex64lib/asm/emit.h>
 #include <emex64lib/asm/section.h>
 #include <emex64lib/asm/elf.h>

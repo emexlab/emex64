@@ -30,18 +30,15 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
-
 #include <emex64lib/support/diagnostic/legacy.h>
 #include <emex64lib/support/virtual/vbitwalker.h>
 #include <emex64lib/support/parser.h>
-
+#include <emex64lib/asm/label/label.h>
 #include <emex64lib/asm/invocation.h>
 #include <emex64lib/asm/opcode.h>
 #include <emex64lib/asm/register.h>
-#include <emex64lib/asm/label.h>
 #include <emex64lib/asm/emit.h>
 #include <emex64lib/asm/section.h>
-
 #include <emex64lib/linker/linker.h>
 
 typedef struct {

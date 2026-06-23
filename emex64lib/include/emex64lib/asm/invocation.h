@@ -26,9 +26,9 @@
 #define EMEX64ASM_INVOCATION_H
 
 #include <stdbool.h>
-
 #include <emex64lib/support/file.h>
-
+#include <emex64lib/asm/label/label.h>
+#include <emex64lib/asm/label/relocate.h>
 #include <emex64lib/asm/type.h>
 #include <emex64lib/asm/options.h>
 

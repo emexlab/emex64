@@ -27,7 +27,6 @@
 
 #include <emex64lib/support/virtual/vbitwalker.h>
 #include <emex64lib/support/file.h>
-
 #include <emex64lib/linker/type.h>
 #include <emex64lib/linker/options.h>
 

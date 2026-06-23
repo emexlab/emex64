@@ -28,11 +28,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
-
 #include <emex64lib/support/file.h>
-
 #include <emex64lib/asm/invocation.h>
-
 #include <emex64lib/linker/type.h>
 
 typedef enum: uint8_t {

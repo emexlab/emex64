@@ -27,9 +27,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-
 #include <emex64lib/support/file.h>
-
 #include <emex64lib/linker/type.h>
 
 typedef struct linker_invocation linker_invocation_t;

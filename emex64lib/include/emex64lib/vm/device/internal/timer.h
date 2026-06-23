@@ -26,7 +26,6 @@
 #define EMEX64VM_DEVICE_TIMER_H
 
 #include <stdint.h>
-
 #include <emex64lib/vm/core.h>
 #include <emex64lib/vm/device/base.h>
 

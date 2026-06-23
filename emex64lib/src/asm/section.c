@@ -29,12 +29,11 @@
 #include <limits.h>
 #include <stdint.h>
 #include <errno.h>
-
 #include <emex64lib/support/parser.h>
 #include <emex64lib/support/diagnostic/legacy.h>
 #include <emex64lib/support/file.h>
-
-#include <emex64lib/asm/label.h>
+#include <emex64lib/asm/label/label.h>
+#include <emex64lib/asm/label/relocate.h>
 #include <emex64lib/asm/section.h>
 #include <emex64lib/asm/code.h>
 
@@ -206,27 +205,12 @@ bool assembler_section_parse(assembler_invocation_t *inv)
                             }
 
                             /* using finally the relocation table to its full extend */
-                            reloc_table_entry_t *rtbe = inv->rtbe;
-                            while(rtbe != NULL &&
-                                  rtbe->next != NULL)
+                            if(!assembler_label_relocate_append(inv, strdup(inv->line[i]->token[a]->str), false, inv->line[i]->token[a]))
                             {
-                                rtbe = rtbe->next;
+                                diag_fatal(inv->line[i]->token[a], "out of memory, can't append relocation to relocation table\n", inv->line[i]->token[a]->str);
+                                return false;
                             }
 
-                            if(rtbe == NULL)
-                            {
-                                rtbe = calloc(1, sizeof(reloc_table_entry_t));
-                                inv->rtbe = rtbe;
-                            }
-                            else
-                            {
-                                rtbe->next = calloc(1, sizeof(reloc_table_entry_t));
-                                rtbe = rtbe->next;
-                            }
-
-                            rtbe->name = strdup(inv->line[i]->token[a]->str);
-                            rtbe->at_link = inv->line[i]->token[a];
-                            rtbe->byte_pos = inv->out_vbitwalker->byte_pos;
                             vbitwalker_skip(inv->out_vbitwalker, 64);
                         }
                         else

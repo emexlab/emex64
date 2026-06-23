@@ -30,7 +30,6 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
-
 #include <emex64lib/support/file.h>
 
 emex_file_policy_t in_data_file_policy = {

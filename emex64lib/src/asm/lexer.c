@@ -25,7 +25,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include <emex64lib/asm/lexer.h>
 
 _Thread_local static const char *stokptr;

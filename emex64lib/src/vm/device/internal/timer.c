@@ -26,9 +26,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
-
 #include <emex64lib/vm/machine.h>
-
 #include <emex64lib/vm/device/internal/timer.h>
 #include <emex64lib/vm/device/internal/controller/ic.h>
 

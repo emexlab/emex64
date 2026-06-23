@@ -24,7 +24,6 @@
 
 #include <stdlib.h>
 #include <emex64lib/vm/machine.h>
-
 #include <emex64lib/vm/device/internal/controller/mem.h>
 #include <emex64lib/vm/device/board/controller/power.h>
 #include <emex64lib/vm/device/board/rtc.h>

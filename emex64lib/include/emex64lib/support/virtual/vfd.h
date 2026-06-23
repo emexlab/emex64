@@ -30,7 +30,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <sys/stat.h>
-
 #include <emex64lib/support/virtual/vpageobj.h>
 
 typedef enum: uint8_t {

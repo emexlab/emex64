@@ -107,7 +107,6 @@ add_library(emex64 ${LIB_TYPE}
     src/asm/emit.c
     src/asm/options.c
     src/asm/invocation.c
-    src/asm/label.c
     src/asm/opcode.c
     src/asm/register.c
     src/asm/section.c
@@ -118,6 +117,10 @@ add_library(emex64 ${LIB_TYPE}
         src/asm/preprocessor/macro.c
         src/asm/preprocessor/condition.c
         src/asm/preprocessor/preprocessor.c
+
+        ## Label API
+        src/asm/label/label.c
+        src/asm/label/relocate.c
 
     # Linker API
     src/linker/driver.c

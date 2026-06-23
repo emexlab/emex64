@@ -27,7 +27,6 @@
 
 #include <stdint.h>
 #include <pthread.h>
-
 #include <emex64lib/vm/device/base.h>
 #include <emex64lib/vm/device/board/controller/8042.h>
 

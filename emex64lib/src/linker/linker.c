@@ -24,9 +24,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-
 #include <emex64lib/support/diagnostic/legacy.h>
-
 #include <emex64lib/linker/linker.h>
 
 uint8_t ident[EI_NIDENT] = { ELF_MAGIC_0, ELF_MAGIC_1, ELF_MAGIC_2, ELF_MAGIC_3, ELF_CLASS64, ELF_DATA2LSB, EV_CURRENT };

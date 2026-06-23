@@ -27,7 +27,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-
 #include <emex64lib/vm/device/base.h>
 
 #define EMEX64_INTC_SIZE      0x30

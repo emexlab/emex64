@@ -29,7 +29,6 @@
 #include <stdbool.h>
 #include <pthread.h>
 #include <stdatomic.h>
-
 #include <emex64lib/vm/device/base.h>
 
 #define UART_BUF_SIZE          64

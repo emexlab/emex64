@@ -25,16 +25,11 @@
 #ifndef EMEX64ASM_EMIT_H
 #define EMEX64ASM_EMIT_H
 
-#include <emex64lib/vm/core.h>
-#include <emex64lib/vm/memory.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <emex64lib/asm/invocation.h>
 #include <emex64lib/asm/type.h>
-#include <emex64lib/asm/label.h>
 #include <emex64lib/asm/opcode.h>
-#include <emex64lib/asm/invocation.h>
-#include <stdbool.h>
-
-#include <emex64lib/support/virtual/vbitwalker.h>
 
 /* opcode emit */
 void assembler_emit_opcode(assembler_invocation_t *inv, uint8_t op);

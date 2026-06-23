@@ -25,9 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string.h>
-
 #include <emex64lib/support/diagnostic/legacy.h>
-
 #include <emex64lib/linker/linker.h>
 #include <emex64lib/linker/obj.h>
 

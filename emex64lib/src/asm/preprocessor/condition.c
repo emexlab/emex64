@@ -24,7 +24,6 @@
 
 #include <stdlib.h>
 #include <strings.h>
-
 #include <emex64lib/asm/preprocessor/condition.h>
 
 static inline assembler_condition_frame_t *__assembler_condition_frame_alloc()

@@ -28,14 +28,11 @@
 #include <string.h>
 #include <spawn.h>
 #include <sys/wait.h>
-
 #include <emex64lib/support/version.h>
 #include <emex64lib/support/diagnostic/legacy.h>
 #include <emex64lib/support/ratchet/args.h>
-
 #include <emex64lib/asm/driver.h>
 #include <emex64lib/asm/invocation.h>
-
 #include <emex64lib/linker/driver.h>
 
 extern char **environ;

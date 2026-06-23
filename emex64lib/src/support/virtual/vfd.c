@@ -26,11 +26,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
-
 #include <emex64lib/support/virtual/vfd.h>
-
 #include <emex64lib/vm/memory.h>
-
 #include <evObj/alloc.h>
 #include <evObj/reference.h>
 

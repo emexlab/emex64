@@ -26,7 +26,6 @@
 #define EMEX64VM_DEVICE_MC_H
 
 #include <stdint.h>
-
 #include <emex64lib/vm/device/base.h>
 
 #define EMEX64_MC_SIZE              0x18

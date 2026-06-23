@@ -28,9 +28,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
-
 #include <emex64lib/support/virtual/vbitwalker.h>
-
 #include <emex64lib/asm/lexer.h>
 
 enum kAssemblerLineType: uint8_t {
@@ -61,20 +59,5 @@ typedef struct assembler_line {
     size_t file_idx;                        /* index of file in compiler invocation */
     struct assembler_invocation *inv;       /* pointer back to compiler invocation */
 } assembler_line_t;
-
-typedef struct {
-    char *name;                             /* name of resolved label */
-    bool defined;                           /* label definitions are defined */
-    uint64_t addr;                          /* address of resolved label */
-    struct assembler_token *at_link;        /* link to the originator of the label */
-} assembler_label_t;
-
-typedef struct reloc_table_entry {
-    char *name;                             /* resolved label name */
-    bool local;                             /* must be resolved at assemble time */
-    size_t byte_pos;                        /* position */
-    struct assembler_token *at_link;        /* link to the originator of the entry */
-    struct reloc_table_entry *next;         /* pointer to next entry */
-} reloc_table_entry_t;
 
 #endif /* EMEX64ASM_TYPE_H */

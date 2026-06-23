@@ -29,7 +29,6 @@
 #include <ctype.h>
 #include <errno.h>
 #include <setjmp.h>
-
 #include <emex64lib/support/parser.h>
 
 static _Thread_local jmp_buf overflow_jmp;

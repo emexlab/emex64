@@ -23,7 +23,6 @@
  */
 
 #include <sys/mman.h>
-
 #include <emex64lib/support/virtual/vpage.h>
 #include <emex64lib/vm/memory.h>
 

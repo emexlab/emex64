@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdint.h>
-
+#include <stdbool.h>
 #include <emex64lib/support/diagnostic/legacy.h>
 #include <emex64lib/asm/invocation.h>
 

@@ -27,7 +27,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-
 #include <emex64lib/asm/invocation.h>
 
 bool assembler_elf_emit(struct assembler_invocation *inv);

@@ -28,11 +28,9 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
-
 #include <emex64lib/support/diagnostic/legacy.h>
-
-#include <emex64lib/asm/label.h>
-#include <emex64lib/asm/emit.h>
+#include <emex64lib/asm/label/label.h>
+#include <emex64lib/asm/invocation.h>
 
 bool assembler_label_prealloc(assembler_invocation_t *inv)
 {

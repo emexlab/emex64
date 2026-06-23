@@ -23,7 +23,6 @@
  */
 
 #include <emex64lib/support/pack.h>
-
 #include <emex64lib/asm/preprocessor/directive.h>
 
 kAssemblerPreprocessorDirectiveType assembler_directive_type_for_str(const char *str)

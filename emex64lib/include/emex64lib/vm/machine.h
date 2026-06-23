@@ -25,19 +25,17 @@
 #ifndef EMEX64VM_MACHINE_H
 #define EMEX64VM_MACHINE_H
 
+#include <stdint.h>
+#include <stdbool.h>
 #include <emex64lib/vm/options.h>
 #include <emex64lib/vm/core.h>
 #include <emex64lib/vm/memory.h>
 #include <emex64lib/vm/mmio.h>
-
 #include <emex64lib/vm/device/internal/timer.h>
 #include <emex64lib/vm/device/internal/controller/ic.h>
 #include <emex64lib/vm/device/board/uart.h>
 #include <emex64lib/vm/device/board/controller/8042.h>
 #include <emex64lib/vm/device/board/display.h>
-
-#include <stdint.h>
-#include <stdbool.h>
 
 typedef struct emex64_machine {
     emex64_core_t *core;

@@ -26,9 +26,7 @@
 #define EMEX64LD_DRIVER_H
 
 #include <stdint.h>
-
 #include <emex64lib/support/file.h>
-
 #include <emex64lib/linker/options.h>
 
 typedef struct {

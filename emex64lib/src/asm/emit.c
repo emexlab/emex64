@@ -29,15 +29,14 @@
 #include <assert.h>
 #include <sys/stat.h>
 #include <unistd.h>
-
 #include <emex64lib/support/parser.h>
 #include <emex64lib/support/virtual/vbitwalker.h>
 #include <emex64lib/support/diagnostic/legacy.h>
-
+#include <emex64lib/asm/label/label.h>
+#include <emex64lib/asm/label/relocate.h>
 #include <emex64lib/asm/invocation.h>
 #include <emex64lib/asm/opcode.h>
 #include <emex64lib/asm/register.h>
-#include <emex64lib/asm/label.h>
 
 void assembler_emit_opcode(assembler_invocation_t *inv,
                            uint8_t op)
@@ -217,20 +216,12 @@ bool assembler_emit_instruction(assembler_line_t *al)
             vbitwalker_write(al->inv->out_vbitwalker, kEmex64ParameterCodingAddr64, 3);
             vbitwalker_align_byte(al->inv->out_vbitwalker);
 
-            /*
-             * append label callsite to relocation
-             * table.
-             */
-            reloc_table_entry_t *rtbe = calloc(1, sizeof(reloc_table_entry_t));
-            if(al->inv->rtbe != NULL)
+            /* append label callsite to relocation table */
+            if(!assembler_label_relocate_append(al->inv, label, local, al->token[i]))
             {
-                rtbe->next = al->inv->rtbe;
+                diag_fatal(al->token[i], "out of memory, can't append relocation to relocation table\n", al->token[i]->str);
+                return false;
             }
-            al->inv->rtbe = rtbe;
-            rtbe->name = label;
-            rtbe->byte_pos = al->inv->out_vbitwalker->byte_pos;
-            rtbe->at_link = al->token[i];
-            rtbe->local = local;
 
             /*
              * skip the 64bit the label occupies
@@ -245,7 +236,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
             /* branches work different, they have offset branching */
             if((i == 1 && (opcode == kEmex64OpcodeB   || opcode == kEmex64OpcodeBE  || opcode == kEmex64OpcodeBNE   ||
                            opcode == kEmex64OpcodeBLE || opcode == kEmex64OpcodeBGE || opcode == kEmex64OpcodeBLT   ||
-                           opcode == kEmex64OpcodeBGT || opcode == kEmex64OpcodeBLW || opcode == kEmex64OpcodeBLE)) ||
+                           opcode == kEmex64OpcodeBGT || opcode == kEmex64OpcodeBLW)) ||
                (i == 2 && (opcode == kEmex64OpcodeBZ  || opcode == kEmex64OpcodeBNZ)))
             {
                 assembler_emit_addr64(al->inv, pr.value);

@@ -22,17 +22,36 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64ASM_LABEL_H
-#define EMEX64ASM_LABEL_H
-
-#include <stdbool.h>
-
-#include <emex64lib/asm/type.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <emex64lib/asm/label/relocate.h>
 #include <emex64lib/asm/invocation.h>
 
-bool assembler_label_prealloc(assembler_invocation_t *inv);
-bool assembler_label_append(assembler_token_t *at);
+bool assembler_label_relocate_append(assembler_invocation_t *inv,
+                                     char *label_str,
+                                     bool local,
+                                     assembler_token_t *at_link)
+{
+    assert(inv != NULL && label_str != NULL && at_link != NULL);
 
-assembler_label_t *assembler_label_lookup(assembler_invocation_t *inv, const char *name);
+    reloc_table_entry_t *rtbe = calloc(1, sizeof(reloc_table_entry_t));
+    if(rtbe == NULL)
+    {
+        return false;
+    }
 
-#endif /* EMEX64ASM_LABEL_H */
+    /* stich link list ^^ */
+    if(inv->rtbe != NULL)
+    {
+        rtbe->next = inv->rtbe;
+    }
+    inv->rtbe = rtbe;
+
+    rtbe->name = label_str;
+    rtbe->byte_pos = vbitwalker_bytes_used(inv->out_vbitwalker);
+    rtbe->at_link = at_link;
+    rtbe->local = local;
+
+    return true;
+}
+

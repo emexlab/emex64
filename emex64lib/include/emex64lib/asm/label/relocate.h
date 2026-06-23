@@ -22,24 +22,22 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64VM_DEVICE_RTC_H
-#define EMEX64VM_DEVICE_RTC_H
+#ifndef EMEX64ASM_LABEL_RELOCATE_H
+#define EMEX64ASM_LABEL_RELOCATE_H
 
-#include <stdint.h>
-#include <emex64lib/vm/device/base.h>
+#include <stdbool.h>
+#include <emex64lib/asm/type.h>
 
-#define EMEX64_RTC_SIZE 0x38
+typedef struct assembler_invocation assembler_invocation_t;
 
-#define RTC_REG_SECONDS 0x00
-#define RTC_REG_MINUTES 0x08
-#define RTC_REG_HOURS   0x10
-#define RTC_REG_DAY     0x18
-#define RTC_REG_MONTH   0x20
-#define RTC_REG_YEAR    0x28
-#define RTC_REG_WEEKDAY 0x30
+typedef struct reloc_table_entry {
+    char *name;                             /* resolved label name */
+    bool local;                             /* must be resolved at assemble time */
+    size_t byte_pos;                        /* position */
+    assembler_token_t *at_link;        /* link to the originator of the entry */
+    struct reloc_table_entry *next;         /* pointer to next entry */
+} reloc_table_entry_t;
 
-typedef struct emex64_core emex64_core_t;
+bool assembler_label_relocate_append(assembler_invocation_t *inv, char *label_str, bool local, assembler_token_t *at_link);
 
-uint64_t emex64_rtc_read(emex64_core_t *core, void *device, uint64_t offset, int size);
-
-#endif /* EMEX64VM_DEVICE_RTC_H */
+#endif /* EMEX64ASM_LABEL_RELOCATE_H */

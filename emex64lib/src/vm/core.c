@@ -28,19 +28,15 @@
 #include <stdio.h>
 #include <assert.h>
 #include <unistd.h>
-
 #include <emex64lib/vm/core.h>
 #include <emex64lib/vm/memory.h>
 #include <emex64lib/vm/machine.h>
-
 #include <emex64lib/vm/device/internal/controller/ic.h>
 #include <emex64lib/vm/device/internal/timer.h>
-
 #include <emex64lib/vm/instruction/core.h>
 #include <emex64lib/vm/instruction/data.h>
 #include <emex64lib/vm/instruction/alu.h>
 #include <emex64lib/vm/instruction/ctrl.h>
-
 #include <emex64lib/support/bitbolt.h>
 #include <emex64lib/support/likely.h>
 

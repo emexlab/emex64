@@ -26,11 +26,8 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
-
 #include <emex64lib/support/diagnostic/legacy.h>
-
 #include <emex64lib/vm/core.h>
-
 #include <emex64lib/linker/emit.h>
 #include <emex64lib/linker/linker.h>
 

@@ -25,14 +25,11 @@
 #ifndef EMEX64ASM_OPCODE_H
 #define EMEX64ASM_OPCODE_H
 
-#include <emex64lib/vm/core.h>
-
-#include <emex64lib/asm/type.h>
-
-#include <emex64lib/support/parser.h>
-
 #include <stdint.h>
 #include <stdbool.h>
+#include <emex64lib/support/parser.h>
+#include <emex64lib/vm/core.h>
+#include <emex64lib/asm/type.h>
 
 typedef struct opcode_entry opcode_entry_t;
 

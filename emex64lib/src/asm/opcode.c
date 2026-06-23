@@ -24,9 +24,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-
 #include <emex64lib/support/pack.h>
-
 #include <emex64lib/asm/opcode.h>
 #include <emex64lib/asm/emit.h>
 

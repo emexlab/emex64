@@ -26,7 +26,6 @@
 #define EMEX64LD_OPTIONS_H
 
 #include <stdbool.h>
-
 #include <emex64lib/linker/type.h>
 
 typedef struct linker_options {

@@ -28,7 +28,6 @@
 #include <termios.h>
 #include <pthread.h>
 #include <unistd.h>
-
 #include <emex64lib/vm/machine.h>
 #include <emex64lib/vm/device/board/uart.h>
 #include <emex64lib/vm/device/internal/controller/ic.h>

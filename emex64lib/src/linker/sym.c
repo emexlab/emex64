@@ -24,7 +24,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-
 #include <emex64lib/linker/sym.h>
 
 linker_symbol_t *linker_symbol_alloc(const char *name,

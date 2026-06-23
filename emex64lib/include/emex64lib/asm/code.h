@@ -28,9 +28,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
-
 #include <emex64lib/support/file.h>
-
 #include <emex64lib/asm/type.h>
 #include <emex64lib/asm/invocation.h>
 
