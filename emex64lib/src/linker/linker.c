@@ -31,6 +31,10 @@ uint8_t ident[EI_NIDENT] = { ELF_MAGIC_0, ELF_MAGIC_1, ELF_MAGIC_2, ELF_MAGIC_3,
 
 linker_invocation_t *linker_invocation_alloc(linker_options_t options)
 {
+    thread_log_diagnostic_options.warning_error = false;
+    thread_log_diagnostic_options.caret_diagnostics = false;
+    thread_log_diagnostic_options.color_diagnostics = true;
+
     linker_invocation_t *inv = malloc(sizeof(linker_invocation_t));
     if(inv == NULL)
     {

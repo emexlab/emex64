@@ -169,6 +169,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
             fprintf(stderr, "\n");
             fprintf(stderr, "  -fpage-align           The assembler will align sections to a page boundary.\n");
             fprintf(stderr, "  -fcaret-diagnostics    The assembler will print diagnostics showing their caret positions.\n");
+            fprintf(stderr, "  -fcolor-diagnostics    The assembler will print diagnostics with color.\n");
             fprintf(stderr, "                         Each feature flag can be reversed by prefixing it with a \"no\" (i.e -fno-page-align).\n");
             fprintf(stderr, "\n");
             fprintf(stderr, "  -Werror                The assembler will treat every warning as a error.\n");
@@ -217,6 +218,14 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
             else if(strcmp(flag, "no-caret-diagnostics") == 0)
             {
                 driver->invocation_options.caret_diagnostics = false;
+            }
+            else if(strcmp(flag, "color-diagnostics") == 0)
+            {
+                driver->invocation_options.color_diagnostics = true;
+            }
+            else if(strcmp(flag, "no-color-diagnostics") == 0)
+            {
+                driver->invocation_options.color_diagnostics = false;
             }
             else
             {
@@ -505,6 +514,7 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
                 /* feature flags */
                 ratchet_args_append(&ra, driver->invocation_options.page_align ? "-fpage-align" : "-fno-page-align");
                 ratchet_args_append(&ra, driver->invocation_options.caret_diagnostics ? "-fcaret-diagnostics" : "-fno-caret-diagnostics");
+                ratchet_args_append(&ra, driver->invocation_options.color_diagnostics ? "-fcolor-diagnostics" : "-fno-color-diagnostics");
 
                 /* warning flags */
                 ratchet_args_append(&ra, driver->invocation_options.warning_error ? "-Werror" : "-Wno-error");

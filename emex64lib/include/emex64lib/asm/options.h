@@ -37,6 +37,7 @@ typedef struct assembler_invocation_options {
     /* features */
     bool page_align;                /* default: true */
     bool caret_diagnostics;         /* default: true */
+    bool color_diagnostics;         /* default: true */
 
     /* warnings */
     bool warning_error;             /* default: false */

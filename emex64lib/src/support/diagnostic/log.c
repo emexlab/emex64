@@ -30,6 +30,18 @@
 #include <emex64lib/support/diagnostic/log.h>
 #include <emex64lib/asm/invocation.h>
 
+#define C_BOLD "\x1b[1m"
+#define C_CARET "\x1b[32m"
+#define C_RESET "\x1b[0m"
+#define C_NOTE "\x1b[1;35m"
+#define C_WARN "\x1b[1;33m" 
+#define C_ERROR "\x1b[1;31m"
+
+static const char *col(const char *code)
+{
+    return thread_log_diagnostic_options.color_diagnostics ? code : "";
+}
+
 _Thread_local diagnostic_logging_options_t thread_log_diagnostic_options = {
     .warning_error = false,
     .caret_diagnostics = true,
@@ -176,12 +188,12 @@ static void diag_print_caret_line(assembler_token_t *at)
         putchar(src[i] == '\t' ? '\t' : ' ');
     }
 
-    printf("\x1b[1m\x1b[32m^");
+    printf("%s%s^", col(C_BOLD), col(C_CARET));   /* bold green */
     for(size_t i = 1; i < tok_len; i++)
     {
         putchar('~');
     }
-    printf("\x1b[0m\n");
+    printf("%s\n", col(C_RESET));
 }
 
 void diag_log(diag_level_t level,
@@ -201,20 +213,12 @@ void diag_log(diag_level_t level,
 
     switch(level)
     {
-        case DIAG_NOTE:
-            printf("\x1b[1m\033[35mnote:");
-            break;
-        case DIAG_WARN:
-            printf("\x1b[1m\033[33mwarning:");
-            break;
-        case DIAG_ERROR:
-            printf("\x1b[1m\033[31merror:");
-            break;
-        case DIAG_FATAL:
-            printf("\x1b[1m\033[31mfatal:");
-            break;
+        case DIAG_NOTE: printf("%snote:", col(C_NOTE));  break;
+        case DIAG_WARN: printf("%swarning:", col(C_WARN));  break;
+        case DIAG_ERROR: printf("%serror:", col(C_ERROR)); break;
+        case DIAG_FATAL: printf("%sfatal:", col(C_ERROR)); break;
     }
-    printf("\033[0m\x1b[0m ");
+    printf("%s ", col(C_RESET));
 
     va_list args;
     va_start(args, msg);

@@ -35,4 +35,5 @@ assembler_invocation_options_t assembler_invocation_options_default = {
     .warning_error = false,
     .warning_deprecated = true,
     .caret_diagnostics = true,
+    .color_diagnostics = true,
 };
