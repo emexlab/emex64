@@ -282,17 +282,18 @@ bool linker_link(linker_options_t options,
     {
         if(!linker_load_object(inv, input_file[i]))
         {
-            diag_error(NULL, "object file \'%s\' couldn't be loaded\n", input_file[i]);
+            diag_error(NULL, "object file \'%s\' couldn't be loaded\n", input_file[i]->path);
             linker_invocation_dealloc(inv);
             return false;
         }
     }
+    linker_layout(inv);
 
     for(uint64_t i = 0; i < linker_script_file_cnt; i++)
     {
         if(!linker_script_parse(inv, linker_script_file[i]))
         {
-            diag_error(NULL, "linker script file \'%s\' is problematic\n", linker_script_file[i]);
+            diag_error(NULL, "linker script file \'%s\' is problematic\n", linker_script_file[i]->path);
             linker_invocation_dealloc(inv);
             return false;
         }
@@ -387,10 +388,12 @@ bool linker_link(linker_options_t options,
     {
         fprintf(stderr,
                 "emex64ld: linked object(s) → %s\n"
-                "  .text  %8lu bytes @ 0x%08lx\n"
-                "  .data  %8lu bytes @ 0x%08lx\n"
-                "  .bss   %8lu bytes @ 0x%08lx (virtual)\n"
-                "  entry  %s @ 0x%08lx\n", output->path,
+                "  .fw_hdr  %8lu bytes @ 0x%08lx\n"
+                "  .text    %8lu bytes @ 0x%08lx\n"
+                "  .data    %8lu bytes @ 0x%08lx\n"
+                "  .bss     %8lu bytes @ 0x%08lx (virtual)\n"
+                "  entry    %s @ 0x%08lx\n", output->path,
+                (unsigned long)BOOT_HEADER_SIZE, (unsigned long)0,
                 (unsigned long)total_text, (unsigned long)BOOT_HEADER_SIZE,
                 (unsigned long)total_data, (unsigned long)inv->out_text_off,
                 (unsigned long)(inv->out_bss_off - inv->out_data_off), (unsigned long)inv->out_data_off,

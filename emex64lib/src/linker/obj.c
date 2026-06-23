@@ -28,6 +28,22 @@
 #include <emex64lib/support/diagnostic/log.h>
 #include <emex64lib/linker/linker.h>
 #include <emex64lib/linker/obj.h>
+#include <emex64lib/vm/memory.h>
+
+static unsigned long obj_sec_align(linker_object_t *o, int32_t idx)
+{
+    if(idx < 0)
+    {
+        return 1;
+    }
+    unsigned long a = o->shdrs[idx].sh_addralign;
+    return a < 2 ? 1 : a;
+}
+
+static inline unsigned long align_up(unsigned long v, unsigned long a)
+{
+    return (v + a - 1) & ~(a - 1);
+}
 
 linker_object_t *linker_object_alloc(emex_file_t *object_file)
 {
@@ -162,31 +178,42 @@ bool linker_load_object(linker_invocation_t *inv,
     }
     else
     {
-        obj->next = inv->obj;
-        inv->obj = obj;
-    }
-
-    /* updating offsets */
-    obj->base_text = inv->out_text_off;
-    inv->out_text_off += linker_object_text_size(obj);
-
-    inv->out_data_off = inv->out_text_off;
-    obj = inv->obj;
-    while(obj != NULL)
-    {
-        obj->base_data = inv->out_data_off;
-        inv->out_data_off += linker_object_data_size(obj);
-        obj = obj->next;
-    }
-
-    inv->out_bss_off = inv->out_data_off;
-    obj = inv->obj;
-    while(obj != NULL)
-    {
-        obj->base_bss = inv->out_bss_off;
-        inv->out_bss_off += linker_object_bss_size(obj);
-        obj = obj->next;
+        linker_object_t *tail = inv->obj;
+        while (tail->next) tail = tail->next;
+        tail->next = obj;
     }
 
     return true;
+}
+
+void linker_layout(linker_invocation_t *inv)
+{
+    unsigned long cur = BOOT_HEADER_SIZE;
+
+    for(linker_object_t *o = inv->obj; o; o = o->next)
+    {
+        cur = align_up(cur, obj_sec_align(o, o->idx_text));
+        o->base_text = cur;
+        cur += linker_object_text_size(o);
+    }
+    cur = align_up(cur, EMEX64_PAGE_SIZE);
+    inv->out_text_off = cur;
+
+    for(linker_object_t *o = inv->obj; o; o = o->next)
+    {
+        cur = align_up(cur, obj_sec_align(o, o->idx_data));
+        o->base_data = cur;
+        cur += linker_object_data_size(o);
+    }
+    cur = align_up(cur, EMEX64_PAGE_SIZE);
+    inv->out_data_off = cur;
+
+    for(linker_object_t *o = inv->obj; o; o = o->next)
+    {
+        cur = align_up(cur, obj_sec_align(o, o->idx_bss));
+        o->base_bss = cur;
+        cur += linker_object_bss_size(o);
+    }
+    cur = align_up(cur, EMEX64_PAGE_SIZE);
+    inv->out_bss_off = cur;
 }

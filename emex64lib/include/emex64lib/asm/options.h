@@ -35,7 +35,6 @@ typedef struct assembler_driver_options {
 
 typedef struct assembler_invocation_options {
     /* features */
-    bool page_align;                /* default: true */
     bool caret_diagnostics;         /* default: true */
     bool color_diagnostics;         /* default: true */
 

@@ -167,7 +167,6 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
             fprintf(stderr, "  -I <dir>               Adds a directory to the include search path.\n");
             fprintf(stderr, "  -Wl,<arg>,...          Pass the comma separated arguments to the linker.\n");
             fprintf(stderr, "\n");
-            fprintf(stderr, "  -fpage-align           The assembler will align sections to a page boundary.\n");
             fprintf(stderr, "  -fcaret-diagnostics    The assembler will print diagnostics showing their caret positions.\n");
             fprintf(stderr, "  -fcolor-diagnostics    The assembler will print diagnostics with color.\n");
             fprintf(stderr, "                         Each feature flag can be reversed by prefixing it with a \"no\" (i.e -fno-page-align).\n");
@@ -203,13 +202,10 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
                 return false;
             }
 
-            if(strcmp(flag, "page-align") == 0)
+            if(strcmp(flag, "page-align") == 0 ||
+               strcmp(flag, "no-page-align") == 0)
             {
-                driver->invocation_options.page_align = true;
-            }
-            else if(strcmp(flag, "no-page-align") == 0)
-            {
-                driver->invocation_options.page_align = false;
+                diag_warn(NULL, "feature flag '%s' is deprecated, please you equivalents if available\n", flag);
             }
             else if(strcmp(flag, "caret-diagnostics") == 0)
             {
@@ -512,7 +508,6 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
                 ratchet_args_append(&ra, input_path);
 
                 /* feature flags */
-                ratchet_args_append(&ra, driver->invocation_options.page_align ? "-fpage-align" : "-fno-page-align");
                 ratchet_args_append(&ra, driver->invocation_options.caret_diagnostics ? "-fcaret-diagnostics" : "-fno-caret-diagnostics");
                 ratchet_args_append(&ra, driver->invocation_options.color_diagnostics ? "-fcolor-diagnostics" : "-fno-color-diagnostics");
 
@@ -662,13 +657,20 @@ assembler_driver_t *assembler_driver_alloc(int argc,
 
     if(driver->options.verbose)
     {
-        fprintf(stderr, "---- driver ----\n");
-        fprintf(stderr, "page_align: %d\n", driver->invocation_options.page_align);
-        fprintf(stderr, "warning_error: %d\n", driver->invocation_options.warning_error);
-        fprintf(stderr, "warning_deprecated: %d\n", driver->invocation_options.warning_deprecated);
-        fprintf(stderr, "assemble_only: %d\n", driver->options.assemble_only);
-        fprintf(stderr, "verbose: %d\n", driver->options.verbose);
-        fprintf(stderr, "in_process: %d\n", driver->options.in_process || driver->options.assemble_only);
+        fprintf(stderr, "%s version %d.%d.%d (%s)\n", argv[0], EMEX64_VERSION_MAJOR, EMEX64_VERSION_MINOR, EMEX64_VERSION_PATCH, EMEX64_VERSION_STRING);
+        fprintf(stderr, "pid: %d\n", getpid());
+        fprintf(stderr, "uid: %d\n", getuid());
+        fprintf(stderr, "options: {\n");
+        fprintf(stderr, "    assemble_only: %d,\n", driver->options.assemble_only);
+        fprintf(stderr, "    verbose: %d,\n", driver->options.verbose);
+        fprintf(stderr, "    in_process: %d,\n", driver->options.in_process);
+        fprintf(stderr, "}\n");;
+        fprintf(stderr, "invocation_options: {\n");
+        fprintf(stderr, "    caret_diagnostics: %d,\n", driver->invocation_options.caret_diagnostics);
+        fprintf(stderr, "    color_diagnostics: %d,\n", driver->invocation_options.color_diagnostics);
+        fprintf(stderr, "    warning_error: %d,\n", driver->invocation_options.warning_error);
+        fprintf(stderr, "    warning_deprecated: %d,\n", driver->invocation_options.warning_deprecated);
+        fprintf(stderr, "}\n");;
         fprintf(stderr, "output_path: %s\n", driver->output_path);
 
         fprintf(stderr, "input_file[%d]: { ", driver->input_file_count);
@@ -704,16 +706,19 @@ assembler_driver_t *assembler_driver_alloc(int argc,
         }
         fprintf(stderr, " }\n");
 
-        fprintf(stderr, "linker_flags[%d]: { ", driver->linker_flags_cnt);
-        for(int i = 0; i < driver->linker_flags_cnt; i++)
+        if(!driver->options.assemble_only)
         {
-            if(i != 0)
+            fprintf(stderr, "linker_flags[%d]: { ", driver->linker_flags_cnt);
+            for(int i = 0; i < driver->linker_flags_cnt; i++)
             {
-                fprintf(stderr, ", ");
+                if(i != 0)
+                {
+                    fprintf(stderr, ", ");
+                }
+                fprintf(stderr, "%s", driver->linker_flags[i]);
             }
-            fprintf(stderr, "%s", driver->linker_flags[i]);
+            fprintf(stderr, " }\n");
         }
-        fprintf(stderr, " }\n");
 
         fprintf(stderr, "jobs: {");
         assembler_job_t *job = driver->job;
@@ -726,7 +731,7 @@ assembler_driver_t *assembler_driver_alloc(int argc,
             fprintf(stderr, "\t{\n");
             fprintf(stderr, "\t\ttype: %s\n", assembler_job_string_for_type(job->type));
             fprintf(stderr, "\t\tcommand: %s\n", job->command);
-            fprintf(stderr, "\t\targv[%d]: { ", job->argc);
+            fprintf(stderr, "\t\targv[%d]: {", job->argc);
             for(int i = 0; i < job->argc; i++)
             {
                 if(i != 0)
@@ -736,8 +741,8 @@ assembler_driver_t *assembler_driver_alloc(int argc,
                 fprintf(stderr, "%s", job->argv[i]);
             }
             fprintf(stderr, " }\n");
-            fprintf(stderr, "\t\tprev: %p\n ", (void*)job->prev);
-            fprintf(stderr, "\t\tnext: %p\n ", (void*)job->next);
+            fprintf(stderr, "\t\tprev: %p\n", (void*)job->prev);
+            fprintf(stderr, "\t\tnext: %p\n", (void*)job->next);
             fprintf(stderr, "\t}");
             fprintf(stderr, "\n");
 
@@ -831,11 +836,6 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
         {
             if(job->type == kAssemblerJobTypeDriver && driver->options.in_process)
             {
-                if(driver->options.verbose)
-                {
-                    printf("\n");
-                }
-
                 assembler_driver_t *subdriver = assembler_driver_alloc(job->argc, (const char**)job->argv);
                 if(subdriver == NULL)
                 {
@@ -851,11 +851,6 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
             }
             else if(job->type == kAssemblerJobTypeLinker && driver->options.in_process)
             {
-                if(driver->options.verbose)
-                {
-                    printf("\n");
-                }
-
                 linker_driver_t *subdriver = linker_driver_alloc(job->argc, (const char**)job->argv);
                 if(subdriver == NULL)
                 {
@@ -878,11 +873,6 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
                     return false;
                 }
 
-                if(driver->options.verbose)
-                {
-                    printf("\nspawned job (command='%s' | pid=%d)\n", job->command, pid);
-                }
-
                 int rstatus = 0;
                 if(waitpid(pid, &rstatus, 0) != pid)
                 {
@@ -903,6 +893,10 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
                 }
             }
 
+            if(job->next != NULL && driver->options.verbose)
+            {
+                fprintf(stderr, "\n");
+            }
             job = job->next;
         }
 

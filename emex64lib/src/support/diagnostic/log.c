@@ -45,6 +45,7 @@ static const char *col(const char *code)
 _Thread_local diagnostic_logging_options_t thread_log_diagnostic_options = {
     .warning_error = false,
     .caret_diagnostics = true,
+    .color_diagnostics = true,
 };
 
 static inline int putchar_c(char c)

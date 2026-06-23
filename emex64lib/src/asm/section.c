@@ -37,11 +37,6 @@
 #include <emex64lib/asm/section.h>
 #include <emex64lib/asm/code.h>
 
-static inline unsigned long align_up(unsigned long v, unsigned long a)
-{
-    return (v + a - 1) & ~(a - 1);
-}
-
 bool assembler_section_parse(assembler_invocation_t *inv)
 {
     /* iterating for section token type and creating data section */
@@ -225,16 +220,12 @@ bool assembler_section_parse(assembler_invocation_t *inv)
         }
     }
 
+    vbitwalker_align_byte(inv->out_vbitwalker);
+
     /* record data section end */
     if(inv->data_section_start != UINT64_MAX)
     {
         inv->data_section_end = vbitwalker_bytes_used(inv->out_vbitwalker);
-    }
-
-    if(inv->options.page_align)
-    {
-        inv->out_vbitwalker->byte_pos = align_up(inv->out_vbitwalker->byte_pos, 0x2000);
-        inv->out_vbitwalker->bit_idx = 0;
     }
 
     /* iterating for section token type and creating bss section */
@@ -313,17 +304,13 @@ bool assembler_section_parse(assembler_invocation_t *inv)
         }
     }
 
+    vbitwalker_align_byte(inv->out_vbitwalker);
+
     /* record bss section size */
     if(inv->bss_section_start != UINT64_MAX)
     {
         uint64_t bss_end = vbitwalker_bytes_used(inv->out_vbitwalker);
         inv->bss_section_size = bss_end > inv->bss_section_start ? bss_end - inv->bss_section_start : 0;
-    }
-
-    if(inv->options.page_align)
-    {
-        inv->out_vbitwalker->byte_pos = align_up(inv->out_vbitwalker->byte_pos, 0x2000);
-        inv->out_vbitwalker->bit_idx = 0;
     }
 
     return true;
