@@ -182,25 +182,13 @@ bool assembler_code_inject_file(assembler_invocation_t *inv,
 
     /* injecting file into array */
     uint64_t inj_file_idx;
-    if(inv->file == NULL)
+    emex_file_t **newp = realloc(inv->file, (inv->file_cnt + 1) *  sizeof(emex_file_t*));
+    if(newp == NULL)
     {
-        inv->file = malloc(sizeof(emex_file_t*));
-        if(inv->file == NULL)
-        {
-            goto out_failure;
-        }
-        inv->file[inv->file_cnt] = inj_file;
+        goto out_failure;
     }
-    else
-    {
-        emex_file_t **newp = realloc(inv->file, (inv->file_cnt + 1) *  sizeof(emex_file_t*));
-        if(newp == NULL)
-        {
-            goto out_failure;
-        }
-        inv->file = newp;
-        inv->file[inv->file_cnt] = inj_file;
-    }
+    inv->file = newp;
+    inv->file[inv->file_cnt] = inj_file;
     inj_file_idx = inv->file_cnt++;
 
     /* handling tokenization and preparse */
