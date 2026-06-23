@@ -22,8 +22,8 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64ASM_ELF_H
-#define EMEX64ASM_ELF_H
+#ifndef EMEX64ASM_EMITTER_ELF_H
+#define EMEX64ASM_EMITTER_ELF_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -31,4 +31,4 @@
 
 bool assembler_elf_emit(struct assembler_invocation *inv);
 
-#endif /* EMEX64ASM_ELF_H */
+#endif /* EMEX64ASM_EMITTER_ELF_H */

@@ -22,6 +22,7 @@
  * SOFTWARE.
  */
 
+#include <assert.h>
 #include <emex64lib/support/pack.h>
 #include <emex64lib/asm/emitter/register.h>
 
@@ -63,4 +64,13 @@ kEmex64Register register_from_string(const char *name)
         case PACK('r','r'): return kEmex64RegisterRR;
         default: return kEmex64RegisterInvalid;
     }
+}
+
+void assembler_emit_register(assembler_invocation_t *inv,
+                             kEmex64Register reg)
+{
+    assert(reg <= kEmex64RegisterMAX);
+
+    vbitwalker_write(inv->out_vbitwalker, kEmex64ParameterCodingReg, 3);
+    vbitwalker_write(inv->out_vbitwalker, reg, 5);
 }

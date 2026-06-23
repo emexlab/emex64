@@ -22,16 +22,16 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64ASM_OPCODE_H
-#define EMEX64ASM_OPCODE_H
+#ifndef EMEX64ASM_EMITTER_OPCODE_H
+#define EMEX64ASM_EMITTER_OPCODE_H
 
-#include <stdint.h>
 #include <stdbool.h>
-#include <emex64lib/support/parser.h>
 #include <emex64lib/vm/core.h>
-#include <emex64lib/asm/type.h>
+#include <emex64lib/asm/invocation.h>
 
 kEmex64Opcode opcode_from_string(const char *name);
 bool opcode_arg_accepts_reg_only(const emex64_opfunc_entry_t *opce, uint8_t arg);
 
-#endif /* EMEX64ASM_OPCODE_H */
+void assembler_emit_opcode(assembler_invocation_t *inv, kEmex64Opcode op);
+
+#endif /* EMEX64ASM_EMITTER_OPCODE_H */

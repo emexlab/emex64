@@ -94,3 +94,9 @@ bool opcode_arg_accepts_reg_only(const emex64_opfunc_entry_t *opce,
 {
     return opce != NULL && (opce->argmask & (1u << (31 - arg))) != 0;
 }
+
+void assembler_emit_opcode(assembler_invocation_t *inv,
+                           kEmex64Opcode op)
+{
+    vbitwalker_write(inv->out_vbitwalker, op, 8);
+}

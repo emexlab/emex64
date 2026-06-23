@@ -120,6 +120,7 @@ add_library(emex64 ${LIB_TYPE}
 
         ## Emitter API
         src/asm/emitter/emitter.c
+        src/asm/emitter/immediate.c
         src/asm/emitter/opcode.c
         src/asm/emitter/register.c
         src/asm/emitter/elf.c

@@ -22,14 +22,18 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64ASM_EMITTER_REGISTER_H
-#define EMEX64ASM_EMITTER_REGISTER_H
+#ifndef EMEX64ASM_EMITTER_IMMEDIATE_H
+#define EMEX64ASM_EMITTER_IMMEDIATE_H
 
-#include <emex64lib/vm/core.h>
+#include <stdint.h>
 #include <emex64lib/asm/invocation.h>
 
-kEmex64Register register_from_string(const char *name);
+void assembler_emit_imm5(assembler_invocation_t *inv, uint8_t imm);
+void assembler_emit_imm8(assembler_invocation_t *inv, uint8_t imm);
+void assembler_emit_imm16(assembler_invocation_t *inv, uint16_t imm);
+void assembler_emit_imm32(assembler_invocation_t *inv, uint32_t imm);
+void assembler_emit_imm64(assembler_invocation_t *inv, uint64_t imm);
+void assembler_emit_addr64(assembler_invocation_t *inv, uint64_t addr);
+void assembler_emit_imm(assembler_invocation_t *inv, uint64_t imm);
 
-void assembler_emit_register(assembler_invocation_t *inv, kEmex64Register reg);
-
-#endif /* EMEX64ASM_EMITTER_REGISTER_H */
+#endif /* EMEX64ASM_EMITTER_IMMEDIATE_H */

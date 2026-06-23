@@ -22,38 +22,18 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64ASM_EMIT_H
-#define EMEX64ASM_EMIT_H
+#ifndef EMEX64ASM_EMITTER_EMITTER_H
+#define EMEX64ASM_EMITTER_EMITTER_H
 
 #include <stdbool.h>
-#include <stdint.h>
 #include <emex64lib/asm/invocation.h>
 #include <emex64lib/asm/type.h>
 #include <emex64lib/asm/emitter/opcode.h>
 #include <emex64lib/asm/emitter/register.h>
+#include <emex64lib/asm/emitter/immediate.h>
 
-/* opcode emit */
-void assembler_emit_opcode(assembler_invocation_t *inv, kEmex64Opcode op);
-
-/* register emit */
-void assembler_emit_register(assembler_invocation_t *inv, kEmex64Register reg);
-
-/* intermediate emit */
-void assembler_emit_imm5(assembler_invocation_t *inv, uint8_t imm);
-void assembler_emit_imm8(assembler_invocation_t *inv, uint8_t imm);
-void assembler_emit_imm16(assembler_invocation_t *inv, uint16_t imm);
-void assembler_emit_imm32(assembler_invocation_t *inv, uint32_t imm);
-void assembler_emit_imm64(assembler_invocation_t *inv, uint64_t imm);
-void assembler_emit_addr64(assembler_invocation_t *inv, uint64_t addr);
-void assembler_emit_imm(assembler_invocation_t *inv, uint64_t imm);
-
-/* end emitter */
 void assembler_emit_end(assembler_invocation_t *inv);
-
-/* instruction emitter */
 bool assembler_emit_instruction(assembler_line_t *al);
-
-/* automised code emitting */
 bool assembler_emit(assembler_invocation_t *inv);
 
-#endif /* EMEX64ASM_EMIT_H */
+#endif /* EMEX64ASM_EMITTER_EMITTER_H */
