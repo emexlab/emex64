@@ -31,12 +31,6 @@
 #include <emex64lib/vm/core.h>
 #include <emex64lib/asm/type.h>
 
-typedef struct opcode_entry opcode_entry_t;
-
-/* handler for emitting instruction */
-typedef bool (*instruction_emit_handler)(const opcode_entry_t *opce, assembler_line_t *cl);
-
-/* opcode entry gathering */
 kEmex64Opcode opcode_from_string(const char *name);
 bool opcode_arg_accepts_reg_only(const emex64_opfunc_entry_t *opce, uint8_t arg);
 
