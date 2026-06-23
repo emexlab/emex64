@@ -196,7 +196,7 @@ bool assembler_code_inject_file(assembler_invocation_t *inv,
     {
         if(!__assembler_splice_line(inv, at_line_index, entry_cnt))
         {
-            goto out_failure;
+            goto out_failure_file_rm;
         }
     }
     else
@@ -204,7 +204,7 @@ bool assembler_code_inject_file(assembler_invocation_t *inv,
         inv->line = calloc(entry_cnt, sizeof(assembler_line_t*));
         if(inv->line == NULL)
         {
-            goto out_failure;
+            goto out_failure_file_rm;
         }
         inv->line_cnt = entry_cnt;
     }
@@ -252,12 +252,12 @@ bool assembler_code_inject_file(assembler_invocation_t *inv,
             if(token.type == kAssemblerTokenTypeInvalid)
             {
                 diag_error(at, "token '%s' is not valid\n", at->str);
-                goto out_failure;
+                goto out_failure_file_rm;
             }
             else if(token.type == kAssemblerTokenTypeTooLong)
             {
                 diag_error(at, "token is too long, token lenght limit is %d characters\n", LEXTOK_LENGHT_MAX);
-                goto out_failure;
+                goto out_failure_file_rm;
             }
             at->type = token.type;
             inv->line[at_line_index + i]->token[inv->line[at_line_index + i]->token_cnt++] = at;
@@ -282,6 +282,9 @@ bool assembler_code_inject_file(assembler_invocation_t *inv,
     free(entries);
     return true;
 
+out_failure_file_rm:
+    /* preventing evObj issues */
+    inv->file[inj_file_idx] = NULL;
 out_failure:
     for(size_t i = 0; i < entry_cnt; i++)
     {
