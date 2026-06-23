@@ -28,7 +28,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
-#include <emex64lib/support/diagnostic/legacy.h>
+#include <emex64lib/support/diagnostic/log.h>
 #include <emex64lib/asm/label/label.h>
 #include <emex64lib/asm/invocation.h>
 

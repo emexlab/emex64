@@ -23,7 +23,7 @@
  */
 
 #include <emex64lib/support/virtual/vpageobj.h>
-#include <emex64lib/support/diagnostic/legacy.h>
+#include <emex64lib/support/diagnostic/log.h>
 
 DEFINE_EVOBJECT_MAIN_EVENT_HANDLER(vpageobj)
 {

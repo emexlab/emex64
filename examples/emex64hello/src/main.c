@@ -24,7 +24,7 @@
 
 #include <stdio.h>
 #include <fcntl.h>
-#include <emex64lib/support/diagnostic/legacy.h>
+#include <emex64lib/support/diagnostic/log.h>
 #include <emex64lib/asm/invocation.h>
 #include <emex64lib/linker/linker.h>
 #include <emex64lib/vm/machine.h>

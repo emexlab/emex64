@@ -25,7 +25,7 @@
 #include <string.h>
 #include <assert.h>
 #include <emex64lib/support/parser.h>
-#include <emex64lib/support/diagnostic/legacy.h>
+#include <emex64lib/support/diagnostic/log.h>
 #include <emex64lib/asm/preprocessor/preprocessor.h>
 #include <emex64lib/asm/invocation.h>
 #include <emex64lib/asm/code.h>

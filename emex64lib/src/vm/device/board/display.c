@@ -30,7 +30,7 @@
 #include <pthread.h>
 #include <stdatomic.h>
 #include <unistd.h>
-#include <emex64lib/support/diagnostic/legacy.h>
+#include <emex64lib/support/diagnostic/log.h>
 #include <emex64lib/vm/machine.h>
 #include <emex64lib/vm/device/board/display.h>
 

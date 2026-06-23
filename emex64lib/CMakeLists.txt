@@ -60,7 +60,7 @@ add_library(emex64 ${LIB_TYPE}
     src/support/bitbolt.c
 
         ## Diagnostic API (Errors, Warnings, Notes, etc ^^)
-        src/support/diagnostic/legacy.c
+        src/support/diagnostic/log.c
         src/support/diagnostic/message.c
         src/support/diagnostic/storage.c
 

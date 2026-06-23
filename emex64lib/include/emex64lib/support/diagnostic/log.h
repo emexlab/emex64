@@ -25,6 +25,7 @@
 #ifndef EMEX64_DIAGNOSTIC_LEGACY_H
 #define EMEX64_DIAGNOSTIC_LEGACY_H
 
+#include <stdbool.h>
 #include <emex64lib/asm/type.h>
 
 #define diag_note(at, msg, ...) diag_log(DIAG_NOTE, at, msg __VA_OPT__(,) __VA_ARGS__)
@@ -32,8 +33,13 @@
 #define diag_error(at, msg, ...) diag_log(DIAG_ERROR, at, msg __VA_OPT__(,) __VA_ARGS__)
 #define diag_fatal(at, msg, ...) diag_log(DIAG_FATAL, at, msg __VA_OPT__(,) __VA_ARGS__)
 
-extern _Thread_local bool warning_error;
-extern _Thread_local bool caret_diagnostics;
+typedef struct diagnostic_logging_options {
+    bool warning_error;
+    bool caret_diagnostics;
+    bool color_diagnostics;
+} diagnostic_logging_options_t;
+
+extern _Thread_local diagnostic_logging_options_t thread_log_diagnostic_options;
 
 typedef enum {
     DIAG_NOTE,

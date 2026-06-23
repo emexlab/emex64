@@ -31,7 +31,7 @@
 #include <unistd.h>
 #include <emex64lib/support/parser.h>
 #include <emex64lib/support/virtual/vbitwalker.h>
-#include <emex64lib/support/diagnostic/legacy.h>
+#include <emex64lib/support/diagnostic/log.h>
 #include <emex64lib/asm/label/label.h>
 #include <emex64lib/asm/label/relocate.h>
 #include <emex64lib/asm/emitter/emitter.h>

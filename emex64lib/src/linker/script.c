@@ -27,7 +27,7 @@
 #include <stdint.h>
 #include <errno.h>
 #include <string.h>
-#include <emex64lib/support/diagnostic/legacy.h>
+#include <emex64lib/support/diagnostic/log.h>
 #include <emex64lib/linker/linker.h>
 #include <emex64lib/linker/script.h>
 

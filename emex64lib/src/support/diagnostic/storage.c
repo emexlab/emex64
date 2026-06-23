@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <emex64lib/support/diagnostic/storage.h>
-#include <emex64lib/support/diagnostic/legacy.h>
+#include <emex64lib/support/diagnostic/log.h>
 
 diagnostic_storage_t *diagnostic_storage_alloc()
 {

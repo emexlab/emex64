@@ -29,7 +29,7 @@
 #include <string.h>
 #include <pthread.h>
 
-#include <emex64lib/support/diagnostic/legacy.h>
+#include <emex64lib/support/diagnostic/log.h>
 #include <emex64lib/support/parser.h>
 
 #include <emex64lib/vm/machine.h>

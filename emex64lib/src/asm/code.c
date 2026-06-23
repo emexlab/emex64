@@ -28,7 +28,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <emex64lib/support/diagnostic/legacy.h>
+#include <emex64lib/support/diagnostic/log.h>
 #include <emex64lib/asm/preprocessor/directive.h>
 #include <emex64lib/asm/code.h>
 #include <emex64lib/asm/lexer.h>

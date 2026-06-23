@@ -30,7 +30,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <assert.h>
-#include <emex64lib/support/diagnostic/legacy.h>
+#include <emex64lib/support/diagnostic/log.h>
 #include <emex64lib/support/likely.h>
 #include <emex64lib/vm/memory.h>
 #include <emex64lib/vm/core.h>

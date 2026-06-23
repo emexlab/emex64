@@ -27,11 +27,13 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <emex64lib/support/diagnostic/legacy.h>
+#include <emex64lib/support/diagnostic/log.h>
 #include <emex64lib/asm/invocation.h>
 
-_Thread_local bool warning_error = false;
-_Thread_local bool caret_diagnostics = true;
+_Thread_local diagnostic_logging_options_t thread_log_diagnostic_options = {
+    .warning_error = false,
+    .caret_diagnostics = true,
+};
 
 static inline int putchar_c(char c)
 {
@@ -187,7 +189,7 @@ void diag_log(diag_level_t level,
               const char *msg,
               ...)
 {
-    if(warning_error)
+    if(thread_log_diagnostic_options.warning_error)
     {
         level = DIAG_ERROR;
     }
@@ -289,7 +291,7 @@ void diag_log(diag_level_t level,
 
     va_end(args);
 
-    if(at != NULL && caret_diagnostics)
+    if(at != NULL && thread_log_diagnostic_options.caret_diagnostics)
     {
         diag_print_caret_line(at);
     }

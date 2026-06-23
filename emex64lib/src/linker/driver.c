@@ -27,7 +27,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <emex64lib/support/version.h>
-#include <emex64lib/support/diagnostic/legacy.h>
+#include <emex64lib/support/diagnostic/log.h>
 #include <emex64lib/linker/linker.h>
 #include <emex64lib/linker/driver.h>
 #include <emex64lib/linker/emit.h>

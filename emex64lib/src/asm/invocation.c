@@ -27,7 +27,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdint.h>
-#include <emex64lib/support/diagnostic/legacy.h>
+#include <emex64lib/support/diagnostic/log.h>
 #include <emex64lib/support/file.h>
 #include <emex64lib/asm/preprocessor/preprocessor.h>
 #include <emex64lib/asm/label/label.h>
@@ -40,8 +40,8 @@
 assembler_invocation_t *assembler_invocation_alloc(assembler_invocation_options_t options)
 {
     /* apply warning_error local thread variable */
-    warning_error = options.warning_error;
-    caret_diagnostics = options.caret_diagnostics;
+    thread_log_diagnostic_options.warning_error = options.warning_error;
+    thread_log_diagnostic_options.caret_diagnostics = options.caret_diagnostics;
 
     assembler_invocation_t *inv = calloc(1, sizeof(assembler_invocation_t));
     if(inv == NULL)
