@@ -177,8 +177,7 @@ bool assembler_code_inject_file(assembler_invocation_t *inv,
 
     if(!__assembler_code_fastline(inj_file, &entries, &entry_cnt, &entry_cap))
     {
-        free(entries);
-        return false;
+        goto out_failure;
     }
 
     /* injecting file into array */
@@ -188,8 +187,7 @@ bool assembler_code_inject_file(assembler_invocation_t *inv,
         inv->file = malloc(sizeof(emex_file_t*));
         if(inv->file == NULL)
         {
-            free(entries);
-            return false;
+            goto out_failure;
         }
         inv->file[inv->file_cnt] = inj_file;
     }
@@ -198,8 +196,7 @@ bool assembler_code_inject_file(assembler_invocation_t *inv,
         emex_file_t **newp = realloc(inv->file, (inv->file_cnt + 1) *  sizeof(emex_file_t*));
         if(newp == NULL)
         {
-            free(entries);
-            return false;
+            goto out_failure;
         }
         inv->file = newp;
         inv->file[inv->file_cnt] = inj_file;
@@ -211,13 +208,16 @@ bool assembler_code_inject_file(assembler_invocation_t *inv,
     {
         if(!__assembler_splice_line(inv, at_line_index, entry_cnt))
         {
-            free(entries);
-            return false;
+            goto out_failure;
         }
     }
     else
     {
         inv->line = calloc(entry_cnt, sizeof(assembler_line_t*));
+        if(inv->line == NULL)
+        {
+            goto out_failure;
+        }
         inv->line_cnt = entry_cnt;
     }
 
@@ -265,14 +265,12 @@ bool assembler_code_inject_file(assembler_invocation_t *inv,
             if(token.type == kAssemblerTokenTypeInvalid)
             {
                 diag_error(at, "Token '%s' is not valid\n", at->str);
-                free(entries);
-                return false;
+                goto out_failure;
             }
             else if(token.type == kAssemblerTokenTypeTooLong)
             {
                 diag_error(at, "Token is too long, token lenght limit is %d characters\n", LEXTOK_LENGHT_MAX);
-                free(entries);
-                return false;
+                goto out_failure;
             }
             at->type = token.type;
             inv->line[at_line_index + i]->token[inv->line[at_line_index + i]->token_cnt++] = at;
@@ -297,6 +295,14 @@ bool assembler_code_inject_file(assembler_invocation_t *inv,
 
     free(entries);
     return true;
+
+out_failure:
+    for(size_t i = 0; i < entry_cnt; i++)
+    {
+        free(entries[i].code);
+    }
+    free(entries);
+    return false;
 }
 
 bool assembler_code_preparse(assembler_invocation_t *inv,
