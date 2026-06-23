@@ -29,7 +29,7 @@
 #include <stdbool.h>
 #include <pthread.h>
 
-enum kEmex64Opcode: uint8_t {
+typedef enum: uint8_t {
     /* core operations */
     kEmex64OpcodeHLT =      0b00000000,
     kEmex64OpcodeNOP =      0b00000001,
@@ -113,9 +113,9 @@ enum kEmex64Opcode: uint8_t {
      */
 
     kEmex64OpcodeMAX = kEmex64OpcodeCMOVB,
-};
+} kEmex64Opcode;
 
-enum kEmex64ParameterCoding: uint8_t {
+typedef enum: uint8_t {
     /*
      * defines the end of a instruction in case the
      * instruction can have such a end coding, like
@@ -137,9 +137,9 @@ enum kEmex64ParameterCoding: uint8_t {
      * for dynamic symbol relocation.
      */
     kEmex64ParameterCodingAddr64 =  0b111
-};
+} kEmex64ParameterCoding;
 
-enum kEmex64Register: uint8_t {
+typedef enum: uint8_t {
     /*
      * program counter: it points to the current address at
      * which the CPU currently is, it increments by the
@@ -231,9 +231,9 @@ enum kEmex64Register: uint8_t {
     kEmex64RegisterRR =     0b11111,
 
     kEmex64RegisterMAX = kEmex64RegisterRR
-};
+} kEmex64Register;
 
-enum kEmex64ControlRegister: uint8_t {
+typedef enum: uint8_t {
     kEmex64ControlRegisterCR0 = 0b00000,    /* CREL:    elevation control register */
     kEmex64ControlRegisterCR1 = 0b00001,    /* CRKSP:   kernel stack pointer (the stack pointer the interrupt controller will use when receiving interrupt) */
     kEmex64ControlRegisterCR2 = 0b00010,    /* CREXC:   exception register (first 3bits for the exception) */
@@ -266,9 +266,9 @@ enum kEmex64ControlRegister: uint8_t {
     kEmex64ControlRegisterCR29 = 0b11101,
     kEmex64ControlRegisterCR30 = 0b11110,
     kEmex64ControlRegisterCR31 = 0b11111,
-};
+} kEmex64ControlRegister;
 
-enum kEmex64FloatingRegister: uint8_t {
+typedef enum: uint8_t {
     kEmex64FloatingRegisterFR0 = 0b00000,
     kEmex64FloatingRegisterFR1 = 0b00001,
     kEmex64FloatingRegisterFR2 = 0b00010,
@@ -302,7 +302,7 @@ enum kEmex64FloatingRegister: uint8_t {
     kEmex64FloatingRegisterFR30 = 0b11110,
     kEmex64FloatingRegisterFR31 = 0b11111,
     kEmex64FloatingRegisterMAX = kEmex64FloatingRegisterFR31
-};
+} kEmex64FloatingRegister;
 
 typedef union {
     uint64_t u64;
@@ -313,11 +313,11 @@ typedef union {
     float f32;
 } FPReg;
 
-enum kEmex64ElevationLevel: uint8_t {
+typedef enum: uint8_t {
     kEmex64ElevationLevelUser =             0b00,
     kEmex64ElevationLevelKernel =           0b01,
     kEmex64ElevationLevelSecureMonitor =    0b10    /* used for software kernel secure mechanism like apples PPL */
-};
+} kEmex64ElevationLevel;
 
 /*
  * these flags is what the CF register contains of, yk we talked
@@ -331,13 +331,13 @@ enum kEmex64ElevationLevel: uint8_t {
  * G = GREATER
  *
  */
-enum kEmex64CompareFlag: uint8_t {
+typedef enum: uint8_t {
     kEmex64CompareFlagZ =   0x1,
     kEmex64CompareFlagL =   0x2,
     kEmex64CompareFlagG =   0x4
-};
+} kEmex64CompareFlag;
 
-enum kEmex64Exception {
+typedef enum: uint8_t {
     /*
      * normal state, simply a marker to say nothing
      * to trigger a interrupt for.
@@ -384,7 +384,7 @@ enum kEmex64Exception {
      * KTRR exception!?
      */
     kEmex64ExceptionKTRRViolation =     0b110,
-};
+} kEmex64Exception;
 
 #define EMEX64_MAX_ARGS 26
 #define EMEX64_MAX_ILEN (1 + EMEX64_MAX_ARGS * 9)
@@ -436,7 +436,7 @@ typedef struct emex64_core {
          * the opcode it self, so the cpu knows what to
          * execute.
          */
-        enum kEmex64Opcode opcode;
+        kEmex64Opcode opcode;
         emex64_opfunc_entry_t op;
 
         /*
@@ -454,7 +454,7 @@ typedef struct emex64_core {
          */
         uint8_t param_cnt;
         uint64_t *param[EMEX64_MAX_ARGS];
-        enum kEmex64ParameterCoding param_coding[EMEX64_MAX_ARGS];
+        kEmex64ParameterCoding param_coding[EMEX64_MAX_ARGS];
     } op;
 
     /*
@@ -463,7 +463,7 @@ typedef struct emex64_core {
      */
     struct {
         struct {
-            enum kEmex64ElevationLevel level;
+            kEmex64ElevationLevel level;
         } crel;
 
         struct {
@@ -471,7 +471,7 @@ typedef struct emex64_core {
         } crksp;
 
         struct {
-            enum kEmex64Exception exception;
+            kEmex64Exception exception;
         } crexc;
 
         /*

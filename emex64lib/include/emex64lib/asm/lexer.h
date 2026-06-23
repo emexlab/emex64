@@ -55,17 +55,17 @@ enum kCmptokTokenMode: uint8_t {
     kCmptokTokenModeExpression,
 };
 
-enum kAssemblerTokenType: uint8_t {
+typedef enum: uint8_t {
     kAssemblerTokenTypeInvalid,
     kAssemblerTokenTypeTooLong,
     kAssemblerTokenTypeStandard,
     kAssemblerTokenTypeStaticExpression,
-};
+} kAssemblerTokenType;
 
 typedef struct {
     const char *token;
     size_t column;
-    enum kAssemblerTokenType type;
+    kAssemblerTokenType type;
 } lextok_token_t;
 
 lextok_token_t lextok(const char *token);

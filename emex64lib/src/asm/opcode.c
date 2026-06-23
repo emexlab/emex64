@@ -28,8 +28,8 @@
 #include <emex64lib/asm/opcode.h>
 #include <emex64lib/asm/emit.h>
 
-enum kEmex64Opcode opcode_from_string(const char *name,
-                                      bool *success)
+kEmex64Opcode opcode_from_string(const char *name,
+                                 bool *success)
 {
     if(name == NULL)
     {

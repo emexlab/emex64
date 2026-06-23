@@ -28,7 +28,7 @@
 #include <emex64lib/support/pack.h>
 #include <emex64lib/asm/register.h>
 
-enum kEmex64Register register_from_string(const char *name, bool *success)
+kEmex64Register register_from_string(const char *name, bool *success)
 {
     if(name == NULL)
     {

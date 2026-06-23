@@ -27,7 +27,7 @@
 #include <emex64lib/vm/machine.h>
 #include <stdio.h>
 
-static inline uint64_t emex64_branch_pc(uint64_t pc, uint64_t v, enum kEmex64ParameterCoding coding)
+static inline uint64_t emex64_branch_pc(uint64_t pc, uint64_t v, kEmex64ParameterCoding coding)
 {
     switch(coding)
     {

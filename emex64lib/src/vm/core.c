@@ -162,7 +162,7 @@ static inline void emex64_core_execute_instruction_at_pc(emex64_core_t *core)
 
     bitbolt_t bb = { core->op.inscache, 0 };
 
-    enum kEmex64Opcode opcode = (uint8_t)bb_read(&bb, 8);
+    kEmex64Opcode opcode = (uint8_t)bb_read(&bb, 8);
     if(unlikely(opcode > kEmex64OpcodeMAX))
     {
         core->cr_state.crexc.exception = kEmex64ExceptionBadInstruction;
@@ -180,7 +180,7 @@ static inline void emex64_core_execute_instruction_at_pc(emex64_core_t *core)
     uint8_t i = 0;
     for(; i < maxarg; i++)
     {
-        enum kEmex64ParameterCoding coding = (uint8_t)bb_read(&bb, 3);
+        kEmex64ParameterCoding coding = (uint8_t)bb_read(&bb, 3);
         core->op.param_coding[i] = coding;
         switch(coding)
         {

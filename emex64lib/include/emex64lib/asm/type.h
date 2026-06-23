@@ -31,7 +31,7 @@
 #include <emex64lib/support/virtual/vbitwalker.h>
 #include <emex64lib/asm/lexer.h>
 
-enum kAssemblerLineType: uint8_t {
+typedef enum: uint8_t {
     kAssemblerLineTypeNone,
     kAssemblerLineTypeIgnore,
     kAssemblerLineTypeAssembly,
@@ -41,18 +41,18 @@ enum kAssemblerLineType: uint8_t {
     kAssemblerLineTypeSection,
     kAssemblerLineTypeSectionData,
     kAssemblerLineTypePreprocessorDirective,
-};
+} kAssemblerLineType;
 
 typedef struct assembler_token {
     char *str;
     size_t column_num;                      /* start offset of column */
     struct assembler_line *al;              /* pointer back to compiler line */
-    enum kAssemblerTokenType type;          /* OMG THAT IS AI?!?! the token type, WOAHHH AM I A AI, DID A AI GENERATE THIS TOKEN?!??!*/
+    kAssemblerTokenType type;               /* OMG THAT IS AI?!?! the token type, WOAHHH AM I A AI, DID A AI GENERATE THIS TOKEN?!??!*/
 } assembler_token_t;
 
 typedef struct assembler_line {
     char *str;
-    enum kAssemblerLineType type;           /* type of line */
+    kAssemblerLineType type;                /* type of line */
     struct assembler_token **token;         /* subtokens */
     uint64_t token_cnt;                     /* count of subtokens */
     size_t line_num;                        /* line number in file */   
