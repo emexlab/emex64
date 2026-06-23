@@ -133,7 +133,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
     enum kEmex64Opcode opcode = opcode_from_string(al->token[0]->str, &success);
     if(!success)
     {
-        diag_error(al->token[0], "illegal opcode '%s'\n", al->token[0]->str);
+        diag_error(al->token[0], "use of unknown instruction '%s'\n", al->token[0]->str);
         return false;
     }
 
@@ -315,7 +315,7 @@ bool assembler_emit(assembler_invocation_t *inv)
         if(label == NULL)
         {
             /* local labels must be resolved at assembly time */
-            diag_error(reloc->at_link, "label '%s' is undefined\n", reloc->name);
+            diag_error(reloc->at_link, "use of undeclared identifier '%s'\n", reloc->name);
             return false;
         }
 
