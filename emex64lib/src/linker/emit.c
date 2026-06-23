@@ -593,14 +593,14 @@ static bool __linker_link_relocatable(linker_invocation_t *inv,
     ehdr.e_shnum = kELFSectionHeaderIndexCount;
     ehdr.e_shstrndx = kELFSectionHeaderIndexShstrtab;
 
-    vbitwalker_write_buf(vb, (uint8_t *)&ehdr, sizeof(ehdr));
-    vbitwalker_write_buf(vb, text.data, text.len);
-    vbitwalker_write_buf(vb, data.data, data.len);
-    vbitwalker_write_buf(vb, rela_text.data, rela_text.len);
-    vbitwalker_write_buf(vb, rela_data.data, rela_data.len);
-    vbitwalker_write_buf(vb, sym_buf.data, sym_buf.len);
-    vbitwalker_write_buf(vb, strtab_buf.data, strtab_buf.len);
-    vbitwalker_write_buf(vb, shstrtab_buf.data, shstrtab_buf.len);
+    vbitwalker_write_buf(vb, (const char*)&ehdr, sizeof(ehdr));
+    vbitwalker_write_buf(vb, (const char*)text.data, text.len);
+    vbitwalker_write_buf(vb, (const char*)data.data, data.len);
+    vbitwalker_write_buf(vb, (const char*)rela_text.data, rela_text.len);
+    vbitwalker_write_buf(vb, (const char*)rela_data.data, rela_data.len);
+    vbitwalker_write_buf(vb, (const char*)sym_buf.data, sym_buf.len);
+    vbitwalker_write_buf(vb, (const char*)strtab_buf.data, strtab_buf.len);
+    vbitwalker_write_buf(vb, (const char*)shstrtab_buf.data, shstrtab_buf.len);
 
     ELF64_Shdr shdrs[kELFSectionHeaderIndexCount] = {
         [kELFSectionHeaderIndexText] = (ELF64_Shdr){
@@ -673,7 +673,7 @@ static bool __linker_link_relocatable(linker_invocation_t *inv,
         },
     };
 
-    vbitwalker_write_buf(vb, (uint8_t *)shdrs, sizeof(shdrs));
+    vbitwalker_write_buf(vb, (const char *)shdrs, sizeof(shdrs));
 
     vbitwalker_sync(vb);
     vbitwalker_dealloc(vb);
@@ -819,9 +819,6 @@ bool linker_link(linker_options_t options,
             return false;
         }
     }
-
-    uint64_t total_text = inv->out_text_off - BOOT_HEADER_SIZE;
-    uint64_t total_data = inv->out_data_off - inv->out_text_off;
 
     if(!linker_script_apply(inv, inv->out_bss_off, BOOT_HEADER_SIZE, inv->out_text_off, inv->out_bss_off > inv->out_data_off ? inv->out_data_off : inv->out_bss_off))
     {
