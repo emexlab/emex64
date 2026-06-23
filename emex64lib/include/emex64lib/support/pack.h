@@ -48,13 +48,18 @@
 
 static inline uint64_t pack_name(const char *s)
 {
+    if(s == NULL)
+    {
+        return UINT64_MAX;
+    }
+
     uint64_t v = 0;
     int i = 0;
     for(; i < 9 && s[i]; i++)
     {
         v |= (uint64_t)(s[i] & 0x7F) << (i * 7);
     }
-    return s[i] ? (1ull << 63) : v;
+    return s[i] ? UINT64_MAX : v;
 }
 
 #endif /* EMEX64_PACK_H */

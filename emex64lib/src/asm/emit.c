@@ -128,9 +128,8 @@ void assembler_emit_end(assembler_invocation_t *inv)
 
 bool assembler_emit_instruction(assembler_line_t *al)
 {
-    bool success = false;
-    kEmex64Opcode opcode = opcode_from_string(al->token[0]->str, &success);
-    if(!success)
+    kEmex64Opcode opcode = opcode_from_string(al->token[0]->str);
+    if(opcode == kEmex64OpcodeInvalid)
     {
         diag_error(al->token[0], "use of unknown instruction '%s'\n", al->token[0]->str);
         return false;
@@ -165,9 +164,8 @@ bool assembler_emit_instruction(assembler_line_t *al)
 
     for(uint64_t i = 1; i < al->token_cnt; i++)
     {
-        bool success = false;
-        kEmex64Register reg = register_from_string(al->token[i]->str, &success);
-        if(success)
+        kEmex64Register reg = register_from_string(al->token[i]->str);
+        if(reg != kEmex64RegisterInvalid)
         {
             /* registers are always allowed so far */
             assembler_emit_register(al->inv, reg);

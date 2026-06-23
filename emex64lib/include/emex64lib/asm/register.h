@@ -27,6 +27,6 @@
 
 #include <emex64lib/vm/core.h>
 
-kEmex64Register register_from_string(const char *name, bool *success);
+kEmex64Register register_from_string(const char *name);
 
 #endif /* EMEX64ASM_REGISTER_H */

@@ -28,16 +28,8 @@
 #include <emex64lib/support/pack.h>
 #include <emex64lib/asm/register.h>
 
-kEmex64Register register_from_string(const char *name, bool *success)
+kEmex64Register register_from_string(const char *name)
 {
-    if(name == NULL)
-    {
-        *success = false;
-        return kEmex64RegisterPC;
-    }
-
-    *success = true;
-
     switch(pack_name(name))
     {
         case PACK('p','c'): return kEmex64RegisterPC;
@@ -72,8 +64,6 @@ kEmex64Register register_from_string(const char *name, bool *success)
         case PACK('r','2','5'): return kEmex64RegisterR25;
         case PACK('r','2','6'): return kEmex64RegisterRR;
         case PACK('r','r'): return kEmex64RegisterRR;
-        default:
-            *success = false;
-            return kEmex64RegisterPC;
+        default: return kEmex64RegisterInvalid;
     }
 }

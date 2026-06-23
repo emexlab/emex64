@@ -28,16 +28,12 @@
 #include <emex64lib/asm/opcode.h>
 #include <emex64lib/asm/emit.h>
 
-kEmex64Opcode opcode_from_string(const char *name,
-                                 bool *success)
+kEmex64Opcode opcode_from_string(const char *name)
 {
     if(name == NULL)
     {
-        *success = false;
-        return kEmex64OpcodeHLT;
+        return kEmex64OpcodeInvalid;
     }
-
-    *success = true;
 
     switch(pack_name(name))
     {
@@ -97,9 +93,7 @@ kEmex64Opcode opcode_from_string(const char *name,
         case PACK('b','s','w','a','p','d'): return kEmex64OpcodeBSWAPD;
         case PACK('b','s','w','a','p','q'): return kEmex64OpcodeBSWAPQ;
         case PACK('b','s','w','a','p','w'): return kEmex64OpcodeBSWAPW;
-        default:
-            *success = false;
-            return kEmex64OpcodeHLT;
+        default: return kEmex64OpcodeInvalid;
     }
 }
 

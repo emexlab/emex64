@@ -113,6 +113,8 @@ typedef enum: uint8_t {
      */
 
     kEmex64OpcodeMAX = kEmex64OpcodeCMOVB,
+
+    kEmex64OpcodeInvalid =  0b11111111,
 } kEmex64Opcode;
 
 typedef enum: uint8_t {
@@ -230,7 +232,9 @@ typedef enum: uint8_t {
      */
     kEmex64RegisterRR =     0b11111,
 
-    kEmex64RegisterMAX = kEmex64RegisterRR
+    kEmex64RegisterMAX = kEmex64RegisterRR,
+
+    kEmex64RegisterInvalid =    0b11111111,
 } kEmex64Register;
 
 typedef enum: uint8_t {
