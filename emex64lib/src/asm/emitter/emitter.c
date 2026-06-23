@@ -34,18 +34,17 @@
 #include <emex64lib/support/diagnostic/legacy.h>
 #include <emex64lib/asm/label/label.h>
 #include <emex64lib/asm/label/relocate.h>
+#include <emex64lib/asm/emitter/emitter.h>
 #include <emex64lib/asm/invocation.h>
-#include <emex64lib/asm/opcode.h>
-#include <emex64lib/asm/register.h>
 
 void assembler_emit_opcode(assembler_invocation_t *inv,
-                           uint8_t op)
+                           kEmex64Opcode op)
 {
     vbitwalker_write(inv->out_vbitwalker, op, 8);
 }
 
 void assembler_emit_register(assembler_invocation_t *inv,
-                             uint8_t reg)
+                             kEmex64Register reg)
 {
     assert(reg <= kEmex64RegisterMAX);
 

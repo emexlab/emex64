@@ -104,13 +104,9 @@ add_library(emex64 ${LIB_TYPE}
     src/asm/driver.c
     src/asm/lexer.c
     src/asm/code.c
-    src/asm/emit.c
     src/asm/options.c
     src/asm/invocation.c
-    src/asm/opcode.c
-    src/asm/register.c
     src/asm/section.c
-    src/asm/elf.c
 
         ## Preprocessor API
         src/asm/preprocessor/directive.c
@@ -121,6 +117,12 @@ add_library(emex64 ${LIB_TYPE}
         ## Label API
         src/asm/label/label.c
         src/asm/label/relocate.c
+
+        ## Emitter API
+        src/asm/emitter/emitter.c
+        src/asm/emitter/opcode.c
+        src/asm/emitter/register.c
+        src/asm/emitter/elf.c
 
     # Linker API
     src/linker/driver.c

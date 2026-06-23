@@ -22,11 +22,8 @@
  * SOFTWARE.
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <emex64lib/support/pack.h>
-#include <emex64lib/asm/register.h>
+#include <emex64lib/asm/emitter/register.h>
 
 kEmex64Register register_from_string(const char *name)
 {

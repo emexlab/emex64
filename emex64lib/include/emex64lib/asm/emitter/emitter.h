@@ -29,13 +29,14 @@
 #include <stdint.h>
 #include <emex64lib/asm/invocation.h>
 #include <emex64lib/asm/type.h>
-#include <emex64lib/asm/opcode.h>
+#include <emex64lib/asm/emitter/opcode.h>
+#include <emex64lib/asm/emitter/register.h>
 
 /* opcode emit */
-void assembler_emit_opcode(assembler_invocation_t *inv, uint8_t op);
+void assembler_emit_opcode(assembler_invocation_t *inv, kEmex64Opcode op);
 
 /* register emit */
-void assembler_emit_register(assembler_invocation_t *inv, uint8_t reg);
+void assembler_emit_register(assembler_invocation_t *inv, kEmex64Register reg);
 
 /* intermediate emit */
 void assembler_emit_imm5(assembler_invocation_t *inv, uint8_t imm);
@@ -50,7 +51,7 @@ void assembler_emit_imm(assembler_invocation_t *inv, uint64_t imm);
 void assembler_emit_end(assembler_invocation_t *inv);
 
 /* instruction emitter */
-bool assembler_emit_instruction(const opcode_entry_t *opce, assembler_line_t *al);
+bool assembler_emit_instruction(assembler_line_t *al);
 
 /* automised code emitting */
 bool assembler_emit(assembler_invocation_t *inv);

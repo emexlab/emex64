@@ -22,11 +22,8 @@
  * SOFTWARE.
  */
 
-#include <stdlib.h>
-#include <string.h>
 #include <emex64lib/support/pack.h>
-#include <emex64lib/asm/opcode.h>
-#include <emex64lib/asm/emit.h>
+#include <emex64lib/asm/emitter/opcode.h>
 
 kEmex64Opcode opcode_from_string(const char *name)
 {

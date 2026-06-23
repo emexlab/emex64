@@ -35,9 +35,9 @@
 #include <emex64lib/support/parser.h>
 #include <emex64lib/asm/label/label.h>
 #include <emex64lib/asm/invocation.h>
-#include <emex64lib/asm/opcode.h>
-#include <emex64lib/asm/register.h>
-#include <emex64lib/asm/emit.h>
+#include <emex64lib/asm/emitter/opcode.h>
+#include <emex64lib/asm/emitter/register.h>
+#include <emex64lib/asm/emitter/emitter.h>
 #include <emex64lib/asm/section.h>
 #include <emex64lib/linker/linker.h>
 
