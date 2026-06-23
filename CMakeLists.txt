@@ -51,3 +51,51 @@ if(NOT EMEX64LIB_STATIC)
         endif()
     endif()
 endif()
+
+if(MSVC)
+    # Fuck MSVC nobody likes you
+    message(FATAL_ERROR "MSVC is not supported. Switch to Linux moron, microslop sheep!")
+else()
+
+    # Setting up compiler flags
+    set(_EMEX64_WARN_FLAGS -Wall -Wextra -Wpedantic -Wno-unused-parameter)
+    set(_EMEX64_OPT_FLAGS -fPIC)
+
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        list(APPEND _EMEX64_OPT_FLAGS -g -O0)
+    else()
+        if(EMEX64LIB_COMPILER_OPTIMIZATIONS)
+            list(APPEND _EMEX64_OPT_FLAGS -O3 -fomit-frame-pointer -fstrict-aliasing -ffast-math -funroll-loops)
+        endif()
+
+        if(EMEX64LIB_NATIVE_ARCH)
+            list(APPEND _EMEX64_OPT_FLAGS -march=native -mtune=native)
+        endif()
+
+        if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+            list(APPEND _EMEX64_OPT_FLAGS -fgraphite-identity -floop-nest-optimize -fipa-pta)
+        elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
+            list(APPEND _EMEX64_OPT_FLAGS -fvectorize -fslp-vectorize)
+        endif()
+
+        include(CheckIPOSupported)
+        check_ipo_supported(RESULT _ipo_supported OUTPUT _ipo_output)
+        if(_ipo_supported)
+            set_target_properties(emex64 PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+        else()
+            message(STATUS "LTO not supported: ${_ipo_output}")
+        endif()
+    endif()
+
+    target_compile_options(emex64 PRIVATE ${_EMEX64_WARN_FLAGS} ${_EMEX64_OPT_FLAGS})
+
+    if(EMEX64_BUILD_TOOLS)
+        target_compile_options(emex64asm PRIVATE ${_EMEX64_WARN_FLAGS} ${_EMEX64_OPT_FLAGS})
+        target_compile_options(emex64vm PRIVATE ${_EMEX64_WARN_FLAGS} ${_EMEX64_OPT_FLAGS})
+        target_compile_options(emex64ld PRIVATE ${_EMEX64_WARN_FLAGS} ${_EMEX64_OPT_FLAGS})
+    endif()
+
+    if(EMEX64_BUILD_EXAMPLES)
+        target_compile_options(emex64hello PRIVATE ${_EMEX64_WARN_FLAGS} ${_EMEX64_OPT_FLAGS})
+    endif()
+endif()

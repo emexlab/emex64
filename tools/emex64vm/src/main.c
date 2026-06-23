@@ -36,7 +36,6 @@
 
 int main(int argc, char *argv[])
 {
-    int opt;
     const char *firmware_image_path = NULL;
 
     emex64_machine_options_t machine_options = emex64_machine_options_default();

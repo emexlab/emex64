@@ -145,7 +145,7 @@ target_compile_definitions(emex64 PRIVATE
 
 set(EMEX64_VERSION_TAG "INDEV")
 set(EMEX64_VERSION_HEADER ${CMAKE_CURRENT_BINARY_DIR}/include/emex64lib/support/version.h)
-add_custom_target(emex64_version_header
+add_custom_target(emex64_header_gen
     BYPRODUCTS ${EMEX64_VERSION_HEADER}
     COMMAND ${CMAKE_COMMAND}
         -DEMEX64_VERSION=${PROJECT_VERSION}
@@ -155,14 +155,14 @@ add_custom_target(emex64_version_header
         -DPROJECT_VERSION_PATCH=${PROJECT_VERSION_PATCH}
         -DSRC=${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.h.in
         -DDST=${CMAKE_CURRENT_BINARY_DIR}/include/emex64lib/support/version.h
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/gen_version.cmake
-    COMMENT "Generating version header")
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/gen_hdr.cmake
+    COMMENT "generating headers")
 
 set_source_files_properties(${EMEX64_VERSION_HEADER} PROPERTIES GENERATED TRUE)
 set_source_files_properties(src/asm/driver.c PROPERTIES OBJECT_DEPENDS ${EMEX64_VERSION_HEADER})
 set_source_files_properties(src/linker/driver.c PROPERTIES OBJECT_DEPENDS ${EMEX64_VERSION_HEADER})
 
-add_dependencies(emex64 emex64_version_header)
+add_dependencies(emex64 emex64_header_gen)
 
 target_include_directories(emex64
     PUBLIC
@@ -179,44 +179,6 @@ target_link_libraries(emex64
 )
 
 target_compile_features(emex64 PUBLIC c_std_23)
-
-if(MSVC)
-    # Fuck MSVC nobody likes you
-    message(FATAL_ERROR "MSVC is not supported. Switch to Linux moron, microslop sheep!")
-else()
-
-    # Setting up compiler flags
-    set(_EMEX64_WARN_FLAGS -Wall -Wextra -Wpedantic -Wno-unused-parameter)
-    set(_EMEX64_OPT_FLAGS -fPIC)
-
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        list(APPEND _EMEX64_OPT_FLAGS -g -O0)
-    else()
-        if(EMEX64LIB_COMPILER_OPTIMIZATIONS)
-            list(APPEND _EMEX64_OPT_FLAGS -O3 -fomit-frame-pointer -fstrict-aliasing -ffast-math -funroll-loops)
-        endif()
-
-        if(EMEX64LIB_NATIVE_ARCH)
-            list(APPEND _EMEX64_OPT_FLAGS -march=native -mtune=native)
-        endif()
-
-        if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-            list(APPEND _EMEX64_OPT_FLAGS -fgraphite-identity -floop-nest-optimize -fipa-pta)
-        elseif(CMAKE_C_COMPILER_ID MATCHES "Clang")
-            list(APPEND _EMEX64_OPT_FLAGS -fvectorize -fslp-vectorize)
-        endif()
-
-        include(CheckIPOSupported)
-        check_ipo_supported(RESULT _ipo_supported OUTPUT _ipo_output)
-        if(_ipo_supported)
-            set_target_properties(emex64 PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
-        else()
-            message(STATUS "LTO not supported: ${_ipo_output}")
-        endif()
-    endif()
-
-    target_compile_options(emex64 PRIVATE ${_EMEX64_WARN_FLAGS} ${_EMEX64_OPT_FLAGS})
-endif()
 
 target_link_libraries(emex64
     PRIVATE
