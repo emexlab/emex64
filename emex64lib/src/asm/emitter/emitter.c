@@ -45,13 +45,13 @@ void assembler_emit_end(assembler_invocation_t *inv)
 
 bool assembler_emit_instruction(assembler_line_t *al)
 {
-    kEmex64Opcode opcode = opcode_from_string(al->token[0]->str);
-    if(opcode == kEmex64OpcodeInvalid)
+    if(al->token[0]->type != kAssemblerTokenTypeInstruction)
     {
-        diag_error(al->token[0], "use of unknown instruction '%s'\n", al->token[0]->str);
+        diag_error(al->token[0], "expected instruction literal, but got %s '%s'\n", assembler_lexer_str_for_token_type(al->token[0]->type), al->token[0]->str);
         return false;
     }
 
+    const kEmex64Opcode opcode = al->token[0]->instruction_literal.v;
     const emex64_opfunc_entry_t *entry = &kEmex64OpfuncTable[opcode];
 
     /* sanity checking all parameter count related things */
@@ -157,7 +157,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
         }
         else
         {
-            diag_error(al->token[i], "didn't expect %s '%s' within a instruction definition\n", assembler_lexer_str_for_token_type(al->token[i]->type), al->token[i]->str);
+            diag_error(al->token[i], "didn't expect %s '%s' within a instruction definition's operands\n", assembler_lexer_str_for_token_type(al->token[i]->type), al->token[i]->str);
             return false;
         }
     }

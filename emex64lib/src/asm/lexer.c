@@ -31,6 +31,7 @@
 #include <emex64lib/support/parser.h>
 #include <emex64lib/asm/lexer.h>
 #include <emex64lib/asm/emitter/register.h>
+#include <emex64lib/asm/emitter/opcode.h>
 
 _Thread_local static const char *stokptr;
 _Thread_local static const char *ltokptr;
@@ -301,6 +302,15 @@ bool assembler_lexer_classify(assembler_token_t *at)
                 return true;
             }
 
+            /* checking if it is a opcode */
+            kEmex64Opcode op = opcode_from_string(at->str);
+            if(op != kEmex64OpcodeInvalid)
+            {
+                at->instruction_literal.v = op;
+                at->type = kAssemblerTokenTypeInstruction;
+                return true;
+            }
+
             /* checking if identifier is in a valid format */
             if(!__assembly_lexer_validate_identifier(at->str))
             {
@@ -328,6 +338,8 @@ const char *assembler_lexer_str_for_token_type(kAssemblerTokenType type)
             return "string literal";
         case kAssemblerTokenTypeRegister:
             return "register literal";
+        case kAssemblerTokenTypeInstruction:
+            return "instruction literal";
         case kAssemblerTokenTypeComma:
         case kAssemblerTokenTypeColon:
         case kAssemblerTokenTypeLParen:
