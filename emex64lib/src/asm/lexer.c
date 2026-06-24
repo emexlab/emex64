@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 #include <ctype.h>
 #include <emex64lib/support/diagnostic/log.h>
 #include <emex64lib/support/parser.h>
@@ -82,8 +83,8 @@ lextok_token_t assembler_lexer_tok(const char *token)
     retval.column = ltokptr - stokptr;
 
     /* perform copy */
-    unsigned short a = 0;
-    unsigned char token_mode = kCmptokTokenModeNone;
+    uint16_t a = 0;
+    uint8_t token_mode = kCmptokTokenModeNone;
     while(a <= LEXTOK_LENGHT_MAX)
     {
         if(a == LEXTOK_LENGHT_MAX)
@@ -103,6 +104,15 @@ lextok_token_t assembler_lexer_tok(const char *token)
                     case ' ':
                     case ',':
                     case '\t':
+                        goto break_out;
+
+                    case ':':
+                        if(a > 0)
+                        {
+                            goto break_out;
+                        }
+                        retval.type = kAssemblerTokenTypeColon;
+                        __lextok_append(&a);
                         goto break_out;
                     
                     /* handling string beginnings */
@@ -170,10 +180,9 @@ lextok_token_t assembler_lexer_tok(const char *token)
         }
 
         continue;
-
-    break_out:
-        break;
     }
+
+break_out:
 
     otoken[a] = '\0';
 

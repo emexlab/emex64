@@ -40,17 +40,6 @@ assembler_label_t *assembler_label_lookup(assembler_invocation_t *inv,
 
 bool assembler_label_append(assembler_token_t *at)
 {
-    /* validate label definition */
-    bool failed_validity = false;
-    if(at->al->type != kAssemblerLineTypeSectionData)
-    {
-        for(uint64_t i = at->al->type == kAssemblerLineTypeExternLabel ? 2 : 1; i < at->al->token_cnt; i++)
-        {
-            diag_error(at->al->token[i], "unknown token after label definition '%s'\n", at->al->token[i]->str);
-            failed_validity = true;
-        }
-    }
-
     /* accessing compiler invocation */
     assembler_invocation_t *inv = at->al->inv;
 
@@ -69,30 +58,30 @@ bool assembler_label_append(assembler_token_t *at)
             /* constructing scoped label */
             size_t label_scope_len = strlen(inv->label_scope);
             size_t ct_len = strlen(at->str);
-            size_t size = label_scope_len + ct_len;
+            size_t size = label_scope_len + ct_len + 1;
             name = malloc(size);
             if(name == NULL)
             {
-                diag_error(at, "failed to allocate memory for this label\n");
+                diag_fatal(at, "out of memory, failed to allocate memory for label difinition '%s'\n", at->str);
                 return false;
             }
 
             memcpy(name, inv->label_scope, label_scope_len);
-            memcpy(name + label_scope_len, at->str, ct_len - 1); /* minus 1 to ommit the ':' character */
+            memcpy(name + label_scope_len, at->str, ct_len); /* minus 1 to ommit the ':' character */
             name[size - 1] = '\0';
             break;
         }
         case kAssemblerLineTypeGlobalLabel:
         {
             /* constructing global label */
-            size_t size = strlen(at->str);
+            size_t size = strlen(at->str) + 1;
             name = malloc(size);
             if(name == NULL)
             {
-                diag_error(at, "failed to allocate memory for this label\n");
+                diag_fatal(at, "out of memory, failed to allocate memory for label difinition '%s'\n", at->str);
                 return false;
             }
-            memcpy(name, at->str, size - 1);
+            memcpy(name, at->str, size);
             name[size - 1] = '\0';
             break;
         }
@@ -103,7 +92,7 @@ bool assembler_label_append(assembler_token_t *at)
             name = malloc(size);
             if(name == NULL)
             {
-                diag_error(at, "failed to allocate memory for this label\n");
+                diag_fatal(at, "out of memory, failed to allocate memory for label difinition '%s'\n", at->str);
                 return false;
             }
             memcpy(name, at->str, size - 1);
@@ -140,7 +129,7 @@ bool assembler_label_append(assembler_token_t *at)
         if(at->al->type == kAssemblerLineTypeExternLabel)
         {
             free(name);
-            return !failed_validity;
+            return true;
         }
 
         /* label can be defined after using 'extern' too */
@@ -156,7 +145,7 @@ bool assembler_label_append(assembler_token_t *at)
             label->at_link = at;
             label->addr = vbitwalker_bytes_used(inv->out_vbitwalker);
             free(name);
-            return !failed_validity;
+            return true;
         }
 
         diag_note(label->at_link, "label '%s' already defined here\n", name);
@@ -191,5 +180,5 @@ bool assembler_label_append(assembler_token_t *at)
         return false;
     }
 
-    return !failed_validity;
+    return true;
 }

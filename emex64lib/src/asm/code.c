@@ -349,7 +349,7 @@ bool assembler_code_postparse(assembler_invocation_t *inv)
             continue;
         }
         
-        if(inv->line[i]->token_cnt >= 1)
+        if(inv->line[i]->token_cnt >= 2)
         {
             /* getting size of subtoken */
             size_t size = strlen(inv->line[i]->token[0]->str);
@@ -363,7 +363,7 @@ bool assembler_code_postparse(assembler_invocation_t *inv)
              * checking if last character of token is a ':',
              * because that means that its a label.
              */
-            if(inv->line[i]->token[0]->str[size - 1] == ':')
+            if(inv->line[i]->token[1]->type == kAssemblerTokenTypeColon)
             {
                 section_mode = false;
 
@@ -387,6 +387,12 @@ bool assembler_code_postparse(assembler_invocation_t *inv)
                     default:
                         diag_error(inv->line[i]->token[0], "illegal label definition '%s'\n", inv->line[i]->token[0]->str);
                         return false;
+                }
+
+                for(uint64_t j = 3; j < inv->line[i]->token_cnt; j++)
+                {
+                    diag_error(inv->line[i]->token[j], "unexpected %s '%s' after label definition\n", assembler_lexer_str_for_token_type(inv->line[i]->token[j]->type), inv->line[i]->token[j]->str);
+                    return false;
                 }
 
                 continue;
