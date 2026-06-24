@@ -81,9 +81,16 @@ void assembler_invocation_dealloc(assembler_invocation_t *inv)
         free(inv->line[i]->str);
         for(uint64_t j = 0; j < inv->line[i]->token_cnt; j++)
         {
+            if(inv->line[i]->token[j]->type == kAssemblerTokenTypeString)
+            {
+                free(inv->line[i]->token[j]->string.buf);
+            }
+
             free(inv->line[i]->token[j]->str);
+            free(inv->line[i]->token[j]);
         }
         free(inv->line[i]->token);
+        free(inv->line[i]);
     }
     free(inv->line);
 

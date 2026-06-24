@@ -29,7 +29,22 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <emex64lib/support/virtual/vbitwalker.h>
-#include <emex64lib/asm/lexer.h>
+
+typedef enum: uint8_t {
+    kAssemblerTokenTypeInvalid,
+    kAssemblerTokenTypeTooLong,
+
+    kAssemblerTokenTypeIdentifier,  /* in the lextok step everything becomes a identifier at first */
+    kAssemblerTokenTypeInteger,
+    kAssemblerTokenTypeString,
+    kAssemblerTokenTypeComma,
+    kAssemblerTokenTypeRParen,
+    kAssemblerTokenTypeLParen,
+    kAssemblerTokenTypePlus,
+    kAssemblerTokenTypeMinus,
+    kAssemblerTokenTypeMultiply,
+    kAssemblerTokenTypeDivide,
+} kAssemblerTokenType;
 
 typedef enum: uint8_t {
     kAssemblerLineTypeNone,
@@ -48,6 +63,16 @@ typedef struct assembler_token {
     size_t column_num;                      /* start offset of column */
     struct assembler_line *al;              /* pointer back to compiler line */
     kAssemblerTokenType type;               /* OMG THAT IS AI?!?! the token type, WOAHHH AM I A AI, DID A AI GENERATE THIS TOKEN?!??!*/
+
+    union {
+        struct {
+            uint64_t v; /* signed by default */
+        } integer;
+        struct {
+            char *buf;
+            size_t len;
+        } string;
+    };
 } assembler_token_t;
 
 typedef struct assembler_line {

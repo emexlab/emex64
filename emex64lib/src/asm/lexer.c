@@ -176,3 +176,8 @@ lextok_token_t assembler_lexer_tok(const char *token)
     retval.token = (a == 0) ? NULL : otoken;
     return retval;
 }
+
+void assembler_lexer_classify(assembler_token_t *at)
+{
+    /* firs*/
+}
