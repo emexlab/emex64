@@ -27,6 +27,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 #include <emex64lib/asm/type.h>
 
 #define LEXTOK_LENGHT_MAX   2048    /* if anyone comes close to that size, bro pls fix your variable naming style O.O */
@@ -58,6 +59,6 @@ typedef struct {
 } lextok_token_t;
 
 lextok_token_t assembler_lexer_tok(const char *token);
-void assembler_lexer_classify(assembler_token_t *at);
+bool assembler_lexer_classify(assembler_token_t *at);
 
 #endif /* EMEX64ASM_LEXER_H */

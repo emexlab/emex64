@@ -308,9 +308,29 @@ bool assembler_code_preparse(assembler_invocation_t *inv,
 
 bool assembler_code_postparse(assembler_invocation_t *inv)
 {
+    /* token type emitter */
+    for(uint64_t li = 0; li < inv->line_cnt; li++)
+    {
+        if(inv->line[li]->token_cnt == 0 ||
+           inv->line[li]->type == kAssemblerLineTypeIgnore)
+        {
+            /* probably a whitespace or excluded by a macro */
+            continue;
+        }
+
+        for(uint64_t ti = 0; ti < inv->line[li]->token_cnt; ti++)
+        {
+            if(!assembler_lexer_classify(inv->line[li]->token[ti]))
+            {
+                /* callee emitted error */
+                return false;
+            }
+        }
+    }
+
     /* token type evaluation */
     bool section_mode = false;
-    for(unsigned long i = 0; i < inv->line_cnt; i++)
+    for(uint64_t i = 0; i < inv->line_cnt; i++)
     {
         if(inv->line[i]->token_cnt == 0 ||
            inv->line[i]->type == kAssemblerLineTypeIgnore)

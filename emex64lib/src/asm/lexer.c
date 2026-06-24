@@ -25,6 +25,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+#include <emex64lib/support/diagnostic/log.h>
+#include <emex64lib/support/parser.h>
 #include <emex64lib/asm/lexer.h>
 
 _Thread_local static const char *stokptr;
@@ -177,7 +180,118 @@ lextok_token_t assembler_lexer_tok(const char *token)
     return retval;
 }
 
-void assembler_lexer_classify(assembler_token_t *at)
+static bool __assembly_lexer_validate_identifier(const char *s)
 {
-    /* firs*/
+    if(s == NULL || s[0] == '\0')
+    {
+        return false;
+    }
+
+    size_t len = strlen(s);
+    size_t end = len;
+    if(s[end - 1] == ':')
+    {
+        end--;
+    }
+
+    if(end == 0)
+    {
+        return false;
+    }
+
+    if(!isalpha((unsigned char)s[0]) && s[0] != '_' && s[0] != '.')
+    {
+        return false;
+    }
+
+    if(s[0] == '.' && end == 1)
+    {
+        return false;
+    }
+
+    for(size_t i = 1; i < end; i++)
+    {
+        if(!isalnum((unsigned char)s[i]) && s[i] != '_' && s[i] != '.')
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool assembler_lexer_classify(assembler_token_t *at)
+{
+    /* first we need to find out what exactly they are */
+    parser_return_t pret = parse_value_from_string(at->str);
+    switch(pret.type)
+    {
+        case emexParserValueTypeNumber:
+            at->type = kAssemblerTokenTypeInteger;
+            at->integer.v = pret.value;
+            return true;
+        case emexParserValueTypeBuffer:
+            at->type = kAssemblerTokenTypeString;
+            at->string.buf = calloc(pret.len + 1, sizeof(char));
+            if(at->string.buf == NULL)
+            {
+                diag_fatal(at, "out of memory, couldn't allocate string literal buffer for '%s'\n", at->str);
+                return false;
+            }
+            memcpy(at->string.buf, (const char*)pret.value, pret.len);
+            at->string.buf[pret.len] = '\0';
+            at->string.len = pret.len;
+            return true;
+        case emexParserValueTypeOverflow:
+            diag_error(at, "integer literal '%s' overflows 64bit lenght\n", at->str);
+            return false;
+        case emexParserValueTypeString:
+            /* remains a identifier under certain conditions */
+            size_t len = strlen(at->str);
+            if(len == 1)
+            {
+                /* checking if it is a math op or structural punctation */
+                switch(at->str[0])
+                {
+                    case ',':
+                        at->type = kAssemblerTokenTypeComma;
+                        return true;
+                    case ':':
+                        at->type = kAssemblerTokenTypeColon;
+                        return true;
+                    case '(':
+                        at->type = kAssemblerTokenTypeLParen;
+                        return true;
+                    case ')':
+                        at->type = kAssemblerTokenTypeRParen;
+                        return true;
+                    case '+':
+                        at->type = kAssemblerTokenTypePlus;
+                        return true;
+                    case '-':
+                        at->type = kAssemblerTokenTypeMinus;
+                        return true;
+                    case '*':
+                        at->type = kAssemblerTokenTypeMultiply;
+                        return true;
+                    case '/':
+                        at->type = kAssemblerTokenTypeDivide;
+                        return true;
+                    default:
+                        break;
+                }
+            }
+
+            /* checking if identifier is in a valid format */
+            if(!__assembly_lexer_validate_identifier(at->str))
+            {
+                diag_error(at, "token '%s' is not a valid identifier\n", at->str);
+                return false;
+            }
+            
+            return true;
+        default:
+            diag_error(at, "unknown token '%s'\n", at->str);
+            return false;
+    }
 }
