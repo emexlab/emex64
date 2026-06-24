@@ -36,6 +36,7 @@
 #include <emex64lib/asm/label/relocate.h>
 #include <emex64lib/asm/emitter/emitter.h>
 #include <emex64lib/asm/invocation.h>
+#include <emex64lib/asm/lexer.h>
 
 void assembler_emit_end(assembler_invocation_t *inv)
 {
@@ -66,12 +67,12 @@ bool assembler_emit_instruction(assembler_line_t *al)
     }
     if((al->token_cnt - 1) > entry->maxargs)
     {
-        diag_error(al->token[al->token_cnt - 1], "too many operands for opcode '%s', expected %d operands, but got %d operands\n", al->token[0]->str, entry->maxargs, al->token_cnt - 1);
+        diag_error(al->token[al->token_cnt - 1], "too many operands for a %s instruction, expected %d operands, but got %d operands\n", al->token[0]->str, entry->maxargs, al->token_cnt - 1);
         return false;
     }
     else if((al->token_cnt - 1) < entry->minargs)
     {
-        diag_error(al->token[al->token_cnt - 1], "too few operands for opcode '%s', expected %d operands, but got %d operands\n", al->token[0]->str, entry->minargs, al->token_cnt - 1);
+        diag_error(al->token[al->token_cnt - 1], "too few operands for a %s instruction, expected %d operands, but got %d operands\n", al->token[0]->str, entry->minargs, al->token_cnt - 1);
         return false;
     }
 
@@ -91,7 +92,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
         /* checking if allowed to be something else than a register */
         if(opcode_arg_accepts_reg_only(entry,  i - 1))
         {
-            diag_error(al->token[i], "expected register, got immediate or label '%s'\n", al->token[i]->str);
+            diag_error(al->token[i], "expected register, got %s '%s'\n", assembler_lexer_str_for_token_type(al->token[i]->type),  al->token[i]->str);
             return false;
         }
 
@@ -105,13 +106,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
          *       are going to use later on, so the
          *       relocations work perfectly fine.
          */
-        parser_return_t pr = parse_value_from_string(al->token[i]->str);
-        if(pr.type == emexParserValueTypeOverflow)
-        {
-            diag_error(al->token[i], "integer literal '%s' overflows 64bit lenght\n", al->token[i]->str);
-            return false;
-        }
-        else if(pr.type == emexParserValueTypeString)
+        if(al->token[i]->type == kAssemblerTokenTypeIdentifier)
         {
             /* the label is either local or global */
             bool local;
@@ -145,7 +140,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
              */
             vbitwalker_skip(al->inv->out_vbitwalker, 64);
         }
-        else
+        else if(al->token[i]->type == kAssemblerTokenTypeInteger)
         {
             /* branches work different, they have offset branching */
             if((i == 1 && (opcode == kEmex64OpcodeB   || opcode == kEmex64OpcodeBE  || opcode == kEmex64OpcodeBNE   ||
@@ -153,13 +148,18 @@ bool assembler_emit_instruction(assembler_line_t *al)
                            opcode == kEmex64OpcodeBGT || opcode == kEmex64OpcodeBLW)) ||
                (i == 2 && (opcode == kEmex64OpcodeBZ  || opcode == kEmex64OpcodeBNZ)))
             {
-                assembler_emit_addr64(al->inv, pr.value);
+                assembler_emit_addr64(al->inv, al->token[i]->integer.v);
             }
             else
             {
                 /* its a immediate */
-                assembler_emit_imm(al->inv, pr.value);
+                assembler_emit_imm(al->inv, al->token[i]->integer.v);
             }
+        }
+        else
+        {
+            diag_error(al->token[i], "didn't expect %s '%s' within a instruction definition\n", assembler_lexer_str_for_token_type(al->token[i]->type), al->token[i]->str);
+            return false;
         }
     }
 

@@ -295,3 +295,28 @@ bool assembler_lexer_classify(assembler_token_t *at)
             return false;
     }
 }
+
+const char *assembler_lexer_str_for_token_type(kAssemblerTokenType type)
+{
+    switch(type)
+    {
+        case kAssemblerTokenTypeIdentifier:
+            return "identifier";
+        case kAssemblerTokenTypeInteger:
+            return "integer literal";
+        case kAssemblerTokenTypeString:
+            return "string literal";
+        case kAssemblerTokenTypeComma:
+        case kAssemblerTokenTypeColon:
+        case kAssemblerTokenTypeLParen:
+        case kAssemblerTokenTypeRParen:
+            return "punctuation";
+        case kAssemblerTokenTypePlus:
+        case kAssemblerTokenTypeMinus:
+        case kAssemblerTokenTypeMultiply:
+        case kAssemblerTokenTypeDivide:
+            return "binary operation";
+        default:
+            return "unknown token";
+    }
+}
