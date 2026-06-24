@@ -378,14 +378,15 @@ bool assembler_code_postparse(assembler_invocation_t *inv)
                         break;
                 }
 
+                /* post validity check */
+                bool valid = true;
                 if(inv->line[i]->token[0]->type != kAssemblerTokenTypeIdentifier)
                 {
                     diag_error(inv->line[i]->token[0], "expected identifier in label definition, but got %s '%s'\n", assembler_lexer_str_for_token_type(inv->line[i]->token[0]->type), inv->line[i]->token[0]->str);
-                    return false;
+                    valid = false;
                 }
 
-                bool valid = true;
-                for(uint64_t j = 3; j < inv->line[i]->token_cnt; j++)
+                for(uint64_t j = 2; j < inv->line[i]->token_cnt; j++)
                 {
                     diag_error(inv->line[i]->token[j], "unexpected %s '%s' after label definition\n", assembler_lexer_str_for_token_type(inv->line[i]->token[j]->type), inv->line[i]->token[j]->str);
                     valid = false;
@@ -420,19 +421,21 @@ bool assembler_code_postparse(assembler_invocation_t *inv)
                     break;
             }
 
+            bool valid = true;
+
             if(inv->line[i]->token[1]->type != kAssemblerTokenTypeIdentifier)
             {
                 diag_error(inv->line[i]->token[1], "expected identifier in keyword construct, but got %s '%s'\n", assembler_lexer_str_for_token_type(inv->line[i]->token[1]->type), inv->line[i]->token[1]->str);
-                return false;
+                valid = false;
             }
 
-            bool valid = true;
-            for(uint64_t j = 3; j < inv->line[i]->token_cnt; j++)
+            for(uint64_t j = 2; j < inv->line[i]->token_cnt; j++)
             {
                 /* idk keyword construct, keyword definition ahhhhhh */
                 diag_error(inv->line[i]->token[j], "unexpected %s '%s' after keyword construct\n", assembler_lexer_str_for_token_type(inv->line[i]->token[j]->type), inv->line[i]->token[j]->str);
                 valid = false;
             }
+
             if(!valid)
             {
                 return false;
