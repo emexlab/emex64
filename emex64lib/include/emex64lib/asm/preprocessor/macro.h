@@ -27,18 +27,16 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <emex64lib/support/hashmap/hashmap.h>
 #include <emex64lib/asm/type.h>
 
 typedef struct assembler_macro {
-    const char *match;          /* borrowed */
     const char **inject_token;  /* borrowed */
     uint64_t inject_token_cnt;
-    struct assembler_macro *next;
 } assembler_macro_t;
 
 typedef struct assembler_macro_storage {
-    assembler_macro_t *head;
-    assembler_macro_t *tail;
+    hashmap_t *macro_map;
 } assembler_macro_storage_t;
 
 assembler_macro_t *assembler_macro_alloc(const char *match, const char **inject_token, uint64_t token_cnt);

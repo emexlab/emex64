@@ -37,14 +37,13 @@ assembler_macro_t *assembler_macro_alloc(const char *match,
 
     macro->inject_token = inject_token;
     macro->inject_token_cnt = token_cnt;
-    macro->match = match;
-    macro->next = NULL;
 
     return macro;
 }
 
 void assembler_macro_dealloc(assembler_macro_t *macro)
 {
+    free(macro->inject_token);
     free(macro);
 }
 
@@ -56,38 +55,31 @@ assembler_macro_storage_t *assembler_macro_storage_alloc()
         return NULL;
     }
 
-    storage->head = NULL;
-    storage->tail = NULL;
+    storage->macro_map = hashmap_alloc();
+    if(storage->macro_map == NULL)
+    {
+        free(storage);
+        return NULL;
+    }
 
     return storage;
 }
 
 void assembler_macro_storage_dealloc(assembler_macro_storage_t *storage)
 {
-    while(storage->head != NULL)
+    const void *key; size_t klen; assembler_macro_t *val;
+    for(hashmap_iter_t it = hashmap_iter_create(storage->macro_map); hashmap_next(&it, &key, &klen, (void**)&val);)
     {
-        assembler_macro_t *next = storage->head->next;
-        free(storage->head->inject_token);
-        assembler_macro_dealloc(storage->head);
-        storage->head = next;
+        assembler_macro_dealloc(val);
     }
-
+    hashmap_dealloc(storage->macro_map);
     free(storage);
 }
 
 assembler_macro_t *assembler_macro_storage_lookup(assembler_macro_storage_t *storage,
                                                   const char *match)
 {
-    assembler_macro_t *head = storage->head; 
-    while(head != NULL)
-    {
-        if(strcmp(head->match, match) == 0)
-        {
-            return head;
-        }
-        head = head->next;
-    }
-    return NULL;
+    return (assembler_macro_t*)hashmap_gets(storage->macro_map, match);
 }
 
 bool assembler_macro_storage_append_macro_char(assembler_macro_storage_t *storage,
@@ -113,16 +105,11 @@ bool assembler_macro_storage_append_macro_char(assembler_macro_storage_t *storag
         return false;
     }
 
-    /* stich the linked list ^^ */
-    if(storage->head == NULL)
+    if(!hashmap_puts(storage->macro_map, match, macro))
     {
-        storage->head = macro;
+        assembler_macro_dealloc(macro);
+        return false;
     }
-    else
-    {
-        storage->tail->next = macro;
-    }
-    storage->tail = macro;
 
     return true;
 }
@@ -155,27 +142,10 @@ bool assembler_macro_storage_append_macro(assembler_macro_storage_t *storage,
 void assembler_macro_storage_remove_macro(assembler_macro_storage_t *storage,
                                           const char *match)
 {
-    if(storage->head != NULL)
+    assembler_macro_t *found = assembler_macro_storage_lookup(storage, match);
+    if(found != NULL)
     {
-        if(strcmp(storage->head->match, match) == 0)
-        {
-            assembler_macro_t *next = storage->head;
-            assembler_macro_dealloc(storage->head);
-            storage->head = next;
-            return;
-        }
-    }
-
-    assembler_macro_t *current = storage->head;
-    while(current != NULL)
-    {
-        if(current->next != NULL && strcmp(current->next->match, match) == 0)
-        {
-            assembler_macro_t *next = current->next->next;
-            assembler_macro_dealloc(current->next);
-            current->next = next;
-            return;
-        }
-        current = current->next;
+        assembler_macro_dealloc(found);
+        hashmap_dels(storage->macro_map, match);
     }
 }
