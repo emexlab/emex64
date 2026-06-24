@@ -148,7 +148,7 @@ static inline bool __assembler_splice_line(assembler_invocation_t *inv,
         inv->line = tmp;
     }
 
-    /* deallocating the idx */
+    /* deallocating the line at the idx */
     free(inv->line[idx]->str);
     for(uint64_t i = 0; i < inv->line[idx]->token_cnt; i++)
     {
@@ -219,6 +219,7 @@ bool assembler_code_inject_file(assembler_invocation_t *inv,
     /* inject additional lines */
     for(size_t i = 0; i < entry_cnt; i++)
     {
+        /* FIXME: not reversable for now */
         assembler_line_t *al = calloc(1, sizeof(assembler_line_t));
         al->str = entries[i].code;
         al->line_num = entries[i].line_num;
@@ -259,12 +260,14 @@ bool assembler_code_inject_file(assembler_invocation_t *inv,
             if(token.type == kAssemblerTokenTypeInvalid)
             {
                 diag_error(at, "token '%s' is not valid\n", at->str);
-                goto out_failure_file_rm;
+                inv->file[inj_file_idx] = NULL;
+                return false;
             }
             else if(token.type == kAssemblerTokenTypeTooLong)
             {
                 diag_error(at, "token is too long, token lenght limit is %d characters\n", LEXTOK_LENGHT_MAX);
-                goto out_failure_file_rm;
+                inv->file[inj_file_idx] = NULL;
+                return false;
             }
             at->type = token.type;
             inv->line[at_line_index + i]->token[inv->line[at_line_index + i]->token_cnt++] = at;
