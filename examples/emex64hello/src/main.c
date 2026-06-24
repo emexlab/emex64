@@ -43,7 +43,7 @@ static inline emex_file_t *emex_file_alloc_vopen(const char *path,
      * creating a file backed by the virtual file descriptor
      * which is backed by a vpageobj_t.
      */
-    emex_file_t *file = emex_file_alloc_vfd("test.o", policy, d);
+    emex_file_t *file = emex_file_alloc_vfd(path, policy, d);
     vfd_close(d);
     if(file == NULL)
     {

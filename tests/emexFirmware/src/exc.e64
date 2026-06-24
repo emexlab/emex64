@@ -29,7 +29,6 @@ section .data
     exception_msg db "\n-- panic --\nexception code: 0x\0"
     exception2_msg db "reason: \0"
     exception_reg_msg db "-- register dump --\n\0"
-    exception_unsupported_ptb_msg db "page tables aren't supported yet.\0"
 
 ; array of all exception type names
 section .data
@@ -104,7 +103,6 @@ _exception_putreg:
     ldq r5, r3
 
     ; get the reg value from frame pointer passed in r0
-    ; god this is so unefficient :<
     ; time will hopefully fix this later
     b r5
     
