@@ -116,6 +116,6 @@ typedef enum: uint8_t {
 
 #define ELF_SYM_INFO(bind, type) (((bind) << 4) | ((type) & 0xf))
 
-extern uint8_t ident[EI_NIDENT];
+extern const uint8_t ident[EI_NIDENT];
 
 #endif /* EMEX64LD_TYPE_H */

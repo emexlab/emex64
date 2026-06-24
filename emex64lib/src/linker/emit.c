@@ -583,7 +583,7 @@ static bool __linker_link_relocatable(linker_invocation_t *inv,
     }
 
     ELF64_Ehdr ehdr = {0};
-    memcpy(ehdr.e_ident, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0", EI_NIDENT);
+    memcpy(ehdr.e_ident, ident, EI_NIDENT);
     ehdr.e_type = kELFTypeRel;
     ehdr.e_machine = ELF_MAGIC_EMEX64;
     ehdr.e_version = EV_CURRENT;

@@ -27,7 +27,7 @@
 #include <emex64lib/support/diagnostic/log.h>
 #include <emex64lib/linker/linker.h>
 
-uint8_t ident[EI_NIDENT] = { ELF_MAGIC_0, ELF_MAGIC_1, ELF_MAGIC_2, ELF_MAGIC_3, ELF_CLASS64, ELF_DATA2LSB, EV_CURRENT };
+const uint8_t ident[EI_NIDENT] = { ELF_MAGIC_0, ELF_MAGIC_1, ELF_MAGIC_2, ELF_MAGIC_3, ELF_CLASS64, ELF_DATA2LSB, EV_CURRENT };
 
 linker_invocation_t *linker_invocation_alloc(linker_options_t options)
 {
