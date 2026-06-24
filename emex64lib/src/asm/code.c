@@ -351,14 +351,6 @@ bool assembler_code_postparse(assembler_invocation_t *inv)
         
         if(inv->line[i]->token_cnt >= 2)
         {
-            /* getting size of subtoken */
-            size_t size = strlen(inv->line[i]->token[0]->str);
-            if(size == 0)
-            {
-                /* invalid size */
-                continue;
-            }
-
             /*
              * checking if last character of token is a ':',
              * because that means that its a label.
@@ -378,15 +370,18 @@ bool assembler_code_postparse(assembler_invocation_t *inv)
                  */
                 switch(inv->line[i]->token[0]->str[0])
                 {
-                    case '_':
-                        inv->line[i]->type = kAssemblerLineTypeGlobalLabel;
-                        break;
                     case '.':
                         inv->line[i]->type = kAssemblerLineTypeLocalLabel;
                         break;
                     default:
-                        diag_error(inv->line[i]->token[0], "illegal label definition '%s'\n", inv->line[i]->token[0]->str);
-                        return false;
+                        inv->line[i]->type = kAssemblerLineTypeGlobalLabel;
+                        break;
+                }
+
+                if(inv->line[i]->token[0]->type != kAssemblerTokenTypeIdentifier)
+                {
+                    diag_error(inv->line[i]->token[0], "expected identifier in label definition, but got %s '%s'\n", assembler_lexer_str_for_token_type(inv->line[i]->token[0]->type), inv->line[i]->token[0]->str);
+                    return false;
                 }
 
                 for(uint64_t j = 3; j < inv->line[i]->token_cnt; j++)
