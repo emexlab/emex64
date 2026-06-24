@@ -17,7 +17,7 @@ This will install emex64's toolchain and VM to `/usr/local`, and will prompt for
 emex64vm will additionally require GLFW/GLEW if using the virtual display.
 
 ## Using the Virtual Machine (VM)
-The VM can be invoked to run firmware with `emex64vm --firmware <image path>`. Test programs and the current testing firmware can be found in `./tests/`.
+The VM can be invoked to run firmware with `emex64vm -f <image path>`. Test programs and the current testing firmware can be found in `./tests/`.
 
 These examples will be compiled and directly run with `make`. 
 
