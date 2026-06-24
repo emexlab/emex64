@@ -48,18 +48,22 @@ enum kCmptokTokenMode: uint8_t {
      * of this parser!
      */
     kCmptokTokenModeCharacter,
-
-    /*
-     * expression mode is for things like (SOME_MACRO + 4 + (NYA + 10))
-     */
-    kCmptokTokenModeExpression,
 };
 
 typedef enum: uint8_t {
     kAssemblerTokenTypeInvalid,
     kAssemblerTokenTypeTooLong,
-    kAssemblerTokenTypeStandard,
-    kAssemblerTokenTypeStaticExpression,
+
+    kAssemblerTokenTypeIdentifier,  /* in the lextok step everything becomes a identifier at first */
+    kAssemblerTokenTypeNumber,
+    kAssemblerTokenTypeString,
+    kAssemblerTokenTypeComma,
+    kAssemblerTokenTypeRParen,
+    kAssemblerTokenTypeLParen,
+    kAssemblerTokenTypePlus,
+    kAssemblerTokenTypeMinus,
+    kAssemblerTokenTypeMultiply,
+    kAssemblerTokenTypeDivide,
 } kAssemblerTokenType;
 
 typedef struct {

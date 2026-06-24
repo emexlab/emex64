@@ -74,7 +74,7 @@ lextok_token_t lextok(const char *token)
     }
 
     lextok_token_t retval;
-    retval.type = kAssemblerTokenTypeStandard;
+    retval.type = kAssemblerTokenTypeIdentifier;
     retval.column = ltokptr - stokptr;
 
     /* perform copy */
@@ -113,11 +113,6 @@ lextok_token_t lextok(const char *token)
                         retval.type = kAssemblerTokenTypeInvalid;
                         break;
                     
-                    /* handling static expression beginnings */
-                    case '(':
-                        token_mode = kCmptokTokenModeExpression;
-                        retval.type = kAssemblerTokenTypeInvalid;
-                        break;
                     default:
                         break;
                 }
@@ -134,7 +129,7 @@ lextok_token_t lextok(const char *token)
                         }
 
                         __lextok_append(&a);
-                        retval.type = kAssemblerTokenTypeStandard;
+                        retval.type = kAssemblerTokenTypeIdentifier;
                         goto break_out;
                     default:
                         break;
@@ -152,19 +147,7 @@ lextok_token_t lextok(const char *token)
                         }
                         
                         __lextok_append(&a);
-                        retval.type = kAssemblerTokenTypeStandard;
-                        goto break_out;
-                    default:
-                        break;
-                }
-                break;
-            case kCmptokTokenModeExpression:
-                switch(ltokptr[0])
-                {
-                    /* handling character ends */
-                    case ')':                        
-                        __lextok_append(&a);
-                        retval.type = kAssemblerTokenTypeStaticExpression;
+                        retval.type = kAssemblerTokenTypeIdentifier;
                         goto break_out;
                     default:
                         break;

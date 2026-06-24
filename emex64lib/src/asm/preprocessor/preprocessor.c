@@ -147,12 +147,6 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
 
             repeat:
                 {
-                    if(inv->line[li]->token[ti]->type == kAssemblerTokenTypeStaticExpression)
-                    {
-                        diag_error(inv->line[li]->token[ti], "static expressions aren't supported yet!\n");
-                        goto failure;
-                    }
-
                     assembler_macro_t *found_match = assembler_macro_storage_lookup(storage, inv->line[li]->token[ti]->str);
                     if(found_match == NULL)
                     {
