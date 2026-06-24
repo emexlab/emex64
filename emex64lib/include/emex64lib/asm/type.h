@@ -29,6 +29,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <emex64lib/support/virtual/vbitwalker.h>
+#include <emex64lib/vm/core.h>
 
 typedef enum: uint8_t {
     kAssemblerTokenTypeInvalid,
@@ -37,6 +38,7 @@ typedef enum: uint8_t {
     kAssemblerTokenTypeIdentifier,  /* in the lextok step everything becomes a identifier at first */
     kAssemblerTokenTypeInteger,
     kAssemblerTokenTypeString,
+    kAssemblerTokenTypeRegister,
     kAssemblerTokenTypeComma,
     kAssemblerTokenTypeColon,
     kAssemblerTokenTypeLParen,
@@ -68,11 +70,14 @@ typedef struct assembler_token {
     union {
         struct {
             uint64_t v; /* signed by default */
-        } integer;
+        } integer_literal;
         struct {
             char *buf;
             size_t len;
-        } string;
+        } string_literal;
+        struct {
+            kEmex64Register v;
+        } register_literal;
     };
 } assembler_token_t;
 

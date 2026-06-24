@@ -81,11 +81,10 @@ bool assembler_emit_instruction(assembler_line_t *al)
 
     for(uint64_t i = 1; i < al->token_cnt; i++)
     {
-        kEmex64Register reg = register_from_string(al->token[i]->str);
-        if(reg != kEmex64RegisterInvalid)
+        if(al->token[i]->type == kAssemblerTokenTypeRegister)
         {
             /* registers are always allowed so far */
-            assembler_emit_register(al->inv, reg);
+            assembler_emit_register(al->inv, al->token[i]->register_literal.v);
             continue;
         }
 
@@ -148,12 +147,12 @@ bool assembler_emit_instruction(assembler_line_t *al)
                            opcode == kEmex64OpcodeBGT || opcode == kEmex64OpcodeBLW)) ||
                (i == 2 && (opcode == kEmex64OpcodeBZ  || opcode == kEmex64OpcodeBNZ)))
             {
-                assembler_emit_addr64(al->inv, al->token[i]->integer.v);
+                assembler_emit_addr64(al->inv, al->token[i]->integer_literal.v);
             }
             else
             {
                 /* its a immediate */
-                assembler_emit_imm(al->inv, al->token[i]->integer.v);
+                assembler_emit_imm(al->inv, al->token[i]->integer_literal.v);
             }
         }
         else

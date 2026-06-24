@@ -29,6 +29,7 @@
 #include <emex64lib/support/diagnostic/log.h>
 #include <emex64lib/support/parser.h>
 #include <emex64lib/asm/lexer.h>
+#include <emex64lib/asm/emitter/register.h>
 
 _Thread_local static const char *stokptr;
 _Thread_local static const char *ltokptr;
@@ -227,20 +228,20 @@ bool assembler_lexer_classify(assembler_token_t *at)
     switch(pret.type)
     {
         case emexParserValueTypeNumber:
+            at->integer_literal.v = pret.value;
             at->type = kAssemblerTokenTypeInteger;
-            at->integer.v = pret.value;
             return true;
         case emexParserValueTypeBuffer:
-            at->type = kAssemblerTokenTypeString;
-            at->string.buf = calloc(pret.len + 1, sizeof(char));
-            if(at->string.buf == NULL)
+            at->string_literal.buf = calloc(pret.len + 1, sizeof(char));
+            if(at->string_literal.buf == NULL)
             {
                 diag_fatal(at, "out of memory, couldn't allocate string literal buffer for '%s'\n", at->str);
                 return false;
             }
-            memcpy(at->string.buf, (const char*)pret.value, pret.len);
-            at->string.buf[pret.len] = '\0';
-            at->string.len = pret.len;
+            memcpy(at->string_literal.buf, (const char*)pret.value, pret.len);
+            at->string_literal.buf[pret.len] = '\0';
+            at->string_literal.len = pret.len;
+            at->type = kAssemblerTokenTypeString;
             return true;
         case emexParserValueTypeOverflow:
             diag_error(at, "integer literal '%s' overflows 64bit lenght\n", at->str);
@@ -282,13 +283,23 @@ bool assembler_lexer_classify(assembler_token_t *at)
                 }
             }
 
+            /* checking if it is a register */
+            kEmex64Register reg = register_from_string(at->str);
+            if(reg != kEmex64RegisterInvalid)
+            {
+                at->register_literal.v = reg;
+                at->type = kAssemblerTokenTypeRegister;
+                return true;
+            }
+
             /* checking if identifier is in a valid format */
             if(!__assembly_lexer_validate_identifier(at->str))
             {
                 diag_error(at, "token '%s' is not a valid identifier\n", at->str);
                 return false;
             }
-            
+
+            at->type = kAssemblerTokenTypeIdentifier;
             return true;
         default:
             diag_error(at, "unknown token '%s'\n", at->str);
@@ -306,6 +317,8 @@ const char *assembler_lexer_str_for_token_type(kAssemblerTokenType type)
             return "integer literal";
         case kAssemblerTokenTypeString:
             return "string literal";
+        case kAssemblerTokenTypeRegister:
+            return "register literal";
         case kAssemblerTokenTypeComma:
         case kAssemblerTokenTypeColon:
         case kAssemblerTokenTypeLParen:
