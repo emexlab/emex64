@@ -91,7 +91,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
         /* checking if allowed to be something else than a register */
         if(opcode_arg_accepts_reg_only(entry,  i - 1))
         {
-            diag_error(al->token[i], "expected register, got intermediate or label '%s'\n", al->token[i]->str);
+            diag_error(al->token[i], "expected register, got immediate or label '%s'\n", al->token[i]->str);
             return false;
         }
 
@@ -157,7 +157,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
             }
             else
             {
-                /* its a intermediate */
+                /* its a immediate */
                 assembler_emit_imm(al->inv, pr.value);
             }
         }

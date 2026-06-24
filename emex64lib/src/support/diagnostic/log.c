@@ -31,11 +31,14 @@
 #include <emex64lib/asm/invocation.h>
 
 #define C_BOLD "\x1b[1m"
-#define C_CARET "\x1b[32m"
+#define C_CARET "\x1b[0;1;32m"
+#define C_FIXIT "\x1b[0;1;32m"
+#define C_NOTE "\x1b[0;1;36m"
+#define C_REMARK "\x1b[0;1;34m"
+#define C_WARN "\x1b[0;1;35m"
+#define C_ERROR "\x1b[0;1;31m"
+#define C_FATAL "\x1b[0;1;31m"
 #define C_RESET "\x1b[0m"
-#define C_NOTE "\x1b[1;35m"
-#define C_WARN "\x1b[1;33m" 
-#define C_ERROR "\x1b[1;31m"
 
 static const char *col(const char *code)
 {

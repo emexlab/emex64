@@ -170,13 +170,13 @@ static inline void emex64_core_execute_instruction_at_pc(emex64_core_t *core)
     }
 
     core->op.opcode = opcode;
-    core->op.op = kEmex64OpfuncTable[opcode];
+    core->op.opce = kEmex64OpfuncTable[opcode];
 
     /*
      * parameter decoder, this decoding loop decodes
      * all parameters the instruction defines.
      */
-    uint8_t maxarg = core->op.op.maxargs;
+    uint8_t maxarg = core->op.opce.maxargs;
     uint8_t i = 0;
     for(; i < maxarg; i++)
     {
@@ -206,8 +206,8 @@ static inline void emex64_core_execute_instruction_at_pc(emex64_core_t *core)
             case kEmex64ParameterCodingImm16:
             case kEmex64ParameterCodingImm32:
             case kEmex64ParameterCodingImm64:
-                core->op.imm[i] = bb_read(&bb, kImmBits[coding]);
-                core->op.param[i] = &(core->op.imm[i]);
+                core->op.immcache[i] = bb_read(&bb, kImmBits[coding]);
+                core->op.param[i] = &(core->op.immcache[i]);
                 break;
         }
     }
@@ -222,7 +222,7 @@ escape_from_la:
     core->op.ilen = (uint32_t)((bb.pos + 7u) >> 3);
 
     /* the part of executing the instruction */
-    core->op.op.func(core);
+    core->op.opce.func(core);
     core->rl[kEmex64RegisterPC] += core->op.ilen;   /* FIXME: IDK if it should increment or not due to interrupts */
 
     return;

@@ -427,8 +427,13 @@ typedef struct emex64_core {
          * multithreading gets added. for a future reader:
          * it is necessary to count + 8, otherwise bb_read
          * might overread the inscache.
+         * 
+         * And the immediate cache stores all immediates into
+         * a cache so they can like registers be used inside
+         * the parameter pointer array.
          */
         uint8_t inscache[EMEX64_MAX_ILEN + 8];
+        uint64_t immcache[EMEX64_MAX_ARGS];
 
         /*
          * lenght of decoded instruction so that the cpu
@@ -438,23 +443,17 @@ typedef struct emex64_core {
 
         /*
          * the opcode it self, so the cpu knows what to
-         * execute.
+         * execute. The opcode entry which tells the decoder
+         * how to decode the instruction.
          */
         kEmex64Opcode opcode;
-        emex64_opfunc_entry_t op;
-
-        /*
-         * a array of intermediate values that can go from
-         * 8 to 64 bits in width, the cpu stuffs that cache
-         * on time of decoding.
-         */
-        uint64_t imm[EMEX64_MAX_ARGS];
+        emex64_opfunc_entry_t opce;
 
         /*
          * pointer array for parameters, at emulation we
          * dont have many emulation options so we stuff
          * each parameter into this array.. register
-         * intermediate, etc.
+         * immediate, etc.
          */
         uint8_t param_cnt;
         uint64_t *param[EMEX64_MAX_ARGS];

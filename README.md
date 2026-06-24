@@ -22,7 +22,20 @@ The VM can be invoked to run firmware with `emex64vm --firmware <image path>`. T
 These examples will be compiled and directly run with `make`. 
 
 ## Instruction Set Architecture (ISA)
-The instruction coding is variable, it is not a fixed lenght instruction set, which is a CISC concept.
+The instruction coding is variable, it is not a fixed lenght instruction set, which is a CISC concept. Instructions are coded by the first 8 bit serving as the opcode, followed by operands that are not aligned to a byte boundary. Operands are coded by the first 3 bit serving as the type of operand followed by the operand it self. A table of the operand types here:
+
+| Type               | Binary       | Description                |
+|--------------------|--------------|----------------------------|
+| End                | `0b000`      | Terminates the instruction, parser stops parsing |
+| Register           | `0b001`      | 5 bit register identifier  |
+| Immediate (5bit)   | `0b010`      | 5 bit immediate            |
+| Immediate (8bit)   | `0b011`      | 8 bit immediate            |
+| Immediate (16bit)  | `0b100`      | 16 bit immediate           |
+| Immediate (32bit)  | `0b101`      | 32 bit immediate           |
+| Immediate (64bit)  | `0b110`      | 64 bit immediate           |
+| Address (64bit)    | `0b111`      | 64 bit immediate, with the difference that the decoder aligns to the next byte boundary, this was done with the intention for easy address relocation in the linker, it payed off >:3. |
+
+In case it is a immediate it stores the immediate into a immediate cache of the core which then gets used as a operand inside of the operation logic.
 
 ### Register Set (RS)
 #### Userspace Accessible Registers
@@ -50,11 +63,11 @@ The instruction coding is variable, it is not a fixed lenght instruction set, wh
 #### Data
 | Opcode      | Binary       | Description |
 |-------------|--------------|-------------|
-| `mov`       | `0b00000010` | Moves a intermediate or a value of a register into a register. |
+| `mov`       | `0b00000010` | Moves a immediate or a value of a register into a register. |
 | `swp`       | `0b00000011` | Swaps the values of two registers. |
 | `swpz`      | `0b00000100` | Swaps the values of two registers, while zeroing out the source. |
-| `push`      | `0b00000101` | Pushes a intermediate or a value of a register onto the stack. *(2) |
-| `pop`       | `0b00000110` | Pops a intermediate from the stack into a register. *(2) |
+| `push`      | `0b00000101` | Pushes a immediate or a value of a register onto the stack. *(2) |
+| `pop`       | `0b00000110` | Pops a immediate from the stack into a register. *(2) |
 | `ldb`       | `0b00000111` | Loads a byte from a memory address into a register. |
 | `ldw`       | `0b00001000` | Loads a word from a memory address into a register. |
 | `ldd`       | `0b00001001` | Loads a double word from a memory address into a register. |
@@ -114,5 +127,5 @@ The instruction coding is variable, it is not a fixed lenght instruction set, wh
 | Opcode      | Binary       | Description |
 |-------------|--------------|-------------|
 | `clr`       | `0b00110101` | Clears operands. *(2) |
-| `cmov`      | `0b00110110` | Moves a value of a register or intermediate into a control register of the core.  |
+| `cmov`      | `0b00110110` | Moves a value of a register or immediate into a control register of the core.  |
 | `cmovb`     | `0b00110111` | Moves a value from a control register into a register. |
