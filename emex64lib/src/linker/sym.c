@@ -47,7 +47,7 @@ linker_symbol_t *linker_symbol_alloc(const char *name,
     sym->object_path = strdup(object_path);
     if(sym->object_path == NULL)
     {
-        free(sym->object_path);
+        free(sym->name);
         free(sym);
         return NULL;
     }
