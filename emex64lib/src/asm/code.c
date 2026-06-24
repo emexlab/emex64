@@ -256,6 +256,7 @@ bool assembler_code_inject_file(assembler_invocation_t *inv,
             assembler_token_t *at = calloc(1, sizeof(assembler_token_t));
             at->str = strdup(token.token);
             at->column_num = token.column + 1;
+            at->real_len = strlen(at->str);
             at->al = inv->line[at_line_index + i];
             if(token.type == kAssemblerTokenTypeInvalid)
             {

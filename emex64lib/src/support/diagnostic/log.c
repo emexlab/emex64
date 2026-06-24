@@ -158,14 +158,7 @@ static void diag_print_caret_line(assembler_token_t *at)
     const char *src = at->al->str;
     size_t line_num = at->al->line_num;
     size_t start = (at->column_num > 0) ? at->column_num - 1 : 0;
-    size_t tok_len = 0;
-    if(at->str != NULL)
-    {
-        while(at->str[tok_len])
-        {
-            tok_len++;
-        }
-    }
+    size_t tok_len = at->real_len;
     if(tok_len == 0)
     {
         tok_len = 1;

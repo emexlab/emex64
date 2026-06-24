@@ -158,6 +158,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                     uint64_t tail = old_token_cnt - ti - 1;
                     uint64_t new_token_cnt = old_token_cnt - 1 + new_tokens;
                     uint64_t column_number = inv->line[li]->token[ti]->column_num;
+                    uint64_t real_len = inv->line[li]->token[ti]->real_len;
 
                     /* the consumed token always dies */
                     free(inv->line[li]->token[ti]->str);
@@ -202,6 +203,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         at->al = inv->line[li];
                         at->str = strdup(found_match->inject_token[k]);
                         at->column_num = column_number;
+                        at->real_len = real_len;
                         inv->line[li]->token[ti + k] = at;
                     }
                     

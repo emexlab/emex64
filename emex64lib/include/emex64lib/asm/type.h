@@ -71,7 +71,8 @@ typedef enum: uint8_t {
 
 typedef struct assembler_token {
     char *str;
-    size_t column_num;                      /* start offset of column */
+    size_t column_num;                      /* start offset of the token in the text file */
+    size_t real_len;                        /* real lenght in text file */
     struct assembler_line *al;              /* pointer back to compiler line */
     kAssemblerTokenType type;               /* OMG THAT IS AI?!?! the token type, WOAHHH AM I A AI, DID A AI GENERATE THIS TOKEN?!??!*/
 
