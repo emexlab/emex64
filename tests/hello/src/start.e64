@@ -40,6 +40,3 @@ hello:
     bnz r1, .loop
 .end:
     stb PLATFORM_PWR, 0
-
-_start:
-    b hello
