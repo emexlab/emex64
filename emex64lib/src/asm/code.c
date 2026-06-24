@@ -224,7 +224,7 @@ bool assembler_code_inject_file(assembler_invocation_t *inv,
     for(size_t i = 0; i < entry_cnt; i++)
     {
         /* using cmptok in first pass to get token count */
-        for(lextok_token_t token = lextok(inv->line[at_line_index + i]->str); token.token != NULL; token = lextok(NULL))
+        for(lextok_token_t token = assembler_lexer_tok(inv->line[at_line_index + i]->str); token.token != NULL; token = assembler_lexer_tok(NULL))
         {
             /*
              * until this is not null i will not move
@@ -243,7 +243,7 @@ bool assembler_code_inject_file(assembler_invocation_t *inv,
          * and over again, is this a carousell or
          * why am I getting ill rn.
          */
-        for(lextok_token_t token = lextok(inv->line[at_line_index + i]->str); token.token != NULL; token = lextok(NULL))
+        for(lextok_token_t token = assembler_lexer_tok(inv->line[at_line_index + i]->str); token.token != NULL; token = assembler_lexer_tok(NULL))
         {
             assembler_token_t *at = calloc(1, sizeof(assembler_token_t));
             at->str = strdup(token.token);

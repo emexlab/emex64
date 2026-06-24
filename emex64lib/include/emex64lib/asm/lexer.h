@@ -72,6 +72,6 @@ typedef struct {
     kAssemblerTokenType type;
 } lextok_token_t;
 
-lextok_token_t lextok(const char *token);
+lextok_token_t assembler_lexer_tok(const char *token);
 
 #endif /* EMEX64ASM_LEXER_H */

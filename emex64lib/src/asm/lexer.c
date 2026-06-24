@@ -56,7 +56,7 @@ static inline void __lextok_append(unsigned short *otoken_pos)
     otoken[(*otoken_pos)++] = *(ltokptr++);
 }
 
-lextok_token_t lextok(const char *token)
+lextok_token_t assembler_lexer_tok(const char *token)
 {
     if(token != NULL)
     {
