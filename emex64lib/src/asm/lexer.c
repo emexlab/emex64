@@ -235,7 +235,7 @@ bool assembler_lexer_classify(assembler_token_t *at)
             at->string_literal.buf = calloc(pret.len + 1, sizeof(char));
             if(at->string_literal.buf == NULL)
             {
-                diag_fatal(at, "out of memory, couldn't allocate string literal buffer for '%s'\n", at->str);
+                diag_fatal(at, "out of memory, couldn't allocate buffer for string literal '%s'\n", at->str);
                 return false;
             }
             memcpy(at->string_literal.buf, (const char*)pret.value, pret.len);
@@ -244,7 +244,7 @@ bool assembler_lexer_classify(assembler_token_t *at)
             at->type = kAssemblerTokenTypeString;
             return true;
         case emexParserValueTypeOverflow:
-            diag_error(at, "integer literal '%s' overflows 64bit lenght\n", at->str);
+            diag_error(at, "integer literal '%s' overflows 64bit length\n", at->str);
             return false;
         case emexParserValueTypeString:
             /* remains a identifier under certain conditions */
