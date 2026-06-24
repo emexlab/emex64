@@ -152,9 +152,16 @@ static inline bool __assembler_splice_line(assembler_invocation_t *inv,
     free(inv->line[idx]->str);
     for(uint64_t i = 0; i < inv->line[idx]->token_cnt; i++)
     {
+        if(inv->line[idx]->token[i]->type == kAssemblerTokenTypeString)
+        {
+            free(inv->line[idx]->token[i]->string_literal.buf);
+        }
+
         free(inv->line[idx]->token[i]->str);
+        free(inv->line[idx]->token[i]);
     }
     free(inv->line[idx]->token);
+    free(inv->line[idx]);
 
     /* shift the tail */
     memmove(&inv->line[idx + count], &inv->line[idx + 1], (inv->line_cnt - idx - 1) * sizeof *inv->line);
