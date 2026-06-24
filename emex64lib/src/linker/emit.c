@@ -705,7 +705,6 @@ static bool __linker_link_firmware(linker_invocation_t *inv,
     vbitwalker_t *vb = emex_file_dup_vbitwalker(output, BW_LITTLE_ENDIAN);
     if(vb == NULL)
     {
-        linker_invocation_dealloc(inv);
         return false;
     }
 
@@ -746,7 +745,6 @@ static bool __linker_link_firmware(linker_invocation_t *inv,
         if(!obj_apply_relocs(inv, obj, vb))
         {
             vbitwalker_dealloc(vb);
-            linker_invocation_dealloc(inv);
             return false;
         }
         obj = obj->next;
@@ -757,7 +755,6 @@ static bool __linker_link_firmware(linker_invocation_t *inv,
     {
         diag_error(NULL, "entry symbol '%s' not found\n", inv->options.entry_name);
         vbitwalker_dealloc(vb);
-        linker_invocation_dealloc(inv);
         return false;
     }
 
