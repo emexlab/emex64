@@ -71,7 +71,7 @@ _fw_8042_handler:
     ;stq putc_sym, r3
     iret
 
-_fw_start:
+_main:
     blw _interrupt_register_handler, IRQ_EXCEPTION, _exception_handler
     blw _interrupt_register_handler, IRQ_8042, _fw_8042_handler
 
@@ -120,20 +120,18 @@ _fw_start:
 _start:
     ; early stack fixup
     ldq r0, MCSIZE
-    sub r0, 8
-    mov sp, r0
+    sub sp, r0, 8
 
     bl _put_init                                    ; checks for fb
     bl _pmm_init                                    ; initilizing page allocator
 
     ; actual stack fixup
     blw _pmm_alloc                                  ; a bit small lmfao
-    add rr, 0x1FFE
-    mov sp, rr
+    add sp, rr, 0x1FFE
     
     bl _slab_init                                   ; initilizing slab allocator
     bl _interrupt_init                              ; initilizing interrupt controller
-    bl _fw_start                                    ; branching to main symbol
+    bl _main                                        ; branching to main symbol
 .poweroff:
     stb PLATFORM_PWR, 0                             ; telling platform device to turn off
     
