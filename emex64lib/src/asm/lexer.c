@@ -63,6 +63,18 @@ static inline void __lextok_append(unsigned short *otoken_pos)
     otoken[(*otoken_pos)++] = *(ltokptr++);
 }
 
+static inline void __lextok_handle_punctuation(unsigned short *otoken_pos,
+                                               lextok_token_t *token,
+                                               kAssemblerTokenType type)
+{
+    if(*otoken_pos > 0)
+    {
+        return;
+    }
+    token->type = kAssemblerTokenTypeColon;
+    __lextok_append(otoken_pos);
+}
+
 lextok_token_t assembler_lexer_tok(const char *token)
 {
     if(token != NULL)
@@ -108,13 +120,33 @@ lextok_token_t assembler_lexer_tok(const char *token)
                     case '\t':
                         goto break_out;
 
+                    /* punctuation */
                     case ':':
-                        if(a > 0)
-                        {
-                            goto break_out;
-                        }
-                        retval.type = kAssemblerTokenTypeColon;
-                        __lextok_append(&a);
+                        __lextok_handle_punctuation(&a, &retval, kAssemblerTokenTypeColon);
+                        goto break_out;
+                    
+                    case '(':
+                        __lextok_handle_punctuation(&a, &retval, kAssemblerTokenTypeLParen);
+                        goto break_out;
+                    
+                    case ')':
+                        __lextok_handle_punctuation(&a, &retval, kAssemblerTokenTypeRParen);
+                        goto break_out;
+
+                    case '+':
+                        __lextok_handle_punctuation(&a, &retval, kAssemblerTokenTypePlus);
+                        goto break_out;
+
+                    case '-':
+                        __lextok_handle_punctuation(&a, &retval, kAssemblerTokenTypeMinus);
+                        goto break_out;
+
+                    case '*':
+                        __lextok_handle_punctuation(&a, &retval, kAssemblerTokenTypeMultiply);
+                        goto break_out;
+
+                    case '/':
+                        __lextok_handle_punctuation(&a, &retval, kAssemblerTokenTypeDivide);
                         goto break_out;
                     
                     /* handling string beginnings */
