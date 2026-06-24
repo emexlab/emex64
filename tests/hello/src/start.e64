@@ -27,7 +27,7 @@
 section .data
     msg db "hello, world!\r\n\0"
 
-_start:
+hello:
     mov r0, msg
 .loop:
     ldb r1, r0
@@ -40,3 +40,6 @@ _start:
     bnz r1, .loop
 .end:
     stb PLATFORM_PWR, 0
+
+_start:
+    b hello

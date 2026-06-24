@@ -29,6 +29,7 @@
 #include <ctype.h>
 #include <emex64lib/support/diagnostic/log.h>
 #include <emex64lib/support/parser.h>
+#include <emex64lib/support/pack.h>
 #include <emex64lib/asm/lexer.h>
 #include <emex64lib/asm/emitter/register.h>
 #include <emex64lib/asm/emitter/opcode.h>
@@ -231,6 +232,16 @@ static bool __assembly_lexer_validate_identifier(const char *s)
     return true;
 }
 
+static kAssemblerKeyword __assembler_lexer_keyword(const char *s)
+{
+    switch(pack_name(s))
+    {
+        case PACK('s','e','c','t','i','o','n'): return kAssemblerKeywordSection;
+        case PACK('e','x','t','e','r','n'): return kAssemblerKeywordExtern;
+        default: return kAssemblerKeywordInvalid;
+    }
+}
+
 bool assembler_lexer_classify(assembler_token_t *at)
 {
     /* first we need to find out what exactly they are */
@@ -311,6 +322,15 @@ bool assembler_lexer_classify(assembler_token_t *at)
                 return true;
             }
 
+            /* checking if it is a keyword */
+            kAssemblerKeyword keyword = __assembler_lexer_keyword(at->str);
+            if(keyword != kAssemblerKeywordInvalid)
+            {
+                at->keyword.v = keyword;
+                at->type = kAssemblerTokenTypeKeyword;
+                return true;
+            }
+
             /* checking if identifier is in a valid format */
             if(!__assembly_lexer_validate_identifier(at->str))
             {
@@ -340,6 +360,8 @@ const char *assembler_lexer_str_for_token_type(kAssemblerTokenType type)
             return "register literal";
         case kAssemblerTokenTypeInstruction:
             return "instruction literal";
+        case kAssemblerTokenTypeKeyword:
+            return "keyword";
         case kAssemblerTokenTypeComma:
         case kAssemblerTokenTypeColon:
         case kAssemblerTokenTypeLParen:

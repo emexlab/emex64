@@ -384,9 +384,14 @@ bool assembler_code_postparse(assembler_invocation_t *inv)
                     return false;
                 }
 
+                bool valid = true;
                 for(uint64_t j = 3; j < inv->line[i]->token_cnt; j++)
                 {
                     diag_error(inv->line[i]->token[j], "unexpected %s '%s' after label definition\n", assembler_lexer_str_for_token_type(inv->line[i]->token[j]->type), inv->line[i]->token[j]->str);
+                    valid = false;
+                }
+                if(!valid)
+                {
                     return false;
                 }
 
@@ -394,17 +399,45 @@ bool assembler_code_postparse(assembler_invocation_t *inv)
             }
         }
 
-        if(inv->line[i]->token_cnt >= 2 && strcmp(inv->line[i]->token[0]->str, "extern") == 0)
+        if(inv->line[i]->token_cnt >= 1 && inv->line[i]->token[0]->type == kAssemblerTokenTypeKeyword)
         {
-            section_mode = true;
-            inv->line[i]->type = kAssemblerLineTypeExternLabel;
-            continue;
-        }
-        
-        if(inv->line[i]->token_cnt < 3 && strcmp(inv->line[i]->token[0]->str, "section") == 0)
-        {
-            section_mode = true;
-            inv->line[i]->type = kAssemblerLineTypeSection;
+            if(inv->line[i]->token_cnt == 1)
+            {
+                diag_error(inv->line[i]->token[0], "expected identifier after %s '%s'\n", assembler_lexer_str_for_token_type(inv->line[i]->token[0]->type), inv->line[i]->token[0]->str);
+                return false;
+            }
+
+            switch(inv->line[i]->token[0]->keyword.v)
+            {
+                case kAssemblerKeywordSection:
+                    section_mode = true;
+                    inv->line[i]->type = kAssemblerLineTypeSection;
+                    break;
+                case kAssemblerKeywordExtern:
+                    inv->line[i]->type = kAssemblerLineTypeExternLabel;
+                    break;
+                default:
+                    break;
+            }
+
+            if(inv->line[i]->token[1]->type != kAssemblerTokenTypeIdentifier)
+            {
+                diag_error(inv->line[i]->token[1], "expected identifier in keyword construct, but got %s '%s'\n", assembler_lexer_str_for_token_type(inv->line[i]->token[1]->type), inv->line[i]->token[1]->str);
+                return false;
+            }
+
+            bool valid = true;
+            for(uint64_t j = 3; j < inv->line[i]->token_cnt; j++)
+            {
+                /* idk keyword construct, keyword definition ahhhhhh */
+                diag_error(inv->line[i]->token[j], "unexpected %s '%s' after keyword construct\n", assembler_lexer_str_for_token_type(inv->line[i]->token[j]->type), inv->line[i]->token[j]->str);
+                valid = false;
+            }
+            if(!valid)
+            {
+                return false;
+            }
+
             continue;
         }
 

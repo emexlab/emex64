@@ -40,6 +40,7 @@ typedef enum: uint8_t {
     kAssemblerTokenTypeString,
     kAssemblerTokenTypeRegister,
     kAssemblerTokenTypeInstruction,
+    kAssemblerTokenTypeKeyword,
     kAssemblerTokenTypeComma,
     kAssemblerTokenTypeColon,
     kAssemblerTokenTypeLParen,
@@ -49,6 +50,12 @@ typedef enum: uint8_t {
     kAssemblerTokenTypeMultiply,
     kAssemblerTokenTypeDivide,
 } kAssemblerTokenType;
+
+typedef enum: uint8_t {
+    kAssemblerKeywordSection,
+    kAssemblerKeywordExtern,
+    kAssemblerKeywordInvalid,
+} kAssemblerKeyword;
 
 typedef enum: uint8_t {
     kAssemblerLineTypeNone,
@@ -82,6 +89,9 @@ typedef struct assembler_token {
         struct {
             kEmex64Opcode v;
         } instruction_literal;
+        struct {
+            kAssemblerKeyword v;
+        } keyword;
     };
 } assembler_token_t;
 
