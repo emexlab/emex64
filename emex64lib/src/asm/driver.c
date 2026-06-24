@@ -55,7 +55,7 @@ assembler_job_t *assembler_job_alloc(assembler_job_t *prev,
             return NULL;
     }
 
-    /* allocating job (definetly AI generated btw xD I definetly didn't wrote this comments, cuz it is wayyyyy to generic right) */
+    /* allocating job (definetly AI generated btw xD I definetly didn't wrote this comments, cuz it is wayyyyy to generic right??? /s) */
     assembler_job_t *job = malloc(sizeof(assembler_job_t));
     if(job == NULL)
     {
