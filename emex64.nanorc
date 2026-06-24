@@ -24,4 +24,4 @@ color yellow "'([^'\\]|\\.)*'"
 color brightyellow "<([^\"\\]|\\.)*>"
 
 # Comments
-color blue ";.*"
+color brightblue ";.*"
