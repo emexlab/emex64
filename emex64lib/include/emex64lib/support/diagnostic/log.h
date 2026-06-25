@@ -31,7 +31,6 @@
 #include <emex64lib/support/diagnostic/consumer.h>
 
 /* legacy wrapper */
-
 #define diag_log_legacy(severity, at, msg, ...) \
     do { \
         _Pragma("GCC warning \"diag_log_* API is deprecated; call diagnostic_report() directly and use the diagnostic_consumer_t infrastructure\"") \
@@ -54,9 +53,9 @@
         } \
     } while(0);
 
-#define diag_note(at, msg, ...) diagnostic_report(NULL, kDiagnosticSeverityNote, NULL, msg __VA_OPT__(,) __VA_ARGS__)
-#define diag_warn(at, msg, ...) diagnostic_report(NULL, kDiagnosticSeverityWarning, NULL, msg __VA_OPT__(,) __VA_ARGS__)
+#define diag_note(at, msg, ...) diag_log_legacy(kDiagnosticSeverityNote, at, msg __VA_OPT__(,) __VA_ARGS__)
+#define diag_warn(at, msg, ...) diag_log_legacy(kDiagnosticSeverityWarning, at, msg __VA_OPT__(,) __VA_ARGS__)
 #define diag_error(at, msg, ...) diag_log_legacy(kDiagnosticSeverityError, at, msg __VA_OPT__(,) __VA_ARGS__)
-#define diag_fatal(at, msg, ...) diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, msg __VA_OPT__(,) __VA_ARGS__)
+#define diag_fatal(at, msg, ...) diag_log_legacy(kDiagnosticSeverityFatal, at, msg __VA_OPT__(,) __VA_ARGS__)
 
 #endif /* EMEX64_DIAGNOSTIC_LOG_H */
