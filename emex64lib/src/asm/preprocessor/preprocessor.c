@@ -421,7 +421,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                     case kAssemblerPreprocessorDirectiveTypeEndIf:
                         if(state.in_a_condition == false)
                         {
-                            diag_error(inv->line[li]->token[0], "%%end%% directive was defined but no %%if%% directive was defined before.\n");
+                            diag_error(inv->line[li]->token[0], "%%endif%% directive was defined, but no %%if%% directive was defined before.\n");
                             goto failure;
                         }
                         assembler_condition_state_pop(&state);
