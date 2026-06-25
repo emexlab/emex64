@@ -70,7 +70,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
 {
     if(al->token[0]->type != kAssemblerTokenTypeInstruction)
     {
-        diag_error(al->token[0], "expected instruction identifier, but got %s '%s'\n", assembler_lexer_str_for_token_type(al->token[0]->type), al->token[0]->str);
+        diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(al->token[0]), "expected instruction identifier, but got %s '%s'", assembler_lexer_str_for_token_type(al->token[0]->type), al->token[0]->str);
         return false;
     }
 
@@ -86,7 +86,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
         {
             if(k != 1 && ptype == kAssemblerTokenTypeComma && al->token[k]->type == kAssemblerTokenTypeComma)
             {
-                diag_error(al->token[k - 1], "expected operand after %s '%s'\n", assembler_lexer_str_for_token_type(al->token[k - 1]->type), al->token[k - 1]->str);
+                diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(al->token[k - 1]), "expected operand after %s '%s'", assembler_lexer_str_for_token_type(al->token[k - 1]->type), al->token[k - 1]->str);
                 return false;
             }
 
@@ -100,17 +100,17 @@ bool assembler_emit_instruction(assembler_line_t *al)
 
     if(operand_total > EMEX64_MAX_ARGS)
     {
-        diag_error(al->token[al->token_cnt - 1], "holy smokes, why soo many operands, maximum is %d operands in emex64\n", EMEX64_MAX_ARGS);
+        diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(al->token[al->token_cnt - 1]), "holy smokes, why soo many operands, maximum is %d operands in emex64", EMEX64_MAX_ARGS);
         return false;
     }
     if(operand_total > entry->maxargs)
     {
-        diag_error(al->token[al->token_cnt - 1], "too many operands for a %s instruction, expected %d operands, but got %llu operands\n", al->token[0]->str, entry->maxargs, (unsigned long long)operand_total);
+        diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(al->token[al->token_cnt - 1]), "too many operands for a %s instruction, expected %d operands, but got %llu operands", al->token[0]->str, entry->maxargs, (unsigned long long)operand_total);
         return false;
     }
     if(operand_total < entry->minargs)
     {
-        diag_error(al->token[0], "too few operands for a %s instruction, expected %d operands, but got %llu operands\n", al->token[0]->str, entry->minargs, (unsigned long long)operand_total);
+        diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(al->token[al->token_cnt - 1]), "too few operands for a %s instruction, expected %d operands, but got %llu operands\n", al->token[0]->str, entry->minargs, (unsigned long long)operand_total);
         return false;
     }
 
@@ -135,7 +135,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
 
         if(operand_cnt == 0)
         {
-            diag_error(al->token[start > 0 ? start - 1 : 0], "empty operand\n");
+            diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(al->token[start > 0 ? start - 1 : 0]), "empty operand");
             return false;
         }
 
@@ -148,7 +148,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
 
         if(opcode_arg_accepts_reg_only(entry, argno))
         {
-            diag_error(operand[0], "expected register identifier, but got %s '%s'\n", assembler_lexer_str_for_token_type(operand[0]->type), operand[0]->str);
+            diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(operand[0]), "expected register identifier, but got %s '%s'", assembler_lexer_str_for_token_type(operand[0]->type), operand[0]->str);
             return false;
         }
 
@@ -172,7 +172,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
 
             if(!assembler_label_relocate_append(al->inv, label, local, operand[0]))
             {
-                diag_fatal(operand[0], "out of memory, can't append relocation to relocation table\n");
+                diagnostic_report(al->inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(operand[0]),  "out of memory, can't append relocation to relocation table");
                 return false;
             }
 
@@ -225,7 +225,7 @@ bool assembler_emit(assembler_invocation_t *inv)
                     failed = true;
                     if(++errors >= 10)
                     {
-                        diag_fatal(NULL, "too many errors emitted, stopping now\n");
+                        diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL,  "too many errors emitted, stopping now");
                         return false;
                     }
                 }
@@ -236,7 +236,7 @@ bool assembler_emit(assembler_invocation_t *inv)
                     failed = true;
                     if(++errors >= 10)
                     {
-                        diag_fatal(NULL, "too many errors emitted, stopping now\n");
+                        diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL,  "too many errors emitted, stopping now");
                         return false;
                     }
                 }
@@ -255,10 +255,10 @@ bool assembler_emit(assembler_invocation_t *inv)
         {
             /* local labels must be resolved at assembly time */
             failed = true;
-            diag_error(reloc->at_link, "use of undeclared identifier '%s'\n", reloc->name);
+            diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(reloc->at_link),  "use of undeclared identifier '%s'", reloc->name);
             if(++errors >= 10)
             {
-                diag_fatal(NULL, "too many errors emitted, stopping now\n");
+                diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL,  "too many errors emitted, stopping now");
                 return false;
             }
         }
