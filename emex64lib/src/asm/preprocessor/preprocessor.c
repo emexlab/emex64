@@ -213,8 +213,11 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         diag_error(inv->line[li]->token[ti], "macro nesting limit of %d was reached\n", UINT16_MAX);
                         goto failure;
                     }
-                    
-                    goto repeat;
+
+                    if(ti < inv->line[li]->token_cnt)
+                    {
+                        goto repeat;
+                    }
                 }
             }
         }
