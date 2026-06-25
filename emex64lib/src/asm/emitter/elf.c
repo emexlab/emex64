@@ -117,7 +117,7 @@ bool assembler_elf_emit(assembler_invocation_t *inv)
     struct stat st;
     if(vfd_stat(d, &st) != 0)
     {
-        diag_error(NULL, "elf_emit: fstat failed\n");
+        diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "elf_emit: fstat failed");
         return false;
     }
 
@@ -125,13 +125,13 @@ bool assembler_elf_emit(assembler_invocation_t *inv)
     uint8_t *flat = malloc(flat_size);
     if(!flat)
     {
-        diag_error(NULL, "elf_emit: out of memory\n");
+        diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "elf_emit: out of memory");
         return false;
     }
 
     if(vfd_seek(d, 0, SEEK_SET) < 0 || vfd_read(d, flat, flat_size) != (ssize_t)flat_size)
     {
-        diag_error(NULL, "elf_emit: read flat binary failed\n");
+        diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "elf_emit: read flat binary failed");
         free(flat);
         return false;
     }
@@ -343,19 +343,19 @@ bool assembler_elf_emit(assembler_invocation_t *inv)
 
     if(vfd_truncate(d, 0) != 0)
     {
-        diag_error(NULL, "elf_emit: ftruncate failed\n");
+        diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "elf_emit: ftruncate failed");
         goto done;
     }
     if(vfd_seek(d, 0, SEEK_SET) < 0)
     {
-        diag_error(NULL, "elf_emit: lseek failed\n");
+        diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "elf_emit: lseek failed");
         goto done;
     }
 
 #define WRITE_BUF(buf, len) do { \
     if(vfd_write(d, (buf), (len)) != (ssize_t)(len)) \
     { \
-        diag_error(NULL, "elf_emit: write failed\n"); \
+        diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "elf_emit: write failed"); \
         goto done; \
     } \
 } while(0)
