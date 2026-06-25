@@ -88,6 +88,7 @@ add_library(emex64 ${LIB_TYPE}
         src/vm/instruction/ctrl.c
 
         ## Devices
+
             ### SoC internal devices
             src/vm/device/internal/controller/ic.c
             src/vm/device/internal/controller/mem.c
@@ -110,6 +111,9 @@ add_library(emex64 ${LIB_TYPE}
     src/asm/options.c
     src/asm/invocation.c
     src/asm/section.c
+
+        ## Diagnostic API (Errors, Warnings, Notes, etc ^^)
+        src/asm/diagnostic/consumer.c
 
         ## Preprocessor API
         src/asm/preprocessor/directive.c

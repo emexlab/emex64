@@ -28,6 +28,7 @@
 #include <stdbool.h>
 #include <emex64lib/support/file.h>
 #include <emex64lib/support/hashmap/hashmap.h>
+#include <emex64lib/asm/diagnostic/consumer.h>
 #include <emex64lib/asm/label/label.h>
 #include <emex64lib/asm/label/relocate.h>
 #include <emex64lib/asm/type.h>
@@ -40,6 +41,8 @@ typedef struct {
 
 typedef struct assembler_invocation {
     assembler_invocation_options_t options;     /* borrowed */
+
+    assembler_diagnostic_consumer_t *consumer;
     
     emex_file_t **file;
     size_t file_cnt;

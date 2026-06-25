@@ -51,6 +51,8 @@ assembler_invocation_t *assembler_invocation_alloc(assembler_invocation_options_
         return NULL;
     }
 
+    inv->consumer = assembler_diagnostic_consumer_alloc(inv);
+
     inv->label_hashmap = hashmap_alloc();
     if(inv->label_hashmap == NULL)
     {
@@ -126,7 +128,7 @@ bool assembler_invocation_emit(assembler_invocation_t *inv,
     inv->out_vbitwalker = emex_file_dup_vbitwalker(output, BW_LITTLE_ENDIAN);
     if(inv->out_vbitwalker == NULL)
     {
-        diag_fatal(NULL, "couldn't allocate fdwalker\n");
+        diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "couldn't allocate fdwalker");
         return false;
     }
 

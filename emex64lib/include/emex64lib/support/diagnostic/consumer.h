@@ -28,6 +28,16 @@
 #include <stdint.h>
 #include <emex64lib/support/diagnostic/diagnostic.h>
 
+#define C_BOLD "\x1b[1m"
+#define C_CARET "\x1b[0;1;32m"
+#define C_FIXIT "\x1b[0;1;32m"
+#define C_NOTE "\x1b[0;1;36m"
+#define C_REMARK "\x1b[0;1;34m"
+#define C_WARN "\x1b[0;1;35m"
+#define C_ERROR "\x1b[0;1;31m"
+#define C_FATAL "\x1b[0;1;31m"
+#define C_RESET "\x1b[0m"
+
 typedef struct diagnostic_consumer diagnostic_consumer_t;
 
 typedef void (*diagnostic_consumer_consume_diagnostic_handler)(diagnostic_consumer_t*,diagnostic_t*);
@@ -35,6 +45,7 @@ typedef void (*diagnostic_consumer_consume_diagnostic_handler)(diagnostic_consum
 /* mostly used as a header */
 typedef struct diagnostic_consumer {
     diagnostic_consumer_consume_diagnostic_handler consume_handler;
+    void *ctx;
 } diagnostic_consumer_t;
 
 void diagnostic_report(diagnostic_consumer_t *consumer, kDiagnosticSeverity severity, diagnostic_location_t *location, char *str, ...);

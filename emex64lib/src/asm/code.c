@@ -46,7 +46,6 @@ static bool __assembler_code_fastline(emex_file_t *file,
 {
     if(!emex_file_map(file))
     {
-        diag_error(NULL, "failed to map assembly file '%s'\n", file->path);
         return false;
     }
 
@@ -265,13 +264,13 @@ bool assembler_code_inject_file(assembler_invocation_t *inv,
             at->al = inv->line[at_line_index + i];
             if(token.type == kAssemblerTokenTypeInvalid)
             {
-                diag_error(at, "token '%s' is not valid\n", at->str);
+                diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "token '%s' is not valid", at->str);
                 inv->file[inj_file_idx] = NULL;
                 return false;
             }
             else if(token.type == kAssemblerTokenTypeTooLong)
             {
-                diag_error(at, "token is too long, token lenght limit is %d characters\n", LEXTOK_LENGHT_MAX);
+                diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "token is too long, token lenght limit is %d characters", LEXTOK_LENGHT_MAX);
                 inv->file[inj_file_idx] = NULL;
                 return false;
             }
@@ -315,7 +314,7 @@ bool assembler_code_preparse(assembler_invocation_t *inv,
 {
     if(!assembler_code_inject_file(inv, 0, input))
     {
-        diag_fatal(NULL, "couldn't parse file at '%s'\n", input->path);
+        diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "couldn't parse file at '%s'", input->path);
         return false;
     }
 
@@ -388,13 +387,13 @@ bool assembler_code_postparse(assembler_invocation_t *inv)
                 bool valid = true;
                 if(inv->line[i]->token[0]->type != kAssemblerTokenTypeIdentifier)
                 {
-                    diag_error(inv->line[i]->token[0], "expected identifier in label definition, but got %s '%s'\n", assembler_lexer_str_for_token_type(inv->line[i]->token[0]->type), inv->line[i]->token[0]->str);
+                    diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[0]), "expected identifier in label definition, but got %s '%s'", assembler_lexer_str_for_token_type(inv->line[i]->token[0]->type), inv->line[i]->token[0]->str);
                     valid = false;
                 }
 
                 for(uint64_t j = 2; j < inv->line[i]->token_cnt; j++)
                 {
-                    diag_error(inv->line[i]->token[j], "unexpected %s '%s' after label definition\n", assembler_lexer_str_for_token_type(inv->line[i]->token[j]->type), inv->line[i]->token[j]->str);
+                    diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[j]), "unexpected %s '%s' after label definition", assembler_lexer_str_for_token_type(inv->line[i]->token[j]->type), inv->line[i]->token[j]->str);
                     valid = false;
                 }
                 if(!valid)
@@ -410,7 +409,7 @@ bool assembler_code_postparse(assembler_invocation_t *inv)
         {
             if(inv->line[i]->token_cnt == 1)
             {
-                diag_error(inv->line[i]->token[0], "expected identifier after %s '%s'\n", assembler_lexer_str_for_token_type(inv->line[i]->token[0]->type), inv->line[i]->token[0]->str);
+                diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[0]), "expected identifier after %s '%s'", assembler_lexer_str_for_token_type(inv->line[i]->token[0]->type), inv->line[i]->token[0]->str);
                 return false;
             }
 
@@ -431,14 +430,14 @@ bool assembler_code_postparse(assembler_invocation_t *inv)
 
             if(inv->line[i]->token[1]->type != kAssemblerTokenTypeIdentifier)
             {
-                diag_error(inv->line[i]->token[1], "expected identifier in keyword construct, but got %s '%s'\n", assembler_lexer_str_for_token_type(inv->line[i]->token[1]->type), inv->line[i]->token[1]->str);
+                diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[1]), "expected identifier in keyword construct, but got %s '%s'", assembler_lexer_str_for_token_type(inv->line[i]->token[1]->type), inv->line[i]->token[1]->str);
                 valid = false;
             }
 
             for(uint64_t j = 2; j < inv->line[i]->token_cnt; j++)
             {
                 /* idk keyword construct, keyword definition ahhhhhh */
-                diag_error(inv->line[i]->token[j], "unexpected %s '%s' after keyword construct\n", assembler_lexer_str_for_token_type(inv->line[i]->token[j]->type), inv->line[i]->token[j]->str);
+                diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[j]), "unexpected %s '%s' after keyword construct", assembler_lexer_str_for_token_type(inv->line[i]->token[j]->type), inv->line[i]->token[j]->str);
                 valid = false;
             }
 
