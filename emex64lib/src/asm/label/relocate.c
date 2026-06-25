@@ -41,11 +41,20 @@ bool assembler_label_relocate_append(assembler_invocation_t *inv,
     }
 
     /* stich link list ^^ */
-    if(inv->rtbe != NULL)
+    if(inv->rtbe == NULL)
     {
-        rtbe->next = inv->rtbe;
+        inv->rtbe = rtbe;
     }
-    inv->rtbe = rtbe;
+    else
+    {
+        /* finding the head */
+        reloc_table_entry_t *tail = inv->rtbe;
+        while(tail->next != NULL)
+        {
+            tail = tail->next;
+        }
+        tail->next = rtbe;
+    }
 
     rtbe->name = label_str;
     rtbe->byte_pos = vbitwalker_bytes_used(inv->out_vbitwalker);
