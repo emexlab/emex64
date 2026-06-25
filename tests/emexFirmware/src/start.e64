@@ -75,9 +75,6 @@ _main:
     blw _interrupt_register_handler, IRQ_EXCEPTION, _exception_handler
     blw _interrupt_register_handler, IRQ_8042, _fw_8042_handler
 
-    blw _putbase, r0, 10
-    blw _putc, '\n'
-
     blw _mc_lock_ktrr
     blw _puts, fw_ktrr_msg
 
