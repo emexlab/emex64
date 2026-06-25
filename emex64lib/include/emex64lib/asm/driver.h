@@ -50,6 +50,7 @@ typedef struct assembler_job {
 typedef struct {
     assembler_driver_options_t options;
     assembler_invocation_options_t invocation_options;
+    assembler_diagnostic_consumer_t *consumer;  /* owned */
     kEmitMode emit_mode;
 
     const char *output_path;    /* borrowed */

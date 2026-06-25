@@ -198,14 +198,14 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
             }
             else
             {
-                diag_error(NULL, "missing argument to '-f'\n");
+                diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "missing argument to '-f'");
                 return false;
             }
 
             if(strcmp(flag, "page-align") == 0 ||
                strcmp(flag, "no-page-align") == 0)
             {
-                diag_warn(NULL, "feature flag '%s' is deprecated, please you equivalents if available\n", flag);
+                diagnostic_report(driver->consumer, kDiagnosticSeverityWarning, NULL, "feature flag '%s' is deprecated, please you equivalents if available", flag);
             }
             else if(strcmp(flag, "caret-diagnostics") == 0)
             {
@@ -225,7 +225,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
             }
             else
             {
-                diag_error(NULL, "unknown feature flag '%s'\n", flag);
+                diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "unknown feature flag '%s'", flag);
                 return false;
             }
         }
@@ -234,7 +234,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
             const char *p = argv[i] + 4;
             if(*p == '\0')
             {
-                diag_error(NULL, "missing argument to '-Wl,'\n");
+                diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "missing argument to '-Wl,'");
                 return false;
             }
 
@@ -266,7 +266,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
             }
             else
             {
-                diag_error(NULL, "missing argument to '-W'\n");
+                diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "missing argument to '-W'");
                 return false;
             }
 
@@ -288,7 +288,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
             }
             else
             {
-                diag_error(NULL, "unknown warning flag '%s'\n", flag);
+                diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "unknown warning flag '%s'", flag);
                 return false;
             }
         }
@@ -305,7 +305,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
             }
             else
             {
-                diag_error(NULL, "missing argument to '-D'\n");
+                diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "missing argument to '-D'");
                 return false;
             }
 
@@ -375,7 +375,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
             }
             else
             {
-                diag_error(NULL, "missing argument to '-I'\n");
+                diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "missing argument to '-I'");
                 return false;
             }
             driver->inc_dirs = realloc(driver->inc_dirs, (driver->inc_dir_cnt + 1) * sizeof(char*));
@@ -402,7 +402,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
             emex_file_t *file = emex_file_alloc(argv[i], in_data_file_policy);
             if(file == NULL || !(file->type == kEmexFileTypeAssembly || file->type == kEmexFileTypeAssemblyIncludation || file->type == kEmexFileTypeObject))
             {
-                diag_error(NULL, "unknown or non existing input file '%s'\n", argv[i]);
+                diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "unknown or non existing input file '%s'", argv[i]);
                 return false;
             }
 
@@ -410,20 +410,20 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
         }
         else
         {
-            diag_error(NULL, "unknown option '%s'\n", argv[i]);
+            diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "unknown option '%s'", argv[i]);
             return false;
         }
     }
 
     if(driver->input_file_count <= 0)
     {
-        diag_error(NULL, "no input files\n");
+        diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "no input files");
         return false;
     }
 
     if(driver->output_path == NULL)
     {
-        diag_warn(NULL, "no output path provided, falling back to 'a.out'\n");
+        diagnostic_report(driver->consumer, kDiagnosticSeverityWarning, NULL,  "no output path provided, falling back to 'a.out'");
         driver->output_path = "a.out";
     }
 
@@ -479,7 +479,7 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
     /* -c is only meant to assemble one assembly file to a object file */
     if(driver->options.assemble_only && driver->input_file_count > 1)
     {
-        diag_error(NULL, "multiple input files were passed in object emit mode\n");
+        diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL,  "multiple input files were passed in object emit mode");
         return false;
     }
 
@@ -548,7 +548,7 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
 
                 if(ra.failed)
                 {
-                    diag_fatal(NULL, "out of memory, can't allocate arguments array for assembler job\n");
+                    diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate arguments array for assembler job");
                     ratchet_args_deinit(&ra);
                     return false;
                 }
@@ -557,7 +557,7 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
                 ratchet_args_deinit(&ra);
                 if(new_tail == NULL)
                 {
-                    diag_fatal(NULL, "out of memory, can't allocate assembler job\n");
+                    diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate assembler job");
                     return false;
                 }
                 driver->job = new_tail;
@@ -599,7 +599,7 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
 
         if(ra.failed)
         {
-            diag_fatal(NULL, "out of memory, can't allocate arguments array for linker job\n");
+            diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate arguments array for linker job");
             ratchet_args_deinit(&ra);
             return false;
         }
@@ -608,7 +608,7 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
         ratchet_args_deinit(&ra);
         if(new_tail == NULL)
         {
-            diag_fatal(NULL, "out of memory, can't allocate linker job\n");
+            diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate linker job");
             return false;
         }
         driver->job = new_tail;
@@ -645,6 +645,13 @@ assembler_driver_t *assembler_driver_alloc(int argc,
     assembler_driver_t *driver = calloc(1, sizeof(assembler_driver_t));
     if(driver == NULL)
     {
+        return NULL;
+    }
+
+    driver->consumer = assembler_diagnostic_consumer_alloc();
+    if(driver->consumer == NULL)
+    {
+        assembler_driver_dealloc(driver);
         return NULL;
     }
 
@@ -796,6 +803,7 @@ void assembler_driver_dealloc(assembler_driver_t *driver)
         job = next;
     }
 
+    assembler_diagnostic_consumer_dealloc(driver->consumer);
     free(driver);
 }
 
@@ -803,9 +811,7 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
 {
     if(driver->options.assemble_only)
     {
-        assembler_diagnostic_consumer_t *consumer = assembler_diagnostic_consumer_alloc();
-
-        assembler_invocation_t *inv = assembler_invocation_alloc(driver->invocation_options, consumer);
+        assembler_invocation_t *inv = assembler_invocation_alloc(driver->invocation_options, driver->consumer);
         if(inv == NULL)
         {
             return false;
@@ -821,7 +827,6 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
         {
             emex_file_dealloc(output);
             assembler_invocation_dealloc(inv);
-            assembler_diagnostic_consumer_dealloc(consumer);
             return false;
         }
 
@@ -829,7 +834,6 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
 
         emex_file_dealloc(output);
         assembler_invocation_dealloc(inv);
-        assembler_diagnostic_consumer_dealloc(consumer);
 
         return success;
     }
@@ -873,7 +877,7 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
                 pid_t pid = 0;
                 if(posix_spawnp(&pid, job->command, NULL, NULL, job->argv, environ) != 0)
                 {
-                    diag_error(NULL, "failed to spawn it!\n");
+                    diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL,  "failed to spawn it!");
                     return false;
                 }
 
@@ -892,7 +896,7 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
                 }
                 else if(WIFSIGNALED(rstatus))
                 {
-                    diag_fatal(NULL, "job (command='%s' | pid=%d) terminated by signal %d\n", job->command, pid, WTERMSIG(rstatus));
+                    diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "job (command='%s' | pid=%d) terminated by signal %d", job->command, pid, WTERMSIG(rstatus));
                     return false;
                 }
             }
