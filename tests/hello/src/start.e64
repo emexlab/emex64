@@ -33,11 +33,11 @@ hello:
 .loop:
     ldb r1, r0
 .retry:
-    ldd r2, UART_STATUS
-    and r2, UART_STATUS_TX_EMPTY
+    ldd r2, EMEX64_UART_REG_STATUS
+    and r2, EMEX64_UART_STATUS_TX_EMPTY
     bz r2, .retry
-    std UART_DATA, r1
+    std EMEX64_UART_REG_DATA, r1
     inc r0
     bnz r1, .loop
 .end:
-    stb PLATFORM_PWR, 0
+    stb EMEX64_PLATFORM_REG_PWR, 0
