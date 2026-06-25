@@ -78,22 +78,24 @@ bool assembler_emit_instruction(assembler_line_t *al)
     const emex64_opfunc_entry_t *entry = &kEmex64OpfuncTable[opcode];
 
     uint64_t operand_total = 0;
+    kAssemblerTokenType ptype;
     if(al->token_cnt > 1)
     {
         operand_total = 1;
         for(uint64_t k = 1; k < al->token_cnt; k++)
         {
+            if(k != 1 && ptype == kAssemblerTokenTypeComma && al->token[k]->type == kAssemblerTokenTypeComma)
+            {
+                diag_error(al->token[k - 1], "expected operand after %s '%s'\n", assembler_lexer_str_for_token_type(al->token[k - 1]->type), al->token[k - 1]->str);
+                return false;
+            }
+
+            ptype = al->token[k]->type;
             if(al->token[k]->type == kAssemblerTokenTypeComma)
             {
                 operand_total++;
             }
         }
-    }
-
-    if(al->token[al->token_cnt - 1]->type == kAssemblerTokenTypeComma)
-    {
-        diag_error(al->token[al->token_cnt - 1], "expected operand after %s '%s'\n", assembler_lexer_str_for_token_type(al->token[al->token_cnt - 1]->type), al->token[al->token_cnt - 1]->str);
-        return false;
     }
 
     if(operand_total > EMEX64_MAX_ARGS)
