@@ -122,7 +122,7 @@ _pmm_init:
 
     ; getting the count of pages in use by the kernel image
     mov r1, __emex64_exec_img_end
-    add r1, 0x1FFF                                  ; add constants math (PAGE_SIZE - 1) to the assembler FRIDAAA!!! ahhh
+    add r1, (PAGE_SIZE - 1)
     div r1, PAGE_SIZE                               ; get the number of pages the image is sized
 
     ; getting the end address of image but in the logic of our page math

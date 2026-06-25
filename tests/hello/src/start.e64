@@ -24,6 +24,8 @@
 
 %include% <emex64.e64inc>
 
+%define% MEOW ((UART_STATUS - 1) + 1) * 1
+
 section .data
     msg db "hello, world!\r\n\0"
 
@@ -32,7 +34,7 @@ hello:
 .loop:
     ldb r1, r0
 .retry:
-    ldd r2, UART_STATUS
+    ldd r2, MEOW
     and r2, UART_STATUS_TX_EMPTY
     bz r2, .retry
     std UART_DATA, r1

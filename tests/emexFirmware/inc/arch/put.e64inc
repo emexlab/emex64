@@ -22,11 +22,11 @@
 ; SOFTWARE.
 ;
 
-%ifndef% PUT_E64INC
-%define% PUT_E64INC
+%ifndef% ARCH_PUT_E64INC
+%define% ARCH_PUT_E64INC
 
 extern _putc
 extern _puts
 extern _put_mem
 
-%endif% ; PUT_E64INC
+%endif% ; ARCH_PUT_E64INC

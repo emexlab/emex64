@@ -22,7 +22,12 @@
 ; SOFTWARE.
 ;
 
+%ifndef% ARCH_MM_E64INC
+%define% ARCH_MM_E64INC
+
 %define% PAGE_SIZE  0x2000
 %define% PAGE_MASK  0xFFFFFFFFFFFFE000
 
 %define% CR4_PT_PRESENT 0b00000001
+
+%endif% ; ARCH_MM_E64INC

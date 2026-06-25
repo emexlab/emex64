@@ -22,10 +22,15 @@
 ; SOFTWARE.
 ;
 
+%ifndef% ARCH_DISPLAY_E64INC
+%define% ARCH_DISPLAY_E64INC
+
 %define% FB_BASE            0x0030000000000000
-%define% FB_ENABLED         0x0030000000000000
-%define% FB_HEIGHT          0x0030000000000008
-%define% FB_WIDTH           0x0030000000000010
-%define% FB_FRAMEBUFFER     0x0030000000000018
+%define% FB_ENABLED         FB_BASE
+%define% FB_HEIGHT          (FB_BASE + 0x08)
+%define% FB_WIDTH           (FB_BASE + 0x10)
+%define% FB_FRAMEBUFFER     (FB_BASE + 0x18)
 
 %define% FB_TEXT_COLOR      0xFF
+
+%endif% ; ARCH_DISPLAY_E64INC

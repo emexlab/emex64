@@ -22,6 +22,9 @@
 ; SOFTWARE.
 ;
 
+%ifndef% ARCH_REGS_E64INC
+%define% ARCH_REGS_E64INC
+
 %define% REG_PC     0b00000
 %define% REG_SP     0b00001
 %define% REG_FP     0b00010
@@ -87,3 +90,5 @@
 %define% REG_CR29   0b11101
 %define% REG_CR30   0b11110
 %define% REG_CR31   0b11111
+
+%endif% ; ARCH_REGS_E64INC

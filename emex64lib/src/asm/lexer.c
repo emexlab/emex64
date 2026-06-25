@@ -45,7 +45,6 @@ static inline void __lextok_skip_ignore_spaces(void)
         switch(ltokptr[0])
         {
             case ' ':
-            case ',':
             case '\t':
                 ltokptr++;
                 break;
@@ -116,7 +115,6 @@ lextok_token_t assembler_lexer_tok(const char *token)
                     /* handling what shall be skipped and not tokenized */
                     case ';':
                     case ' ':
-                    case ',':
                     case '\t':
                         goto break_out;
 
@@ -147,6 +145,10 @@ lextok_token_t assembler_lexer_tok(const char *token)
 
                     case '/':
                         __lextok_handle_punctuation(&a, &retval, kAssemblerTokenTypeDivide);
+                        goto break_out;
+                    
+                    case ',':
+                        __lextok_handle_punctuation(&a, &retval, kAssemblerTokenTypeComma);
                         goto break_out;
                     
                     /* handling string beginnings */
@@ -340,7 +342,7 @@ bool assembler_lexer_classify(assembler_token_t *at)
             kEmex64Register reg = register_from_string(at->str);
             if(reg != kEmex64RegisterInvalid)
             {
-                at->register_literal.v = reg;
+                at->register_identifier.v = reg;
                 at->type = kAssemblerTokenTypeRegister;
                 return true;
             }
@@ -349,7 +351,7 @@ bool assembler_lexer_classify(assembler_token_t *at)
             kEmex64Opcode op = opcode_from_string(at->str);
             if(op != kEmex64OpcodeInvalid)
             {
-                at->instruction_literal.v = op;
+                at->instruction_identifier.v = op;
                 at->type = kAssemblerTokenTypeInstruction;
                 return true;
             }
@@ -389,9 +391,9 @@ const char *assembler_lexer_str_for_token_type(kAssemblerTokenType type)
         case kAssemblerTokenTypeString:
             return "string literal";
         case kAssemblerTokenTypeRegister:
-            return "register literal";
+            return "register identifier";
         case kAssemblerTokenTypeInstruction:
-            return "instruction literal";
+            return "instruction identifier";
         case kAssemblerTokenTypeKeyword:
             return "keyword";
         case kAssemblerTokenTypeComma:

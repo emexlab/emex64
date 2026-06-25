@@ -32,281 +32,282 @@
 #include <emex64lib/support/parser.h>
 #include <emex64lib/support/diagnostic/log.h>
 #include <emex64lib/support/file.h>
+#include <emex64lib/support/pack.h>
 #include <emex64lib/asm/label/label.h>
 #include <emex64lib/asm/label/relocate.h>
 #include <emex64lib/asm/section.h>
 #include <emex64lib/asm/code.h>
+#include <emex64lib/asm/expr.h>
 
-bool assembler_section_parse(assembler_invocation_t *inv)
+static bool __assembler_section_emit_value(assembler_invocation_t *inv,
+                                           assembler_token_t **entry,
+                                           uint64_t entry_cnt,
+                                           int dbs)
 {
-    /* iterating for section token type and creating data section */
-    for(unsigned long i = 0; i < inv->line_cnt; i++)
+    if(entry_cnt == 1 && entry[0]->type == kAssemblerTokenTypeString)
     {
-        if(inv->line[i]->type == kAssemblerLineTypeSection)
+        vbitwalker_write_buf(inv->out_vbitwalker, entry[0]->string_literal.buf, entry[0]->string_literal.len);
+        return true;
+    }
+
+    if(entry_cnt == 1 && entry[0]->type == kAssemblerTokenTypeIdentifier)
+    {
+        if(dbs != 64)
         {
-            if(strcmp(inv->line[i]->token[1]->str, ".data") == 0)
-            {
-                /* so relocation never breaks */
-                vbitwalker_align_byte(inv->out_vbitwalker);
+            diag_error(entry[0], "don't put labels inside improper data types, i watch you!\n");
+            return false;
+        }
+        if(!assembler_label_relocate_append(inv, strdup(entry[0]->str), false, entry[0]))
+        {
+            diag_fatal(entry[0], "out of memory, can't append relocation to relocation table\n");
+            return false;
+        }
+        vbitwalker_skip(inv->out_vbitwalker, 64);
+        return true;
+    }
 
-                /* record data section start for ELF emit */
-                if(inv->data_section_start == UINT64_MAX)
-                {
-                    inv->data_section_start = vbitwalker_bytes_used(inv->out_vbitwalker);
-                }
+    int64_t value;
+    if(!assembler_eval_const(entry, entry_cnt, &value))
+    {
+        return false;
+    }
 
-                /* iterating till section data is over */
-                i++;
-                for(; i < inv->line_cnt && (inv->line[i]->type == kAssemblerLineTypeSectionData || inv->line[i]->type == kAssemblerLineTypeIgnore); i++)
-                {
-                    if(inv->line[i]->type == kAssemblerLineTypeIgnore)
-                    {
-                        continue;
-                    }
-
-                    /* checking count */
-                    if(inv->line[i]->token_cnt < 3)
-                    {
-                        diag_error(inv->line[i]->token[inv->line[i]->token_cnt - 1], "insufficient tokens for entry in .data section\n");
-                        return false;
-                    }
-
-                    /* inserting address as label */
-                    if(!assembler_label_append(inv->line[i]->token[0]))
-                    {
-                        return false;
-                    }
-
-                    /* checking if its known */
-                    int dbs = 8;
-                    if(strcmp(inv->line[i]->token[1]->str, "dw") == 0)
-                    {
-                        dbs = 16;
-                    }
-                    else if(strcmp(inv->line[i]->token[1]->str, "dd") == 0)
-                    {
-                        dbs = 32;
-                    }
-                    else if(strcmp(inv->line[i]->token[1]->str, "dq") == 0)
-                    {
-                        dbs = 64;
-                    }
-                    else if(strcmp(inv->line[i]->token[1]->str, "df") == 0)
-                    {
-                        const char *base_file_path = inv->file[inv->line[i]->file_idx]->path;
-
-                        /* need directory path */
-                        char base_dir[PATH_MAX];
-                        const char *last_slash = strrchr(base_file_path, '/');
-                        if(!last_slash)
-                        {
-                            strcpy(base_dir, ".");
-                        }
-                        else
-                        {
-                            size_t len = last_slash - base_file_path;
-                            if(len == 0)
-                            {
-                                strcpy(base_dir, "/");
-                            }
-                            else
-                            {
-                                memcpy(base_dir, base_file_path, len);
-                                base_dir[len] = '\0';
-                            }
-                        }
-
-                        /* iterating through the chain */
-                        for(unsigned long a = 2; a < inv->line[i]->token_cnt; a++)
-                        {
-                            /* using low level type parser */
-                            parser_return_t pr = parse_value_from_string(inv->line[i]->token[a]->str);
-                            if(pr.type == emexParserValueTypeOverflow)
-                            {
-                                diag_error(inv->line[i]->token[a], "integer literal '%s' overflows 64bit lenght\n", inv->line[i]->token[a]->str);
-                                return false;
-                            }
-
-                            /* checking type */
-                            if(pr.type == emexParserValueTypeBuffer)
-                            {
-                                char *path_component = malloc(pr.len + 1);
-                                strncpy(path_component, (char*)pr.value, pr.len);
-                                path_component[pr.len] = '\0';
-
-                                char joined[PATH_MAX];
-                                int n = snprintf(joined, sizeof(joined), "%s/%s", base_dir, path_component);
-                                if(n < 0 || n >= (int)sizeof(joined))
-                                {
-                                    diag_error(inv->line[i]->token[a], "path too long: %s\n", path_component);
-                                    free(path_component);
-                                    return false;
-                                }
-
-                                char resolved[PATH_MAX];
-                                if(realpath(joined, resolved) == NULL)
-                                {
-                                    diag_error(inv->line[i]->token[a], "cannot resolve path '%s'\n", path_component);
-                                    free(path_component);
-                                    return false;
-                                }
-
-                                emex_file_t *file = emex_file_alloc(resolved, in_data_file_policy);
-                                if(file == NULL || !emex_file_map(file))
-                                {
-                                    diag_error(inv->line[i]->token[a], "cannot map file at '%s'\n", path_component);
-                                    free(path_component);
-                                    return false;
-                                }
-
-                                vbitwalker_write_buf(inv->out_vbitwalker, file->content, file->len);
-
-                                emex_file_dealloc(file);
-                                free(path_component);
-                                continue;
-                            }
-
-                            diag_error(inv->line[i]->token[1], "not a file path '%s'\n", inv->line[i]->token[1]->str);
-                            return false;
-                        }
-
-                        continue;
-                    }
-                    else if(strcmp(inv->line[i]->token[1]->str, "db") != 0)
-                    {
-                        diag_error(inv->line[i]->token[1], "invalid data type for .data section entry '%s'\n", inv->line[i]->token[1]->str);
-                        return false;
-                    }
-
-                    /* iterating through the chain */
-                    for(unsigned long a = 2; a < inv->line[i]->token_cnt; a++)
-                    {
-                        /* using low level type parser */
-                        parser_return_t pr = parse_value_from_string(inv->line[i]->token[a]->str);
-
-                        /* checking type */
-                        if(pr.type == emexParserValueTypeBuffer)
-                        {
-                            /* its a buffer so we copy the buffer into section */
-                            char *buffer = (char*)pr.value;
-                            vbitwalker_write_buf(inv->out_vbitwalker, buffer, pr.len);
-                        }
-                        else if(pr.type == emexParserValueTypeString)
-                        {
-                            if(dbs != 64)
-                            {
-                                diag_error(inv->line[i]->token[a], "don't put labels inside improper data types, i watch you!\n");
-                                return false;
-                            }
-
-                            /* using finally the relocation table to its full extend */
-                            if(!assembler_label_relocate_append(inv, strdup(inv->line[i]->token[a]->str), false, inv->line[i]->token[a]))
-                            {
-                                diag_fatal(inv->line[i]->token[a], "out of memory, can't append relocation to relocation table\n", inv->line[i]->token[a]->str);
-                                return false;
-                            }
-
-                            vbitwalker_skip(inv->out_vbitwalker, 64);
-                        }
-                        else
-                        {
-                            /* storing value */
-                            vbitwalker_write(inv->out_vbitwalker, pr.value, dbs);
-                        }
-                    }
-                }
-                i--;
-            }
+    if(dbs < 64)
+    {
+        uint64_t umax = (UINT64_C(1) << dbs) - 1;
+        int64_t smin = -(INT64_C(1) << (dbs - 1));
+        if(value < smin || (uint64_t)value > umax)
+        {
+            diag_error(entry[0], "value %ld doesn't fit in a %d bits data entry\n", (long long)value, dbs);
+            return false;
         }
     }
 
-    vbitwalker_align_byte(inv->out_vbitwalker);
+    vbitwalker_write(inv->out_vbitwalker, (uint64_t)value, dbs);
+    return true;
+}
 
-    /* record data section end */
+static int __assembler_section_dbs_get(const char *str)
+{
+    switch(pack_name(str))
+    {
+        case PACK('d','b'):
+            return 8;
+        case PACK('d','w'):
+            return 16;
+        case PACK('d','d'):
+            return 32;
+        case PACK('d','q'):
+            return 64;
+        case PACK('d','f'):
+            return 0;
+        default:
+            return 128;
+    }
+}
+
+bool assembler_section_parse(assembler_invocation_t *inv)
+{
+    /* only emitting data section into out virtual file descriptor */
+    for(uint64_t i = 0; i < inv->line_cnt; i++)
+    {
+        if(inv->line[i]->type != kAssemblerLineTypeSection ||
+           strcmp(inv->line[i]->token[1]->str, ".data") != 0)
+        {
+            continue;
+        }
+
+        vbitwalker_align_byte(inv->out_vbitwalker);
+        if(inv->data_section_start == UINT64_MAX)
+        {
+            inv->data_section_start = vbitwalker_bytes_used(inv->out_vbitwalker);
+        }
+
+        i++;
+        for(; i < inv->line_cnt && (inv->line[i]->type == kAssemblerLineTypeSectionData || inv->line[i]->type == kAssemblerLineTypeIgnore); i++)
+        {
+            if(inv->line[i]->type == kAssemblerLineTypeIgnore)
+            {
+                continue;
+            }
+
+            if(inv->line[i]->token_cnt < 3)
+            {
+                diag_error(inv->line[i]->token[inv->line[i]->token_cnt - 1], "insufficient tokens for entry in .data section\n");
+                return false;
+            }
+
+            if(!assembler_label_append(inv->line[i]->token[0]))
+            {
+                return false;
+            }
+
+            int dbs = __assembler_section_dbs_get(inv->line[i]->token[1]->str);
+            if(dbs == 0)
+            {
+                const char *base_file_path = inv->file[inv->line[i]->file_idx]->path;
+                char base_dir[PATH_MAX];
+                const char *last_slash = strrchr(base_file_path, '/');
+                if(!last_slash)
+                {
+                    strcpy(base_dir, ".");
+                }
+                else
+                {
+                    size_t len = last_slash - base_file_path;
+                    if(len == 0)
+                    {
+                        strcpy(base_dir, "/");
+                    }
+                    else
+                    {
+                        memcpy(base_dir, base_file_path, len);
+                        base_dir[len] = '\0';
+                    }
+                }
+
+                for(unsigned long a = 2; a < inv->line[i]->token_cnt; a++)
+                {
+                    if(inv->line[i]->token[a]->type == kAssemblerTokenTypeComma)
+                    {
+                        continue;
+                    }
+                    if(inv->line[i]->token[a]->type != kAssemblerTokenTypeString)
+                    {
+                        diag_error(inv->line[i]->token[a], "not a file path '%s'\n", inv->line[i]->token[a]->str);
+                        return false;
+                    }
+
+                    const char *path_component = inv->line[i]->token[a]->string_literal.buf;
+
+                    char joined[PATH_MAX];
+                    int n = snprintf(joined, sizeof(joined), "%s/%s", base_dir, path_component);
+                    if(n < 0 || n >= (int)sizeof(joined))
+                    {
+                        diag_error(inv->line[i]->token[a], "path too long: %s\n", path_component);
+                        return false;
+                    }
+
+                    char resolved[PATH_MAX];
+                    if(realpath(joined, resolved) == NULL)
+                    {
+                        diag_error(inv->line[i]->token[a], "cannot resolve path '%s'\n", path_component);
+                        return false;
+                    }
+
+                    emex_file_t *file = emex_file_alloc(resolved, in_data_file_policy);
+                    if(file == NULL || !emex_file_map(file))
+                    {
+                        diag_error(inv->line[i]->token[a], "cannot map file at '%s'\n", path_component);
+                        return false;
+                    }
+
+                    vbitwalker_write_buf(inv->out_vbitwalker, file->content, file->len);
+                    emex_file_dealloc(file);
+                }
+                continue;
+            }
+            else if(dbs == 128)
+            {
+                diag_error(inv->line[i]->token[1], "invalid data type for .data section entry '%s'\n", inv->line[i]->token[1]->str);
+                return false;
+            }
+
+            uint64_t a = 2;
+            while(a < inv->line[i]->token_cnt)
+            {
+                uint64_t start = a;
+                while(a < inv->line[i]->token_cnt && inv->line[i]->token[a]->type != kAssemblerTokenTypeComma)
+                {
+                    a++;
+                }
+                assembler_token_t **entry = &inv->line[i]->token[start];
+                uint64_t entry_cnt = a - start;
+
+                if(a < inv->line[i]->token_cnt)
+                {
+                    a++;
+                }
+
+                if(entry_cnt == 0)
+                {
+                    diag_error(inv->line[i]->token[start - 1], "empty value in .data entry\n");
+                    return false;
+                }
+
+                if(!__assembler_section_emit_value(inv, entry, entry_cnt, dbs))
+                {
+                    return false;
+                }
+            }
+        }
+        i--;
+    }
+
+    vbitwalker_align_byte(inv->out_vbitwalker);
     if(inv->data_section_start != UINT64_MAX)
     {
         inv->data_section_end = vbitwalker_bytes_used(inv->out_vbitwalker);
     }
 
-    /* iterating for section token type and creating bss section */
-    for(unsigned long i = 0; i < inv->line_cnt; i++)
+    /* only emitting bss section into out virtual file descriptor */
+    for(uint64_t i = 0; i < inv->line_cnt; i++)
     {
-        if(inv->line[i]->type == kAssemblerLineTypeSection)
+        if(inv->line[i]->type != kAssemblerLineTypeSection ||
+           strcmp(inv->line[i]->token[1]->str, ".bss") != 0)
         {
-            if(strcmp(inv->line[i]->token[1]->str, ".bss") == 0)
-            {
-                /* so relocation never breaks */
-                vbitwalker_align_byte(inv->out_vbitwalker);
-
-                /* record bss start */
-                if(inv->bss_section_start == UINT64_MAX)
-                {
-                    inv->bss_section_start = vbitwalker_bytes_used(inv->out_vbitwalker);
-                }
-                
-                /* finding variable type */
-                i++;
-                for(; i < inv->line_cnt && (inv->line[i]->type == kAssemblerLineTypeSectionData || inv->line[i]->type == kAssemblerLineTypeIgnore); i++)
-                {
-                    if(inv->line[i]->type == kAssemblerLineTypeIgnore)
-                    {
-                        continue;
-                    }
-
-                    /* checking count */
-                    if(inv->line[i]->token_cnt != 3)
-                    {
-                        diag_error(inv->line[i]->token[inv->line[i]->token_cnt - 1], "insufficient or too many tokens for entry in .bss section\n");
-                        return false;
-                    }
-
-                    /* insert label into label array */
-                    if(!assembler_label_append(inv->line[i]->token[0]))
-                    {
-                        return false;
-                    }
-
-                    /* find out size */
-                    int dbs = 8;
-                    if(strcmp(inv->line[i]->token[1]->str, "dw") == 0)
-                    {
-                        dbs = 16;
-                    }
-                    else if(strcmp(inv->line[i]->token[1]->str, "dd") == 0)
-                    {
-                        dbs = 32;
-                    }
-                    else if(strcmp(inv->line[i]->token[1]->str, "dq") == 0)
-                    {
-                        dbs = 64;
-                    }
-                    else if(strcmp(inv->line[i]->token[1]->str, "db") != 0)
-                    {
-                        diag_error(inv->line[i]->token[1], "invalid data type for .bss section entry '%s'\n", inv->line[i]->token[1]->str);
-                        return false;
-                    }
-
-                    /* offset image address by value */
-                    parser_return_t pr = parse_value_from_string(inv->line[i]->token[2]->str);
-
-                    /* checking if the type makes sense */
-                    /* imagine you read that comment and you realise that you had the same idea before */
-                    if(pr.type != emexParserValueTypeNumber)
-                    {
-                        diag_error(inv->line[i]->token[2], "invalid size for .bss section entry '%s'\n", inv->line[i]->token[2]->str);
-                        return false;
-                    }
-
-                    inv->out_vbitwalker->byte_pos += (dbs / 8) * pr.value;
-                }
-                i--;
-            }
+            continue;
         }
+
+        vbitwalker_align_byte(inv->out_vbitwalker);
+        if(inv->bss_section_start == UINT64_MAX)
+        {
+            inv->bss_section_start = vbitwalker_bytes_used(inv->out_vbitwalker);
+        }
+
+        i++;
+        for(; i < inv->line_cnt && (inv->line[i]->type == kAssemblerLineTypeSectionData || inv->line[i]->type == kAssemblerLineTypeIgnore); i++)
+        {
+            if(inv->line[i]->type == kAssemblerLineTypeIgnore)
+            {
+                continue;
+            }
+
+            if(inv->line[i]->token_cnt < 3)
+            {
+                diag_error(inv->line[i]->token[inv->line[i]->token_cnt - 1], "insufficient tokens for entry in .bss section\n");
+                return false;
+            }
+
+            if(!assembler_label_append(inv->line[i]->token[0]))
+            {
+                return false;
+            }
+
+            int dbs = __assembler_section_dbs_get(inv->line[i]->token[1]->str);
+            if(dbs == 128 || dbs == 0)
+            {
+                diag_error(inv->line[i]->token[1], "invalid data type for .bss section entry '%s'\n", inv->line[i]->token[1]->str);
+                return false;
+            }
+
+            int64_t count;
+            if(!assembler_eval_const(&inv->line[i]->token[2], inv->line[i]->token_cnt - 2, &count))
+            {
+                return false;
+            }
+            if(count < 0)
+            {
+                diag_error(inv->line[i]->token[2], "negative size in .bss section entry\n");
+                return false;
+            }
+
+            inv->out_vbitwalker->byte_pos += (uint64_t)(dbs / 8) * (uint64_t)count;
+        }
+        i--;
     }
 
     vbitwalker_align_byte(inv->out_vbitwalker);
-
-    /* record bss section size */
     if(inv->bss_section_start != UINT64_MAX)
     {
         uint64_t bss_end = vbitwalker_bytes_used(inv->out_vbitwalker);

@@ -37,138 +37,165 @@
 #include <emex64lib/asm/emitter/emitter.h>
 #include <emex64lib/asm/invocation.h>
 #include <emex64lib/asm/lexer.h>
+#include <emex64lib/asm/expr.h>
 
 void assembler_emit_end(assembler_invocation_t *inv)
 {
     vbitwalker_write(inv->out_vbitwalker, kEmex64ParameterCodingEnd, 3);
 }
 
+bool opcode_arg_is_branch_target(kEmex64Opcode op,
+                                 uint64_t argno)
+{
+    switch(op)
+    {
+        case kEmex64OpcodeB:
+        case kEmex64OpcodeBE:
+        case kEmex64OpcodeBNE:
+        case kEmex64OpcodeBLE:
+        case kEmex64OpcodeBGE:
+        case kEmex64OpcodeBLT:
+        case kEmex64OpcodeBGT:
+        case kEmex64OpcodeBLW:
+            return argno == 0;
+        case kEmex64OpcodeBZ:
+        case kEmex64OpcodeBNZ:
+            return argno == 1;
+        default:
+            return false;
+    }
+}
+
 bool assembler_emit_instruction(assembler_line_t *al)
 {
     if(al->token[0]->type != kAssemblerTokenTypeInstruction)
     {
-        diag_error(al->token[0], "expected instruction literal, but got %s '%s'\n", assembler_lexer_str_for_token_type(al->token[0]->type), al->token[0]->str);
+        diag_error(al->token[0], "expected instruction identifier, but got %s '%s'\n", assembler_lexer_str_for_token_type(al->token[0]->type), al->token[0]->str);
         return false;
     }
 
-    const kEmex64Opcode opcode = al->token[0]->instruction_literal.v;
+    const kEmex64Opcode opcode = al->token[0]->instruction_identifier.v;
     const emex64_opfunc_entry_t *entry = &kEmex64OpfuncTable[opcode];
 
-    /* sanity checking all parameter count related things */
-    if(al->token_cnt <= 0)
+    uint64_t operand_total = 0;
+    if(al->token_cnt > 1)
     {
-        diag_error(al->token[0], "insufficient operands\n");
+        operand_total = 1;
+        for(uint64_t k = 1; k < al->token_cnt; k++)
+        {
+            if(al->token[k]->type == kAssemblerTokenTypeComma)
+            {
+                operand_total++;
+            }
+        }
+    }
+
+    if(operand_total > EMEX64_MAX_ARGS)
+    {
+        diag_error(al->token[al->token_cnt - 1], "holy smokes, why soo many operands, maximum is %d operands in emex64\n", EMEX64_MAX_ARGS);
         return false;
     }
-    else if(al->token_cnt > EMEX64_MAX_ARGS)
+    if(operand_total > entry->maxargs)
     {
-        diag_error(al->token[0], "holy smokes, why soo many operands, maximum is %d operands in emex64\n", EMEX64_MAX_ARGS);
+        diag_error(al->token[al->token_cnt - 1], "too many operands for a %s instruction, expected %d operands, but got %llu operands\n", al->token[0]->str, entry->maxargs, (unsigned long long)operand_total);
         return false;
     }
-    if((al->token_cnt - 1) > entry->maxargs)
+    if(operand_total < entry->minargs)
     {
-        diag_error(al->token[al->token_cnt - 1], "too many operands for a %s instruction, expected %d operands, but got %d operands\n", al->token[0]->str, entry->maxargs, al->token_cnt - 1);
-        return false;
-    }
-    else if((al->token_cnt - 1) < entry->minargs)
-    {
-        diag_error(al->token[al->token_cnt - 1], "too few operands for a %s instruction, expected %d operands, but got %d operands\n", al->token[0]->str, entry->minargs, al->token_cnt - 1);
+        diag_error(al->token[0], "too few operands for a %s instruction, expected %d operands, but got %llu operands\n", al->token[0]->str, entry->minargs, (unsigned long long)operand_total);
         return false;
     }
 
-    /* emitting the instruction */
     assembler_emit_opcode(al->inv, opcode);
 
-    for(uint64_t i = 1; i < al->token_cnt; i++)
+    uint64_t i = 1;
+    uint64_t argno = 0;
+    while(i < al->token_cnt)
     {
-        if(al->token[i]->type == kAssemblerTokenTypeRegister)
+        uint64_t start = i;
+        while(i < al->token_cnt && al->token[i]->type != kAssemblerTokenTypeComma)
         {
-            /* registers are always allowed so far */
-            assembler_emit_register(al->inv, al->token[i]->register_literal.v);
-            continue;
+            i++;
+        }
+        assembler_token_t **operand = &al->token[start];
+        uint64_t operand_cnt = i - start;
+
+        if(i < al->token_cnt)
+        {
+            i++;
         }
 
-        /* checking if allowed to be something else than a register */
-        if(opcode_arg_accepts_reg_only(entry,  i - 1))
+        if(operand_cnt == 0)
         {
-            diag_error(al->token[i], "expected register, got %s '%s'\n", assembler_lexer_str_for_token_type(al->token[i]->type),  al->token[i]->str);
+            diag_error(al->token[start > 0 ? start - 1 : 0], "empty operand\n");
             return false;
         }
 
-        /*
-         * parsing value
-         *
-         * note: if its a string then it is a 64bit
-         *       label. 64bit defaulted because we
-         *       need to ensure early compatibility
-         *       with the new object file format we
-         *       are going to use later on, so the
-         *       relocations work perfectly fine.
-         */
-        if(al->token[i]->type == kAssemblerTokenTypeIdentifier)
+        if(operand_cnt == 1 && operand[0]->type == kAssemblerTokenTypeRegister)
         {
-            /* the label is either local or global */
+            assembler_emit_register(al->inv, operand[0]->register_identifier.v);
+            argno++;
+            continue;
+        }
+
+        if(opcode_arg_accepts_reg_only(entry, argno))
+        {
+            diag_error(operand[0], "expected register identifier, got %s '%s'\n", assembler_lexer_str_for_token_type(operand[0]->type), operand[0]->str);
+            return false;
+        }
+
+        if(operand_cnt == 1 && operand[0]->type == kAssemblerTokenTypeIdentifier)
+        {
             bool local;
             char *label = NULL;
-            if(al->token[i]->str[0] == '.')
+            if(operand[0]->str[0] == '.')
             {
                 local = true;
-                asprintf(&label, "%s%s", al->inv->label_scope, al->token[i]->str);
+                asprintf(&label, "%s%s", al->inv->label_scope, operand[0]->str);
             }
             else
             {
                 local = false;
-                label = strdup(al->token[i]->str);
+                label = strdup(operand[0]->str);
             }
 
             vbitwalker_write(al->inv->out_vbitwalker, kEmex64ParameterCodingAddr64, 3);
             vbitwalker_align_byte(al->inv->out_vbitwalker);
 
-            /* append label callsite to relocation table */
-            if(!assembler_label_relocate_append(al->inv, label, local, al->token[i]))
+            if(!assembler_label_relocate_append(al->inv, label, local, operand[0]))
             {
-                diag_fatal(al->token[i], "out of memory, can't append relocation to relocation table\n", al->token[i]->str);
+                diag_fatal(operand[0], "out of memory, can't append relocation to relocation table\n");
                 return false;
             }
 
-            /*
-             * skip the 64bit the label occupies
-             * as we added it to the relocation table
-             * already. the relocation table later will
-             * fill this space with the address.
-             */
             vbitwalker_skip(al->inv->out_vbitwalker, 64);
+            argno++;
+            continue;
         }
-        else if(al->token[i]->type == kAssemblerTokenTypeInteger)
+
+        int64_t value;
+        if(!assembler_eval_const(operand, operand_cnt, &value))
         {
-            /* branches work different, they have offset branching */
-            if((i == 1 && (opcode == kEmex64OpcodeB   || opcode == kEmex64OpcodeBE  || opcode == kEmex64OpcodeBNE   ||
-                           opcode == kEmex64OpcodeBLE || opcode == kEmex64OpcodeBGE || opcode == kEmex64OpcodeBLT   ||
-                           opcode == kEmex64OpcodeBGT || opcode == kEmex64OpcodeBLW)) ||
-               (i == 2 && (opcode == kEmex64OpcodeBZ  || opcode == kEmex64OpcodeBNZ)))
-            {
-                assembler_emit_addr64(al->inv, al->token[i]->integer_literal.v);
-            }
-            else
-            {
-                /* its a immediate */
-                assembler_emit_imm(al->inv, al->token[i]->integer_literal.v);
-            }
+            return false;
+        }
+
+        if(opcode_arg_is_branch_target(opcode, argno))
+        {
+            assembler_emit_addr64(al->inv, (uint64_t)value);
         }
         else
         {
-            diag_error(al->token[i], "didn't expect %s '%s' within a instruction definition's operands\n", assembler_lexer_str_for_token_type(al->token[i]->type), al->token[i]->str);
-            return false;
+            assembler_emit_imm(al->inv, (uint64_t)value);
         }
+        argno++;
     }
 
-    if(entry->maxargs != (al->token_cnt - 1))
+    if(entry->maxargs != argno)
     {
         assembler_emit_end(al->inv);
     }
 
     vbitwalker_align_byte(al->inv->out_vbitwalker);
-
     return true;
 }
 

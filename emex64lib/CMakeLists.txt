@@ -106,6 +106,7 @@ add_library(emex64 ${LIB_TYPE}
     # Assembler API
     src/asm/driver.c
     src/asm/lexer.c
+    src/asm/expr.c
     src/asm/code.c
     src/asm/options.c
     src/asm/invocation.c

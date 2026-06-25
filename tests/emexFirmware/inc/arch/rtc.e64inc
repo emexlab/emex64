@@ -22,11 +22,16 @@
 ; SOFTWARE.
 ;
 
+%ifndef% ARCH_RTC_E64INC
+%define% ARCH_RTC_E64INC
+
 %define% RTC_BASE       0x0020000000006000
 %define% RTC_SECONDS    RTC_BASE
-%define% RTC_MINUTES    0x0020000000006008
-%define% RTC_HOURS      0x0020000000006010
-%define% RTC_DAY        0x0020000000006018
-%define% RTC_MONTH      0x0020000000006020
-%define% RTC_YEAR       0x0020000000006028
-%define% RTC_WEEKDAY    0x0020000000006030
+%define% RTC_MINUTES    (RTC_BASE + 0x08)
+%define% RTC_HOURS      (RTC_BASE + 0x10)
+%define% RTC_DAY        (RTC_BASE + 0x18)
+%define% RTC_MONTH      (RTC_BASE + 0x20)
+%define% RTC_YEAR       (RTC_BASE + 0x28)
+%define% RTC_WEEKDAY    (RTC_BASE + 0x30)
+
+%endif% ; ARCH_RTC_E64INC
