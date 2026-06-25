@@ -22,32 +22,41 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64_DIAGNOSTIC_LEGACY_H
-#define EMEX64_DIAGNOSTIC_LEGACY_H
+#ifndef EMEX64_DIAGNOSTIC_LOG_H
+#define EMEX64_DIAGNOSTIC_LOG_H
 
 #include <stdbool.h>
 #include <emex64lib/asm/type.h>
+#include <emex64lib/asm/invocation.h>
+#include <emex64lib/support/diagnostic/consumer.h>
 
-#define diag_note(at, msg, ...) diag_log(DIAG_NOTE, at, msg __VA_OPT__(,) __VA_ARGS__)
-#define diag_warn(at, msg, ...) diag_log(DIAG_WARN, at, msg __VA_OPT__(,) __VA_ARGS__)
-#define diag_error(at, msg, ...) diag_log(DIAG_ERROR, at, msg __VA_OPT__(,) __VA_ARGS__)
-#define diag_fatal(at, msg, ...) diag_log(DIAG_FATAL, at, msg __VA_OPT__(,) __VA_ARGS__)
+/* legacy wrapper */
 
-typedef struct diagnostic_logging_options {
-    bool warning_error;
-    bool caret_diagnostics;
-    bool color_diagnostics;
-} diagnostic_logging_options_t;
+#define diag_log_legacy(severity, at, msg, ...) \
+    do { \
+        _Pragma("GCC warning \"diag_log_* API is deprecated; call diagnostic_report() directly and use the diagnostic_consumer_t infrastructure\"") \
+        if((at) == NULL) \
+        { \
+            diagnostic_report(NULL, severity, NULL, msg __VA_OPT__(,) __VA_ARGS__); \
+        } \
+        else \
+        { \
+            assembler_token_t *_diag_at = (assembler_token_t *)(at); \
+            diagnostic_report(NULL, severity, &(diagnostic_location_t){ \
+                .file_name = _diag_at->al->inv->file[_diag_at->al->file_idx]->path, \
+                .line = _diag_at->al->str, \
+                .ln = _diag_at->al->line_num, \
+                .col = _diag_at->column_num, \
+                .range = (diagnostic_location_text_range_t){ \
+                    .start_col = _diag_at->column_num, \
+                    .end_col = _diag_at->column_num + _diag_at->real_len } \
+            }, msg __VA_OPT__(,) __VA_ARGS__); \
+        } \
+    } while(0);
 
-extern _Thread_local diagnostic_logging_options_t thread_log_diagnostic_options;
+#define diag_note(at, msg, ...) diagnostic_report(NULL, kDiagnosticSeverityNote, NULL, msg __VA_OPT__(,) __VA_ARGS__)
+#define diag_warn(at, msg, ...) diagnostic_report(NULL, kDiagnosticSeverityWarning, NULL, msg __VA_OPT__(,) __VA_ARGS__)
+#define diag_error(at, msg, ...) diag_log_legacy(kDiagnosticSeverityError, at, msg __VA_OPT__(,) __VA_ARGS__)
+#define diag_fatal(at, msg, ...) diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, msg __VA_OPT__(,) __VA_ARGS__)
 
-typedef enum {
-    DIAG_NOTE,
-    DIAG_WARN,
-    DIAG_ERROR,
-    DIAG_FATAL,
-} diag_level_t;
-
-void diag_log(diag_level_t level, assembler_token_t *at, const char *msg, ...);
-
-#endif /* EMEX64_DIAGNOSTIC_LEGACY_H */
+#endif /* EMEX64_DIAGNOSTIC_LOG_H */

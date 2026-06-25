@@ -60,9 +60,8 @@ add_library(emex64 ${LIB_TYPE}
     src/support/bitbolt.c
 
         ## Diagnostic API (Errors, Warnings, Notes, etc ^^)
-        src/support/diagnostic/log.c
-        src/support/diagnostic/message.c
-        src/support/diagnostic/storage.c
+        src/support/diagnostic/diagnostic.c
+        src/support/diagnostic/consumer.c
 
         ## Virtual API (Virtualized UNIX Primitives)
         src/support/virtual/vpage.c

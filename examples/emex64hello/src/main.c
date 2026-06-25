@@ -120,7 +120,8 @@ int main(void)
             struct stat fdstat;
             if(vfd_stat(d, &fdstat) == 0)
             {
-                diag_note(NULL, "compiled virtual assembly file into virtual object file\n\tvirtual_object_file_size: %d bytes\n", fdstat.st_size);
+                diag_note(NULL, "compiled virtual assembly file into virtual object file\n");
+                fprintf(stderr, "\tvirtual_object_file_size: %d bytes\n", fdstat.st_size);
             }
             vfd_close(d);
         }

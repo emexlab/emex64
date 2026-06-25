@@ -22,20 +22,41 @@
  * SOFTWARE.
  */
 
-#ifndef DIAGNOSTIC_STORAGE_H
-#define DIAGNOSTIC_STORAGE_H
+#ifndef EMEX64_DIAGNOSTIC_DIAGNOSTIC_H
+#define EMEX64_DIAGNOSTIC_DIAGNOSTIC_H
 
-#include <emex64lib/support/diagnostic/message.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdarg.h>
 
-typedef struct {
-    diagnostic_message_t *tail;
-    kDiagnosticMessageType most_severe_occured_message_type;
-} diagnostic_storage_t;
+typedef enum: uint8_t {
+    kDiagnosticSeverityNote,
+    kDiagnosticSeverityWarning,
+    kDiagnosticSeverityError,
+    kDiagnosticSeverityFatal,
+} kDiagnosticSeverity;
 
-diagnostic_storage_t *diagnostic_storage_alloc();
-void diagnostic_storage_dealloc(diagnostic_storage_t *storage);
+typedef struct diagnostic_location_text_range {
+    uint64_t start_col;
+    uint64_t end_col;
+} diagnostic_location_text_range_t;
 
-void diagnostic_storage_append_internal(diagnostic_storage_t *storage, kDiagnosticMessageType type, char *msg);
-void diagnostic_storage_append_file(diagnostic_storage_t *storage, kDiagnosticMessageType type, char *file, char *msg, uint64_t ln, uint64_t col);
+typedef struct diagnostic_location {
+    char *file_name;
+    char *line;
+    uint64_t ln;
+    uint64_t col;
+    diagnostic_location_text_range_t range;
+} diagnostic_location_t;
 
-#endif /* DIAGNOSTIC_STORAGE_H */
+typedef struct diagnostic {
+    char *str;
+    kDiagnosticSeverity severity;
+    diagnostic_location_t *location;
+} diagnostic_t;
+
+diagnostic_t *diagnostic_allocv(kDiagnosticSeverity severity, diagnostic_location_t *location, char *str, va_list args);
+diagnostic_t *diagnostic_alloc(kDiagnosticSeverity severity, diagnostic_location_t *location, char *str, ...);
+void diagnostic_dealloc(diagnostic_t *diagnostic);
+
+#endif /* EMEX64_DIAGNOSTIC_DIAGNOSTIC_H */
