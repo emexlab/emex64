@@ -25,13 +25,14 @@
 %ifndef% ARCH_RTC_E64INC
 %define% ARCH_RTC_E64INC
 
-%define% RTC_BASE       0x0020000000006000
-%define% RTC_SECONDS    RTC_BASE
-%define% RTC_MINUTES    (RTC_BASE + 0x08)
-%define% RTC_HOURS      (RTC_BASE + 0x10)
-%define% RTC_DAY        (RTC_BASE + 0x18)
-%define% RTC_MONTH      (RTC_BASE + 0x20)
-%define% RTC_YEAR       (RTC_BASE + 0x28)
-%define% RTC_WEEKDAY    (RTC_BASE + 0x30)
+%include% "mmio.e64inc"
+
+%define% EMEX64_RTC_REG_SECONDS EMEX64_RTC_BASE
+%define% EMEX64_RTC_REG_MINUTES (EMEX64_RTC_BASE + 0x08)
+%define% EMEX64_RTC_REG_HOURS   (EMEX64_RTC_BASE + 0x10)
+%define% EMEX64_RTC_REG_DAY     (EMEX64_RTC_BASE + 0x18)
+%define% EMEX64_RTC_REG_MONTH   (EMEX64_RTC_BASE + 0x20)
+%define% EMEX64_RTC_REG_YEAR    (EMEX64_RTC_BASE + 0x28)
+%define% EMEX64_RTC_REG_WEEKDAY (EMEX64_RTC_BASE + 0x30)
 
 %endif% ; ARCH_RTC_E64INC

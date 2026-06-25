@@ -25,12 +25,15 @@
 %ifndef% ARCH_DISPLAY_E64INC
 %define% ARCH_DISPLAY_E64INC
 
-%define% FB_BASE            0x0030000000000000
-%define% FB_ENABLED         FB_BASE
-%define% FB_HEIGHT          (FB_BASE + 0x08)
-%define% FB_WIDTH           (FB_BASE + 0x10)
-%define% FB_FRAMEBUFFER     (FB_BASE + 0x18)
+%include% "mmio.e64inc"
 
-%define% FB_TEXT_COLOR      0xFF
+%define% EMEX64_FB_REG_ENABLED      EMEX64_FB_BASE          ; read-only: tells if the display cable is attached and if the display controller is online
+%define% EMEX64_FB_REG_HEIGHT       (EMEX64_FB_BASE + 0x08) ; read-only: tells the pixel height of the display
+%define% EMEX64_FB_REG_WIDTH        (EMEX64_FB_BASE + 0x10) ; read-only: tells the pixel width of the display
+
+; doesn't require aligned quad word access
+%define% EMEX64_FB_FRAMEBUFFER      (EMEX64_FB_BASE + 0x18) ; read-write: a mapping the size of height by width in bytes representing the content of the display
+
+%define% EMEX64_FB_TEXT_COLOR      0xFF
 
 %endif% ; ARCH_DISPLAY_E64INC

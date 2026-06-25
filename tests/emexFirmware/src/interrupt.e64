@@ -35,9 +35,9 @@ _interrupt_init:
     ;mov cr1, rr
 
     ; setting up vector table onto interrupt controller
-    stq INTC_REG_VECTOR, ivec
-    stb INTC_REG_ENABLED, 0x0
-    stq INTC_REG_CTRL, 1
+    stq EMEX64_IC_REG_VECTOR, ivec
+    stb EMEX64_IC_REG_ENABLED, 0x0
+    stq EMEX64_IC_REG_CTRL, 1
     ret
 
 _interrupt_register_handler:
@@ -49,10 +49,10 @@ _interrupt_register_handler:
     stq r2, r1
 
     ; now calculate bit and or it
-    ldq r2, INTC_REG_ENABLED
+    ldq r2, EMEX64_IC_REG_ENABLED
     shl r1, 0x1, r0
     or r2, r1
-    stq INTC_REG_ENABLED, r2
+    stq EMEX64_IC_REG_ENABLED, r2
     wret
 
 _interrupt_unregister_handler:
@@ -64,11 +64,11 @@ _interrupt_unregister_handler:
     stq r2, 0x0
 
     ; now calculate bit and or it
-    ldq r2, INTC_REG_ENABLED
+    ldq r2, EMEX64_IC_REG_ENABLED
     shl r1, 0x1, r0
     not r1
     and r2, r1
-    stq INTC_REG_ENABLED, r2
+    stq EMEX64_IC_REG_ENABLED, r2
     wret
 
 _interrupt_unregister_all:

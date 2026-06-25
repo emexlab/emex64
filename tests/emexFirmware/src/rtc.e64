@@ -36,13 +36,13 @@ _rtc_2putbase:
     wret
 
 _print_time:
-    mov r1, RTC_DAY
+    mov r1, EMEX64_RTC_REG_DAY
     blw _puts, time
 .loop:
     ldd r0, r1
     blw _rtc_2putbase, r0
     add r1, 8
-    cmp r1, RTC_YEAR
+    cmp r1, EMEX64_RTC_REG_YEAR
     bgt .loop_2_entry
     blw _putc, '.'
     b .loop
@@ -53,7 +53,7 @@ _print_time:
     ldd r0, r1
     blw _rtc_2putbase, r0
     sub r1, 8
-    cmp r1, RTC_SECONDS
+    cmp r1, EMEX64_RTC_REG_SECONDS
     blt .end
     blw _putc, ':'
     b .loop_2

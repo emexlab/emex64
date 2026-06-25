@@ -25,6 +25,15 @@
 %ifndef% ARCH_E64INC
 %define% ARCH_E64INC
 
+; very low level MMIO mappings
+%include% "mmio.e64inc"
+
+;
+; mappings and information of the
+; devices available on the emex64
+; platform, the firmware utilizes
+; them using those mappings
+;
 %include% "interrupt.e64inc"
 %include% "uart.e64inc"
 %include% "rtc.e64inc"

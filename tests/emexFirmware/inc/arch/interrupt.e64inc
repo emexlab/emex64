@@ -25,24 +25,25 @@
 %ifndef% ARCH_INTERRUPT_E64INC
 %define% ARCH_INTERRUPT_E64INC
 
-%define% INTC_BASE          0x0020000000000000
-%define% INTC_REG_PENDING   INTC_BASE
-%define% INTC_REG_ENABLED   (INTC_BASE + 0x08)
-%define% INTC_REG_CTRL      (INTC_BASE + 0x10)
-%define% INTC_REG_VECTOR    (INTC_BASE + 0x18)
-%define% INTC_REG_ACK       (INTC_BASE + 0x20)
-%define% INTC_REG_CURRENT   (INTC_BASE + 0x28)
+%include% "mmio.e64inc"
 
-%define% INTC_CTRL_ENABLE   0x1
-%define% INTC_CTRL_NESTING  0x2
+%define% EMEX64_IC_REG_PENDING  EMEX64_IC_BASE
+%define% EMEX64_IC_REG_ENABLED  (EMEX64_IC_BASE + 0x08)
+%define% EMEX64_IC_REG_CTRL     (EMEX64_IC_BASE + 0x10)
+%define% EMEX64_IC_REG_VECTOR   (EMEX64_IC_BASE + 0x18)
+%define% EMEX64_IC_REG_ACK      (EMEX64_IC_BASE + 0x20)
+%define% EMEX64_IC_REG_CURRENT  (EMEX64_IC_BASE + 0x28)
 
-%define% IRQ_EXCEPTION  0
-%define% IRQ_TIMER      1
-%define% IRQ_DISK       2
-%define% IRQ_NETWORK    3
-%define% IRQ_SOFTWARE   4
-%define% IRQ_UART       5
-%define% IRQ_8042       6   ; spicy x3 silly keyboard controller
-%define% IRQ_UART       7
+%define% EMEX64_IC_CTRL_ENABLE  0x1
+%define% EMEX64_IC_CTRL_NESTING 0x2
+
+%define% EMEX64_IC_IRQ_EXCEPTION    0
+%define% EMEX64_IC_IRQ_TIMER        1
+%define% EMEX64_IC_IRQ_DISK         2
+%define% EMEX64_IC_IRQ_NETWORK      3
+%define% EMEX64_IC_IRQ_SOFTWARE     4
+%define% EMEX64_IC_IRQ_UART         5
+%define% EMEX64_IC_IRQ_8042         6   ; spicy x3 silly keyboard and mouse controller
+%define% EMEX64_IC_IRQ_UART         7
 
 %endif% ; ARCH_INTERRUPT_E64INC

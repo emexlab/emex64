@@ -46,14 +46,14 @@ _fw_8042_handler:
     ;ldq r3, putc_sym
     ;stq putc_sym, _uart_putc
 
-    ldd r0, EMEX64_8042_STATUS_REG      ; STATUS port
+    ldd r0, EMEX64_8042_REG_STATUS      ; STATUS port
     and r0, 0x01                        ; OBF (bit 0)?
     bz r0, .no_data
-    ldd r1, EMEX64_8042_STATUS_REG
+    ldd r1, EMEX64_8042_REG_STATUS
     and r1, 0x20
     bnz r1, .mouse_event
     
-    ldd r0, EMEX64_8042_DATA_REG
+    ldd r0, EMEX64_8042_REG_DATA
     blw _puts, fw_8042_msg
     blw _puts, fw_scancode_msg
     blw _putbase, r0, 16
@@ -61,7 +61,7 @@ _fw_8042_handler:
     b .done
     
 .mouse_event:
-    ldd r0, EMEX64_8042_DATA_REG
+    ldd r0, EMEX64_8042_REG_DATA
     blw _puts, fw_8042_mouse_msg
     blw _putbase, r0, 16
     blw _putc, '\n'
@@ -72,8 +72,8 @@ _fw_8042_handler:
     iret
 
 _main:
-    blw _interrupt_register_handler, IRQ_EXCEPTION, _exception_handler
-    blw _interrupt_register_handler, IRQ_8042, _fw_8042_handler
+    blw _interrupt_register_handler, EMEX64_IC_IRQ_EXCEPTION, _exception_handler
+    blw _interrupt_register_handler, EMEX64_IC_IRQ_8042, _fw_8042_handler
 
     blw _mc_lock_ktrr
     blw _puts, fw_ktrr_msg
@@ -81,8 +81,8 @@ _main:
     blw _puts, fw_font_test_msg
 
     blw _puts, fw_display_msg
-    ldw r0, FB_HEIGHT
-    ldw r1, FB_WIDTH
+    ldw r0, EMEX64_FB_REG_HEIGHT
+    ldw r1, EMEX64_FB_REG_WIDTH
     bz r0, .dsp_not_installed
     blw _putbase, r1, 10
     blw _puts, fw_display_x_msg
@@ -119,7 +119,7 @@ _main:
 ; main setup routine
 _start:
     ; early stack fixup
-    ldq r0, MCSIZE
+    ldq r0, EMEX64_MC_REG_SIZE
     sub sp, r0, 8
 
     bl _put_init                                    ; checks for fb
@@ -133,5 +133,5 @@ _start:
     bl _interrupt_init                              ; initilizing interrupt controller
     bl _main                                        ; branching to main symbol
 .poweroff:
-    stb PLATFORM_PWR, 0                             ; telling platform device to turn off
+    stb EMEX64_PLATFORM_REG_PWR, 0                  ; telling platform device to turn off
     

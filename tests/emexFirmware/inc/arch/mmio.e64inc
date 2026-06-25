@@ -22,17 +22,22 @@
 ; SOFTWARE.
 ;
 
-%include% <arch/mc.e64inc>
+%ifndef% ARCH_MMIO_E64INC
+%define% ARCH_MMIO_E64INC
 
-extern __data_start
+%include% "mm.e64inc"
 
-_mc_get_mem_size:
-    ldq rr, EMEX64_MC_REG_SIZE  ; loading memory size
-    wret
+%define% EMEX64_MMIO_BASE       0x0020000000000000
 
-_mc_lock_ktrr:
-    ; data start sits right after the text region ends
-    sub r0, __data_start, 1
-    stq EMEX64_MC_REG_KTRR_SIZE, r0
-    stb EMEX64_MC_REG_KTRR_LOCKED, 1
-    wret
+%define% EMEX64_IC_BASE         (EMEX64_MMIO_BASE + (EMEX64_PAGE_SIZE * 0)) ; Interrupt Controller
+%define% EMEX64_APIC_BASE       (EMEX64_MMIO_BASE + (EMEX64_PAGE_SIZE * 1)) ; Advanced Programmable Interrupt Controller
+%define% EMEX64_TIMER_BASE      (EMEX64_MMIO_BASE + (EMEX64_PAGE_SIZE * 2))
+%define% EMEX64_RTC_BASE        (EMEX64_MMIO_BASE + (EMEX64_PAGE_SIZE * 3))
+%define% EMEX64_UART_BASE       (EMEX64_MMIO_BASE + (EMEX64_PAGE_SIZE * 4))
+%define% EMEX64_MC_BASE         (EMEX64_MMIO_BASE + (EMEX64_PAGE_SIZE * 5))
+%define% EMEX64_PLATFORM_BASE   (EMEX64_MMIO_BASE + (EMEX64_PAGE_SIZE * 6))
+%define% EMEX64_8042_BASE       (EMEX64_MMIO_BASE + (EMEX64_PAGE_SIZE * 7))
+
+%define% EMEX64_FB_BASE         (EMEX64_MMIO_BASE + 0x0010000000000000)
+
+%endif% ; ARCH_MMIO_E64INC

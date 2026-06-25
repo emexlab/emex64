@@ -26,16 +26,16 @@
 
 _uart_putc:
 .start:
-    ldd r1, UART_STATUS
-    and r1, UART_STATUS_TX_EMPTY
+    ldd r1, EMEX64_UART_REG_STATUS
+    and r1, EMEX64_UART_STATUS_TX_EMPTY
     bz r1, .start
-    std UART_DATA, r0
+    std EMEX64_UART_REG_DATA, r0
     wret
 
 _uart_getc:
 .start:
-    ldd r1, UART_STATUS
-    and r1, UART_STATUS_RX_READY
+    ldd r1, EMEX64_UART_REG_STATUS
+    and r1, EMEX64_UART_STATUS_RX_READY
     bz r1, .start
-    ldd rr, UART_DATA
+    ldd rr, EMEX64_UART_REG_DATA
     wret

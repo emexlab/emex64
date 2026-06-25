@@ -77,8 +77,8 @@ _gui_putc:
 
     blt .skip_pixel
 
-    ldw r14, FB_HEIGHT
-    ldw r15, FB_WIDTH
+    ldw r14, EMEX64_FB_REG_HEIGHT
+    ldw r15, EMEX64_FB_REG_WIDTH
     
     cmp r11, r14
     bge .skip_pixel
@@ -92,8 +92,8 @@ _gui_putc:
 
     mul r13, r11, r15
     add r13, r12
-    add r13, FB_FRAMEBUFFER
-    stb r13, FB_TEXT_COLOR
+    add r13, EMEX64_FB_FRAMEBUFFER
+    stb r13, EMEX64_FB_TEXT_COLOR
 .skip_pixel:
     inc r8
     cmp r8, 8
@@ -111,7 +111,7 @@ _gui_putc:
     stw gui_column, 0
 
     ; how many glyphs fit?
-    ldw r6, FB_HEIGHT
+    ldw r6, EMEX64_FB_REG_HEIGHT
     div r6, 10
     dec r6
 
@@ -132,9 +132,9 @@ _gui_putc:
 _scroll_up:
     bz r0, .end
 
-    ldw r1, FB_HEIGHT
-    ldw r2, FB_WIDTH
-    mov r3, FB_FRAMEBUFFER
+    ldw r1, EMEX64_FB_REG_HEIGHT
+    ldw r2, EMEX64_FB_REG_WIDTH
+    mov r3, EMEX64_FB_FRAMEBUFFER
 
     clr r4
 

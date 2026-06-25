@@ -50,8 +50,8 @@ section .data
 
 ; i know this belongs into gui.e64
 _draw_scaled_logo:
-    ldw r4, FB_WIDTH
-    ldw r5, FB_HEIGHT
+    ldw r4, EMEX64_FB_REG_WIDTH
+    ldw r5, EMEX64_FB_REG_HEIGHT
     mov r6, 0
 .y_loop:
     cmp r6, 20
@@ -86,7 +86,7 @@ _draw_scaled_logo:
     push r14
     mul r14, r13, r4
     add r14, r15
-    add r14, FB_FRAMEBUFFER
+    add r14, EMEX64_FB_FRAMEBUFFER
     stb r14, r11
     pop r14
 .sx_next:
@@ -112,7 +112,7 @@ _putc:
     b r1
 
 _put_init:
-    ldb r0, FB_ENABLED
+    ldb r0, EMEX64_FB_REG_ENABLED
     bnz r0, .end_gui
 .end_uart:
     stq putc_sym, _uart_putc

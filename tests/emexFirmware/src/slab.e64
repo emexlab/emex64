@@ -112,7 +112,7 @@ _create_slab:
     blw _pmm_alloc
     bz rr, .fail
     mov r6, rr
-    add r7, r6, PAGE_SIZE
+    add r7, r6, EMEX64_PAGE_SIZE
     sub r7, SLAB_META_SIZE
     stq r7, r6
     add r8, r7, SLAB_OFF_CACHE
@@ -237,7 +237,7 @@ _kfree:
     bz r0, .done                                                ; null pointer checking r0
     mov r1, r0
     and r0, PAGE_MASK
-    add r2, r0, PAGE_SIZE
+    add r2, r0, EMEX64_PAGE_SIZE
     sub r2, SLAB_META_SIZE
     add r3, r2, SLAB_OFF_CACHE
     ldq r3, r3
