@@ -54,12 +54,12 @@ static bool __assembler_section_emit_value(assembler_invocation_t *inv,
     {
         if(dbs != 64)
         {
-            diag_error(entry[0], "don't put labels inside improper data types, i watch you!\n");
+            diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(entry[0]), "don't put labels inside improper data types, i watch you!");
             return false;
         }
         if(!assembler_label_relocate_append(inv, strdup(entry[0]->str), false, entry[0]))
         {
-            diag_fatal(entry[0], "out of memory, can't append relocation to relocation table\n");
+            diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(entry[0]), "out of memory, can't append relocation to relocation table");
             return false;
         }
         vbitwalker_skip(inv->out_vbitwalker, 64);
@@ -78,7 +78,7 @@ static bool __assembler_section_emit_value(assembler_invocation_t *inv,
         int64_t smin = -(INT64_C(1) << (dbs - 1));
         if(value < smin || (uint64_t)value > umax)
         {
-            diag_error(entry[0], "value %ld doesn't fit in a %d bits data entry\n", (long long)value, dbs);
+            diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(entry[0]), "value %ld doesn't fit in a %d bits data entry", (long long)value, dbs);
             return false;
         }
     }
@@ -133,7 +133,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
 
             if(inv->line[i]->token_cnt < 3)
             {
-                diag_error(inv->line[i]->token[inv->line[i]->token_cnt - 1], "insufficient tokens for entry in .data section\n");
+                diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[inv->line[i]->token_cnt - 1]), "insufficient tokens for entry in .data section");
                 return false;
             }
 
@@ -174,7 +174,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
                     }
                     if(inv->line[i]->token[a]->type != kAssemblerTokenTypeString)
                     {
-                        diag_error(inv->line[i]->token[a], "not a file path '%s'\n", inv->line[i]->token[a]->str);
+                        diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[a]), "not a file path '%s'", inv->line[i]->token[a]->str);
                         return false;
                     }
 
@@ -184,21 +184,21 @@ bool assembler_section_parse(assembler_invocation_t *inv)
                     int n = snprintf(joined, sizeof(joined), "%s/%s", base_dir, path_component);
                     if(n < 0 || n >= (int)sizeof(joined))
                     {
-                        diag_error(inv->line[i]->token[a], "path too long: %s\n", path_component);
+                        diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[a]), "path too long: %s", path_component);
                         return false;
                     }
 
                     char resolved[PATH_MAX];
                     if(realpath(joined, resolved) == NULL)
                     {
-                        diag_error(inv->line[i]->token[a], "cannot resolve path '%s'\n", path_component);
+                        diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[a]), "cannot resolve path '%s'", path_component);
                         return false;
                     }
 
                     emex_file_t *file = emex_file_alloc(resolved, in_data_file_policy);
                     if(file == NULL || !emex_file_map(file))
                     {
-                        diag_error(inv->line[i]->token[a], "cannot map file at '%s'\n", path_component);
+                        diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[a]), "cannot map file at '%s'", path_component);
                         return false;
                     }
 
@@ -209,7 +209,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
             }
             else if(dbs == 128)
             {
-                diag_error(inv->line[i]->token[1], "invalid data type for .data section entry '%s'\n", inv->line[i]->token[1]->str);
+                diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[1]), "invalid data type for .data section entry '%s'", inv->line[i]->token[1]->str);
                 return false;
             }
 
@@ -231,7 +231,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
 
                 if(entry_cnt == 0)
                 {
-                    diag_error(inv->line[i]->token[start - 1], "empty value in .data entry\n");
+                    diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[start - 1]), "empty value in .data entry");
                     return false;
                 }
 
@@ -275,7 +275,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
 
             if(inv->line[i]->token_cnt < 3)
             {
-                diag_error(inv->line[i]->token[inv->line[i]->token_cnt - 1], "insufficient tokens for entry in .bss section\n");
+                diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[inv->line[i]->token_cnt - 1]), "insufficient tokens for entry in .bss section");
                 return false;
             }
 
@@ -287,7 +287,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
             int dbs = __assembler_section_dbs_get(inv->line[i]->token[1]->str);
             if(dbs == 128 || dbs == 0)
             {
-                diag_error(inv->line[i]->token[1], "invalid data type for .bss section entry '%s'\n", inv->line[i]->token[1]->str);
+                diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[1]), "invalid data type for .bss section entry '%s'", inv->line[i]->token[1]->str);
                 return false;
             }
 
@@ -298,7 +298,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
             }
             if(count < 0)
             {
-                diag_error(inv->line[i]->token[2], "negative size in .bss section entry\n");
+                diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[2]), "negative size in .bss section entry");
                 return false;
             }
 

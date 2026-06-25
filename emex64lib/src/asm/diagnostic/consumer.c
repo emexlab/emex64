@@ -92,8 +92,9 @@ static void __assembler_diagnostic_consumer_consume_diagnostic_handler(diagnosti
 
     fprintf(stderr, "%s\n", diagnostic->str);
 
-    if(((assembler_diagnostic_consumer_context_t*)consumer->ctx)->inv->options.caret_diagnostics &&
-        diagnostic->location != NULL)
+    if(((assembler_diagnostic_consumer_context_t*)consumer->ctx)->inv != NULL &&
+       ((assembler_diagnostic_consumer_context_t*)consumer->ctx)->inv->options.caret_diagnostics &&
+       diagnostic->location != NULL)
     {
         __assembler_diagnostic_consumer_show_caret_preview(diagnostic);
     }
@@ -104,7 +105,7 @@ static void __assembler_diagnostic_consumer_consume_diagnostic_handler(diagnosti
     diagnostic_dealloc(diagnostic);
 }
 
-assembler_diagnostic_consumer_t *assembler_diagnostic_consumer_alloc(assembler_invocation_t *inv)
+assembler_diagnostic_consumer_t *assembler_diagnostic_consumer_alloc()
 {
     assembler_diagnostic_consumer_t *consumer = malloc(sizeof(assembler_diagnostic_consumer_t));
     if(consumer == NULL)
@@ -119,7 +120,7 @@ assembler_diagnostic_consumer_t *assembler_diagnostic_consumer_alloc(assembler_i
         return NULL;
     }
 
-    ((assembler_diagnostic_consumer_context_t*)consumer->ctx)->inv = inv;
+    ((assembler_diagnostic_consumer_context_t*)consumer->ctx)->inv = NULL;
     ((assembler_diagnostic_consumer_context_t*)consumer->ctx)->diagnostic = NULL;
     ((assembler_diagnostic_consumer_context_t*)consumer->ctx)->diagnostic_cnt = 0;
 
@@ -143,3 +144,15 @@ void assembler_diagnostic_consumer_dealloc(assembler_diagnostic_consumer_t *cons
     free(consumer->ctx);
     free(consumer);
 }
+
+void assembler_diagnostic_consumer_bind_invocation(assembler_diagnostic_consumer_t *consumer,
+                                                   assembler_invocation_t *inv)
+{
+    ((assembler_diagnostic_consumer_context_t*)consumer->ctx)->inv = inv;
+}
+
+void assembler_diagnostic_consumer_unbind_invocation(assembler_diagnostic_consumer_t *consumer)
+{
+    ((assembler_diagnostic_consumer_context_t*)consumer->ctx)->inv = NULL;
+}
+

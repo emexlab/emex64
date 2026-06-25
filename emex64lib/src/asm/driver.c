@@ -803,7 +803,9 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
 {
     if(driver->options.assemble_only)
     {
-        assembler_invocation_t *inv = assembler_invocation_alloc(driver->invocation_options);
+        assembler_diagnostic_consumer_t *consumer = assembler_diagnostic_consumer_alloc();
+
+        assembler_invocation_t *inv = assembler_invocation_alloc(driver->invocation_options, consumer);
         if(inv == NULL)
         {
             return false;
@@ -819,6 +821,7 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
         {
             emex_file_dealloc(output);
             assembler_invocation_dealloc(inv);
+            assembler_diagnostic_consumer_dealloc(consumer);
             return false;
         }
 
@@ -826,6 +829,7 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
 
         emex_file_dealloc(output);
         assembler_invocation_dealloc(inv);
+        assembler_diagnostic_consumer_dealloc(consumer);
 
         return success;
     }

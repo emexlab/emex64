@@ -37,7 +37,8 @@
 #include <emex64lib/asm/code.h>
 #include <emex64lib/asm/section.h>
 
-assembler_invocation_t *assembler_invocation_alloc(assembler_invocation_options_t options)
+assembler_invocation_t *assembler_invocation_alloc(assembler_invocation_options_t options,
+                                                   assembler_diagnostic_consumer_t *consumer)
 {
     /* apply warning_error local thread variable */
     /*thread_log_diagnostic_options.warning_error = options.warning_error;
@@ -51,7 +52,7 @@ assembler_invocation_t *assembler_invocation_alloc(assembler_invocation_options_
         return NULL;
     }
 
-    inv->consumer = assembler_diagnostic_consumer_alloc(inv);
+    inv->consumer = consumer;
 
     inv->label_hashmap = hashmap_alloc();
     if(inv->label_hashmap == NULL)
@@ -64,6 +65,8 @@ assembler_invocation_t *assembler_invocation_alloc(assembler_invocation_options_
     inv->data_section_start = UINT64_MAX;
     inv->data_section_end = UINT64_MAX;
     inv->bss_section_start = UINT64_MAX;
+
+    assembler_diagnostic_consumer_bind_invocation(inv->consumer, inv);
 
     return inv;
 }
@@ -117,6 +120,7 @@ void assembler_invocation_dealloc(assembler_invocation_t *inv)
     }
 
     vbitwalker_dealloc(inv->out_vbitwalker);
+    assembler_diagnostic_consumer_unbind_invocation(inv->consumer);
     free(inv);
 }
 

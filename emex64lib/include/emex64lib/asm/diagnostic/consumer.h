@@ -48,7 +48,10 @@ typedef struct assembler_diagnostic_consumer_context {
     uint64_t diagnostic_cnt;
 } assembler_diagnostic_consumer_context_t;
 
-assembler_diagnostic_consumer_t *assembler_diagnostic_consumer_alloc(assembler_invocation_t *inv);
+assembler_diagnostic_consumer_t *assembler_diagnostic_consumer_alloc();
 void assembler_diagnostic_consumer_dealloc(assembler_diagnostic_consumer_t *consumer);
+
+void assembler_diagnostic_consumer_bind_invocation(assembler_diagnostic_consumer_t *consumer, assembler_invocation_t *inv);
+void assembler_diagnostic_consumer_unbind_invocation(assembler_diagnostic_consumer_t *consumer);
 
 #endif /* EMEX64ASM_DIAGNOSTIC_CONSUMER_H */
