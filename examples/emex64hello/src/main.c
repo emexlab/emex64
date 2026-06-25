@@ -132,7 +132,7 @@ int main(void)
             if(vfd_stat(d, &fdstat) == 0)
             {
                 diagnostic_report(NULL, kDiagnosticSeverityNote, NULL, "compiled virtual assembly file into virtual object file");
-                fprintf(stderr, "\tvirtual_object_file_size: %llu bytes\n", (uint64_t)fdstat.st_size);
+                fprintf(stderr, "\tvirtual_object_file_size: %llu bytes\n", (unsigned long long)fdstat.st_size);
             }
             vfd_close(d);
         }
