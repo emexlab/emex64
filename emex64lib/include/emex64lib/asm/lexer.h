@@ -50,6 +50,12 @@ enum kCmptokTokenMode: uint8_t {
      * of this parser!
      */
     kCmptokTokenModeCharacter,
+
+    /*
+     * this mode is for <some/path/to/some/system.e64inc>
+     * rawrrrrr >:3
+     */
+    kCmptokTokenModeHeaderName,
 };
 
 typedef struct {

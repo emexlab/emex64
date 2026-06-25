@@ -243,7 +243,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         char *hdr_token = __assembler_preprocessor_include_directive_get_token(inv->line[li]->token[1]->str, &system_hdr);
                         if(hdr_token == NULL)
                         {
-                            diag_error(inv->line[li]->token[1], "invalid token passed after %%include%% directive\n");
+                            diag_error(inv->line[li]->token[1], "invalid token '%s' passed after %%include%% directive\n", inv->line[li]->token[1]->str);
                             goto failure;
                         }
 

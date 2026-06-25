@@ -162,6 +162,12 @@ lextok_token_t assembler_lexer_tok(const char *token)
                         token_mode = kCmptokTokenModeCharacter;
                         retval.type = kAssemblerTokenTypeInvalid;
                         break;
+
+                    /* handling string beginnings */
+                    case '<':
+                        token_mode = kCmptokTokenModeHeaderName;
+                        retval.type = kAssemblerTokenTypeInvalid;
+                        break;
                     
                     default:
                         break;
@@ -198,6 +204,18 @@ lextok_token_t assembler_lexer_tok(const char *token)
                         
                         __lextok_append(&a);
                         retval.type = kAssemblerTokenTypeIdentifier;
+                        goto break_out;
+                    default:
+                        break;
+                }
+                break;
+            case kCmptokTokenModeHeaderName:
+                switch(ltokptr[0])
+                {
+                    /* handling header name ends */
+                    case '>':
+                        __lextok_append(&a);
+                        retval.type = kAssemblerTokenTypeHeaderName;
                         goto break_out;
                     default:
                         break;

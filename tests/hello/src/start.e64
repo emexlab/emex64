@@ -22,9 +22,8 @@
 ; SOFTWARE.
 ;
 
-%include% <emex64.e64inc>
-
-%define% MEOW ((UART_STATUS - 1) + 1) * 1
+%include% <arch/uart.e64inc>
+%include% <arch/platform.e64inc>
 
 section .data
     msg db "hello, world!\r\n\0"
@@ -34,7 +33,7 @@ hello:
 .loop:
     ldb r1, r0
 .retry:
-    ldd r2, MEOW
+    ldd r2, UART_STATUS
     and r2, UART_STATUS_TX_EMPTY
     bz r2, .retry
     std UART_DATA, r1

@@ -38,6 +38,7 @@ typedef enum: uint8_t {
     kAssemblerTokenTypeIdentifier,  /* in the lextok step everything becomes a identifier at first */
     kAssemblerTokenTypeInteger,
     kAssemblerTokenTypeString,
+    kAssemblerTokenTypeHeaderName,  /* shouldn't be classified after tokenization */
     kAssemblerTokenTypeRegister,
     kAssemblerTokenTypeInstruction,
     kAssemblerTokenTypeKeyword,
