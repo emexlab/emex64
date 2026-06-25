@@ -32,32 +32,6 @@
 
 #define LEXTOK_LENGHT_MAX   2048    /* if anyone comes close to that size, bro pls fix your variable naming style O.O */
 
-enum kCmptokTokenMode: uint8_t {
-    /* the nothing mode */
-    kCmptokTokenModeNone,
-
-    /*
-     * string mode, means it parses the
-     * next characters as a character
-     * buffer sequence
-     */
-    kCmptokTokenModeString,
-
-    /*
-     * character mode, means it parses the next characters as
-     * a character, if its not a valid character next steps in
-     * compilation will fail, but thats not responsibility
-     * of this parser!
-     */
-    kCmptokTokenModeCharacter,
-
-    /*
-     * this mode is for <some/path/to/some/system.e64inc>
-     * rawrrrrr >:3
-     */
-    kCmptokTokenModeHeaderName,
-};
-
 typedef struct {
     const char *token;
     size_t column;

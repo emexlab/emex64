@@ -34,6 +34,32 @@
 #include <emex64lib/asm/emitter/register.h>
 #include <emex64lib/asm/emitter/opcode.h>
 
+typedef enum: uint8_t {
+    /* the nothing mode */
+    kLextokTokenModeNone,
+
+    /*
+     * string mode, means it parses the
+     * next characters as a character
+     * buffer sequence
+     */
+    kLextokTokenModeString,
+
+    /*
+     * character mode, means it parses the next characters as
+     * a character, if its not a valid character next steps in
+     * compilation will fail, but thats not responsibility
+     * of this parser!
+     */
+    kLextokTokenModeCharacter,
+
+    /*
+     * this mode is for <some/path/to/some/system.e64inc>
+     * rawrrrrr >:3
+     */
+    kLextokTokenModeHeaderName,
+} kLextokTokenMode;
+
 _Thread_local static const char *stokptr;
 _Thread_local static const char *ltokptr;
 _Thread_local static char otoken[LEXTOK_LENGHT_MAX + 1];
@@ -73,15 +99,15 @@ static inline void __lextok_handle_punctuation(unsigned short *otoken_pos,
     __lextok_append(otoken_pos);
 }
 
-static inline char __lextok_get_end_char(enum kCmptokTokenMode mode)
+static inline char __lextok_get_end_char(kLextokTokenMode mode)
 {
     switch(mode)
     {
-        case kCmptokTokenModeCharacter:
+        case kLextokTokenModeCharacter:
             return '\'';
-        case kCmptokTokenModeString:
+        case kLextokTokenModeString:
             return '"';
-        case kCmptokTokenModeHeaderName:
+        case kLextokTokenModeHeaderName:
         default:
             return '>';
     }
@@ -110,7 +136,7 @@ lextok_token_t assembler_lexer_tok(const char *token)
 
     /* perform copy */
     uint16_t a = 0;
-    uint8_t token_mode = kCmptokTokenModeNone;
+    kLextokTokenMode token_mode = kLextokTokenModeNone;
     while(a <= LEXTOK_LENGHT_MAX)
     {
         if(a == LEXTOK_LENGHT_MAX)
@@ -122,7 +148,7 @@ lextok_token_t assembler_lexer_tok(const char *token)
         /* processing string */
         switch(token_mode)
         {
-            case kCmptokTokenModeNone:
+            case kLextokTokenModeNone:
                 switch(ltokptr[0])
                 {
                     /* handling what shall be skipped and not tokenized */
@@ -145,19 +171,19 @@ lextok_token_t assembler_lexer_tok(const char *token)
                     
                     /* handling string beginnings */
                     case '"':
-                        token_mode = kCmptokTokenModeString;
+                        token_mode = kLextokTokenModeString;
                         retval.type = kAssemblerTokenTypeInvalid;
                         break;
                     
                     /* handling character beginnings */
                     case '\'':
-                        token_mode = kCmptokTokenModeCharacter;
+                        token_mode = kLextokTokenModeCharacter;
                         retval.type = kAssemblerTokenTypeInvalid;
                         break;
 
                     /* handling header name beginnings */
                     case '<':
-                        token_mode = kCmptokTokenModeHeaderName;
+                        token_mode = kLextokTokenModeHeaderName;
                         retval.type = kAssemblerTokenTypeInvalid;
                         break;
                     
@@ -165,9 +191,9 @@ lextok_token_t assembler_lexer_tok(const char *token)
                         break;
                 }
                 break;
-            case kCmptokTokenModeString:
-            case kCmptokTokenModeCharacter:
-            case kCmptokTokenModeHeaderName:
+            case kLextokTokenModeString:
+            case kLextokTokenModeCharacter:
+            case kLextokTokenModeHeaderName:
                 if(ltokptr[0] == __lextok_get_end_char(token_mode))
                 {
                     if(a > 0 && otoken[a - 1] == '\\')
