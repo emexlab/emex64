@@ -97,15 +97,20 @@ char *assembler_code_find_header(const char *name,
     snprintf(dir_buf, sizeof(dir_buf), "%s", source_file);
     char *slash = strrchr(dir_buf, '/');
     const char *source_dir = slash ? (slash[0] = '\0', dir_buf) : ".";
-
-    char buf[PATH_MAX];
+    
     if(source_dir)
     {
-        snprintf(buf, sizeof(buf), "%s/%s", source_dir, name);
+        char buf[PATH_MAX];
+        int n = snprintf(buf, sizeof(buf), "%s/%s", source_dir, name);
+        if(n < 0 || (size_t)n >= sizeof(buf))
+        {
+            return NULL;
+        }
         if(access(buf, R_OK) == 0)
         {
             return strdup(buf);
         }
+        return NULL;
     }
     return NULL;
 }
