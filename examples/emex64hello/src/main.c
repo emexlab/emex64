@@ -81,23 +81,33 @@ int main(void)
     );
     if(unsaved_file == NULL)
     {
-        diag_fatal(NULL, "failed to allocate virtual assembly file\n");
+        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate virtual assembly file");
         return 1;
     }
 
     emex_file_t *object_file = emex_file_alloc_vopen("test.o", out_data_file_policy);
     if(object_file == NULL)
     {
-        diag_fatal(NULL, "failed to allocate virtual object file\n");
+        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate virtual object file");
         emex_file_dealloc(unsaved_file);
         return 1;
     }
 
     /* we need the invocation to assemble */
-    assembler_invocation_t *inv = assembler_invocation_alloc(assembler_invocation_options_default);
+    assembler_diagnostic_consumer_t *consumer = assembler_diagnostic_consumer_alloc();
+    if(consumer == NULL)
+    {
+        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate consumer for assembler invocation");
+        emex_file_dealloc(object_file);
+        emex_file_dealloc(unsaved_file);
+        return 1;
+    }
+
+    assembler_invocation_t *inv = assembler_invocation_alloc(assembler_invocation_options_default, consumer);
     if(inv == NULL)
     {
-        diag_fatal(NULL, "failed to allocate assembler invocation\n");
+        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate assembler invocation");
+        assembler_diagnostic_consumer_dealloc(consumer);
         emex_file_dealloc(object_file);
         emex_file_dealloc(unsaved_file);
         return 1;
@@ -105,10 +115,11 @@ int main(void)
 
     bool success = assembler_invocation_emit(inv, unsaved_file, object_file);
     assembler_invocation_dealloc(inv);
+    assembler_diagnostic_consumer_dealloc(consumer);
     emex_file_dealloc(unsaved_file);
     if(!success)
     {
-        diag_fatal(NULL, "ouweee =<\n");
+        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "ouweee =<");
         emex_file_dealloc(object_file);
         return 1;
     }
@@ -120,8 +131,8 @@ int main(void)
             struct stat fdstat;
             if(vfd_stat(d, &fdstat) == 0)
             {
-                diag_note(NULL, "compiled virtual assembly file into virtual object file\n");
-                fprintf(stderr, "\tvirtual_object_file_size: %d bytes\n", fdstat.st_size);
+                diagnostic_report(NULL, kDiagnosticSeverityNote, NULL, "compiled virtual assembly file into virtual object file");
+                fprintf(stderr, "\tvirtual_object_file_size: %lld bytes\n", fdstat.st_size);
             }
             vfd_close(d);
         }
@@ -131,7 +142,7 @@ int main(void)
     emex_file_t **input_file = calloc(1, sizeof(emex_file_t*));
     if(input_file == NULL)
     {
-        diag_fatal(NULL, "couldn't allocate input files array for the linker\n");
+        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "couldn't allocate input files array for the linker");
         emex_file_dealloc(object_file);
         return 1;
     }
@@ -140,7 +151,7 @@ int main(void)
     emex_file_t *firmware_file = emex_file_alloc_vopen("test.img", out_data_file_policy);
     if(firmware_file == NULL)
     {
-        diag_fatal(NULL, "failed to allocate virtual firmware file\n");
+        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate virtual firmware file");
         free(input_file);
         emex_file_dealloc(object_file);
         return 1;
@@ -151,13 +162,13 @@ int main(void)
     emex_file_dealloc(object_file);
     if(!success)
     {
-       diag_fatal(NULL, "failed to link virtual object file into virtual firmware file\n");
-       emex_file_dealloc(firmware_file);
-       return 1;
+        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to link virtual object file into virtual firmware file");
+        emex_file_dealloc(firmware_file);
+        return 1;
     }
     else
     {
-        diag_note(NULL, "linked virtual object file into virtual firmware file\n");
+        diagnostic_report(NULL, kDiagnosticSeverityNote, NULL, "linked virtual object file into virtual firmware file");
     }
 
     /* let the core spin >:3 */
@@ -167,7 +178,7 @@ int main(void)
     emex64_machine_t *machine = emex64_machine_alloc(machine_options);
     if(machine == NULL)
     {
-        diag_fatal(NULL, "failed to allocate virtual machine\n");
+        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate virtual machine");
         emex_file_dealloc(firmware_file);
         return 1;
     }
@@ -176,7 +187,7 @@ int main(void)
     emex_file_dealloc(firmware_file);
     if(!success)
     {
-        diag_fatal(NULL, "failed to load virtual firmware file\n");
+        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to load virtual firmware file");
         return 1;
     }
 
