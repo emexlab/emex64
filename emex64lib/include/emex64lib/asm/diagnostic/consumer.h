@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <emex64lib/support/virtual/vfd.h>
 #include <emex64lib/support/diagnostic/consumer.h>
 
 #define AT_TO_DLOC(at) &(diagnostic_location_t){ \
@@ -46,6 +47,7 @@ typedef struct assembler_diagnostic_consumer_context {
     assembler_invocation_t *inv;    /* borrowed */
     diagnostic_t **diagnostic;
     uint64_t diagnostic_cnt;
+    vfd_t *d;
 } assembler_diagnostic_consumer_context_t;
 
 assembler_diagnostic_consumer_t *assembler_diagnostic_consumer_alloc();

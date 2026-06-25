@@ -22,12 +22,14 @@
  * SOFTWARE.
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <unistd.h>
 #include <emex64lib/asm/diagnostic/consumer.h>
 #include <emex64lib/asm/invocation.h>
 
-static void __assembler_diagnostic_consumer_show_caret_preview(diagnostic_t *diagnostic)
+static void __assembler_diagnostic_consumer_show_caret_preview(vfd_t *d, diagnostic_t *diagnostic)
 {
     const char *src = diagnostic->location->line;
     size_t line_num = diagnostic->location->ln;
@@ -40,63 +42,87 @@ static void __assembler_diagnostic_consumer_show_caret_preview(diagnostic_t *dia
     }
     int w = ndigits + 3;
 
-    fprintf(stderr, "%*zu | %s\n", w, line_num, src);
+    char numbuf[32];
+    int nlen = 0;
+    {
+        size_t v = line_num;
+        char tmp[32];
+        int t = 0;
+        do {
+            tmp[t++] = '0' + (v % 10); v /= 10;
+        } while(v);
+        while(t > 0) numbuf[nlen++] = tmp[--t];
+        numbuf[nlen] = '\0';
+    }
+
+    for(int i = 0; i < w - nlen; i++)
+    {
+        vfd_putc(d, ' ');
+    }
+    vfd_puts(d, numbuf);
+    vfd_puts(d, " | ");
+    vfd_puts(d, src);
+    vfd_putc(d, '\n');
 
     for(int i = 0; i < w + 1; i++)
     {
-        fprintf(stderr, " ");
+        vfd_putc(d, ' ');
     }
-    fprintf(stderr, "| ");
-
+    vfd_puts(d, "| ");
     size_t indent = diagnostic->location->range.start_col > 0 ? diagnostic->location->range.start_col - 1 : 0;
     for(size_t i = 0; i < indent && src[i] != '\0'; i++)
     {
-        fprintf(stderr, src[i] == '\t' ? "\t" : " ");
+        vfd_putc(d, src[i] == '\t' ? '\t' : ' ');
     }
 
-    fprintf(stderr, "%s%s^", C_BOLD, C_CARET);   /* bold green */
+    vfd_puts(d, C_BOLD);
+    vfd_puts(d, C_CARET);
+    vfd_putc(d, '^');
     size_t span = diagnostic->location->range.end_col > diagnostic->location->range.start_col ? diagnostic->location->range.end_col - diagnostic->location->range.start_col : 1;
     for(size_t i = 1; i < span; i++)
     {
-        fprintf(stderr, "~");
+        vfd_putc(d, '~');
     }
-    fprintf(stderr, "%s\n", C_RESET);
+    vfd_puts(d, C_RESET);
+    vfd_putc(d, '\n');
 }
 
 static void __assembler_diagnostic_consumer_consume_diagnostic_handler(diagnostic_consumer_t *consumer,
                                                                        diagnostic_t *diagnostic)
 {
+    assembler_diagnostic_consumer_context_t *ctx = consumer->ctx;
+
     if(diagnostic->location != NULL)
     {
-        fprintf(stderr, "%s:%llu:%llu: ", diagnostic->location->file_name, diagnostic->location->ln, diagnostic->location->col);
+        vfdprintf(ctx->d, "%s:%llu:%llu: ", diagnostic->location->file_name, diagnostic->location->ln, diagnostic->location->col);
     }
 
     /* fallback when no consumer was specified */
     switch(diagnostic->severity)
     {
         case kDiagnosticSeverityNote:
-            fprintf(stderr, "%snote:", C_NOTE);
+            vfdprintf(ctx->d, "%snote:", C_NOTE);
             break;
         case kDiagnosticSeverityWarning:
-            fprintf(stderr, "%swarning:", C_WARN); 
+            vfdprintf(ctx->d, "%swarning:", C_WARN); 
             break;
         case kDiagnosticSeverityError:
-            fprintf(stderr, "%serror:", C_ERROR);
+            vfdprintf(ctx->d, "%serror:", C_ERROR);
             break;
         case kDiagnosticSeverityFatal:
         default:
-            fprintf(stderr, "%sfatal:", C_ERROR);
+            vfdprintf(ctx->d, "%sfatal:", C_ERROR);
             break;
     }
-    fprintf(stderr, "%s ", C_RESET);
+    vfdprintf(ctx->d, "%s ", C_RESET);
 
-    fprintf(stderr, "%s\n", diagnostic->str);
+    vfdprintf(ctx->d, "%s\n", diagnostic->str);
 
     if(((assembler_diagnostic_consumer_context_t*)consumer->ctx)->inv != NULL &&
        ((assembler_diagnostic_consumer_context_t*)consumer->ctx)->inv->options.caret_diagnostics &&
        diagnostic->location != NULL)
     {
-        __assembler_diagnostic_consumer_show_caret_preview(diagnostic);
+        __assembler_diagnostic_consumer_show_caret_preview(ctx->d, diagnostic);
     }
 
     /* dont forget to flush the toilet otherwise things get stinky */
@@ -120,9 +146,17 @@ assembler_diagnostic_consumer_t *assembler_diagnostic_consumer_alloc()
         return NULL;
     }
 
-    ((assembler_diagnostic_consumer_context_t*)consumer->ctx)->inv = NULL;
-    ((assembler_diagnostic_consumer_context_t*)consumer->ctx)->diagnostic = NULL;
-    ((assembler_diagnostic_consumer_context_t*)consumer->ctx)->diagnostic_cnt = 0;
+    assembler_diagnostic_consumer_context_t *ctx = consumer->ctx;
+    ctx->inv = NULL;
+    ctx->diagnostic = NULL;
+    ctx->diagnostic_cnt = 0;
+    ctx->d = vfd_open_fd(STDERR_FILENO);
+    if(ctx->d == NULL)
+    {
+        free(ctx);
+        free(consumer);
+        return NULL;
+    }
 
     consumer->consume_handler = __assembler_diagnostic_consumer_consume_diagnostic_handler;
 
@@ -136,11 +170,13 @@ void assembler_diagnostic_consumer_dealloc(assembler_diagnostic_consumer_t *cons
         return;
     }
 
-    for(uint64_t i = 0; i < ((assembler_diagnostic_consumer_context_t*)consumer->ctx)->diagnostic_cnt; i++)
+    assembler_diagnostic_consumer_context_t *ctx = consumer->ctx;
+    vfd_close(ctx->d);
+    for(uint64_t i = 0; i < ctx->diagnostic_cnt; i++)
     {
-        diagnostic_dealloc(((assembler_diagnostic_consumer_context_t*)consumer->ctx)->diagnostic[i]);
+        diagnostic_dealloc(ctx->diagnostic[i]);
     }
-    free(((assembler_diagnostic_consumer_context_t*)consumer->ctx)->diagnostic);
+    free(ctx->diagnostic);
     free(consumer->ctx);
     free(consumer);
 }

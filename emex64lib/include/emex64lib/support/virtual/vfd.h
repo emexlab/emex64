@@ -67,4 +67,8 @@ int vfd_stat(vfd_t *d, struct stat *stat);
 
 char *vfd_gets(vfd_t *d, char *s, int n);
 
+int vfd_putc(vfd_t *d, char c);
+int vfd_puts(vfd_t *d, const char *s);
+void vfdprintf(vfd_t *d, char *fmt, ...);
+
 #endif /* EMEX64_VFD_H */

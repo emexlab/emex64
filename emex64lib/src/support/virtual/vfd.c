@@ -385,3 +385,188 @@ char *vfd_gets(vfd_t *d,
     s[i] = '\0';
     return s;
 }
+
+int vfd_putc(vfd_t *d, char c)
+{
+    return (int)vfd_write(d, &c, 1);
+}
+ 
+int vfd_puts(vfd_t *d, const char *s)
+{
+    int count = 0;
+ 
+    if(!s)
+    {
+        s = "(null)";
+    }
+ 
+    while(*s)
+    {
+        count += vfd_putc(d, *s++);
+    }
+ 
+    return count;
+}
+ 
+static inline int vfd_putnbr_base_unsigned(vfd_t *d,
+                                           uint64_t n,
+                                           const char *base)
+{
+    int count = 0;
+    uint64_t radix = 0;
+ 
+    while(base[radix])
+    {
+        radix++;
+    }
+ 
+    if(n >= radix)
+    {
+        count += vfd_putnbr_base_unsigned(d, n / radix, base);
+    }
+ 
+    count += vfd_putc(d, base[n % radix]);
+    return count;
+}
+ 
+static inline int vfd_putnbr_signed(vfd_t *d, long n)
+{
+    int count = 0;
+ 
+    if(n < 0)
+    {
+        count += vfd_putc(d, '-');
+        n = -n;
+    }
+ 
+    count += vfd_putnbr_base_unsigned(d, (uint64_t)n, "0123456789");
+ 
+    return count;
+}
+ 
+static inline int vfd_put_binary(vfd_t *d, unsigned int n)
+{
+    return vfd_putnbr_base_unsigned(d, n, "01");
+}
+ 
+static inline int vfd_put_pointer(vfd_t *d, void *p)
+{
+    int count = 0;
+    count += vfd_puts(d, "0x");
+    count += vfd_putnbr_base_unsigned(d, (uintptr_t)p, "0123456789abcdef");
+    return count;
+}
+ 
+static inline int vfd_put_float(vfd_t *d, double n)
+{
+    int count = 0;
+    long ipart = (long)n;
+    double fpart = n - ipart;
+ 
+    if(n < 0)
+    {
+        count += vfd_putc(d, '-');
+        n = -n;
+        ipart = -ipart;
+        fpart = -fpart;
+    }
+ 
+    count += vfd_putnbr_signed(d, ipart);
+    count += vfd_putc(d, '.');
+ 
+    for(int i = 0; i < 6; i++)
+    {
+        fpart *= 10;
+        count += vfd_putc(d, (int)fpart + '0');
+        fpart -= (int)fpart;
+    }
+ 
+    return count;
+}
+
+void vfdprintf(vfd_t *d, char *fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+
+    int i = 0;
+    while(fmt[i])
+    {
+        if(fmt[i] == '%' && fmt[i + 1])
+        {
+            i++;
+            switch(fmt[i])
+            {
+                case 'c':
+                    vfd_putc(d, (char)va_arg(args, int));
+                    break;
+                case 's':
+                    vfd_puts(d, va_arg(args, char *));
+                    break;
+                case 'd':
+                    vfd_putnbr_signed(d, va_arg(args, int));
+                    break;
+                case 'u':
+                    vfd_putnbr_base_unsigned(d, va_arg(args, unsigned int), "0123456789");
+                    break;
+                case 'b':
+                    vfd_put_binary(d, va_arg(args, unsigned int));
+                    break;
+                case 'x':
+                    vfd_putnbr_base_unsigned(d, va_arg(args, unsigned int), "0123456789abcdef");
+                    break;
+                case 'X':
+                    vfd_putnbr_base_unsigned(d, va_arg(args, unsigned int), "0123456789ABCDEF");
+                    break;
+                case 'p':
+                    vfd_put_pointer(d, va_arg(args, void *));
+                    break;
+                case 'f':
+                    vfd_put_float(d, va_arg(args, double));
+                    break;
+                case 'l':
+                    switch(fmt[i + 1])
+                    {
+                        case 'l':
+                            switch(fmt[i + 2])
+                            {
+                                case 'd':
+                                    i += 2;
+                                    vfd_putnbr_signed(d, va_arg(args, int64_t));
+                                    break;
+                                case 'u':
+                                    i += 2;
+                                    vfd_putnbr_base_unsigned(d, va_arg(args, uint64_t), "0123456789");
+                                    break;
+                                default:
+                                    break;
+                            }
+                            break;
+                        case 'd':
+                            i++;
+                            vfd_putnbr_signed(d, va_arg(args, long));
+                            break;
+                        case 'u':
+                            i++;
+                            vfd_putnbr_base_unsigned(d, va_arg(args, unsigned long), "0123456789");
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                case '%':
+                    vfd_putc(d, '%');
+                    break;
+                default:
+                    break;
+            }
+        }
+        else
+        {
+            vfd_putc(d, fmt[i]);
+        }
+        i++;
+    }
+
+    va_end(args);
+}
