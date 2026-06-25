@@ -63,15 +63,28 @@ static inline void __lextok_append(unsigned short *otoken_pos)
 }
 
 static inline void __lextok_handle_punctuation(unsigned short *otoken_pos,
-                                               lextok_token_t *token,
-                                               kAssemblerTokenType type)
+                                               lextok_token_t *token)
 {
     if(*otoken_pos > 0)
     {
         return;
     }
-    token->type = kAssemblerTokenTypeColon;
+    token->type = kAssemblerTokenTypeIdentifier;
     __lextok_append(otoken_pos);
+}
+
+static inline char __lextok_get_end_char(enum kCmptokTokenMode mode)
+{
+    switch(mode)
+    {
+        case kCmptokTokenModeCharacter:
+            return '\'';
+        case kCmptokTokenModeString:
+            return '"';
+        case kCmptokTokenModeHeaderName:
+        default:
+            return '>';
+    }
 }
 
 lextok_token_t assembler_lexer_tok(const char *token)
@@ -120,35 +133,14 @@ lextok_token_t assembler_lexer_tok(const char *token)
 
                     /* punctuation */
                     case ':':
-                        __lextok_handle_punctuation(&a, &retval, kAssemblerTokenTypeColon);
-                        goto break_out;
-                    
                     case '(':
-                        __lextok_handle_punctuation(&a, &retval, kAssemblerTokenTypeLParen);
-                        goto break_out;
-                    
                     case ')':
-                        __lextok_handle_punctuation(&a, &retval, kAssemblerTokenTypeRParen);
-                        goto break_out;
-
                     case '+':
-                        __lextok_handle_punctuation(&a, &retval, kAssemblerTokenTypePlus);
-                        goto break_out;
-
                     case '-':
-                        __lextok_handle_punctuation(&a, &retval, kAssemblerTokenTypeMinus);
-                        goto break_out;
-
                     case '*':
-                        __lextok_handle_punctuation(&a, &retval, kAssemblerTokenTypeMultiply);
-                        goto break_out;
-
-                    case '/':
-                        __lextok_handle_punctuation(&a, &retval, kAssemblerTokenTypeDivide);
-                        goto break_out;
-                    
+                    case '/':           
                     case ',':
-                        __lextok_handle_punctuation(&a, &retval, kAssemblerTokenTypeComma);
+                        __lextok_handle_punctuation(&a, &retval);
                         goto break_out;
                     
                     /* handling string beginnings */
@@ -163,7 +155,7 @@ lextok_token_t assembler_lexer_tok(const char *token)
                         retval.type = kAssemblerTokenTypeInvalid;
                         break;
 
-                    /* handling string beginnings */
+                    /* handling header name beginnings */
                     case '<':
                         token_mode = kCmptokTokenModeHeaderName;
                         retval.type = kAssemblerTokenTypeInvalid;
@@ -174,51 +166,19 @@ lextok_token_t assembler_lexer_tok(const char *token)
                 }
                 break;
             case kCmptokTokenModeString:
-                switch(ltokptr[0])
-                {
-                    /* handling string ends */
-                    case '"':
-                        if(a > 0 && otoken[a-1] == '\\')
-                        {
-                            /* escaped quote, stay in string mode */
-                            break;
-                        }
-
-                        __lextok_append(&a);
-                        retval.type = kAssemblerTokenTypeIdentifier;
-                        goto break_out;
-                    default:
-                        break;
-                }
-                break;
             case kCmptokTokenModeCharacter:
-                switch(ltokptr[0])
-                {
-                    /* handling character ends */
-                    case '\'':
-                        if(a > 0 && otoken[a-1] == '\\')
-                        {
-                            /* escaped meter, stay in string mode */
-                            break;
-                        }
-                        
-                        __lextok_append(&a);
-                        retval.type = kAssemblerTokenTypeIdentifier;
-                        goto break_out;
-                    default:
-                        break;
-                }
-                break;
             case kCmptokTokenModeHeaderName:
-                switch(ltokptr[0])
+                if(ltokptr[0] == __lextok_get_end_char(token_mode))
                 {
-                    /* handling header name ends */
-                    case '>':
-                        __lextok_append(&a);
-                        retval.type = kAssemblerTokenTypeHeaderName;
-                        goto break_out;
-                    default:
+                    if(a > 0 && otoken[a - 1] == '\\')
+                    {
+                        /* escaped quote, stay in string mode */
                         break;
+                    }
+
+                    __lextok_append(&a);
+                    retval.type = kAssemblerTokenTypeIdentifier;
+                    goto break_out;
                 }
                 break;
             default:
