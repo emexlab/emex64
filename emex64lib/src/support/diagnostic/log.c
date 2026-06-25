@@ -263,6 +263,21 @@ void diag_log(diag_level_t level,
                 case 'l':
                     switch(msg[i + 1])
                     {
+                        case 'l':
+                            switch(msg[i + 2])
+                            {
+                                case 'd':
+                                    i += 2;
+                                    putnbr_signed(va_arg(args, int64_t));
+                                    break;
+                                case 'u':
+                                    i += 2;
+                                    putnbr_base_unsigned(va_arg(args, uint64_t), "0123456789");
+                                    break;
+                                default:
+                                    break;
+                            }
+                            break;
                         case 'd':
                             i++;
                             putnbr_signed(va_arg(args, long));

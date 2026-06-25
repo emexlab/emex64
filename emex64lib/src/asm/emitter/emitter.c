@@ -90,6 +90,12 @@ bool assembler_emit_instruction(assembler_line_t *al)
         }
     }
 
+    if(al->token[al->token_cnt - 1]->type == kAssemblerTokenTypeComma)
+    {
+        diag_error(al->token[al->token_cnt - 1], "expected operand after %s '%s'\n", assembler_lexer_str_for_token_type(al->token[al->token_cnt - 1]->type), al->token[al->token_cnt - 1]->str);
+        return false;
+    }
+
     if(operand_total > EMEX64_MAX_ARGS)
     {
         diag_error(al->token[al->token_cnt - 1], "holy smokes, why soo many operands, maximum is %d operands in emex64\n", EMEX64_MAX_ARGS);
@@ -140,7 +146,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
 
         if(opcode_arg_accepts_reg_only(entry, argno))
         {
-            diag_error(operand[0], "expected register identifier, got %s '%s'\n", assembler_lexer_str_for_token_type(operand[0]->type), operand[0]->str);
+            diag_error(operand[0], "expected register identifier, but got %s '%s'\n", assembler_lexer_str_for_token_type(operand[0]->type), operand[0]->str);
             return false;
         }
 
