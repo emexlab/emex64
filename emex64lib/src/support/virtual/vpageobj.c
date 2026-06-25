@@ -23,7 +23,7 @@
  */
 
 #include <emex64lib/support/virtual/vpageobj.h>
-#include <emex64lib/support/diagnostic/log.h>
+#include <emex64lib/support/diagnostic/consumer.h>
 
 DEFINE_EVOBJECT_MAIN_EVENT_HANDLER(vpageobj)
 {
@@ -38,7 +38,7 @@ DEFINE_EVOBJECT_MAIN_EVENT_HANDLER(vpageobj)
     {
         case evObjEventCopy:
         case evObjEventSnapshot:
-            diag_fatal(NULL, "vpageobj_t doesn't support being copied or snapshotted\n");
+            diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "vpageobj_t doesn't support being copied or snapshotted");
             exit(1);
         case evObjEventInit:
             vo->root = vpage_alloc();
