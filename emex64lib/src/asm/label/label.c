@@ -51,7 +51,7 @@ bool assembler_label_append(assembler_token_t *at)
         {
             if(inv->label_scope == NULL)
             {
-                diag_error(at, "local label '%s' was defined out of the scope of a global label, which is illegal\n", at->str);
+                diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "local label '%s' was defined out of the scope of a global label, which is illegal", at->str);
                 return false;
             }
 
@@ -62,7 +62,7 @@ bool assembler_label_append(assembler_token_t *at)
             name = malloc(size);
             if(name == NULL)
             {
-                diag_fatal(at, "out of memory, failed to allocate memory for label difinition '%s'\n", at->str);
+                diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), "out of memory, failed to allocate memory for label difinition '%s'", at->str);
                 return false;
             }
 
@@ -78,7 +78,7 @@ bool assembler_label_append(assembler_token_t *at)
             name = malloc(size);
             if(name == NULL)
             {
-                diag_fatal(at, "out of memory, failed to allocate memory for label difinition '%s'\n", at->str);
+                diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), "out of memory, failed to allocate memory for label difinition '%s'", at->str);
                 return false;
             }
             memcpy(name, at->str, size);
@@ -92,7 +92,7 @@ bool assembler_label_append(assembler_token_t *at)
             name = malloc(size);
             if(name == NULL)
             {
-                diag_fatal(at, "out of memory, failed to allocate memory for label difinition '%s'\n", at->str);
+                diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), "out of memory, failed to allocate memory for label difinition '%s'", at->str);
                 return false;
             }
             memcpy(name, at->str, size - 1);
@@ -109,7 +109,7 @@ bool assembler_label_append(assembler_token_t *at)
             name = malloc(size);
             if(name == NULL)
             {
-                diag_error(at, "failed to allocate memory for this label\n");
+                diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "failed to allocate memory for this label");
                 return false;
             }
             memcpy(name, at->str, size - 1);
@@ -117,7 +117,7 @@ bool assembler_label_append(assembler_token_t *at)
             break;
         }
         default:
-            diag_fatal(at, "this is not a label, report this at 'https://github.com/emexlab/emex64'\n");
+            diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), "this is not a label, report this at 'https://github.com/emexlab/emex64'");
             exit(1);
     }
 
@@ -148,8 +148,8 @@ bool assembler_label_append(assembler_token_t *at)
             return true;
         }
 
-        diag_note(label->at_link, "label '%s' already defined here\n", name);
-        diag_error(at, "duplicated label '%s'\n", name);
+        diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityNote, AT_TO_DLOC(label->at_link), "label '%s' already defined here", name);
+        diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "duplicated label '%s'", name);
         free(name);
         return false;
     }
@@ -163,7 +163,7 @@ bool assembler_label_append(assembler_token_t *at)
     label = calloc(1, sizeof(assembler_label_t));
     if(label == NULL)
     {
-        diag_fatal(NULL, "out of memory, failed to allocate assembler label\n");
+        diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityFatal, NULL, "out of memory, failed to allocate assembler label");
         free(name);
         return false;
     }
@@ -174,7 +174,7 @@ bool assembler_label_append(assembler_token_t *at)
     label->name = name;
     if(!hashmap_puts(inv->label_hashmap, name, label))
     {
-        diag_fatal(NULL, "out of memory, failed to insert label into hashmap\n");
+        diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityFatal, NULL, "out of memory, failed to insert label into hashmap");
         free(label);
         free(name);
         return false;
