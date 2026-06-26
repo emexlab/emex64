@@ -42,6 +42,13 @@ linker_driver_t *linker_driver_alloc(int argc,
         return NULL;
     }
 
+    driver->consumer = linker_diagnostic_consumer_alloc();
+    if(driver->consumer == NULL)
+    {
+        free(driver);
+        return NULL;
+    }
+
     driver->options = linker_options_default;
 
     driver->output_file = NULL;
@@ -80,7 +87,7 @@ linker_driver_t *linker_driver_alloc(int argc,
             driver->output_file = emex_file_alloc(argv[++i], out_data_file_policy);
             if(driver->output_file == NULL)
             {
-                diag_error(NULL, "don't have permission to open file at '%s'\n", argv[i]);
+                diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "don't have permission to open file at '%s'", argv[i]);
                 goto failure;
             }
         }
@@ -93,7 +100,7 @@ linker_driver_t *linker_driver_alloc(int argc,
             emex_file_t *script_file = emex_file_alloc(argv[++i], in_data_file_policy);
             if(script_file == NULL)
             {
-                diag_error(NULL, "unknown or non existing script file '%s'\n", argv[i]);
+                diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "unknown or non existing script file '%s'", argv[i]);
                 goto failure;
             }
             driver->linker_script_file[driver->linker_script_file_cnt++] = script_file;
@@ -103,7 +110,7 @@ linker_driver_t *linker_driver_alloc(int argc,
             emex_file_t *script_file = emex_file_alloc(argv[i] + 2, in_data_file_policy);
             if(script_file == NULL)
             {
-                diag_error(NULL, "unknown or non existing script file '%s'\n", argv[i] + 2);
+                diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "unknown or non existing script file '%s'", argv[i] + 2);
                 goto failure;
             }
             driver->linker_script_file[driver->linker_script_file_cnt++] = script_file;
@@ -121,51 +128,39 @@ linker_driver_t *linker_driver_alloc(int argc,
             emex_file_t *input_file = emex_file_alloc(argv[i], in_data_file_policy);
             if(input_file == NULL)
             {
-                diag_error(NULL, "unknown or non existing input file '%s'\n", argv[i]);
+                diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "unknown or non existing input file '%s'", argv[i]);
                 goto failure;
             }
             driver->input_file[driver->input_file_cnt++] = input_file;
         }
         else
         {
-            diag_error(NULL, "unknown option '%s'\n", argv[i]);
+            diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "unknown option '%s'", argv[i]);
             goto failure;
         }
     }
 
     if(driver->input_file_cnt <= 0)
     {
-        diag_error(NULL, "no input files\n");
+        diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "no input files");
         goto failure;
     }
 
     /* fallback to a.out if not passed */
     if(driver->output_file == NULL)
     {
-        diag_warn(NULL, "no output binary specified, falling back to 'a.out'\n");
+        diagnostic_report(driver->consumer, kDiagnosticSeverityWarning, NULL, "no output binary specified, falling back to 'a.out'");
         driver->output_file = emex_file_alloc("a.out", out_data_file_policy);
         if(driver->output_file == NULL)
         {
-            diag_error(NULL, "don't have permission to open file at 'a.out'\n");
+            diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "don't have permission to open file at 'a.out'");
         }
     }
 
     return driver;
 
 failure:
-    for(uint64_t i = 0; i < driver->input_file_cnt; i++)
-    {
-        emex_file_dealloc(driver->input_file[i]);
-    }
-    free(driver->input_file);
-
-    for(uint64_t i = 0; i < driver->linker_script_file_cnt; i++)
-    {
-        emex_file_dealloc(driver->linker_script_file[i]);
-    }
-    free(driver->linker_script_file);
-
-    free(driver);
+    linker_driver_dealloc(driver);
     return NULL;
 }
 
@@ -183,12 +178,14 @@ void linker_driver_dealloc(linker_driver_t *driver)
     }
     free(driver->linker_script_file);
     emex_file_dealloc(driver->output_file);
+    linker_diagnostic_consumer_emit(driver->consumer);
+    linker_diagnostic_consumer_dealloc(driver->consumer);
     free(driver);
 }
 
 bool linker_driver_drive_the_fucking_car(linker_driver_t *driver)
 {
-    bool success = linker_link(driver->options, driver->input_file, driver->input_file_cnt, driver->linker_script_file, driver->linker_script_file_cnt, driver->output_file);
+    bool success = linker_link(driver->options, driver->consumer, driver->input_file, driver->input_file_cnt, driver->linker_script_file, driver->linker_script_file_cnt, driver->output_file);
     if(!success)
     {
         emex_file_unlink(driver->output_file);

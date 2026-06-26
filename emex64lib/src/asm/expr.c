@@ -156,12 +156,13 @@ bool assembler_eval_const(assembler_token_t **tok, uint64_t count, int64_t *out)
 
     if(e.error)
     {
-        diag_error(e.blame != NULL ? e.blame : tok[0], "%s\n", e.why);
+        assembler_token_t *token = e.blame != NULL ? e.blame : tok[0];
+        diagnostic_report(token->al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(token), "%s", e.why);
         return false;
     }
     if(e.pos != count)
     {
-        diag_error(tok[e.pos], "unexpected %s '%s' after constant expression\n", assembler_lexer_str_for_token_type(tok[e.pos]->type), tok[e.pos]->str);
+        diagnostic_report(tok[e.pos]->al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(tok[e.pos]), "unexpected %s '%s' after constant expression", assembler_lexer_str_for_token_type(tok[e.pos]->type), tok[e.pos]->str);
         return false;
     }
 

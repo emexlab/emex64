@@ -24,24 +24,22 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include <emex64lib/support/diagnostic/log.h>
 #include <emex64lib/linker/linker.h>
 
 const uint8_t ident[EI_NIDENT] = { ELF_MAGIC_0, ELF_MAGIC_1, ELF_MAGIC_2, ELF_MAGIC_3, ELF_CLASS64, ELF_DATA2LSB, EV_CURRENT };
 
-linker_invocation_t *linker_invocation_alloc(linker_options_t options)
+linker_invocation_t *linker_invocation_alloc(linker_options_t options,
+                                             linker_diagnostic_consumer_t *diagnostic_consumer)
 {
-    /*
-    thread_log_diagnostic_options.warning_error = false;
-    thread_log_diagnostic_options.caret_diagnostics = false;
-    thread_log_diagnostic_options.color_diagnostics = true;
-    */
-
     linker_invocation_t *inv = malloc(sizeof(linker_invocation_t));
     if(inv == NULL)
     {
         return NULL;
     }
+
+    inv->consumer = diagnostic_consumer;
 
     inv->sym = NULL;
     inv->obj = NULL;
@@ -102,8 +100,8 @@ bool linker_symbol_append_definition(linker_invocation_t *inv,
     }
     if(sym->defined && sym->addr != addr)
     {
-        diag_error(NULL, "duplicate symbol '%s' in '%s'\n", name, object_path);
-        diag_note(NULL, "symbol '%s' also exists in '%s'\n", name, sym->object_path);
+        diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "duplicate symbol '%s' in '%s'\n", name, object_path);
+        diagnostic_report(inv->consumer, kDiagnosticSeverityNote, NULL, "symbol '%s' also exists in '%s'\n", name, sym->object_path);
         return false;
     }
 

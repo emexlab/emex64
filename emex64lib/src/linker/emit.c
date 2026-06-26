@@ -174,7 +174,7 @@ static uint64_t sym_resolve(linker_invocation_t *inv,
             }
         }
 
-        diag_error(NULL, "undefined symbol '%s', needed by '%s'\n", name, o->file->path);
+        diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "undefined symbol '%s', needed by '%s'", name, o->file->path);
         *success = false;
         return 0;
     }
@@ -200,7 +200,7 @@ static bool obj_apply_relocs(linker_invocation_t *inv,
 
             if(type != R_EMEX64_ABS64)
             {
-                diag_error(NULL, "unsupported relocation type %u in .rela.text\n", type);
+                diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "unsupported relocation type %u in .rela.text", type);
                 return false;
             }
 
@@ -233,7 +233,7 @@ static bool obj_apply_relocs(linker_invocation_t *inv,
 
             if(type != R_EMEX64_ABS64)
             {
-                diag_error(NULL, "unsupported relocation type %u in .rela.data\n", type);
+                diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "unsupported relocation type %u in .rela.data", type);
                 return false;
             }
 
@@ -485,7 +485,7 @@ static bool __linker_link_relocatable(linker_invocation_t *inv,
                     int64_t addend = rela[i].r_addend; \
                     if(type != R_EMEX64_ABS64) \
                     { \
-                        diag_error(NULL, "unsupported relocation type %u\n", type); \
+                        diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "unsupported relocation type %u", type); \
                         continue; \
                     } \
                     uint64_t offset = ((base_addr) + rela[i].r_offset) - (region_base); \
@@ -754,7 +754,7 @@ static bool __linker_link_firmware(linker_invocation_t *inv,
     linker_symbol_t *gsym = linker_symbol_lookup(inv, inv->options.entry_name);
     if(!gsym || !gsym->defined)
     {
-        diag_error(NULL, "entry symbol '%s' not found\n", inv->options.entry_name);
+        diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "entry symbol '%s' not found", inv->options.entry_name);
         vbitwalker_dealloc(vb);
         return false;
     }
@@ -785,13 +785,14 @@ static bool __linker_link_firmware(linker_invocation_t *inv,
 }
 
 bool linker_link(linker_options_t options,
+                 linker_diagnostic_consumer_t *diagnostic_consumer,
                  emex_file_t **input_file,
                  uint64_t input_file_cnt,
                  emex_file_t **linker_script_file,
                  uint64_t linker_script_file_cnt,
                  emex_file_t *output)
 {
-    linker_invocation_t *inv = linker_invocation_alloc(options);
+    linker_invocation_t *inv = linker_invocation_alloc(options, diagnostic_consumer);
     if(inv == NULL)
     {
         return false;
@@ -801,7 +802,7 @@ bool linker_link(linker_options_t options,
     {
         if(!linker_load_object(inv, input_file[i]))
         {
-            diag_error(NULL, "object file \'%s\' couldn't be loaded\n", input_file[i]->path);
+            diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "object file \'%s\' couldn't be loaded", input_file[i]->path);
             linker_invocation_dealloc(inv);
             return false;
         }
@@ -812,7 +813,7 @@ bool linker_link(linker_options_t options,
     {
         if(!linker_script_parse(inv, linker_script_file[i]))
         {
-            diag_error(NULL, "linker script file \'%s\' is problematic\n", linker_script_file[i]->path);
+            diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "linker script file \'%s\' is problematic", linker_script_file[i]->path);
             linker_invocation_dealloc(inv);
             return false;
         }

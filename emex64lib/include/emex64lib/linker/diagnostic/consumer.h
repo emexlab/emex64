@@ -22,30 +22,25 @@
  * SOFTWARE.
  */
 
-#ifndef EMEX64LD_DRIVER_H
-#define EMEX64LD_DRIVER_H
+#ifndef EMEX64LD_DIAGNOSTIC_CONSUMER_H
+#define EMEX64LD_DIAGNOSTIC_CONSUMER_H
 
-#include <stdint.h>
-#include <emex64lib/support/file.h>
-#include <emex64lib/linker/options.h>
-#include <emex64lib/linker/diagnostic/consumer.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <emex64lib/support/virtual/vfd.h>
+#include <emex64lib/support/diagnostic/consumer.h>
 
-typedef struct {
-    linker_options_t options;
-    linker_diagnostic_consumer_t *consumer; /* owned */
+typedef diagnostic_consumer_t linker_diagnostic_consumer_t;
 
-    emex_file_t *output_file;
+typedef struct linker_diagnostic_consumer_context {
+    diagnostic_t **diagnostic;
+    uint64_t diagnostic_cnt;
+    vfd_t *d;
+} linker_diagnostic_consumer_context_t;
 
-    emex_file_t **input_file;           /* borrowed */
-    uint64_t input_file_cnt;
+linker_diagnostic_consumer_t *linker_diagnostic_consumer_alloc();
+void linker_diagnostic_consumer_dealloc(linker_diagnostic_consumer_t *consumer);
 
-    emex_file_t **linker_script_file;   /* borrowed */
-    uint64_t linker_script_file_cnt;
-} linker_driver_t;
+void linker_diagnostic_consumer_emit(linker_diagnostic_consumer_t *consumer);
 
-linker_driver_t *linker_driver_alloc(int argc, const char **argv);
-void linker_driver_dealloc(linker_driver_t *driver);
-
-bool linker_driver_drive_the_fucking_car(linker_driver_t *driver);
-
-#endif /* EMEX64LD_DRIVER_H */
+#endif /* EMEX64LD_DIAGNOSTIC_CONSUMER_H */

@@ -90,7 +90,7 @@ bool linker_script_parse(linker_invocation_t *inv,
             size_t name_len = (size_t)(p - name_start);
             if(name_len == 0)
             {
-                diag_error(NULL, "%s:%d: expected symbol name after PROVIDE\n", script_file->path, lineno);
+                diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "%s:%d: expected symbol name after PROVIDE", script_file->path, lineno);
                 vfd_close(d);
                 return false;
             }
@@ -104,7 +104,7 @@ bool linker_script_parse(linker_invocation_t *inv,
             }
             if(*p != '=')
             {
-                diag_error(NULL, "%s:%d: expected '=' after symbol name\n", script_file->path, lineno);
+                diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "%s:%d: expected '=' after symbol name", script_file->path, lineno);
                 free(sym_name);
                 vfd_close(d);
                 return false;
@@ -129,7 +129,7 @@ bool linker_script_parse(linker_invocation_t *inv,
 
             if(!*expr_start)
             {
-                diag_error(NULL, "%s:%d: empty expression\n", script_file->path, lineno);
+                diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "%s:%d: empty expression", script_file->path, lineno);
                 free(sym_name);
                 vfd_close(d);
                 return false;
@@ -138,7 +138,7 @@ bool linker_script_parse(linker_invocation_t *inv,
             script_sym_t *new = realloc(inv->script_syms, (inv->script_sym_cnt + 1) * sizeof(script_sym_t));
             if(new == NULL)
             {
-                diag_fatal(NULL, "out of memory\n", script_file->path, lineno);
+                diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "out of memory", script_file->path, lineno);
                 free(sym_name);
                 vfd_close(d);
                 return false;
@@ -151,7 +151,7 @@ bool linker_script_parse(linker_invocation_t *inv,
             continue;
         }
 
-        diag_error(NULL, "%s:%d: unrecognised linker script directive: '%s'\n", script_file->path, lineno, p);
+        diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "%s:%d: unrecognised linker script directive: '%s'", script_file->path, lineno, p);
         vfd_close(d);
         return false;
     }
@@ -198,7 +198,7 @@ bool linker_script_apply(linker_invocation_t *inv,
             value = (uint64_t)strtoull(expr, &endptr, 0);
             if(!endptr || *endptr != '\0')
             {
-                diag_error(NULL, "unknown expression '%s' in linker script\n", expr);
+                diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "unknown expression '%s' in linker script\n", expr);
                 return false;
             }
         }

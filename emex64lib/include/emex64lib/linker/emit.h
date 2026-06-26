@@ -29,9 +29,10 @@
 #include <emex64lib/support/file.h>
 #include <emex64lib/linker/type.h>
 #include <emex64lib/linker/options.h>
+#include <emex64lib/linker/diagnostic/consumer.h>
 
 typedef struct linker_invocation linker_invocation_t;
 
-bool linker_link(linker_options_t options, emex_file_t **input_file, uint64_t input_file_cnt, emex_file_t **linker_script_file, uint64_t linker_script_file_cnt, emex_file_t *output);
+bool linker_link(linker_options_t options, linker_diagnostic_consumer_t *diagnostic_consumer, emex_file_t **input_file, uint64_t input_file_cnt, emex_file_t **linker_script_file, uint64_t linker_script_file_cnt, emex_file_t *output);
 
 #endif /* EMEX64LD_EMIT_H */

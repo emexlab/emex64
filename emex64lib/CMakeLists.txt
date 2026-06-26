@@ -141,6 +141,9 @@ add_library(emex64 ${LIB_TYPE}
     src/linker/script.c
     src/linker/emit.c
 
+        ## Diagnostic API (Errors, Warnings, Notes, etc ^^)
+        src/linker/diagnostic/consumer.c
+
     # C Compiler
     src/c/ASTUnit.c
 )
