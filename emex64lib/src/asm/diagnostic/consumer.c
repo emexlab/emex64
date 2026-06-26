@@ -106,41 +106,15 @@ static void __assembler_diagnostic_consumer_consume_diagnostic_handler(diagnosti
 {
     assembler_diagnostic_consumer_context_t *ctx = consumer->ctx;
 
-    if(diagnostic->location != NULL)
+    void *newp = realloc(ctx->diagnostic, (ctx->diagnostic_cnt + 1) * sizeof(diagnostic_t*));
+    if(newp != NULL)
     {
-        vfdprintf(ctx->d, "%s:%llu:%llu: ", diagnostic->location->file_name, diagnostic->location->ln, diagnostic->location->col);
+        ctx->diagnostic = newp;
+        ctx->diagnostic[ctx->diagnostic_cnt++] = diagnostic;
+        return;
     }
 
-    /* fallback when no consumer was specified */
-    switch(diagnostic->severity)
-    {
-        case kDiagnosticSeverityNote:
-            vfdprintf(ctx->d, "%snote:", __assembler_diagnostic_color(ctx, C_NOTE));
-            break;
-        case kDiagnosticSeverityWarning:
-            vfdprintf(ctx->d, "%swarning:", __assembler_diagnostic_color(ctx, C_WARN));
-            break;
-        case kDiagnosticSeverityError:
-            vfdprintf(ctx->d, "%serror:", __assembler_diagnostic_color(ctx, C_ERROR));
-            break;
-        case kDiagnosticSeverityFatal:
-        default:
-            vfdprintf(ctx->d, "%sfatal:", __assembler_diagnostic_color(ctx, C_ERROR));
-            break;
-    }
-    vfdprintf(ctx->d, "%s ", __assembler_diagnostic_color(ctx, C_RESET));
-
-    vfdprintf(ctx->d, "%s\n", diagnostic->str);
-
-    if(ctx->options.caret_diagnostics &&
-       diagnostic->location != NULL)
-    {
-        __assembler_diagnostic_consumer_show_caret_preview(ctx, diagnostic);
-    }
-
-    /* dont forget to flush the toilet otherwise things get stinky */
-    fflush(stderr);
-
+    /* failed to be appended so to the waste with it with it.. */
     diagnostic_dealloc(diagnostic);
 }
 
@@ -192,4 +166,49 @@ void assembler_diagnostic_consumer_dealloc(assembler_diagnostic_consumer_t *cons
     free(ctx->diagnostic);
     free(consumer->ctx);
     free(consumer);
+}
+
+void assembler_diagnostic_consumer_emit(assembler_diagnostic_consumer_t *consumer)
+{
+    assembler_diagnostic_consumer_context_t *ctx = consumer->ctx;
+
+    /* tiny diagnostic engine ^^ */
+    for(uint64_t i = 0; i < ctx->diagnostic_cnt; i++)
+    {
+        diagnostic_t *diagnostic = ctx->diagnostic[i];
+        if(diagnostic->location != NULL)
+        {
+            vfdprintf(ctx->d, "%s:%llu:%llu: ", diagnostic->location->file_name, diagnostic->location->ln, diagnostic->location->col);
+        }
+
+        /* fallback when no consumer was specified */
+        switch(diagnostic->severity)
+        {
+            case kDiagnosticSeverityNote:
+                vfdprintf(ctx->d, "%snote:", __assembler_diagnostic_color(ctx, C_NOTE));
+                break;
+            case kDiagnosticSeverityWarning:
+                vfdprintf(ctx->d, "%swarning:", __assembler_diagnostic_color(ctx, C_WARN));
+                break;
+            case kDiagnosticSeverityError:
+                vfdprintf(ctx->d, "%serror:", __assembler_diagnostic_color(ctx, C_ERROR));
+                break;
+            case kDiagnosticSeverityFatal:
+            default:
+                vfdprintf(ctx->d, "%sfatal:", __assembler_diagnostic_color(ctx, C_ERROR));
+                break;
+        }
+        vfdprintf(ctx->d, "%s ", __assembler_diagnostic_color(ctx, C_RESET));
+
+        vfdprintf(ctx->d, "%s\n", diagnostic->str);
+
+        if(ctx->options.caret_diagnostics &&
+           diagnostic->location != NULL)
+        {
+            __assembler_diagnostic_consumer_show_caret_preview(ctx, diagnostic);
+        }
+
+        /* dont forget to flush the toilet otherwise things get stinky */
+        vfd_sync(ctx->d);
+    }
 }

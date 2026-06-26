@@ -53,4 +53,6 @@ typedef struct assembler_diagnostic_consumer_context {
 assembler_diagnostic_consumer_t *assembler_diagnostic_consumer_alloc(assembler_diagnostic_options_t options);
 void assembler_diagnostic_consumer_dealloc(assembler_diagnostic_consumer_t *consumer);
 
+void assembler_diagnostic_consumer_emit(assembler_diagnostic_consumer_t *consumer);
+
 #endif /* EMEX64ASM_DIAGNOSTIC_CONSUMER_H */
