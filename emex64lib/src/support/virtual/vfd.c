@@ -64,6 +64,7 @@ vfd_t *vfd_open(const char *path,
 
 vfd_t *vfd_open_fd(int fd)
 {
+    fd = dup(fd);
     if(fd < 0)
     {
         return NULL;
