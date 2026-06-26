@@ -40,8 +40,6 @@ typedef struct {
 } assembler_macro_definition_t;
 
 typedef struct assembler_invocation {
-    assembler_invocation_options_t options;     /* borrowed */
-
     assembler_diagnostic_consumer_t *consumer;  /* borrowed */
     
     emex_file_t **file;
@@ -68,7 +66,7 @@ typedef struct assembler_invocation {
     uint64_t bss_section_size;
 } assembler_invocation_t;
 
-assembler_invocation_t *assembler_invocation_alloc(assembler_invocation_options_t options, assembler_diagnostic_consumer_t *consumer);
+assembler_invocation_t *assembler_invocation_alloc(assembler_diagnostic_consumer_t *consumer);
 void assembler_invocation_dealloc(assembler_invocation_t *inv);
 
 bool assembler_invocation_emit(assembler_invocation_t *inv, emex_file_t *input, emex_file_t *output);

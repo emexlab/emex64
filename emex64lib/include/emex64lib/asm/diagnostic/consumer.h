@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <emex64lib/support/virtual/vfd.h>
 #include <emex64lib/support/diagnostic/consumer.h>
+#include <emex64lib/asm/options.h>
 
 #define AT_TO_DLOC(at) &(diagnostic_location_t){ \
                 .file_name = (at)->al->inv->file[(at)->al->file_idx]->path, \
@@ -40,20 +41,16 @@
                     .end_col = (at)->column_num + (at)->real_len } \
             }
 
-typedef struct assembler_invocation assembler_invocation_t;
 typedef diagnostic_consumer_t assembler_diagnostic_consumer_t;
 
 typedef struct assembler_diagnostic_consumer_context {
-    assembler_invocation_t *inv;    /* borrowed */
+    assembler_diagnostic_options_t options;
     diagnostic_t **diagnostic;
     uint64_t diagnostic_cnt;
     vfd_t *d;
 } assembler_diagnostic_consumer_context_t;
 
-assembler_diagnostic_consumer_t *assembler_diagnostic_consumer_alloc();
+assembler_diagnostic_consumer_t *assembler_diagnostic_consumer_alloc(assembler_diagnostic_options_t options);
 void assembler_diagnostic_consumer_dealloc(assembler_diagnostic_consumer_t *consumer);
-
-void assembler_diagnostic_consumer_bind_invocation(assembler_diagnostic_consumer_t *consumer, assembler_invocation_t *inv);
-void assembler_diagnostic_consumer_unbind_invocation(assembler_diagnostic_consumer_t *consumer);
 
 #endif /* EMEX64ASM_DIAGNOSTIC_CONSUMER_H */

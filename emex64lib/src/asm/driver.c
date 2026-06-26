@@ -132,7 +132,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
                                const char **argv)
 {
     /* better starting with the default assembler options ^^ */
-    driver->invocation_options = assembler_invocation_options_default;
+    driver->diagnostic_options = assembler_diagnostic_options_default;
 
     driver->output_path = NULL;
     driver->input_file_count = 0;
@@ -209,19 +209,19 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
             }
             else if(strcmp(flag, "caret-diagnostics") == 0)
             {
-                driver->invocation_options.caret_diagnostics = true;
+                driver->diagnostic_options.caret_diagnostics = true;
             }
             else if(strcmp(flag, "no-caret-diagnostics") == 0)
             {
-                driver->invocation_options.caret_diagnostics = false;
+                driver->diagnostic_options.caret_diagnostics = false;
             }
             else if(strcmp(flag, "color-diagnostics") == 0)
             {
-                driver->invocation_options.color_diagnostics = true;
+                driver->diagnostic_options.color_diagnostics = true;
             }
             else if(strcmp(flag, "no-color-diagnostics") == 0)
             {
-                driver->invocation_options.color_diagnostics = false;
+                driver->diagnostic_options.color_diagnostics = false;
             }
             else
             {
@@ -272,19 +272,19 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
 
             if(strcmp(flag, "error") == 0)
             {
-                driver->invocation_options.warning_error = true;
+                driver->diagnostic_options.warning_error = true;
             }
             else if(strcmp(flag, "no-error") == 0)
             {
-                driver->invocation_options.warning_error = false;
+                driver->diagnostic_options.warning_error = false;
             }
             else if(strcmp(flag, "deprecated") == 0)
             {
-                driver->invocation_options.warning_deprecated = true;
+                driver->diagnostic_options.warning_deprecated = true;
             }
             else if(strcmp(flag, "no-deprecated") == 0)
             {
-                driver->invocation_options.warning_deprecated = false;
+                driver->diagnostic_options.warning_deprecated = false;
             }
             else
             {
@@ -508,12 +508,12 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
                 ratchet_args_append(&ra, input_path);
 
                 /* feature flags */
-                ratchet_args_append(&ra, driver->invocation_options.caret_diagnostics ? "-fcaret-diagnostics" : "-fno-caret-diagnostics");
-                ratchet_args_append(&ra, driver->invocation_options.color_diagnostics ? "-fcolor-diagnostics" : "-fno-color-diagnostics");
+                ratchet_args_append(&ra, driver->diagnostic_options.caret_diagnostics ? "-fcaret-diagnostics" : "-fno-caret-diagnostics");
+                ratchet_args_append(&ra, driver->diagnostic_options.color_diagnostics ? "-fcolor-diagnostics" : "-fno-color-diagnostics");
 
                 /* warning flags */
-                ratchet_args_append(&ra, driver->invocation_options.warning_error ? "-Werror" : "-Wno-error");
-                ratchet_args_append(&ra, driver->invocation_options.warning_deprecated ? "-Wdeprecated" : "-Wno-deprecated");
+                ratchet_args_append(&ra, driver->diagnostic_options.warning_error ? "-Werror" : "-Wno-error");
+                ratchet_args_append(&ra, driver->diagnostic_options.warning_deprecated ? "-Wdeprecated" : "-Wno-deprecated");
 
 
                 for(size_t j = 0; j < driver->inc_dir_cnt; j++)
@@ -648,7 +648,10 @@ assembler_driver_t *assembler_driver_alloc(int argc,
         return NULL;
     }
 
-    driver->consumer = assembler_diagnostic_consumer_alloc();
+    /* need default settings */
+    driver->diagnostic_options = assembler_diagnostic_options_default;
+
+    driver->consumer = assembler_diagnostic_consumer_alloc(driver->diagnostic_options);
     if(driver->consumer == NULL)
     {
         assembler_driver_dealloc(driver);
@@ -672,11 +675,11 @@ assembler_driver_t *assembler_driver_alloc(int argc,
         fprintf(stderr, "    verbose: %d,\n", driver->options.verbose);
         fprintf(stderr, "    in_process: %d,\n", driver->options.in_process);
         fprintf(stderr, "}\n");;
-        fprintf(stderr, "invocation_options: {\n");
-        fprintf(stderr, "    caret_diagnostics: %d,\n", driver->invocation_options.caret_diagnostics);
-        fprintf(stderr, "    color_diagnostics: %d,\n", driver->invocation_options.color_diagnostics);
-        fprintf(stderr, "    warning_error: %d,\n", driver->invocation_options.warning_error);
-        fprintf(stderr, "    warning_deprecated: %d,\n", driver->invocation_options.warning_deprecated);
+        fprintf(stderr, "diagnostic_options: {\n");
+        fprintf(stderr, "    caret_diagnostics: %d,\n", driver->diagnostic_options.caret_diagnostics);
+        fprintf(stderr, "    color_diagnostics: %d,\n", driver->diagnostic_options.color_diagnostics);
+        fprintf(stderr, "    warning_error: %d,\n", driver->diagnostic_options.warning_error);
+        fprintf(stderr, "    warning_deprecated: %d,\n", driver->diagnostic_options.warning_deprecated);
         fprintf(stderr, "}\n");;
         fprintf(stderr, "output_path: %s\n", driver->output_path);
 
@@ -811,7 +814,7 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
 {
     if(driver->options.assemble_only)
     {
-        assembler_invocation_t *inv = assembler_invocation_alloc(driver->invocation_options, driver->consumer);
+        assembler_invocation_t *inv = assembler_invocation_alloc(driver->consumer);
         if(inv == NULL)
         {
             return false;

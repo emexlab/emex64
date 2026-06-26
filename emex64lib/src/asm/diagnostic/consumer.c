@@ -29,10 +29,10 @@
 #include <emex64lib/asm/diagnostic/consumer.h>
 #include <emex64lib/asm/invocation.h>
 
-static const char *__assembler_diagnostic_color(assembler_invocation_t *inv,
+static const char *__assembler_diagnostic_color(assembler_diagnostic_consumer_context_t *ctx,
                                                 char *str)
 {
-    if(inv->options.color_diagnostics)
+    if(ctx->options.color_diagnostics)
     {
         return str;
     }
@@ -42,8 +42,7 @@ static const char *__assembler_diagnostic_color(assembler_invocation_t *inv,
     }
 }
 
-static void __assembler_diagnostic_consumer_show_caret_preview(assembler_invocation_t *inv,
-                                                               vfd_t *d,
+static void __assembler_diagnostic_consumer_show_caret_preview(assembler_diagnostic_consumer_context_t *ctx,
                                                                diagnostic_t *diagnostic)
 {
     const char *src = diagnostic->location->line;
@@ -72,34 +71,34 @@ static void __assembler_diagnostic_consumer_show_caret_preview(assembler_invocat
 
     for(int i = 0; i < w - nlen; i++)
     {
-        vfd_putc(d, ' ');
+        vfd_putc(ctx->d, ' ');
     }
-    vfd_puts(d, numbuf);
-    vfd_puts(d, " | ");
-    vfd_puts(d, src);
-    vfd_putc(d, '\n');
+    vfd_puts(ctx->d, numbuf);
+    vfd_puts(ctx->d, " | ");
+    vfd_puts(ctx->d, src);
+    vfd_putc(ctx->d, '\n');
 
     for(int i = 0; i < w + 1; i++)
     {
-        vfd_putc(d, ' ');
+        vfd_putc(ctx->d, ' ');
     }
-    vfd_puts(d, "| ");
+    vfd_puts(ctx->d, "| ");
     size_t indent = diagnostic->location->range.start_col > 0 ? diagnostic->location->range.start_col - 1 : 0;
     for(size_t i = 0; i < indent && src[i] != '\0'; i++)
     {
-        vfd_putc(d, src[i] == '\t' ? '\t' : ' ');
+        vfd_putc(ctx->d, src[i] == '\t' ? '\t' : ' ');
     }
 
-    vfd_puts(d, __assembler_diagnostic_color(inv, C_BOLD));
-    vfd_puts(d, __assembler_diagnostic_color(inv, C_CARET));
-    vfd_putc(d, '^');
+    vfd_puts(ctx->d, __assembler_diagnostic_color(ctx, C_BOLD));
+    vfd_puts(ctx->d, __assembler_diagnostic_color(ctx, C_CARET));
+    vfd_putc(ctx->d, '^');
     size_t span = diagnostic->location->range.end_col > diagnostic->location->range.start_col ? diagnostic->location->range.end_col - diagnostic->location->range.start_col : 1;
     for(size_t i = 1; i < span; i++)
     {
-        vfd_putc(d, '~');
+        vfd_putc(ctx->d, '~');
     }
-    vfd_puts(d, __assembler_diagnostic_color(inv, C_RESET));
-    vfd_putc(d, '\n');
+    vfd_puts(ctx->d, __assembler_diagnostic_color(ctx, C_RESET));
+    vfd_putc(ctx->d, '\n');
 }
 
 static void __assembler_diagnostic_consumer_consume_diagnostic_handler(diagnostic_consumer_t *consumer,
@@ -111,33 +110,32 @@ static void __assembler_diagnostic_consumer_consume_diagnostic_handler(diagnosti
     {
         vfdprintf(ctx->d, "%s:%llu:%llu: ", diagnostic->location->file_name, diagnostic->location->ln, diagnostic->location->col);
     }
-    
+
     /* fallback when no consumer was specified */
     switch(diagnostic->severity)
     {
         case kDiagnosticSeverityNote:
-            vfdprintf(ctx->d, "%snote:", __assembler_diagnostic_color(ctx->inv, C_NOTE));
+            vfdprintf(ctx->d, "%snote:", __assembler_diagnostic_color(ctx, C_NOTE));
             break;
         case kDiagnosticSeverityWarning:
-            vfdprintf(ctx->d, "%swarning:", __assembler_diagnostic_color(ctx->inv, C_WARN));
+            vfdprintf(ctx->d, "%swarning:", __assembler_diagnostic_color(ctx, C_WARN));
             break;
         case kDiagnosticSeverityError:
-            vfdprintf(ctx->d, "%serror:", __assembler_diagnostic_color(ctx->inv, C_ERROR));
+            vfdprintf(ctx->d, "%serror:", __assembler_diagnostic_color(ctx, C_ERROR));
             break;
         case kDiagnosticSeverityFatal:
         default:
-            vfdprintf(ctx->d, "%sfatal:", __assembler_diagnostic_color(ctx->inv, C_ERROR));
+            vfdprintf(ctx->d, "%sfatal:", __assembler_diagnostic_color(ctx, C_ERROR));
             break;
     }
-    vfdprintf(ctx->d, "%s ", __assembler_diagnostic_color(ctx->inv, C_RESET));
+    vfdprintf(ctx->d, "%s ", __assembler_diagnostic_color(ctx, C_RESET));
 
     vfdprintf(ctx->d, "%s\n", diagnostic->str);
 
-    if(ctx->inv != NULL &&
-       ctx->inv->options.caret_diagnostics &&
+    if(ctx->options.caret_diagnostics &&
        diagnostic->location != NULL)
     {
-        __assembler_diagnostic_consumer_show_caret_preview(ctx->inv, ctx->d, diagnostic);
+        __assembler_diagnostic_consumer_show_caret_preview(ctx, diagnostic);
     }
 
     /* dont forget to flush the toilet otherwise things get stinky */
@@ -146,7 +144,7 @@ static void __assembler_diagnostic_consumer_consume_diagnostic_handler(diagnosti
     diagnostic_dealloc(diagnostic);
 }
 
-assembler_diagnostic_consumer_t *assembler_diagnostic_consumer_alloc()
+assembler_diagnostic_consumer_t *assembler_diagnostic_consumer_alloc(assembler_diagnostic_options_t options)
 {
     assembler_diagnostic_consumer_t *consumer = malloc(sizeof(assembler_diagnostic_consumer_t));
     if(consumer == NULL)
@@ -162,7 +160,7 @@ assembler_diagnostic_consumer_t *assembler_diagnostic_consumer_alloc()
     }
 
     assembler_diagnostic_consumer_context_t *ctx = consumer->ctx;
-    ctx->inv = NULL;
+    ctx->options = options;
     ctx->diagnostic = NULL;
     ctx->diagnostic_cnt = 0;
     ctx->d = vfd_open_fd(STDERR_FILENO);
@@ -195,15 +193,3 @@ void assembler_diagnostic_consumer_dealloc(assembler_diagnostic_consumer_t *cons
     free(consumer->ctx);
     free(consumer);
 }
-
-void assembler_diagnostic_consumer_bind_invocation(assembler_diagnostic_consumer_t *consumer,
-                                                   assembler_invocation_t *inv)
-{
-    ((assembler_diagnostic_consumer_context_t*)consumer->ctx)->inv = inv;
-}
-
-void assembler_diagnostic_consumer_unbind_invocation(assembler_diagnostic_consumer_t *consumer)
-{
-    ((assembler_diagnostic_consumer_context_t*)consumer->ctx)->inv = NULL;
-}
-

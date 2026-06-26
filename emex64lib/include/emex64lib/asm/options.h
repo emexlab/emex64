@@ -41,9 +41,9 @@ typedef struct assembler_invocation_options {
     /* warnings */
     bool warning_error;             /* default: false */
     bool warning_deprecated;        /* default: true */
-} assembler_invocation_options_t;
+} assembler_diagnostic_options_t;
 
 extern assembler_driver_options_t assembler_driver_options_default;
-extern assembler_invocation_options_t assembler_invocation_options_default;
+extern assembler_diagnostic_options_t assembler_diagnostic_options_default;
 
 #endif /* EMEX64ASM_OPTIONS_H */

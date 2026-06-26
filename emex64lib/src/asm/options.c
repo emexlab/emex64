@@ -30,7 +30,7 @@ assembler_driver_options_t assembler_driver_options_default = {
     .in_process = false,
 };
 
-assembler_invocation_options_t assembler_invocation_options_default = {
+assembler_diagnostic_options_t assembler_diagnostic_options_default = {
     .warning_error = false,
     .warning_deprecated = true,
     .caret_diagnostics = true,
