@@ -157,7 +157,19 @@ int main(void)
         return 1;
     }
 
-    success = linker_link(linker_options_default, input_file, 1, NULL, 0, firmware_file);
+    linker_diagnostic_consumer_t *lnkconsumer = linker_diagnostic_consumer_alloc();
+    if(lnkconsumer == NULL)
+    {
+        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate linkers consumer");
+        emex_file_dealloc(firmware_file);
+        free(input_file);
+        emex_file_dealloc(object_file);
+        return 1;
+    }
+
+    success = linker_link(linker_options_default, lnkconsumer, input_file, 1, NULL, 0, firmware_file);
+    linker_diagnostic_consumer_emit(lnkconsumer);
+    linker_diagnostic_consumer_dealloc(lnkconsumer);
     free(input_file);
     emex_file_dealloc(object_file);
     if(!success)

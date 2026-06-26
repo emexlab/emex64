@@ -296,37 +296,37 @@ bool emex_file_map(emex_file_t *f)
                 return false;
             }
 
-            f->vo = evo_alloc_fastpath(vpageobj);
-            if(f->vo == NULL)
+            f->vpageObjRef = VpageObjCreateWithVpage(p);
+            if(f->vpageObjRef == NULL)
             {
                 vpage_dealloc(p);
                 return false;
             }
-
-            vpageobj_set_root(f->vo, p, NULL);
             break;
         }
         case kVFDTypeVirtual:
         {
-            if(!evo_retain(f->d->vd.p))
+            if(!EVRetain(f->d->vd.vpageObjRef))
             {
                 return false;
             }
 
-            vpageobj_t *vo = f->d->vd.p;
-            if(!vpage_bind_page(vo->root))
+            VpageObjRef *vpageObjRef = f->d->vd.vpageObjRef;
+            if(!VpageObjMergePage(vpageObjRef))
             {
-                evo_release(vo);
+                EVRelease(vpageObjRef);
                 return false;
             }
 
-            f->vo = vo;
+            f->vpageObjRef = vpageObjRef;
             break;
         }
     }
 
-    f->content = (char*)f->vo->root->p;
-    f->len = f->vo->root->len;
+
+    vpage_t *vpage = VpageObjGetVpage(f->vpageObjRef);
+    f->content = (char*)vpage->p;
+    f->len = vpage->len;
 
     return true;
 }
@@ -335,7 +335,7 @@ void emex_file_unmap(emex_file_t *f)
 {
     if(f->content != MAP_FAILED)
     {
-        evo_release(f->vo);
+        EVRelease(f->vpageObjRef);
         f->content = MAP_FAILED;
         f->len = 0;
     }

@@ -66,7 +66,7 @@ typedef struct emex_file {
     char *content;          /* mapped file contents */
     size_t len;             /* lenght of the mapped file contents */
     vfd_t *d;               /* file descriptor that gets duped by emex_file_dup_fd */
-    vpageobj_t *vo;         /* virtual page object */
+    VpageObjRef vpageObjRef;   /* virtual page object */
     kEmexFileType type;
     emex_file_policy_t policy;
 } emex_file_t;

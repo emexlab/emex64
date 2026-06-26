@@ -228,7 +228,7 @@ bool emex64_memory_load_image(emex64_memory_t *memory,
         return false;
     }
 
-    ssize_t s = vpage_read(file->vo->root, 0, memory->memory, image_size);
+    ssize_t s = VpageObjRead(file->vpageObjRef, 0, memory->memory, image_size);
 
     if((size_t)s < image_size)
     {

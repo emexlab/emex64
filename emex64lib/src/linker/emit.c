@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
 #include <emex64lib/support/diagnostic/log.h>
 #include <emex64lib/vm/core.h>
 #include <emex64lib/linker/emit.h>

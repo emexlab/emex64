@@ -22,53 +22,124 @@
  * SOFTWARE.
  */
 
+#include <pthread.h>
+#include <assert.h>
 #include <emex64lib/support/virtual/vpageobj.h>
-#include <emex64lib/support/diagnostic/consumer.h>
 
-DEFINE_EVOBJECT_MAIN_EVENT_HANDLER(vpageobj)
+typedef struct VpageObj {
+    EVObject header;
+    vpage_t *root;
+    size_t extra_size_marker;
+} *VpageObj;
+
+void __VpageObjDeinit(VpageObjRef ref)
 {
-    if(evarr == NULL)
+    VpageObj obj = (VpageObj)ref;
+    if(obj->root != NULL)
     {
-        return (int64_t)sizeof(vpageobj_t);
-    }
-
-    vpageobj_t *vo = (vpageobj_t*)evarr[0];
-
-    switch(type)
-    {
-        case evObjEventCopy:
-        case evObjEventSnapshot:
-            diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "vpageobj_t doesn't support being copied or snapshotted");
-            exit(1);
-        case evObjEventInit:
-            vo->root = vpage_alloc();
-            if(vo->root == NULL)
-            {
-                return -1;
-            }
-
-            vo->extra_size_marker = 0;
-
-            return 0;
-        case evObjEventDeinit:
-            vpage_dealloc(vo->root);
-            [[fallthrough]];
-        default:
-            return 0;
+        vpage_dealloc(obj->root);
     }
 }
 
-void vpageobj_set_root(vpageobj_t *vo,
-                       vpage_t *p,
-                       vpage_t **old_out)
+EVClass VpageObjClass = {
+    .name = "VpageObj",
+    .typeID = kEVNotATypeID,
+    .size = sizeof(struct VpageObj),
+    .init = NULL,
+    .deinit = __VpageObjDeinit,
+    .copy = NULL,
+};
+
+static void VpageObjRegisterClass(void)
 {
-    if(old_out != NULL)
+    EVClassRegister(&VpageObjClass);
+}
+
+EVTypeID VpageObjGetType(void)
+{
+    static pthread_once_t once = PTHREAD_ONCE_INIT;
+    pthread_once(&once, VpageObjRegisterClass);
+    return VpageObjClass.typeID;
+}
+
+VpageObjRef VpageObjCreate()
+{
+    vpage_t *vpage = vpage_alloc();
+    if(vpage == NULL)
     {
-        *old_out = vo->root;
+        return NULL;
     }
-    else
+
+    return VpageObjCreateWithVpage(vpage);
+}
+
+VpageObjRef VpageObjCreateWithVpage(vpage_t *vpage)
+{
+    assert(vpage != NULL);
+
+    VpageObj obj = EVAlloc(VpageObjGetType());
+    if(obj == NULL)
     {
-        vpage_dealloc(vo->root);
+        return NULL;
     }
-    vo->root = p;
+
+    obj->root = vpage;
+    obj->extra_size_marker = 0;
+
+    return obj;
+}
+
+vpage_t *VpageObjGetVpage(VpageObjRef vpageObjRef)
+{
+    VpageObj obj = (VpageObj)vpageObjRef;
+    return obj->root;
+}
+
+size_t VpageObjGetSize(VpageObjRef vpageObjRef)
+{
+    VpageObj obj = (VpageObj)vpageObjRef;
+    return vpage_get_size(obj->root);
+}
+
+bool VpageObjExtendPage(VpageObjRef vpageObjRef)
+{
+    VpageObj obj = (VpageObj)vpageObjRef;
+    return vpage_gib_page(obj->root);
+}
+
+bool VpageObjMergePage(VpageObjRef vpageObjRef)
+{
+    VpageObj obj = (VpageObj)vpageObjRef;
+    return vpage_bind_page(obj->root);
+}
+
+size_t VpageObjWrite(VpageObjRef vpageObjRef,
+                     size_t off,
+                     const uint8_t *b,
+                     size_t len)
+{
+    VpageObj obj = (VpageObj)vpageObjRef;
+    return vpage_write(obj->root, off, b, len);
+}
+
+size_t VpageObjRead(VpageObjRef vpageObjRef,
+                    size_t off,
+                    uint8_t *b,
+                    size_t len)
+{
+    VpageObj obj = (VpageObj)vpageObjRef;
+    return vpage_read(obj->root, off, b, len);
+}
+
+size_t VpageObjGetEndMarker(VpageObjRef vpageObjRef)
+{
+    VpageObj obj = (VpageObj)vpageObjRef;
+    return obj->extra_size_marker;
+}
+
+void VpageObjSetEndMarker(VpageObjRef vpageObjRef,
+                          size_t endMarker)
+{
+    VpageObj obj = (VpageObj)vpageObjRef;
+    obj->extra_size_marker = endMarker;
 }

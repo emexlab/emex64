@@ -33,14 +33,22 @@
 #include <evObj/evObj.h>
 #include <emex64lib/support/virtual/vpage.h>
 
-typedef struct vpageobj {
-    evobject_t header;
-    vpage_t *root;
-    size_t extra_size_marker;   /* for vfd */
-} vpageobj_t;
+typedef EVObjectRef VpageObjRef;
 
-DEFINE_EVOBJECT_MAIN_EVENT_HANDLER(vpageobj);
+VpageObjRef VpageObjCreate();
+VpageObjRef VpageObjCreateWithVpage(vpage_t *vpage);
 
-void vpageobj_set_root(vpageobj_t *vo, vpage_t *p, vpage_t **old_out);
+vpage_t *VpageObjGetVpage(VpageObjRef vpageObjRef);
+
+size_t VpageObjGetSize(VpageObjRef vpageObjRef);
+bool VpageObjExtendPage(VpageObjRef vpageObjRef);
+bool VpageObjMergePage(VpageObjRef vpageObjRef);
+
+size_t VpageObjWrite(VpageObjRef vpageObjRef, size_t off, const uint8_t *b, size_t len);
+size_t VpageObjRead(VpageObjRef vpageObjRef, size_t off, uint8_t *b, size_t len);
+
+/* need to be replaced */
+size_t VpageObjGetEndMarker(VpageObjRef vpageObjRef);
+void VpageObjSetEndMarker(VpageObjRef vpageObjRef, size_t endMarker);
 
 #endif /* EMEX64_VPAGEOBJ_H */

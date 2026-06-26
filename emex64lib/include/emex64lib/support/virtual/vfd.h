@@ -45,7 +45,7 @@ typedef struct vfd {
 
         struct {
             off_t off;
-            vpageobj_t *p;
+            VpageObjRef vpageObjRef;
         } vd;
     };
 } vfd_t;

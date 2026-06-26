@@ -89,10 +89,10 @@ vfd_t *vfd_vopen()
     }
 
     d->type = kVFDTypeVirtual;
-    d->vd.p = evo_alloc_fastpath(vpageobj);
+    d->vd.vpageObjRef = VpageObjCreate();
     d->vd.off = 0;
 
-    if(d->vd.p == NULL)
+    if(d->vd.vpageObjRef == NULL)
     {
         return NULL;
     }
@@ -109,7 +109,7 @@ int vfd_close(vfd_t *d)
             vret = close(d->fd);
             break;
         case kVFDTypeVirtual:
-            evo_release(d->vd.p);
+            EVRelease(d->vd.vpageObjRef);
             vret = 0;
             break;
     }
@@ -140,11 +140,11 @@ vfd_t *vfd_dup(vfd_t *d)
         case kVFDTypeVirtual:
             /* copy entire state */
             nd->vd.off = d->vd.off;
-            if(!evo_retain(d->vd.p))
+            nd->vd.vpageObjRef = EVRetain(d->vd.vpageObjRef);
+            if(nd->vd.vpageObjRef == NULL)
             {
                 goto fail;
             }
-            nd->vd.p = d->vd.p;
             break;
         default:
         fail:
@@ -165,7 +165,7 @@ ssize_t vfd_read(vfd_t *d,
             return read(d->fd, buf, count);
         case kVFDTypeVirtual:
         {
-            ssize_t vret = (ssize_t)vpage_read(d->vd.p->root, (size_t)d->vd.off, buf, count);
+            ssize_t vret = (ssize_t)VpageObjRead(d->vd.vpageObjRef, (size_t)d->vd.off, buf, count);
             if(vret > 0)
             {
                 d->vd.off += vret;
@@ -189,25 +189,25 @@ ssize_t vfd_write(vfd_t *d,
             size_t start = (size_t)d->vd.off;
             size_t end_off = start + count;
 
-            while(end_off > vpage_get_size(d->vd.p->root))
+            while(end_off > VpageObjGetSize(d->vd.vpageObjRef))
             {
-                if(!vpage_gib_page(d->vd.p->root))
+                if(!VpageObjExtendPage(d->vd.vpageObjRef))
                 {
                     errno = ENOMEM;
                     return -1;
                 }
             }
 
-            ssize_t vret = (ssize_t)vpage_write(d->vd.p->root, start, buf, count);
+            ssize_t vret = (ssize_t)VpageObjWrite(d->vd.vpageObjRef, start, buf, count);
             if(vret < 0)
             {
                 return vret;
             }
 
             d->vd.off = (off_t)(start + (size_t)vret);
-            if((size_t)d->vd.off > d->vd.p->extra_size_marker)
+            if((size_t)d->vd.off > VpageObjGetEndMarker(d->vd.vpageObjRef))
             {
-                d->vd.p->extra_size_marker = (size_t)d->vd.off;
+                VpageObjSetEndMarker(d->vd.vpageObjRef, (size_t)d->vd.off);
             }
             return vret;
         }
@@ -230,12 +230,12 @@ int vfd_truncate(vfd_t *d, off_t length)
             }
 
             size_t newlen = (size_t)length;
-            size_t oldlen = d->vd.p->extra_size_marker;
+            size_t oldlen = VpageObjGetEndMarker(d->vd.vpageObjRef);
 
             /* make sure the backing store can hold the new lenght */
-            while(vpage_get_size(d->vd.p->root) < newlen)
+            while(VpageObjGetSize(d->vd.vpageObjRef) < newlen)
             {
-                if(!vpage_gib_page(d->vd.p->root)) { errno = ENOMEM; return -1; }
+                if(!VpageObjExtendPage(d->vd.vpageObjRef)) { errno = ENOMEM; return -1; }
             }
 
             if(newlen < oldlen)
@@ -246,12 +246,12 @@ int vfd_truncate(vfd_t *d, off_t length)
                 {
                     size_t chunk = oldlen - pos;
                     if(chunk > sizeof(zeros)) chunk = sizeof(zeros);
-                    vpage_write(d->vd.p->root, pos, zeros, chunk);
+                    VpageObjWrite(d->vd.vpageObjRef, pos, zeros, chunk);
                     pos += chunk;
                 }
             }
 
-            d->vd.p->extra_size_marker = newlen;
+            VpageObjSetEndMarker(d->vd.vpageObjRef, newlen);
             return 0;
         }
     }
@@ -280,7 +280,7 @@ off_t vfd_seek(vfd_t *d,
                     base = d->vd.off;
                     break;
                 case SEEK_END:
-                    base = (off_t)d->vd.p->extra_size_marker;
+                    base = (off_t)VpageObjGetEndMarker(d->vd.vpageObjRef);
                     break;
                 default:
                     errno = EINVAL;
@@ -333,7 +333,7 @@ int vfd_stat(vfd_t *d,
         case kVFDTypeVirtual:
         {
             fflush(stdout);
-            stat->st_size = (off_t)d->vd.p->extra_size_marker;
+            stat->st_size = (off_t)VpageObjGetEndMarker(d->vd.vpageObjRef);
             return 0;
         }
     }
