@@ -29,7 +29,22 @@
 #include <emex64lib/asm/diagnostic/consumer.h>
 #include <emex64lib/asm/invocation.h>
 
-static void __assembler_diagnostic_consumer_show_caret_preview(vfd_t *d, diagnostic_t *diagnostic)
+static const char *__assembler_diagnostic_color(assembler_invocation_t *inv,
+                                                char *str)
+{
+    if(inv->options.color_diagnostics)
+    {
+        return str;
+    }
+    else
+    {
+        return "";
+    }
+}
+
+static void __assembler_diagnostic_consumer_show_caret_preview(assembler_invocation_t *inv,
+                                                               vfd_t *d,
+                                                               diagnostic_t *diagnostic)
 {
     const char *src = diagnostic->location->line;
     size_t line_num = diagnostic->location->ln;
@@ -75,15 +90,15 @@ static void __assembler_diagnostic_consumer_show_caret_preview(vfd_t *d, diagnos
         vfd_putc(d, src[i] == '\t' ? '\t' : ' ');
     }
 
-    vfd_puts(d, C_BOLD);
-    vfd_puts(d, C_CARET);
+    vfd_puts(d, __assembler_diagnostic_color(inv, C_BOLD));
+    vfd_puts(d, __assembler_diagnostic_color(inv, C_CARET));
     vfd_putc(d, '^');
     size_t span = diagnostic->location->range.end_col > diagnostic->location->range.start_col ? diagnostic->location->range.end_col - diagnostic->location->range.start_col : 1;
     for(size_t i = 1; i < span; i++)
     {
         vfd_putc(d, '~');
     }
-    vfd_puts(d, C_RESET);
+    vfd_puts(d, __assembler_diagnostic_color(inv, C_RESET));
     vfd_putc(d, '\n');
 }
 
@@ -96,33 +111,33 @@ static void __assembler_diagnostic_consumer_consume_diagnostic_handler(diagnosti
     {
         vfdprintf(ctx->d, "%s:%llu:%llu: ", diagnostic->location->file_name, diagnostic->location->ln, diagnostic->location->col);
     }
-
+    
     /* fallback when no consumer was specified */
     switch(diagnostic->severity)
     {
         case kDiagnosticSeverityNote:
-            vfdprintf(ctx->d, "%snote:", C_NOTE);
+            vfdprintf(ctx->d, "%snote:", __assembler_diagnostic_color(ctx->inv, C_NOTE));
             break;
         case kDiagnosticSeverityWarning:
-            vfdprintf(ctx->d, "%swarning:", C_WARN); 
+            vfdprintf(ctx->d, "%swarning:", __assembler_diagnostic_color(ctx->inv, C_WARN));
             break;
         case kDiagnosticSeverityError:
-            vfdprintf(ctx->d, "%serror:", C_ERROR);
+            vfdprintf(ctx->d, "%serror:", __assembler_diagnostic_color(ctx->inv, C_ERROR));
             break;
         case kDiagnosticSeverityFatal:
         default:
-            vfdprintf(ctx->d, "%sfatal:", C_ERROR);
+            vfdprintf(ctx->d, "%sfatal:", __assembler_diagnostic_color(ctx->inv, C_ERROR));
             break;
     }
-    vfdprintf(ctx->d, "%s ", C_RESET);
+    vfdprintf(ctx->d, "%s ", __assembler_diagnostic_color(ctx->inv, C_RESET));
 
     vfdprintf(ctx->d, "%s\n", diagnostic->str);
 
-    if(((assembler_diagnostic_consumer_context_t*)consumer->ctx)->inv != NULL &&
-       ((assembler_diagnostic_consumer_context_t*)consumer->ctx)->inv->options.caret_diagnostics &&
+    if(ctx->inv != NULL &&
+       ctx->inv->options.caret_diagnostics &&
        diagnostic->location != NULL)
     {
-        __assembler_diagnostic_consumer_show_caret_preview(ctx->d, diagnostic);
+        __assembler_diagnostic_consumer_show_caret_preview(ctx->inv, ctx->d, diagnostic);
     }
 
     /* dont forget to flush the toilet otherwise things get stinky */
