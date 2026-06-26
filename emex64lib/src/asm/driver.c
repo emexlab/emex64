@@ -148,44 +148,10 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
     driver->macro_cnt = 0;
     driver->macro = NULL;
 
+    /* first pass (diagnostic settings setup pass) */
     for(int i = 1; i < argc; i++)
     {
-        if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0)
-        {
-            fprintf(stderr, "Usage: %s [options] file...\n", argv[0]);
-            fprintf(stderr, "\n");
-            fprintf(stderr, "Options:\n");
-            fprintf(stderr, "  --help                 Shows this help menu.\n");
-            fprintf(stderr, "  --version              Prints version.\n");
-            fprintf(stderr, "  --in-process           All jobs are handled within the same process instead of executing subprocesses.\n");
-            fprintf(stderr, "\n");
-            fprintf(stderr, "  -o <output path>       Sets the output file path, is set to \"a.out\" when not passed.\n");
-            fprintf(stderr, "  -c                     Assemble the source files, but do not link.\n");
-            fprintf(stderr, "  -r                     Relocatable object mode, meaning a ELF object will be emitted out of all assembly files.\n");
-            fprintf(stderr, "  -v                     Prints verbose driver log.\n");
-            fprintf(stderr, "  -D macro[=<value>]     Defines an assembler macro, set to 1 when no value is given.\n");
-            fprintf(stderr, "  -I <dir>               Adds a directory to the include search path.\n");
-            fprintf(stderr, "  -Wl,<arg>,...          Pass the comma separated arguments to the linker.\n");
-            fprintf(stderr, "\n");
-            fprintf(stderr, "  -fcaret-diagnostics    The assembler will print diagnostics showing their caret positions.\n");
-            fprintf(stderr, "  -fcolor-diagnostics    The assembler will print diagnostics with color.\n");
-            fprintf(stderr, "                         Each feature flag can be reversed by prefixing it with a \"no\" (i.e -fno-page-align).\n");
-            fprintf(stderr, "\n");
-            fprintf(stderr, "  -Werror                The assembler will treat every warning as a error.\n");
-            fprintf(stderr, "  -Wdeprecated           The assembler will print a warning on every as deprecated marked symbol or internal features.\n");
-            fprintf(stderr, "                         Each warning flag can be reversed by prefixing it with a \"no\" (i.e -Wno-error).\n");
-            return false;
-        }
-        else if(strcmp(argv[i], "--version") == 0)
-        {
-            fprintf(stderr, "%s version %d.%d.%d (%s)\n", argv[0], EMEX64_VERSION_MAJOR, EMEX64_VERSION_MINOR, EMEX64_VERSION_PATCH, EMEX64_VERSION_STRING);
-            return false;
-        }
-        else if(strcmp(argv[i], "-o") == 0 && i + 1 < argc)
-        {
-            driver->output_path = argv[++i];
-        }
-        else if(strncmp(argv[i], "-f", 2) == 0)
+        if(strncmp(argv[i], "-f", 2) == 0)
         {
             const char *flag;
             if(argv[i][2] != '\0')
@@ -229,30 +195,6 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
                 return false;
             }
         }
-        else if(strncmp(argv[i], "-Wl,", 4) == 0)
-        {
-            const char *p = argv[i] + 4;
-            if(*p == '\0')
-            {
-                diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "missing argument to '-Wl,'");
-                return false;
-            }
-
-            while(*p != '\0')
-            {
-                const char *comma = strchr(p, ',');
-                size_t len = comma ? (size_t)(comma - p) : strlen(p);
-
-                char *arg = malloc(len + 1);
-                memcpy(arg, p, len);
-                arg[len] = '\0';
-
-                driver->linker_flags = realloc(driver->linker_flags, (driver->linker_flags_cnt + 1) * sizeof(char *));
-                driver->linker_flags[driver->linker_flags_cnt++] = arg;
-
-                p = comma ? comma + 1 : p + len;
-            }
-        }
         else if(strncmp(argv[i], "-W", 2) == 0)
         {
             const char *flag;
@@ -290,6 +232,81 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
             {
                 diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "unknown warning flag '%s'", flag);
                 return false;
+            }
+        }
+    }
+
+    /* setting diagnostics */
+    ((assembler_diagnostic_consumer_context_t*)driver->consumer->ctx)->options = driver->diagnostic_options;
+
+    /* boom: actual driver pass */
+    for(int i = 1; i < argc; i++)
+    {
+        if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0)
+        {
+            fprintf(stderr, "Usage: %s [options] file...\n", argv[0]);
+            fprintf(stderr, "\n");
+            fprintf(stderr, "Options:\n");
+            fprintf(stderr, "  --help                 Shows this help menu.\n");
+            fprintf(stderr, "  --version              Prints version.\n");
+            fprintf(stderr, "  --in-process           All jobs are handled within the same process instead of executing subprocesses.\n");
+            fprintf(stderr, "\n");
+            fprintf(stderr, "  -o <output path>       Sets the output file path, is set to \"a.out\" when not passed.\n");
+            fprintf(stderr, "  -c                     Assemble the source files, but do not link.\n");
+            fprintf(stderr, "  -r                     Relocatable object mode, meaning a ELF object will be emitted out of all assembly files.\n");
+            fprintf(stderr, "  -v                     Prints verbose driver log.\n");
+            fprintf(stderr, "  -D macro[=<value>]     Defines an assembler macro, set to 1 when no value is given.\n");
+            fprintf(stderr, "  -I <dir>               Adds a directory to the include search path.\n");
+            fprintf(stderr, "  -Wl,<arg>,...          Pass the comma separated arguments to the linker.\n");
+            fprintf(stderr, "\n");
+            fprintf(stderr, "  -fcaret-diagnostics    The assembler will print diagnostics showing their caret positions.\n");
+            fprintf(stderr, "  -fcolor-diagnostics    The assembler will print diagnostics with color.\n");
+            fprintf(stderr, "                         Each feature flag can be reversed by prefixing it with a \"no\" (i.e -fno-page-align).\n");
+            fprintf(stderr, "\n");
+            fprintf(stderr, "  -Werror                The assembler will treat every warning as a error.\n");
+            fprintf(stderr, "  -Wdeprecated           The assembler will print a warning on every as deprecated marked symbol or internal features.\n");
+            fprintf(stderr, "                         Each warning flag can be reversed by prefixing it with a \"no\" (i.e -Wno-error).\n");
+            return false;
+        }
+        else if(strcmp(argv[i], "--version") == 0)
+        {
+            fprintf(stderr, "%s version %d.%d.%d (%s)\n", argv[0], EMEX64_VERSION_MAJOR, EMEX64_VERSION_MINOR, EMEX64_VERSION_PATCH, EMEX64_VERSION_STRING);
+            return false;
+        }
+        else if(strcmp(argv[i], "-o") == 0 && i + 1 < argc)
+        {
+            driver->output_path = argv[++i];
+        }
+        else if(strncmp(argv[i], "-f", 2) == 0)
+        {
+            continue;
+        }
+        else if(strncmp(argv[i], "-W", 2) == 0)
+        {
+            continue;
+        }
+        else if(strncmp(argv[i], "-Wl,", 4) == 0)
+        {
+            const char *p = argv[i] + 4;
+            if(*p == '\0')
+            {
+                diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "missing argument to '-Wl,'");
+                return false;
+            }
+
+            while(*p != '\0')
+            {
+                const char *comma = strchr(p, ',');
+                size_t len = comma ? (size_t)(comma - p) : strlen(p);
+
+                char *arg = malloc(len + 1);
+                memcpy(arg, p, len);
+                arg[len] = '\0';
+
+                driver->linker_flags = realloc(driver->linker_flags, (driver->linker_flags_cnt + 1) * sizeof(char *));
+                driver->linker_flags[driver->linker_flags_cnt++] = arg;
+
+                p = comma ? comma + 1 : p + len;
             }
         }
         else if(strncmp(argv[i], "-D", 2) == 0)
