@@ -229,6 +229,30 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
                 return false;
             }
         }
+        else if(strncmp(argv[i], "-Wl,", 4) == 0)
+        {
+            const char *p = argv[i] + 4;
+            if(*p == '\0')
+            {
+                diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "missing argument to '-Wl,'");
+                return false;
+            }
+
+            while(*p != '\0')
+            {
+                const char *comma = strchr(p, ',');
+                size_t len = comma ? (size_t)(comma - p) : strlen(p);
+
+                char *arg = malloc(len + 1);
+                memcpy(arg, p, len);
+                arg[len] = '\0';
+
+                driver->linker_flags = realloc(driver->linker_flags, (driver->linker_flags_cnt + 1) * sizeof(char *));
+                driver->linker_flags[driver->linker_flags_cnt++] = arg;
+
+                p = comma ? comma + 1 : p + len;
+            }
+        }
         else if(strncmp(argv[i], "-W", 2) == 0)
         {
             const char *flag;
@@ -266,30 +290,6 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
             {
                 diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "unknown warning flag '%s'", flag);
                 return false;
-            }
-        }
-        else if(strncmp(argv[i], "-Wl,", 4) == 0)
-        {
-            const char *p = argv[i] + 4;
-            if(*p == '\0')
-            {
-                diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "missing argument to '-Wl,'");
-                return false;
-            }
-
-            while(*p != '\0')
-            {
-                const char *comma = strchr(p, ',');
-                size_t len = comma ? (size_t)(comma - p) : strlen(p);
-
-                char *arg = malloc(len + 1);
-                memcpy(arg, p, len);
-                arg[len] = '\0';
-
-                driver->linker_flags = realloc(driver->linker_flags, (driver->linker_flags_cnt + 1) * sizeof(char *));
-                driver->linker_flags[driver->linker_flags_cnt++] = arg;
-
-                p = comma ? comma + 1 : p + len;
             }
         }
         else if(strncmp(argv[i], "-D", 2) == 0)
