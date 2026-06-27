@@ -62,7 +62,7 @@ EVTypeID VpageObjGetType(void)
     return VpageObjClass.typeID;
 }
 
-VpageObjRef VpageObjCreate()
+VpageObjRef VpageObjCreate(EVAllocator *allocator)
 {
     vpage_t *vpage = vpage_alloc();
     if(vpage == NULL)
@@ -70,14 +70,15 @@ VpageObjRef VpageObjCreate()
         return NULL;
     }
 
-    return VpageObjCreateWithVpage(vpage);
+    return VpageObjCreateWithVpage(allocator, vpage);
 }
 
-VpageObjRef VpageObjCreateWithVpage(vpage_t *vpage)
+VpageObjRef VpageObjCreateWithVpage(EVAllocator *allocator,
+                                    vpage_t *vpage)
 {
     assert(vpage != NULL);
 
-    VpageObj obj = EVAlloc(VpageObjGetType());
+    VpageObj obj = EVObjectAlloc(allocator, VpageObjGetType());
     if(obj == NULL)
     {
         return NULL;

@@ -35,8 +35,8 @@
 
 typedef EVObjectRef VpageObjRef;
 
-VpageObjRef VpageObjCreate();
-VpageObjRef VpageObjCreateWithVpage(vpage_t *vpage);
+VpageObjRef VpageObjCreate(EVAllocator *allocator);
+VpageObjRef VpageObjCreateWithVpage(EVAllocator *allocator, vpage_t *vpage);
 
 vpage_t *VpageObjGetVpage(VpageObjRef vpageObjRef);
 

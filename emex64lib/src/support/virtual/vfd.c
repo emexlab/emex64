@@ -28,8 +28,6 @@
 #include <errno.h>
 #include <emex64lib/support/virtual/vfd.h>
 #include <emex64lib/vm/memory.h>
-#include <evObj/alloc.h>
-#include <evObj/reference.h>
 
 vfd_t *vfd_open(const char *path,
                 int flg,
@@ -89,7 +87,7 @@ vfd_t *vfd_vopen()
     }
 
     d->type = kVFDTypeVirtual;
-    d->vd.vpageObjRef = VpageObjCreate();
+    d->vd.vpageObjRef = VpageObjCreate(kEVAllocatorDefault);
     d->vd.off = 0;
 
     if(d->vd.vpageObjRef == NULL)

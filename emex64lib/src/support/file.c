@@ -296,7 +296,7 @@ bool emex_file_map(emex_file_t *f)
                 return false;
             }
 
-            f->vpageObjRef = VpageObjCreateWithVpage(p);
+            f->vpageObjRef = VpageObjCreateWithVpage(kEVAllocatorDefault, p);
             if(f->vpageObjRef == NULL)
             {
                 vpage_dealloc(p);
