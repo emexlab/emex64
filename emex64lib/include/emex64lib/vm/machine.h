@@ -39,7 +39,7 @@
 
 typedef struct emex64_machine {
     emex64_core_t *core;
-    emex64_memory_t *memory;
+    Emex64MemoryRef memory;
     Emex64MMIOBusRef mmio_bus;
     emex64_intc_t *intc;
     emex64_timer_t *timer;
@@ -53,17 +53,5 @@ void emex64_machine_dealloc(emex64_machine_t *machine);
 
 emex64_machine_support_t emex64_machine_support_get(void);
 emex64_machine_options_t emex64_machine_options_default(void);
-
-static inline bool emex64_memory_access(emex64_core_t *core,
-                                        uint64_t addr,
-                                        uint64_t size)
-{
-    uint64_t addr_end = addr + size;
-    if(addr > addr_end || core->machine->memory->memory_size < addr_end)
-    {
-        return false;
-    }
-    return true;
-}
 
 #endif /* EMEX64VM_MACHINE_H */

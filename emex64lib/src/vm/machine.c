@@ -36,7 +36,7 @@ emex64_machine_t *emex64_machine_alloc(emex64_machine_options_t options)
         return NULL;
     }
 
-    machine->memory = emex64_memory_alloc(options.memory_size);
+    machine->memory = Emex64MemoryCreate(NULL, options.memory_size);
     if(machine->memory == NULL)
     {
         goto out_release_machine;
@@ -109,7 +109,7 @@ out_release_core:
 out_release_mmio:
     EVRelease(machine->mmio_bus);
 out_release_memory:
-    emex64_memory_dealloc(machine->memory);
+    EVRelease(machine->memory);
 out_release_machine:
     free(machine);
     return NULL;
@@ -124,7 +124,7 @@ void emex64_machine_dealloc(emex64_machine_t *machine)
     emex64_intc_dealloc(machine->intc);
     emex64_core_dealloc(machine->core);
     EVRelease(machine->mmio_bus);
-    emex64_memory_dealloc(machine->memory);
+    EVRelease(machine->memory);
     free(machine);
 }
 

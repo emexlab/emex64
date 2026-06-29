@@ -37,12 +37,148 @@
 #include <emex64lib/vm/machine.h>
 #include <emex64lib/vm/mmio.h>
 
+typedef struct Emex64Memory {
+    EVObject header;
+    uint8_t *memory;
+    uint64_t memory_size;
+    uint64_t ktrr_size;
+    bool ktrr_locked;
+} *Emex64Memory;
+
+static void __Emex64MemoryDeinit(Emex64MemoryRef memoryRef)
+{
+    Emex64Memory memory = (Emex64Memory)memoryRef;
+    if(memory->memory != MAP_FAILED)
+    {
+        munmap(memory->memory, memory->memory_size);
+    }
+}
+
+static EVClass Emex64MemoryClass = {
+    .name = "Emex64Memory",
+    .typeID = kEVNotATypeID,
+    .size = sizeof(struct Emex64Memory),
+    .init = NULL,
+    .deinit = __Emex64MemoryDeinit,
+    .copy = NULL,
+    .equal = NULL,
+};
+
 typedef struct emex64_mmu_entry_lookup {
     bool fail;
     uint64_t *pte;
 } emex64_mmu_entry_lookup_t;
 
-static inline emex64_mmu_entry_lookup_t emex64_mmu_lookup_pte(emex64_core_t *core,
+static void Emex64MemoryRegisterClass(void)
+{
+    EVClassRegister(&Emex64MemoryClass);
+}
+
+EVTypeID Emex64MemoryGetTypeID(void)
+{
+    static pthread_once_t once = PTHREAD_ONCE_INIT;
+    pthread_once(&once, Emex64MemoryRegisterClass);
+    return Emex64MemoryClass.typeID;
+}
+
+Emex64MemoryRef Emex64MemoryCreate(EVAllocator *allocator,
+                                   uint64_t size)
+{
+    Emex64Memory memory = EVObjectAlloc(allocator, Emex64MemoryGetTypeID());
+    if(memory == NULL)
+    {
+        return NULL;
+    }
+
+    /* allocate raw memory (using mmap for larger sizes, better than malloc in this case) */
+    memory->memory_size = EMEX64_PAGE_ROUND_UP(size);
+    memory->memory = mmap(NULL, memory->memory_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if(memory->memory == MAP_FAILED)
+    {
+        EVRelease(memory);
+        return NULL;
+    }
+
+    return (Emex64MemoryRef)memory;
+}
+
+void Emex64MemoryLockKTRR(Emex64MemoryRef memoryRef)
+{
+    Emex64Memory memory = (Emex64MemoryRef)memoryRef;
+    if(memory == NULL)
+    {
+        return;
+    }
+
+    memory->ktrr_locked = true;
+}
+
+bool Emex64MemoryIsKTRRLocked(Emex64MemoryRef memoryRef)
+{
+    Emex64Memory memory = (Emex64MemoryRef)memoryRef;
+    if(memory == NULL)
+    {
+        return false;
+    }
+
+    return memory->ktrr_locked;
+}
+
+uint64_t Emex64MemoryGetKTRRSize(Emex64MemoryRef memoryRef)
+{
+    Emex64Memory memory = (Emex64MemoryRef)memoryRef;
+    if(memory == NULL)
+    {
+        return 0;
+    }
+
+    return memory->ktrr_size;
+}
+
+bool Emex64MemorySetKTRRSize(Emex64MemoryRef memoryRef,
+                             uint64_t size)
+{
+    Emex64Memory memory = (Emex64MemoryRef)memoryRef;
+    if(memory == NULL || memory->ktrr_locked)
+    {
+        return false;
+    }
+
+    memory->ktrr_size = size;
+    return true;
+}
+
+uint64_t Emex64MemoryGetSize(Emex64MemoryRef memoryRef)
+{
+    Emex64Memory memory = (Emex64MemoryRef)memoryRef;
+    if(memory == NULL)
+    {
+        return 0;
+    }
+
+    return memory->memory_size;
+}
+
+bool Emex64MemoryAccessIsWithinBounds(Emex64MemoryRef memoryRef,
+                                      uint64_t address,
+                                      uint64_t size)
+{
+    Emex64Memory memory = (Emex64MemoryRef)memoryRef;
+    if(memory == NULL)
+    {
+        return false;
+    }
+
+    uint64_t addr_end = address + size;
+    if(address > addr_end || memory->memory_size < addr_end)
+    {
+        return false;
+    }
+    return true;
+}
+
+static inline emex64_mmu_entry_lookup_t emex64_mmu_lookup_pte(Emex64Memory memory,
+                                                              emex64_core_t *core,
                                                               uint64_t pt_addr,
                                                               uint16_t idx)
 {
@@ -51,13 +187,13 @@ static inline emex64_mmu_entry_lookup_t emex64_mmu_lookup_pte(emex64_core_t *cor
      * can be even a table.
      */
     pt_addr = EMEX64_PAGE_ROUND_DOWN(pt_addr);
-    if(unlikely(!EMEX64_IN_PHYS_MEMORY(pt_addr, EMEX64_PAGE_SIZE, core->machine->memory->memory, core->machine->memory->memory_size)))
+    if(unlikely(!EMEX64_IN_PHYS_MEMORY(pt_addr, EMEX64_PAGE_SIZE, memory->memory, memory->memory_size)))
     {
         return (emex64_mmu_entry_lookup_t){ .fail = true, .pte = NULL };
     }
 
     /* now access the table and check its entry too */
-    uint64_t *pt = (uint64_t*)&core->machine->memory->memory[pt_addr];
+    uint64_t *pt = (uint64_t*)&memory->memory[pt_addr];
     uint64_t *pte = &pt[idx];
 
     if(unlikely(!((*pte & EMEX64_MEMORY_MMU_MASK_FLAGS) & kEmex64MMUPTPresent)))
@@ -68,13 +204,14 @@ static inline emex64_mmu_entry_lookup_t emex64_mmu_lookup_pte(emex64_core_t *cor
     return (emex64_mmu_entry_lookup_t){ .fail = false, .pte = pte };
 }
 
-static inline bool emex64_mmu_access_pxd(emex64_core_t *core,
+static inline bool emex64_mmu_access_pxd(Emex64Memory memory,
+                                         emex64_core_t *core,
                                          uint64_t pt_addr,
                                          uint16_t pxd_idx,
                                          kEmex64MemoryAction acc,
                                          uint64_t *oaddr)
 {
-    emex64_mmu_entry_lookup_t lookup = emex64_mmu_lookup_pte(core, pt_addr, pxd_idx);
+    emex64_mmu_entry_lookup_t lookup = emex64_mmu_lookup_pte(memory, core, pt_addr, pxd_idx);
     if(unlikely(lookup.fail))
     {
         return false;
@@ -105,7 +242,7 @@ static inline bool emex64_mmu_access_pxd(emex64_core_t *core,
 
     uint64_t pfn = (*(lookup.pte) & EMEX64_MEMORY_MMU_MASK_PFN) >> 8;
     uint64_t physaddr = EMEX64_PAGE_ROUND_DOWN(pfn << 13);
-    if(unlikely(!EMEX64_IN_PHYS_MEMORY(physaddr, EMEX64_PAGE_SIZE, core->machine->memory->memory, core->machine->memory->memory_size)))
+    if(unlikely(!EMEX64_IN_PHYS_MEMORY(physaddr, EMEX64_PAGE_SIZE, memory->memory, memory->memory_size)))
     {
         return false;
     }
@@ -129,7 +266,8 @@ static inline bool emex64_mmu_access_pxd(emex64_core_t *core,
     return true;
 }
 
-static inline bool emex64_mmu_translate(emex64_core_t *core,
+static inline bool emex64_mmu_translate(Emex64Memory memory,
+                                        emex64_core_t *core,
                                         uint64_t vaddr,
                                         kEmex64MemoryAction action,
                                         uint64_t *paddr)
@@ -144,10 +282,10 @@ static inline bool emex64_mmu_translate(emex64_core_t *core,
     uint64_t pud_addr, pmd_addr, pte_addr, phys_page_base_addr;
 
     /* now access each table */
-    if(!emex64_mmu_access_pxd(core, pgd_addr, ((vaddr >> 43) & 0x3FF), kEmex64MemoryActionPageDirectory, &pud_addr) ||   /* 10 bits for each level index  */
-       !emex64_mmu_access_pxd(core, pud_addr, ((vaddr >> 33) & 0x3FF), kEmex64MemoryActionPageDirectory, &pmd_addr) ||
-       !emex64_mmu_access_pxd(core, pmd_addr, ((vaddr >> 23) & 0x3FF), kEmex64MemoryActionPageDirectory, &pte_addr) ||
-       !emex64_mmu_access_pxd(core, pte_addr, ((vaddr >> 13) & 0x3FF), action, &phys_page_base_addr))
+    if(!emex64_mmu_access_pxd(memory, core, pgd_addr, ((vaddr >> 43) & 0x3FF), kEmex64MemoryActionPageDirectory, &pud_addr) ||   /* 10 bits for each level index  */
+       !emex64_mmu_access_pxd(memory, core, pud_addr, ((vaddr >> 33) & 0x3FF), kEmex64MemoryActionPageDirectory, &pmd_addr) ||
+       !emex64_mmu_access_pxd(memory, core, pmd_addr, ((vaddr >> 23) & 0x3FF), kEmex64MemoryActionPageDirectory, &pte_addr) ||
+       !emex64_mmu_access_pxd(memory, core, pte_addr, ((vaddr >> 13) & 0x3FF), action, &phys_page_base_addr))
     {
         return false;
     }
@@ -157,41 +295,15 @@ static inline bool emex64_mmu_translate(emex64_core_t *core,
     return true;
 }
 
-emex64_memory_t *emex64_memory_alloc(uint64_t size)
+bool Emex64MemoryLoadImage(Emex64MemoryRef memoryRef,
+                           emex_file_t *file)
 {
-    /*
-     * allocating random access memory, which
-     * must be aligned to page size for the
-     * sake of god. And because it makes sense
-     * lol.
-     */
-    emex64_memory_t *memory = malloc(sizeof(emex64_memory_t));
+    Emex64Memory memory = (Emex64MemoryRef)memoryRef;
     if(memory == NULL)
     {
-        return NULL;
+        return false;
     }
 
-    /* allocate raw memory (using mmap for larger sizes, better than malloc in this case) */
-    memory->memory_size = EMEX64_PAGE_ROUND_UP(size);
-    memory->memory = mmap(NULL, memory->memory_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-    if(memory->memory == MAP_FAILED)
-    {
-        free(memory);
-        return NULL;
-    }
-
-    return memory;
-}
-
-void emex64_memory_dealloc(emex64_memory_t *memory)
-{
-    munmap(memory->memory, memory->memory_size);
-    free(memory);
-}
-
-bool emex64_memory_load_image(emex64_memory_t *memory,
-                              emex_file_t *file)
-{
     vfd_t *d = emex_file_dup_vfd(file);
     if(d == NULL)
     {
@@ -239,12 +351,117 @@ bool emex64_memory_load_image(emex64_memory_t *memory,
     return true;
 }
 
-void emex64_memory_action(emex64_core_t *core,
-                          uint64_t addr,
-                          size_t size,
-                          uint64_t *value,
-                          kEmex64MemoryAction action)
+bool Emex64MemoryAction(Emex64MemoryRef memoryRef,
+                        uint64_t addr, size_t size,
+                        uint64_t *value,
+                        kEmex64MemoryAction action)
 {
+    Emex64Memory memory = (Emex64MemoryRef)memoryRef;
+    if(memory == NULL)
+    {
+        return false;
+    }
+
+    if(addr >> 53)
+    {
+        return false;
+    }
+
+    if(unlikely(!Emex64MemoryAccessIsWithinBounds(memoryRef, addr, size)))
+    {
+        return false;
+    }
+
+    uint8_t *mem_ptr = memory->memory + addr;
+
+    switch(action)
+    {
+        case kEmex64MemoryActionPageDirectory:
+        case kEmex64MemoryActionExecute:
+        case kEmex64MemoryActionRead:
+            switch(size)
+            {
+                case 1:
+                    *value = *(uint8_t *)mem_ptr;
+                    break;
+                case 2:
+                {
+                    uint16_t tmp;
+                    memcpy(&tmp, mem_ptr, 2);
+                    *value = TO_HOST16(tmp);
+                    break;
+                }
+                case 4:
+                {
+                    uint32_t tmp;
+                    memcpy(&tmp, mem_ptr, 4);
+                    *value = TO_HOST32(tmp);
+                    break;
+                }
+                case 8:
+                {
+                    uint64_t tmp;
+                    memcpy(&tmp, mem_ptr, 8);
+                    *value = TO_HOST64(tmp);
+                    break;
+                }
+                default:
+                    return false;
+            }
+            return true;
+        case kEmex64MemoryActionWrite:
+            if(unlikely(memory->ktrr_size > addr))
+            {
+                return false;
+            }
+            switch(size)
+            {
+                case 1:
+                    *(uint8_t *)mem_ptr = (uint8_t)*value;
+                    break;
+                case 2:
+                {
+                    uint16_t tmp = (uint16_t)*value;
+                    tmp = TO_HOST16(tmp);
+                    memcpy(mem_ptr, &tmp, 2);
+                    break;
+                }
+                case 4:
+                {
+                    uint32_t tmp = (uint32_t)*value;
+                    tmp = TO_HOST32(tmp);
+                    memcpy(mem_ptr, &tmp, 4);
+                    break;
+                }
+                case 8:
+                {
+                    uint64_t tmp = (uint64_t)*value;
+                    tmp = TO_HOST64(tmp);
+                    memcpy(mem_ptr, &tmp, 8);
+                    break;
+                }
+                default:
+                    return false;
+            }
+            return true;
+        default:
+            return false;
+    }
+}
+
+void Emex64MemoryCoreAction(Emex64MemoryRef memoryRef,
+                            emex64_core_t *core,
+                            uint64_t addr,
+                            size_t size,
+                            uint64_t *value,
+                            kEmex64MemoryAction action)
+{
+    Emex64Memory memory = (Emex64MemoryRef)memoryRef;
+    if(memory == NULL)
+    {
+        return;
+    }
+
     if(unlikely((core->cr_state.crexc.exception == kEmex64ExceptionBadAccess || core->cr_state.crexc.exception == kEmex64ExceptionKTRRViolation) && !core->in_interrupt))
     {
         return;
@@ -301,7 +518,7 @@ void emex64_memory_action(emex64_core_t *core,
      */
     if(core->cr_state.crptb.enabled && !core->in_interrupt)
     {
-        if(!emex64_mmu_translate(core, addr, action, &addr))
+        if(!emex64_mmu_translate(memory, core, addr, action, &addr))
         {
             core->cr_state.crexc.exception = kEmex64ExceptionPageFault;
             return;
@@ -326,16 +543,16 @@ void emex64_memory_action(emex64_core_t *core,
             case kEmex64MemoryActionPageDirectory:
             case kEmex64MemoryActionExecute:
             case kEmex64MemoryActionRead:
-                emex64_memory_action(core, addr, lo_size, &lo_val, action);
-                emex64_memory_action(core, page_end, hi_size, &hi_val, action);
+                Emex64MemoryCoreAction(memoryRef, core, addr, lo_size, &lo_val, action);
+                Emex64MemoryCoreAction(memoryRef, core, page_end, hi_size, &hi_val, action);
                 *value = lo_val | (hi_val << hi_shift);
                 return;
             case kEmex64MemoryActionWrite:
                 lo_mask = (lo_size == 8) ? ~0ULL : (1ULL << hi_shift) - 1;
                 lo_val = *value & lo_mask;
                 hi_val = *value >> hi_shift;
-                emex64_memory_action(core, addr, lo_size, &lo_val, action);
-                emex64_memory_action(core, page_end, hi_size, &hi_val, action);
+                Emex64MemoryCoreAction(memoryRef, core, addr, lo_size, &lo_val, action);
+                Emex64MemoryCoreAction(memoryRef, core, page_end, hi_size, &hi_val, action);
                 return;
         }
         return;
@@ -343,13 +560,13 @@ void emex64_memory_action(emex64_core_t *core,
     else
 rw_fastpath:
     {
-        if(likely(!emex64_memory_access(core, addr, size)))
+        if(unlikely(!Emex64MemoryAccessIsWithinBounds(memoryRef, addr, size)))
         {
             core->cr_state.crexc.exception = kEmex64ExceptionBadAccess;
             return;
         }
 
-        uint8_t *mem_ptr = core->machine->memory->memory + addr;
+        uint8_t *mem_ptr = memory->memory + addr;
 
         switch(action)
         {
@@ -388,7 +605,7 @@ rw_fastpath:
                 }
                 return;
             case kEmex64MemoryActionWrite:
-                if(unlikely(core->machine->memory->ktrr_size > addr))
+                if(unlikely(memory->ktrr_size > addr))
                 {
                     core->cr_state.crexc.exception = kEmex64ExceptionKTRRViolation;
                     return;
@@ -428,12 +645,19 @@ rw_fastpath:
     }
 }
 
-bool emex64_memory_cpy(emex64_core_t *core,
-                       uint8_t *dst,
-                       uint64_t addr,
-                       size_t len,
-                       kEmex64MemoryAction action)
+bool Emex64MemoryCoreCopyIn(Emex64MemoryRef memoryRef,
+                            emex64_core_t *core,
+                            uint8_t *dst,
+                            uint64_t addr,
+                            size_t len,
+                            kEmex64MemoryAction action)
 {
+    Emex64Memory memory = (Emex64MemoryRef)memoryRef;
+    if(memory == NULL)
+    {
+        return false;
+    }
+
     /* do not allow other actions than rx */
     assert(action != kEmex64MemoryActionWrite);
 
@@ -459,7 +683,7 @@ bool emex64_memory_cpy(emex64_core_t *core,
 
         if(paging)
         {
-            if(unlikely(!emex64_mmu_translate(core, addr, action, &paddr)))
+            if(unlikely(!emex64_mmu_translate(memory, core, addr, action, &paddr)))
             {
                 core->cr_state.crexc.exception = kEmex64ExceptionPageFault;
                 return false;
@@ -472,7 +696,7 @@ bool emex64_memory_cpy(emex64_core_t *core,
             }
         }
 
-        if(unlikely(!emex64_memory_access(core, paddr, chunk)))
+        if(unlikely(!Emex64MemoryAccessIsWithinBounds(memoryRef, paddr, chunk)))
         {
             core->cr_state.crexc.exception = kEmex64ExceptionBadAccess;
             return false;
@@ -492,7 +716,7 @@ bool emex64_memory_cpy(emex64_core_t *core,
             }
         }*/
 
-        memcpy(dst, &core->machine->memory->memory[paddr], chunk);
+        memcpy(dst, &memory->memory[paddr], chunk);
 
         dst += chunk;
         addr += chunk;

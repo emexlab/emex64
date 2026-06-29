@@ -32,6 +32,7 @@
 #include <string.h>
 #include <emex64lib/support/file.h>
 #include <emex64lib/vm/core.h>
+#include <evObj/evObj.h>
 
 #define EMEX64_PAGE_SIZE 0x2000
 #define EMEX64_PAGE_MASK (EMEX64_PAGE_SIZE - 1)
@@ -62,13 +63,6 @@
 #define EMEX64_MEMORY_MMU_MASK_FLAGS    0b0000000000000000000000000000000000000000000000000000000011111111
 #define EMEX64_MEMORY_MMU_MASK_PFN      0b1111111111111111111111111111111111111111111111111111111100000000
 
-typedef struct emex64_memory {
-    uint8_t *memory;
-    uint64_t memory_size;
-    uint64_t ktrr_size;
-    bool ktrr_locked;
-} emex64_memory_t;
-
 /* page table entry bit flags */
 typedef enum: uint8_t {
     kEmex64MMUPTPresent =   0b00000001, /* marks a PTE or PXD as present */
@@ -87,12 +81,28 @@ typedef enum: uint8_t {
     kEmex64MemoryActionPageDirectory,
 } kEmex64MemoryAction;
 
-emex64_memory_t *emex64_memory_alloc(uint64_t size);
-void emex64_memory_dealloc(emex64_memory_t *memory);
+typedef EVObjectRef Emex64MemoryRef;
 
-bool emex64_memory_load_image(emex64_memory_t *memory, emex_file_t *file);
+Emex64MemoryRef Emex64MemoryCreate(EVAllocator *allocator, uint64_t size);
 
-void emex64_memory_action(emex64_core_t *core, uint64_t addr, size_t size, uint64_t *value, kEmex64MemoryAction action);
-bool emex64_memory_cpy(emex64_core_t *core, uint8_t *dst, uint64_t addr, size_t len, kEmex64MemoryAction action);
+/*
+Emex64MemoryRef Emex64MemoryCreateCopy(EVAllocator *allocator, Emex64MemoryRef memoryRef);
+*/
+
+void Emex64MemoryLockKTRR(Emex64MemoryRef memoryRef);
+bool Emex64MemoryIsKTRRLocked(Emex64MemoryRef memoryRef);
+uint64_t Emex64MemoryGetKTRRSize(Emex64MemoryRef memoryRef);
+bool Emex64MemorySetKTRRSize(Emex64MemoryRef memoryRef, uint64_t size);
+
+uint64_t Emex64MemoryGetSize(Emex64MemoryRef memoryRef);
+bool Emex64MemoryAccessIsWithinBounds(Emex64MemoryRef memoryRef, uint64_t address, uint64_t size);
+
+bool Emex64MemoryLoadImage(Emex64MemoryRef memoryRef, emex_file_t *file);
+
+bool Emex64MemoryAction(Emex64MemoryRef memoryRef, uint64_t addr, size_t size, uint64_t *value, kEmex64MemoryAction action);
+
+/* API that only the VM shall use */
+void Emex64MemoryCoreAction(Emex64MemoryRef memoryRef, emex64_core_t *core, uint64_t addr, size_t size, uint64_t *value, kEmex64MemoryAction action);
+bool Emex64MemoryCoreCopyIn(Emex64MemoryRef memoryRef, emex64_core_t *core, uint8_t *dst, uint64_t addr, size_t len, kEmex64MemoryAction read_action);
 
 #endif /* EMEX64VM_MEMORY_H */

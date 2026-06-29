@@ -129,12 +129,13 @@ bool emex64_serve_interrupt_if_needed(emex64_core_t *core)
 
     /* read handler address from vector table */
     uint64_t vector_addr = core->machine->intc->vector_base + (irq * 8);
-    if(unlikely(!emex64_memory_access(core, vector_addr, 8)))
+    uint64_t handler_addr;
+    if(!Emex64MemoryAction(core->machine->memory, vector_addr, 8, &handler_addr, kEmex64MemoryActionRead))
     {
         core->machine->intc->current_irq = -1;
         return false;
     }
-    uint64_t handler_addr = TO_HOST64(*(uint64_t*)(core->machine->memory->memory + vector_addr));
+    handler_addr = TO_HOST64(handler_addr);
 
     /* jump to handler */
     uint64_t oldsp = core->rl[kEmex64RegisterSP];
