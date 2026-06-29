@@ -159,7 +159,7 @@ emex64_uart_t *emex64_uart_alloc(emex64_machine_t *machine)
         return NULL;
     }
 
-    if(!emex64_mmio_register(machine->mmio_bus, EMEX64_UART_BASE, EMEX64_UART_SIZE, u, emex64_uart_read, emex64_uart_write))
+    if(!Emex64MMIOBusRegisterDevice(machine->mmio_bus, EMEX64_UART_BASE, EMEX64_UART_SIZE, u, emex64_uart_read, emex64_uart_write))
     {
         free(u);
         return NULL;

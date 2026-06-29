@@ -40,7 +40,7 @@
 typedef struct emex64_machine {
     emex64_core_t *core;
     emex64_memory_t *memory;
-    emex64_mmio_bus_t *mmio_bus;
+    Emex64MMIOBusRef mmio_bus;
     emex64_intc_t *intc;
     emex64_timer_t *timer;
     emex64_uart_t *uart;

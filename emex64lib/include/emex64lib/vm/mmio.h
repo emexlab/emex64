@@ -27,6 +27,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <evObj/evObj.h>
 
 typedef struct emex64_core emex64_core_t;
 
@@ -43,16 +44,11 @@ typedef struct {
 
 #define MAX_MMIO_REGIONS 32
 
-typedef struct {
-    emex64_mmio_region_t *last_region;
-    emex64_mmio_region_t regions[MAX_MMIO_REGIONS];
-    int region_count;
-} emex64_mmio_bus_t;
+typedef EVObjectRef Emex64MMIOBusRef;
 
-emex64_mmio_bus_t *emex64_mmio_alloc(void);
-void emex64_mmio_dealloc(emex64_mmio_bus_t *bus);
+Emex64MMIOBusRef Emex64MMIOBusCreate(EVAllocator *allocator);
 
-bool emex64_mmio_register(emex64_mmio_bus_t *bus, uint64_t base, uint64_t size, void *device, mmio_read_fn read, mmio_write_fn write);
-emex64_mmio_region_t *emex64_mmio_find(emex64_mmio_bus_t *bus, uint64_t addr);
+bool Emex64MMIOBusRegisterDevice(Emex64MMIOBusRef MMIOBusRef, uint64_t base, uint64_t size, void *device, mmio_read_fn read, mmio_write_fn write);
+emex64_mmio_region_t *Emex64MMIOBusGetRegionForAddress(Emex64MMIOBusRef MMIOBusRef, uint64_t addr);
 
 #endif /* EMEX64VM_MMIO_H */

@@ -105,7 +105,7 @@ emex64_timer_t *emex64_timer_alloc(emex64_machine_t *machine)
     }
 
     /* register timer MMIO */
-    if(!emex64_mmio_register(machine->mmio_bus, EMEX64_TIMER_BASE, EMEX64_TIMER_SIZE, timer, emex64_timer_read, emex64_timer_write))
+    if(!Emex64MMIOBusRegisterDevice(machine->mmio_bus, EMEX64_TIMER_BASE, EMEX64_TIMER_SIZE, timer, emex64_timer_read, emex64_timer_write))
     {
         free(timer);
         return NULL;

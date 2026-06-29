@@ -436,7 +436,7 @@ emex64_display_t *emex64_display_alloc(emex64_machine_t *machine,
     display->height = height;
     display->fb_size = width * height;
 
-    if(!emex64_mmio_register(machine->mmio_bus, EMEX64_FB_BASE, EMEX64_FB_FRAMEBUFFER + display->fb_size, display, emex64_fb_read, emex64_fb_write))
+    if(!Emex64MMIOBusRegisterDevice(machine->mmio_bus, EMEX64_FB_BASE, EMEX64_FB_FRAMEBUFFER + display->fb_size, display, emex64_fb_read, emex64_fb_write))
     {
         free(display);
         return NULL;

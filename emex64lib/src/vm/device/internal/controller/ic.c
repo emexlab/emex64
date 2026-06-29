@@ -40,7 +40,7 @@ emex64_intc_t *emex64_intc_alloc(emex64_machine_t *machine)
         return NULL;
     }
 
-    if(!emex64_mmio_register(machine->mmio_bus, EMEX64_IC_BASE, EMEX64_INTC_SIZE, intc, emex64_intc_read, emex64_intc_write))
+    if(!Emex64MMIOBusRegisterDevice(machine->mmio_bus, EMEX64_IC_BASE, EMEX64_INTC_SIZE, intc, emex64_intc_read, emex64_intc_write))
     {
         free(intc);
         return NULL;

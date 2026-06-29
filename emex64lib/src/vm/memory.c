@@ -272,7 +272,7 @@ void emex64_memory_action(emex64_core_t *core,
             return;
         }
 
-        emex64_mmio_region_t *mmio_region = emex64_mmio_find(core->machine->mmio_bus, addr);
+        emex64_mmio_region_t *mmio_region = Emex64MMIOBusGetRegionForAddress(core->machine->mmio_bus, addr);
         if(likely(mmio_region != NULL))
         {
             uint64_t offset = addr - mmio_region->base_addr;

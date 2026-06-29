@@ -42,7 +42,7 @@ emex64_machine_t *emex64_machine_alloc(emex64_machine_options_t options)
         goto out_release_machine;
     }
 
-    machine->mmio_bus = emex64_mmio_alloc();
+    machine->mmio_bus = Emex64MMIOBusCreate(NULL);
     if(machine->mmio_bus == NULL)
     {
         goto out_release_memory;
@@ -85,9 +85,9 @@ emex64_machine_t *emex64_machine_alloc(emex64_machine_options_t options)
         goto out_release_8042;
     }
 
-    if(!emex64_mmio_register(machine->mmio_bus, EMEX64_RTC_BASE, EMEX64_RTC_SIZE, NULL, emex64_rtc_read, NULL) ||
-       !emex64_mmio_register(machine->mmio_bus, EMEX64_MC_BASE, EMEX64_MC_SIZE, NULL, emex64_mc_read, emex64_mc_write) ||
-       !emex64_mmio_register(machine->mmio_bus, EMEX64_PLATFORM_BASE, EMEX64_PLATFORM_SIZE, NULL, emex64_platform_read, emex64_platform_write))
+    if(!Emex64MMIOBusRegisterDevice(machine->mmio_bus, EMEX64_RTC_BASE, EMEX64_RTC_SIZE, NULL, emex64_rtc_read, NULL) ||
+       !Emex64MMIOBusRegisterDevice(machine->mmio_bus, EMEX64_MC_BASE, EMEX64_MC_SIZE, NULL, emex64_mc_read, emex64_mc_write) ||
+       !Emex64MMIOBusRegisterDevice(machine->mmio_bus, EMEX64_PLATFORM_BASE, EMEX64_PLATFORM_SIZE, NULL, emex64_platform_read, emex64_platform_write))
     {
         goto out_release_display;
     }
@@ -107,7 +107,7 @@ out_release_intc:
 out_release_core:
     emex64_core_dealloc(machine->core);
 out_release_mmio:
-    emex64_mmio_dealloc(machine->mmio_bus);
+    EVRelease(machine->mmio_bus);
 out_release_memory:
     emex64_memory_dealloc(machine->memory);
 out_release_machine:
@@ -123,7 +123,7 @@ void emex64_machine_dealloc(emex64_machine_t *machine)
     emex64_timer_dealloc(machine->timer);
     emex64_intc_dealloc(machine->intc);
     emex64_core_dealloc(machine->core);
-    emex64_mmio_dealloc(machine->mmio_bus);
+    EVRelease(machine->mmio_bus);
     emex64_memory_dealloc(machine->memory);
     free(machine);
 }

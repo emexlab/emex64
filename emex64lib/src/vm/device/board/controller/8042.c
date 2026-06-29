@@ -163,7 +163,7 @@ emex64_8042_t *emex64_8042_alloc(emex64_machine_t *machine,
     dev->mouse_enabled = true;
     dev->status = 0x10;
 
-    if(!emex64_mmio_register(machine->mmio_bus, EMEX64_8042_BASE, EMEX64_8042_SIZE, dev, emex64_8042_read, emex64_8042_write))
+    if(!Emex64MMIOBusRegisterDevice(machine->mmio_bus, EMEX64_8042_BASE, EMEX64_8042_SIZE, dev, emex64_8042_read, emex64_8042_write))
     {
         free(dev);
         return NULL;

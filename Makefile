@@ -25,7 +25,7 @@ clean:
 
 xcode_debug: CMAKE_FLAGS = -DEMEX64_BUILD_TOOLS=1 -DEMEX64_BUILD_EXAMPLES=1 -DEMEX64LIB_STATIC=1 -DCMAKE_BUILD_TYPE="Debug"
 xcode_debug:
-	killall Xcode
+	-killall Xcode
 	rm -rf build
 	mkdir -p build
 	cd build; \
