@@ -301,7 +301,10 @@ void emex64_core_terminate(emex64_core_t *core)
     #if defined(__APPLE__)
     /* FIXME: this doesn't work */
     CFRunLoopStop(CFRunLoopGetMain());
-    exit(0); /* FIXME: this is so it works anyways */
+    if(core->machine->display->enabled)
+    {
+        exit(0); /* FIXME: this is so it works anyways */
+    }
     #endif /* __APPLE__ */
     #endif /* #if EMEX64VM_DEVICE_DISPLAY */
     

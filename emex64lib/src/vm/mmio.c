@@ -45,19 +45,141 @@ void emex64_mmio_fallback_write(emex64_core_t *core,
     return;
 }
 
+typedef struct Emex64Region {
+    EVObject header;
+    uint64_t base_addr;
+    uint64_t size;
+    void *device;
+    mmio_read_fn read;
+    mmio_write_fn write;
+} *Emex64MMIORegion;
+
+static EVClass Emex64MMIORegionClass = {
+    .name = "Emex64IC",
+    .typeID = kEVNotATypeID,
+    .size = sizeof(struct Emex64Region),
+    .init = NULL,
+    .deinit = NULL,
+    .copy = NULL,
+    .equal = NULL,
+};
+
+static void Emex64MMIORegionRegisterClass(void)
+{
+    EVClassRegister(&Emex64MMIORegionClass);
+}
+
+EVTypeID Emex64MMIORegionGetTypeID(void)
+{
+    static pthread_once_t once = PTHREAD_ONCE_INIT;
+    pthread_once(&once, Emex64MMIORegionRegisterClass);
+    return Emex64MMIORegionClass.typeID;
+}
+
+Emex64MMIORegionRef Emex64MMIORegionCreate(EVAllocator *allocator,
+                                           uint64_t base,
+                                           uint64_t size,
+                                           void *device,
+                                           mmio_read_fn read,
+                                           mmio_write_fn write)
+{
+    Emex64MMIORegion MMIORegion = EVObjectAlloc(allocator, Emex64MMIORegionGetTypeID());
+    if(MMIORegion == NULL)
+    {
+        return NULL;
+    }
+
+    MMIORegion->base_addr = base;
+    MMIORegion->size = size;
+    MMIORegion->device = device;
+    MMIORegion->read = read;
+    MMIORegion->write = write;
+
+    return (Emex64MMIORegionRef)MMIORegion;
+}
+
+uint64_t Emex64MMIORegionGetBaseAddress(Emex64MMIORegionRef MMIORegionRef)
+{
+    Emex64MMIORegion MMIORegion = (Emex64MMIORegion)MMIORegionRef;
+    if(MMIORegion == NULL)
+    {
+        return 0;
+    }
+
+    return MMIORegion->base_addr;
+}
+
+uint64_t Emex64MMIORegionGetSize(Emex64MMIORegionRef MMIORegionRef)
+{
+    Emex64MMIORegion MMIORegion = (Emex64MMIORegion)MMIORegionRef;
+    if(MMIORegion == NULL)
+    {
+        return 0;
+    }
+
+    return MMIORegion->size;
+}
+
+void *Emex64MMIORegionGetDevice(Emex64MMIORegionRef MMIORegionRef)
+{
+    Emex64MMIORegion MMIORegion = (Emex64MMIORegion)MMIORegionRef;
+    if(MMIORegion == NULL)
+    {
+        return NULL;
+    }
+
+    return MMIORegion->device;
+}
+
+mmio_read_fn Emex64MMIORegionGetReadSymbol(Emex64MMIORegionRef MMIORegionRef)
+{
+    Emex64MMIORegion MMIORegion = (Emex64MMIORegion)MMIORegionRef;
+    if(MMIORegion == NULL)
+    {
+        return emex64_mmio_fallback_read;
+    }
+
+    return MMIORegion->read;
+}
+
+mmio_write_fn Emex64MMIORegionGetWriteSymbol(Emex64MMIORegionRef MMIORegionRef)
+{
+    Emex64MMIORegion MMIORegion = (Emex64MMIORegion)MMIORegionRef;
+    if(MMIORegion == NULL)
+    {
+        return emex64_mmio_fallback_write;
+    }
+
+    return MMIORegion->write;
+}
+
 typedef struct Emex64MMIOBus {
     EVObject header;
-    emex64_mmio_region_t *last_region;
-    emex64_mmio_region_t regions[MAX_MMIO_REGIONS];
+    Emex64MMIORegion last_region;
+    Emex64MMIORegion regions[MAX_MMIO_REGIONS];
     int region_count;
 } *Emex64MMIOBus;
+
+static void __Emex64MMIOBusDeinit(Emex64MMIOBusRef MMIOBusRef)
+{
+    Emex64MMIOBus MMIOBus = (Emex64MMIOBus)MMIOBusRef;
+    if(MMIOBus == NULL || MMIOBus->region_count >= MAX_MMIO_REGIONS)
+    {
+        return;
+    }
+
+    for(int i = 0; i < MMIOBus->region_count; i++)
+    {
+        EVRelease(MMIOBus->regions[i]);
+    }
+}
 
 static EVClass Emex64MMIOBusClass = {
     .name = "Emex64MMIOBus",
     .typeID = kEVNotATypeID,
     .size = sizeof(struct Emex64MMIOBus),
     .init = NULL,
-    .deinit = NULL,
+    .deinit = __Emex64MMIOBusDeinit,
     .copy = NULL,
     .equal = NULL,
 };
@@ -88,12 +210,8 @@ Emex64MMIOBusRef Emex64MMIOBusCreate(EVAllocator *allocator)
     return (Emex64MMIOBusRef)MMIOBus;
 }
 
-bool Emex64MMIOBusRegisterDevice(Emex64MMIOBusRef MMIOBusRef,
-                                 uint64_t base,
-                                 uint64_t size,
-                                 void *device,
-                                 mmio_read_fn read,
-                                 mmio_write_fn write)
+bool Emex64MMIOBusRegisterRegion(Emex64MMIOBusRef MMIOBusRef,
+                                 Emex64MMIORegionRef MMIORegionRef)
 {
 
     Emex64MMIOBus MMIOBus = (Emex64MMIOBus)MMIOBusRef;
@@ -103,18 +221,18 @@ bool Emex64MMIOBusRegisterDevice(Emex64MMIOBusRef MMIOBusRef,
     }
 
     /* region registration */
-    emex64_mmio_region_t *region = &MMIOBus->regions[MMIOBus->region_count++];
-    region->base_addr = base;
-    region->size = size;
-    region->device = device;
-    region->read = read ? read : emex64_mmio_fallback_read;
-    region->write = write ? write : emex64_mmio_fallback_write;
+    MMIORegionRef = EVRetain(MMIORegionRef);
+    if(MMIORegionRef == NULL)
+    {
+        return false;
+    }
+    MMIOBus->regions[MMIOBus->region_count++] = MMIORegionRef;
 
     return true;
 }
 
-emex64_mmio_region_t *Emex64MMIOBusGetRegionForAddress(Emex64MMIOBusRef MMIOBusRef,
-                                                       uint64_t addr)
+Emex64MMIORegionRef Emex64MMIOBusGetRegionForAddress(Emex64MMIOBusRef MMIOBusRef,
+                                                     uint64_t addr)
 {
     Emex64MMIOBus MMIOBus = (Emex64MMIOBus)MMIOBusRef;
     if(MMIOBus == NULL)
@@ -133,7 +251,7 @@ emex64_mmio_region_t *Emex64MMIOBusGetRegionForAddress(Emex64MMIOBusRef MMIOBusR
     /* finding mmio region, hopefully x3 */
     for(int i = 0; i < MMIOBus->region_count; i++)
     {
-        emex64_mmio_region_t *r = &MMIOBus->regions[i];
+        Emex64MMIORegion r = MMIOBus->regions[i];
         if(addr >= r->base_addr &&
            addr < r->base_addr + r->size)
         {

@@ -195,7 +195,7 @@ int main(void)
         return 1;
     }
 
-    success = emex64_memory_load_image(machine->memory, firmware_file);
+    success = Emex64MemoryLoadImage(machine->memory, firmware_file);
     emex_file_dealloc(firmware_file);
     if(!success)
     {

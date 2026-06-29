@@ -35,59 +35,91 @@ emex64_machine_t *emex64_machine_alloc(emex64_machine_options_t options)
     {
         return NULL;
     }
-
+    
     machine->memory = Emex64MemoryCreate(NULL, options.memory_size);
     if(machine->memory == NULL)
     {
         goto out_release_machine;
     }
-
+    
     machine->mmio_bus = Emex64MMIOBusCreate(NULL);
     if(machine->mmio_bus == NULL)
     {
         goto out_release_memory;
     }
-
+    
     machine->core = emex64_core_alloc();
     if(machine->core == NULL)
     {
         goto out_release_mmio;
     }
     machine->core->machine = machine;
-
+    
     machine->intc = emex64_intc_alloc(machine);
     if(machine->intc == NULL)
     {
         goto out_release_core;
     }
-
+    
     machine->timer = emex64_timer_alloc(machine);
     if(machine->timer == NULL)
     {
         goto out_release_intc;
     }
-
+    
     machine->uart = emex64_uart_alloc(machine);
     if(machine->uart == NULL)
     {
         goto out_release_timer;
     }
-
+    
     machine->emex8042 = emex64_8042_alloc(machine, options.keyboard_mode == kKeyboardMode8042, options.mouse_mode == kMouseMode8042);
     if(machine->emex8042 == NULL)
     {
         goto out_release_uart;
     }
-
+    
     machine->display = emex64_display_alloc(machine, options.display.enabled, options.display.width, options.display.height);
     if(machine->display == NULL)
     {
         goto out_release_8042;
     }
+    
+    Emex64MMIORegionRef RTCMMIORegion = Emex64MMIORegionCreate(NULL, EMEX64_RTC_BASE, EMEX64_RTC_SIZE, NULL, emex64_rtc_read, NULL);
+    if(RTCMMIORegion == NULL)
+    {
+        goto out_release_display;
+    }
 
-    if(!Emex64MMIOBusRegisterDevice(machine->mmio_bus, EMEX64_RTC_BASE, EMEX64_RTC_SIZE, NULL, emex64_rtc_read, NULL) ||
-       !Emex64MMIOBusRegisterDevice(machine->mmio_bus, EMEX64_MC_BASE, EMEX64_MC_SIZE, NULL, emex64_mc_read, emex64_mc_write) ||
-       !Emex64MMIOBusRegisterDevice(machine->mmio_bus, EMEX64_PLATFORM_BASE, EMEX64_PLATFORM_SIZE, NULL, emex64_platform_read, emex64_platform_write))
+    bool success = Emex64MMIOBusRegisterRegion(machine->mmio_bus, RTCMMIORegion);
+    EVRelease(RTCMMIORegion);
+    if(!success)
+    {
+        goto out_release_display;
+    }
+
+    Emex64MMIORegionRef MCRegion = Emex64MMIORegionCreate(NULL, EMEX64_MC_BASE, EMEX64_MC_SIZE, NULL, emex64_mc_read, emex64_mc_write);
+    if(MCRegion == NULL)
+    {
+        goto out_release_display;
+    }
+    
+    success = Emex64MMIOBusRegisterRegion(machine->mmio_bus, MCRegion);
+    EVRelease(MCRegion);
+    if(!success)
+    {
+        goto out_release_display;
+    }
+    
+    Emex64MMIORegionRef PlatformRegion = Emex64MMIORegionCreate(NULL, EMEX64_PLATFORM_BASE, EMEX64_PLATFORM_SIZE, NULL, emex64_platform_read, emex64_platform_write);
+    if(PlatformRegion == NULL)
+    {
+        goto out_release_display;
+    }
+    
+    success = Emex64MMIOBusRegisterRegion(machine->mmio_bus, PlatformRegion);
+    EVRelease(PlatformRegion);
+    if(!success)
     {
         goto out_release_display;
     }

@@ -489,17 +489,20 @@ void Emex64MemoryCoreAction(Emex64MemoryRef memoryRef,
             return;
         }
 
-        emex64_mmio_region_t *mmio_region = Emex64MMIOBusGetRegionForAddress(core->machine->mmio_bus, addr);
+        Emex64MMIORegionRef mmio_region = Emex64MMIOBusGetRegionForAddress(core->machine->mmio_bus, addr);
+        void *device = Emex64MMIORegionGetDevice(mmio_region);
         if(likely(mmio_region != NULL))
         {
-            uint64_t offset = addr - mmio_region->base_addr;
+            uint64_t offset = addr - Emex64MMIORegionGetBaseAddress(mmio_region);
             switch(action)
             {
                 case kEmex64MemoryActionRead:
-                    *value = mmio_region->read(core, mmio_region->device, offset, (int)size);
+                    mmio_read_fn read = Emex64MMIORegionGetReadSymbol(mmio_region);
+                    *value = read(core, device, offset, (int)size);
                     return;
                 case kEmex64MemoryActionWrite:
-                    mmio_region->write(core, mmio_region->device, offset, *value, (int)size);
+                    mmio_write_fn write = Emex64MMIORegionGetWriteSymbol(mmio_region);
+                    write(core, device, offset, *value, (int)size);
                     return;
                 default:
                     core->cr_state.crexc.exception = kEmex64ExceptionBadAccess;
