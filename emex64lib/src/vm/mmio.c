@@ -57,10 +57,8 @@ typedef struct Emex64Region {
 static EVClass Emex64MMIORegionClass = {
     .name = "Emex64MMIORegion",
     .typeID = kEVNotATypeID,
-    .size = sizeof(struct Emex64Region),
     .init = NULL,
     .deinit = NULL,
-    .copy = NULL,
     .equal = NULL,
 };
 
@@ -83,7 +81,7 @@ Emex64MMIORegionRef Emex64MMIORegionCreate(EVAllocator *allocator,
                                            mmio_read_fn read,
                                            mmio_write_fn write)
 {
-    Emex64MMIORegion MMIORegion = EVObjectAlloc(allocator, Emex64MMIORegionGetTypeID());
+    Emex64MMIORegion MMIORegion = EVObjectAlloc(allocator, Emex64MMIORegionGetTypeID(), sizeof(struct Emex64Region));
     if(MMIORegion == NULL)
     {
         return NULL;
@@ -177,10 +175,8 @@ static void __Emex64MMIOBusDeinit(Emex64MMIOBusRef MMIOBusRef)
 static EVClass Emex64MMIOBusClass = {
     .name = "Emex64MMIOBus",
     .typeID = kEVNotATypeID,
-    .size = sizeof(struct Emex64MMIOBus),
     .init = NULL,
     .deinit = __Emex64MMIOBusDeinit,
-    .copy = NULL,
     .equal = NULL,
 };
 
@@ -198,7 +194,7 @@ EVTypeID Emex64MMIOBusGetTypeID(void)
 
 Emex64MMIOBusRef Emex64MMIOBusCreate(EVAllocator *allocator)
 {
-    Emex64MMIOBus MMIOBus = EVObjectAlloc(allocator, Emex64MMIOBusGetTypeID());
+    Emex64MMIOBus MMIOBus = EVObjectAlloc(allocator, Emex64MMIOBusGetTypeID(), sizeof(struct Emex64MMIOBus));
     if(MMIOBus == NULL)
     {
         return NULL;

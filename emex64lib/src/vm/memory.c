@@ -57,10 +57,8 @@ static void __Emex64MemoryDeinit(Emex64MemoryRef memoryRef)
 static EVClass Emex64MemoryClass = {
     .name = "Emex64Memory",
     .typeID = kEVNotATypeID,
-    .size = sizeof(struct Emex64Memory),
     .init = NULL,
     .deinit = __Emex64MemoryDeinit,
-    .copy = NULL,
     .equal = NULL,
 };
 
@@ -84,7 +82,7 @@ EVTypeID Emex64MemoryGetTypeID(void)
 Emex64MemoryRef Emex64MemoryCreate(EVAllocator *allocator,
                                    uint64_t size)
 {
-    Emex64Memory memory = EVObjectAlloc(allocator, Emex64MemoryGetTypeID());
+    Emex64Memory memory = EVObjectAlloc(allocator, Emex64MemoryGetTypeID(), sizeof(struct Emex64Memory));
     if(memory == NULL)
     {
         return NULL;

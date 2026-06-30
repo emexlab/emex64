@@ -44,10 +44,8 @@ void __VpageObjDeinit(VpageObjRef ref)
 EVClass VpageObjClass = {
     .name = "VpageObj",
     .typeID = kEVNotATypeID,
-    .size = sizeof(struct VpageObj),
     .init = NULL,
     .deinit = __VpageObjDeinit,
-    .copy = NULL,
 };
 
 static void VpageObjRegisterClass(void)
@@ -78,7 +76,7 @@ VpageObjRef VpageObjCreateWithVpage(EVAllocator *allocator,
 {
     assert(vpage != NULL);
 
-    VpageObj obj = EVObjectAlloc(allocator, VpageObjGetType());
+    VpageObj obj = EVObjectAlloc(allocator, VpageObjGetType(), sizeof(struct VpageObj));
     if(obj == NULL)
     {
         return NULL;
