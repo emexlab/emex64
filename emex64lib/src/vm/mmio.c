@@ -55,7 +55,7 @@ typedef struct Emex64Region {
 } *Emex64MMIORegion;
 
 static EVClass Emex64MMIORegionClass = {
-    .name = "Emex64IC",
+    .name = "Emex64MMIORegion",
     .typeID = kEVNotATypeID,
     .size = sizeof(struct Emex64Region),
     .init = NULL,
