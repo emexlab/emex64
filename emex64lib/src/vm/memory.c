@@ -38,7 +38,7 @@
 #include <emex64lib/vm/mmio.h>
 
 typedef struct Emex64Memory {
-    EVObject header;
+    EFObject header;
     uint8_t *memory;
     uint64_t memory_size;
     uint64_t ktrr_size;
@@ -54,12 +54,13 @@ static void __Emex64MemoryDeinit(Emex64MemoryRef memoryRef)
     }
 }
 
-static EVClass Emex64MemoryClass = {
+static EFClass Emex64MemoryClass = {
     .name = "Emex64Memory",
-    .typeID = kEVNotATypeID,
+    .typeID = kEFNotATypeID,
     .init = NULL,
     .deinit = __Emex64MemoryDeinit,
     .equal = NULL,
+    .copyDescription = NULL,
 };
 
 typedef struct emex64_mmu_entry_lookup {
@@ -69,20 +70,20 @@ typedef struct emex64_mmu_entry_lookup {
 
 static void Emex64MemoryRegisterClass(void)
 {
-    EVClassRegister(&Emex64MemoryClass);
+    EFClassRegister(&Emex64MemoryClass);
 }
 
-EVTypeID Emex64MemoryGetTypeID(void)
+EFTypeID Emex64MemoryGetTypeID(void)
 {
     static pthread_once_t once = PTHREAD_ONCE_INIT;
     pthread_once(&once, Emex64MemoryRegisterClass);
     return Emex64MemoryClass.typeID;
 }
 
-Emex64MemoryRef Emex64MemoryCreate(EVAllocator *allocator,
+Emex64MemoryRef Emex64MemoryCreate(EFAllocatorRef allocatorRef,
                                    uint64_t size)
 {
-    Emex64Memory memory = EVObjectAlloc(allocator, Emex64MemoryGetTypeID(), sizeof(struct Emex64Memory));
+    Emex64Memory memory = EFObjectAlloc(allocatorRef, Emex64MemoryGetTypeID(), sizeof(struct Emex64Memory));
     if(memory == NULL)
     {
         return NULL;
@@ -93,7 +94,7 @@ Emex64MemoryRef Emex64MemoryCreate(EVAllocator *allocator,
     memory->memory = mmap(NULL, memory->memory_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if(memory->memory == MAP_FAILED)
     {
-        EVRelease(memory);
+        EFRelease(memory);
         return NULL;
     }
 

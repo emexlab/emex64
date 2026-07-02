@@ -32,7 +32,7 @@
 #include <string.h>
 #include <emex64lib/support/file.h>
 #include <emex64lib/vm/core.h>
-#include <evObj/evObj.h>
+#include <EmexFoundation/EmexFoundation.h>
 
 #define EMEX64_PAGE_SIZE 0x2000
 #define EMEX64_PAGE_MASK (EMEX64_PAGE_SIZE - 1)
@@ -81,9 +81,11 @@ typedef enum: uint8_t {
     kEmex64MemoryActionPageDirectory,
 } kEmex64MemoryAction;
 
-typedef EVObjectRef Emex64MemoryRef;
+typedef EFObjectRef Emex64MemoryRef;
 
-Emex64MemoryRef Emex64MemoryCreate(EVAllocator *allocator, uint64_t size);
+EFTypeID Emex64MemoryGetTypeID(void);
+
+Emex64MemoryRef Emex64MemoryCreate(EFAllocatorRef allocatorRef, uint64_t size);
 
 /*
 Emex64MemoryRef Emex64MemoryCreateCopy(EVAllocator *allocator, Emex64MemoryRef memoryRef);

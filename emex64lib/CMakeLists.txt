@@ -185,7 +185,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/emex64lib/support/version.h
     DESTINATION include/emex64lib/support)
 
 target_link_libraries(emex64
-    PUBLIC evObj
+    PUBLIC EmexFoundation
 )
 
 target_compile_features(emex64 PUBLIC c_std_23)

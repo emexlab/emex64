@@ -87,7 +87,7 @@ vfd_t *vfd_vopen()
     }
 
     d->type = kVFDTypeVirtual;
-    d->vd.vpageObjRef = VpageObjCreate(kEVAllocatorDefault);
+    d->vd.vpageObjRef = VpageObjCreate(kEFAllocatorDefault);
     d->vd.off = 0;
 
     if(d->vd.vpageObjRef == NULL)
@@ -107,7 +107,7 @@ int vfd_close(vfd_t *d)
             vret = close(d->fd);
             break;
         case kVFDTypeVirtual:
-            EVRelease(d->vd.vpageObjRef);
+            EFRelease(d->vd.vpageObjRef);
             vret = 0;
             break;
     }
@@ -138,7 +138,7 @@ vfd_t *vfd_dup(vfd_t *d)
         case kVFDTypeVirtual:
             /* copy entire state */
             nd->vd.off = d->vd.off;
-            nd->vd.vpageObjRef = EVRetain(d->vd.vpageObjRef);
+            nd->vd.vpageObjRef = EFRetain(d->vd.vpageObjRef);
             if(nd->vd.vpageObjRef == NULL)
             {
                 goto fail;

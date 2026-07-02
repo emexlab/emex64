@@ -1,3 +1,3 @@
-[submodule "evObj"]
-	path = evObj
-	url = https://github.com/emexlab/evObj
+[submodule "EmexFoundation"]
+	path = EmexFoundation
+	url = https://github.com/emexLab/EmexFoundation

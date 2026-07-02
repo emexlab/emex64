@@ -105,7 +105,7 @@ emex64_timer_t *emex64_timer_alloc(emex64_machine_t *machine)
     }
 
     /* register timer MMIO */
-    Emex64MMIORegionRef TimerRegion = Emex64MMIORegionCreate(kEVAllocatorDefault, EMEX64_TIMER_BASE, EMEX64_TIMER_SIZE, timer, emex64_timer_read, emex64_timer_write);
+    Emex64MMIORegionRef TimerRegion = Emex64MMIORegionCreate(kEFAllocatorDefault, EMEX64_TIMER_BASE, EMEX64_TIMER_SIZE, timer, emex64_timer_read, emex64_timer_write);
     if(TimerRegion == NULL)
     {
         free(timer);
@@ -113,7 +113,7 @@ emex64_timer_t *emex64_timer_alloc(emex64_machine_t *machine)
     }
 
     bool success = Emex64MMIOBusRegisterRegion(machine->mmio_bus, TimerRegion);
-    EVRelease(TimerRegion);
+    EFRelease(TimerRegion);
     if(!success)
     {
         free(timer);

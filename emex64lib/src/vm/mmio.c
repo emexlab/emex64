@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <emex64lib/vm/mmio.h>
-#include <evObj/evObj.h>
+#include <EmexFoundation/EmexFoundation.h>
 
 uint64_t emex64_mmio_fallback_read(emex64_core_t *core,
                                    void *device,
@@ -46,7 +46,7 @@ void emex64_mmio_fallback_write(emex64_core_t *core,
 }
 
 typedef struct Emex64Region {
-    EVObject header;
+    EFObject header;
     uint64_t base_addr;
     uint64_t size;
     void *device;
@@ -54,9 +54,9 @@ typedef struct Emex64Region {
     mmio_write_fn write;
 } *Emex64MMIORegion;
 
-static EVClass Emex64MMIORegionClass = {
+static EFClass Emex64MMIORegionClass = {
     .name = "Emex64MMIORegion",
-    .typeID = kEVNotATypeID,
+    .typeID = kEFNotATypeID,
     .init = NULL,
     .deinit = NULL,
     .equal = NULL,
@@ -64,24 +64,24 @@ static EVClass Emex64MMIORegionClass = {
 
 static void Emex64MMIORegionRegisterClass(void)
 {
-    EVClassRegister(&Emex64MMIORegionClass);
+    EFClassRegister(&Emex64MMIORegionClass);
 }
 
-EVTypeID Emex64MMIORegionGetTypeID(void)
+EFTypeID Emex64MMIORegionGetTypeID(void)
 {
     static pthread_once_t once = PTHREAD_ONCE_INIT;
     pthread_once(&once, Emex64MMIORegionRegisterClass);
     return Emex64MMIORegionClass.typeID;
 }
 
-Emex64MMIORegionRef Emex64MMIORegionCreate(EVAllocator *allocator,
+Emex64MMIORegionRef Emex64MMIORegionCreate(EFAllocatorRef allocatorRef,
                                            uint64_t base,
                                            uint64_t size,
                                            void *device,
                                            mmio_read_fn read,
                                            mmio_write_fn write)
 {
-    Emex64MMIORegion MMIORegion = EVObjectAlloc(allocator, Emex64MMIORegionGetTypeID(), sizeof(struct Emex64Region));
+    Emex64MMIORegion MMIORegion = EFObjectAlloc(allocatorRef, Emex64MMIORegionGetTypeID(), sizeof(struct Emex64Region));
     if(MMIORegion == NULL)
     {
         return NULL;
@@ -152,7 +152,7 @@ mmio_write_fn Emex64MMIORegionGetWriteSymbol(Emex64MMIORegionRef MMIORegionRef)
 }
 
 typedef struct Emex64MMIOBus {
-    EVObject header;
+    EFObject header;
     Emex64MMIORegion last_region;
     Emex64MMIORegion regions[MAX_MMIO_REGIONS];
     int region_count;
@@ -168,13 +168,13 @@ static void __Emex64MMIOBusDeinit(Emex64MMIOBusRef MMIOBusRef)
 
     for(int i = 0; i < MMIOBus->region_count; i++)
     {
-        EVRelease(MMIOBus->regions[i]);
+        EFRelease(MMIOBus->regions[i]);
     }
 }
 
-static EVClass Emex64MMIOBusClass = {
+static EFClass Emex64MMIOBusClass = {
     .name = "Emex64MMIOBus",
-    .typeID = kEVNotATypeID,
+    .typeID = kEFNotATypeID,
     .init = NULL,
     .deinit = __Emex64MMIOBusDeinit,
     .equal = NULL,
@@ -182,19 +182,19 @@ static EVClass Emex64MMIOBusClass = {
 
 static void Emex64MMIOBusRegisterClass(void)
 {
-    EVClassRegister(&Emex64MMIOBusClass);
+    EFClassRegister(&Emex64MMIOBusClass);
 }
 
-EVTypeID Emex64MMIOBusGetTypeID(void)
+EFTypeID Emex64MMIOBusGetTypeID(void)
 {
     static pthread_once_t once = PTHREAD_ONCE_INIT;
     pthread_once(&once, Emex64MMIOBusRegisterClass);
     return Emex64MMIOBusClass.typeID;
 }
 
-Emex64MMIOBusRef Emex64MMIOBusCreate(EVAllocator *allocator)
+Emex64MMIOBusRef Emex64MMIOBusCreate(EFAllocatorRef allocatorRef)
 {
-    Emex64MMIOBus MMIOBus = EVObjectAlloc(allocator, Emex64MMIOBusGetTypeID(), sizeof(struct Emex64MMIOBus));
+    Emex64MMIOBus MMIOBus = EFObjectAlloc(allocatorRef, Emex64MMIOBusGetTypeID(), sizeof(struct Emex64MMIOBus));
     if(MMIOBus == NULL)
     {
         return NULL;
@@ -217,7 +217,7 @@ bool Emex64MMIOBusRegisterRegion(Emex64MMIOBusRef MMIOBusRef,
     }
 
     /* region registration */
-    MMIORegionRef = EVRetain(MMIORegionRef);
+    MMIORegionRef = EFRetain(MMIORegionRef);
     if(MMIORegionRef == NULL)
     {
         return false;

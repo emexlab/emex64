@@ -40,7 +40,7 @@ emex64_intc_t *emex64_intc_alloc(emex64_machine_t *machine)
         return NULL;
     }
 
-    Emex64MMIORegionRef ICRegion = Emex64MMIORegionCreate(kEVAllocatorDefault, EMEX64_IC_BASE, EMEX64_INTC_SIZE, intc, emex64_intc_read, emex64_intc_write);
+    Emex64MMIORegionRef ICRegion = Emex64MMIORegionCreate(kEFAllocatorDefault, EMEX64_IC_BASE, EMEX64_INTC_SIZE, intc, emex64_intc_read, emex64_intc_write);
     if(ICRegion == NULL)
     {
         free(intc);
@@ -48,7 +48,7 @@ emex64_intc_t *emex64_intc_alloc(emex64_machine_t *machine)
     }
 
     bool success = Emex64MMIOBusRegisterRegion(machine->mmio_bus, ICRegion);
-    EVRelease(ICRegion);
+    EFRelease(ICRegion);
     if(!success)
     {
         free(intc);

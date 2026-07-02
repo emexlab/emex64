@@ -27,7 +27,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <evObj/evObj.h>
+#include <EmexFoundation/EmexFoundation.h>
 
 typedef struct emex64_core emex64_core_t;
 
@@ -36,9 +36,11 @@ typedef void (*mmio_write_fn)(emex64_core_t *core, void *device, uint64_t offset
 
 #define MAX_MMIO_REGIONS 32
 
-typedef EVObjectRef Emex64MMIORegionRef;
+typedef EFObjectRef Emex64MMIORegionRef;
 
-Emex64MMIORegionRef Emex64MMIORegionCreate(EVAllocator *allocator, uint64_t base, uint64_t size, void *device, mmio_read_fn read, mmio_write_fn write);
+EFTypeID Emex64MMIORegionGetTypeID(void);
+
+Emex64MMIORegionRef Emex64MMIORegionCreate(EFAllocatorRef allocatorRef, uint64_t base, uint64_t size, void *device, mmio_read_fn read, mmio_write_fn write);
 
 uint64_t Emex64MMIORegionGetBaseAddress(Emex64MMIORegionRef MMIORegionRef);
 uint64_t Emex64MMIORegionGetSize(Emex64MMIORegionRef MMIORegionRef);
@@ -46,9 +48,11 @@ void *Emex64MMIORegionGetDevice(Emex64MMIORegionRef MMIORegionRef);
 mmio_read_fn Emex64MMIORegionGetReadSymbol(Emex64MMIORegionRef MMIORegionRef);
 mmio_write_fn Emex64MMIORegionGetWriteSymbol(Emex64MMIORegionRef MMIORegionRef);
 
-typedef EVObjectRef Emex64MMIOBusRef;
+typedef EFObjectRef Emex64MMIOBusRef;
 
-Emex64MMIOBusRef Emex64MMIOBusCreate(EVAllocator *allocator);
+EFTypeID Emex64MMIOBusGetTypeID(void);
+
+Emex64MMIOBusRef Emex64MMIOBusCreate(EFAllocatorRef allocatorRef);
 
 bool Emex64MMIOBusRegisterRegion(Emex64MMIOBusRef MMIOBusRef, Emex64MMIORegionRef MMIORegionRef);
 Emex64MMIORegionRef Emex64MMIOBusGetRegionForAddress(Emex64MMIOBusRef MMIOBusRef, uint64_t addr);

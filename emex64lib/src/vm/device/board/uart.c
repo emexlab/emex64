@@ -159,7 +159,7 @@ emex64_uart_t *emex64_uart_alloc(emex64_machine_t *machine)
         return NULL;
     }
 
-    Emex64MMIORegionRef UARTRegion = Emex64MMIORegionCreate(kEVAllocatorDefault, EMEX64_UART_BASE, EMEX64_UART_SIZE, u, emex64_uart_read, emex64_uart_write);
+    Emex64MMIORegionRef UARTRegion = Emex64MMIORegionCreate(kEFAllocatorDefault, EMEX64_UART_BASE, EMEX64_UART_SIZE, u, emex64_uart_read, emex64_uart_write);
     if(UARTRegion == NULL)
     {
         free(u);
@@ -167,7 +167,7 @@ emex64_uart_t *emex64_uart_alloc(emex64_machine_t *machine)
     }
 
     bool success = Emex64MMIOBusRegisterRegion(machine->mmio_bus, UARTRegion);
-    EVRelease(UARTRegion);
+    EFRelease(UARTRegion);
     if(!success)
     {
         free(u);

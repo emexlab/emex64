@@ -30,13 +30,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <sys/stat.h>
-#include <evObj/evObj.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <emex64lib/support/virtual/vpage.h>
 
-typedef EVObjectRef VpageObjRef;
+typedef EFObjectRef VpageObjRef;
 
-VpageObjRef VpageObjCreate(EVAllocator *allocator);
-VpageObjRef VpageObjCreateWithVpage(EVAllocator *allocator, vpage_t *vpage);
+EFTypeID VpageObjGetType(void);
+
+VpageObjRef VpageObjCreate(EFAllocatorRef allocatorRef);
+VpageObjRef VpageObjCreateWithVpage(EFAllocatorRef allocatorRef, vpage_t *vpage);
 
 vpage_t *VpageObjGetVpage(VpageObjRef vpageObjRef);
 

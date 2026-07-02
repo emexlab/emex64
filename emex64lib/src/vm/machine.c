@@ -92,7 +92,7 @@ emex64_machine_t *emex64_machine_alloc(emex64_machine_options_t options)
     }
 
     bool success = Emex64MMIOBusRegisterRegion(machine->mmio_bus, RTCMMIORegion);
-    EVRelease(RTCMMIORegion);
+    EFRelease(RTCMMIORegion);
     if(!success)
     {
         goto out_release_display;
@@ -105,7 +105,7 @@ emex64_machine_t *emex64_machine_alloc(emex64_machine_options_t options)
     }
     
     success = Emex64MMIOBusRegisterRegion(machine->mmio_bus, MCRegion);
-    EVRelease(MCRegion);
+    EFRelease(MCRegion);
     if(!success)
     {
         goto out_release_display;
@@ -118,7 +118,7 @@ emex64_machine_t *emex64_machine_alloc(emex64_machine_options_t options)
     }
     
     success = Emex64MMIOBusRegisterRegion(machine->mmio_bus, PlatformRegion);
-    EVRelease(PlatformRegion);
+    EFRelease(PlatformRegion);
     if(!success)
     {
         goto out_release_display;
@@ -139,9 +139,9 @@ out_release_intc:
 out_release_core:
     emex64_core_dealloc(machine->core);
 out_release_mmio:
-    EVRelease(machine->mmio_bus);
+    EFRelease(machine->mmio_bus);
 out_release_memory:
-    EVRelease(machine->memory);
+    EFRelease(machine->memory);
 out_release_machine:
     free(machine);
     return NULL;
@@ -155,8 +155,8 @@ void emex64_machine_dealloc(emex64_machine_t *machine)
     emex64_timer_dealloc(machine->timer);
     emex64_intc_dealloc(machine->intc);
     emex64_core_dealloc(machine->core);
-    EVRelease(machine->mmio_bus);
-    EVRelease(machine->memory);
+    EFRelease(machine->mmio_bus);
+    EFRelease(machine->memory);
     free(machine);
 }
 

@@ -27,7 +27,7 @@
 #include <emex64lib/support/virtual/vpageobj.h>
 
 typedef struct VpageObj {
-    EVObject header;
+    EFObject header;
     vpage_t *root;
     size_t extra_size_marker;
 } *VpageObj;
@@ -41,26 +41,26 @@ void __VpageObjDeinit(VpageObjRef ref)
     }
 }
 
-EVClass VpageObjClass = {
+EFClass VpageObjClass = {
     .name = "VpageObj",
-    .typeID = kEVNotATypeID,
+    .typeID = kEFNotATypeID,
     .init = NULL,
     .deinit = __VpageObjDeinit,
 };
 
 static void VpageObjRegisterClass(void)
 {
-    EVClassRegister(&VpageObjClass);
+    EFClassRegister(&VpageObjClass);
 }
 
-EVTypeID VpageObjGetType(void)
+EFTypeID VpageObjGetType(void)
 {
     static pthread_once_t once = PTHREAD_ONCE_INIT;
     pthread_once(&once, VpageObjRegisterClass);
     return VpageObjClass.typeID;
 }
 
-VpageObjRef VpageObjCreate(EVAllocator *allocator)
+VpageObjRef VpageObjCreate(EFAllocatorRef allocatorRef)
 {
     vpage_t *vpage = vpage_alloc();
     if(vpage == NULL)
@@ -68,15 +68,15 @@ VpageObjRef VpageObjCreate(EVAllocator *allocator)
         return NULL;
     }
 
-    return VpageObjCreateWithVpage(allocator, vpage);
+    return VpageObjCreateWithVpage(allocatorRef, vpage);
 }
 
-VpageObjRef VpageObjCreateWithVpage(EVAllocator *allocator,
+VpageObjRef VpageObjCreateWithVpage(EFAllocatorRef allocatorRef,
                                     vpage_t *vpage)
 {
     assert(vpage != NULL);
 
-    VpageObj obj = EVObjectAlloc(allocator, VpageObjGetType(), sizeof(struct VpageObj));
+    VpageObj obj = EFObjectAlloc(allocatorRef, VpageObjGetType(), sizeof(struct VpageObj));
     if(obj == NULL)
     {
         return NULL;

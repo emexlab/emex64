@@ -10,7 +10,7 @@ option(EMEX64_BUILD_TOOLS "Builds tools that make interfacing the emex64 toolcha
 option(EMEX64_BUILD_EXAMPLES "Builds examples that showcase how to use the emex64 toolchain" OFF)
 option(EMEX64LIB_STATIC "Build emex64lib as a static library" OFF)
 
-add_subdirectory(evObj)
+add_subdirectory(EmexFoundation)
 add_subdirectory(emex64lib)
 
 if(EMEX64_BUILD_TOOLS)

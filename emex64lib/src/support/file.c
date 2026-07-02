@@ -296,7 +296,7 @@ bool emex_file_map(emex_file_t *f)
                 return false;
             }
 
-            f->vpageObjRef = VpageObjCreateWithVpage(kEVAllocatorDefault, p);
+            f->vpageObjRef = VpageObjCreateWithVpage(kEFAllocatorDefault, p);
             if(f->vpageObjRef == NULL)
             {
                 vpage_dealloc(p);
@@ -306,7 +306,7 @@ bool emex_file_map(emex_file_t *f)
         }
         case kVFDTypeVirtual:
         {
-            if(!EVRetain(f->d->vd.vpageObjRef))
+            if(!EFRetain(f->d->vd.vpageObjRef))
             {
                 return false;
             }
@@ -314,7 +314,7 @@ bool emex_file_map(emex_file_t *f)
             VpageObjRef *vpageObjRef = f->d->vd.vpageObjRef;
             if(!VpageObjMergePage(vpageObjRef))
             {
-                EVRelease(vpageObjRef);
+                EFRelease(vpageObjRef);
                 return false;
             }
 
@@ -335,7 +335,7 @@ void emex_file_unmap(emex_file_t *f)
 {
     if(f->content != MAP_FAILED)
     {
-        EVRelease(f->vpageObjRef);
+        EFRelease(f->vpageObjRef);
         f->content = MAP_FAILED;
         f->len = 0;
     }
