@@ -24,7 +24,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <EmexToolchain/vm/options.h>
+#include <EmexToolchain/vm/E64MachineOptions.h>
 #include <EmexToolchain/vm/core.h>
 #include <EmexToolchain/vm/E64Memory.h>
 #include <EmexToolchain/vm/E64MMIO.h>
@@ -45,10 +45,10 @@ typedef struct emex64_machine {
     emex64_8042_t *emex8042;
 } emex64_machine_t;
 
-emex64_machine_t *emex64_machine_alloc(emex64_machine_options_t options);
+emex64_machine_t *emex64_machine_alloc(E64MachineOptions options);
 void emex64_machine_dealloc(emex64_machine_t *machine);
 
-emex64_machine_support_t emex64_machine_support_get(void);
-emex64_machine_options_t emex64_machine_options_default(void);
+E64MachineSupport E64MachineSupportGet(void);
+E64MachineOptions E64MachineOptionsGetDefault(void);
 
 #endif /* EMEX64VM_MACHINE_H */

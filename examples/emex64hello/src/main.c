@@ -181,10 +181,10 @@ int main(void)
     }
 
     /* let the core spin >:3 */
-    emex64_machine_options_t machine_options = emex64_machine_options_default();
-    machine_options.display.enabled = false;
+    E64MachineOptions machineOptions = E64MachineOptionsGetDefault();
+    machineOptions.displayOptions.enabled = false;
 
-    emex64_machine_t *machine = emex64_machine_alloc(machine_options);
+    emex64_machine_t *machine = emex64_machine_alloc(machineOptions);
     if(machine == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate virtual machine");

@@ -19,38 +19,35 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef EMEX64VM_OPTIONS_H
-#define EMEX64VM_OPTIONS_H
+#ifndef E64MACHINE_OPTIONS_H
+#define E64MACHINE_OPTIONS_H
 
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <EmexFoundation/runtime/EFBase.h>
 
-typedef enum: uint8_t {
-    kKeyboardModeOff,
-    kKeyboardMode8042,
-} kKeyboardMode;
-
-typedef enum: uint8_t {
-    kMouseModeOff,
-    kMouseMode8042,
-} kMouseMode;
+typedef enum: UInt8 {
+    kE64PeripheralModeOff,
+    kE64PeripheralMode8042,
+} E64PeripheralMode;
 
 typedef struct {
-    bool display;
-} emex64_machine_support_t;
+    Boolean display;
+} E64MachineSupport;
 
 typedef struct {
-    bool enabled;
-    uint16_t width;
-    uint16_t height;
-} emex64_machine_display_options_t;
+    Boolean enabled;
+    UInt16 width;
+    UInt16 height;
+} E64DisplayOptions;
 
 typedef struct {
-    emex64_machine_display_options_t display;
-    uint64_t memory_size;
-    kKeyboardMode keyboard_mode;
-    kMouseMode mouse_mode;
-} emex64_machine_options_t;
+    UInt64 memoryLength;
+    
+    E64DisplayOptions displayOptions;
+    E64PeripheralMode keyboardPeripheralMode;
+    E64PeripheralMode mousePeripheralMode;
+} E64MachineOptions;
 
-#endif /* EMEX64VM_OPTIONS_H */
+#endif /* E64MACHINE_OPTIONS_H */

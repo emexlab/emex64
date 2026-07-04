@@ -25,7 +25,7 @@
 #include <EmexToolchain/vm/device/board/controller/power.h>
 #include <EmexToolchain/vm/device/board/rtc.h>
 
-emex64_machine_t *emex64_machine_alloc(emex64_machine_options_t options)
+emex64_machine_t *emex64_machine_alloc(E64MachineOptions options)
 {
     emex64_machine_t *machine = calloc(1, sizeof(emex64_machine_t));
     if(machine == NULL)
@@ -33,7 +33,7 @@ emex64_machine_t *emex64_machine_alloc(emex64_machine_options_t options)
         return NULL;
     }
     
-    machine->memory = E64MemoryCreate(NULL, options.memory_size);
+    machine->memory = E64MemoryCreate(NULL, options.memoryLength);
     if(machine->memory == NULL)
     {
         goto out_release_machine;
@@ -70,13 +70,13 @@ emex64_machine_t *emex64_machine_alloc(emex64_machine_options_t options)
         goto out_release_timer;
     }
     
-    machine->emex8042 = emex64_8042_alloc(machine, options.keyboard_mode == kKeyboardMode8042, options.mouse_mode == kMouseMode8042);
+    machine->emex8042 = emex64_8042_alloc(machine, options.keyboardPeripheralMode == kE64PeripheralMode8042, options.mousePeripheralMode == kE64PeripheralMode8042);
     if(machine->emex8042 == NULL)
     {
         goto out_release_uart;
     }
     
-    machine->display = emex64_display_alloc(machine, options.display.enabled, options.display.width, options.display.height);
+    machine->display = emex64_display_alloc(machine, options.displayOptions.enabled, options.displayOptions.width, options.displayOptions.height);
     if(machine->display == NULL)
     {
         goto out_release_8042;
@@ -157,9 +157,9 @@ void emex64_machine_dealloc(emex64_machine_t *machine)
     free(machine);
 }
 
-emex64_machine_support_t emex64_machine_support_get(void)
+E64MachineSupport E64MachineSupportGet(void)
 {
-    emex64_machine_support_t support;
+    E64MachineSupport support;
     #if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || defined(__APPLE__))
     support.display = true;
     #else
@@ -168,20 +168,20 @@ emex64_machine_support_t emex64_machine_support_get(void)
     return support;
 }
 
-emex64_machine_options_t emex64_machine_options_default(void)
+E64MachineOptions E64MachineOptionsGetDefault(void)
 {
-    emex64_machine_options_t options;
+    E64MachineOptions options;
     #if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || defined(__APPLE__))
-    options.display.enabled = true;
-    options.keyboard_mode = kKeyboardMode8042;
-    options.mouse_mode = kMouseMode8042;
+    options.displayOptions.enabled = true;
+    options.keyboardPeripheralMode = kE64PeripheralMode8042;
+    options.mousePeripheralMode = kE64PeripheralMode8042;
     #else
-    options.display.enabled = false;
-    options.keyboard_mode = kKeyboardModeOff;
-    options.mouse_mode = kMouseModeOff;
+    options.displayOptions.enabled = false;
+    options.keyboardPeripheralMode = kE64PeripheralModeOff;
+    options.mousePeripheralMode = kE64PeripheralModeOff;
     #endif /* EMEX64VM_DEVICE_DISPLAY */
-    options.display.width = 640;
-    options.display.height = 480;
-    options.memory_size = 100 * 1024 * 1024;
+    options.displayOptions.width = 640;
+    options.displayOptions.height = 480;
+    options.memoryLength = 100 * 1024 * 1024;
     return options;
 }

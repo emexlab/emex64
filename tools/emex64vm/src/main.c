@@ -35,8 +35,8 @@ int main(int argc, char *argv[])
 {
     const char *firmware_image_path = NULL;
 
-    emex64_machine_options_t machine_options = emex64_machine_options_default();
-    emex64_machine_support_t machine_support = emex64_machine_support_get();
+    E64MachineOptions machineOptions = E64MachineOptionsGetDefault();
+    E64MachineSupport machineSupport = E64MachineSupportGet();
 
     /* TODO: we need a driver for the VM later */
     /* parse arguments */
@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
             fprintf(stderr, "  -m:[kb|mb|gb] <size>   Providing memory size, this size will later be allocated\n");
             fprintf(stderr, "                         for the machine.\n");
             fprintf(stderr, "\n");
-            if(machine_support.display)
+            if(machineSupport.display)
             {
                 fprintf(stderr, "  --display [on|off|required]\n");
                 fprintf(stderr, "                         Sets up the display, if it is required, but not available\n");
@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
             parser_return_t pr = parse_value_from_string(argv[++i]);
             if(pr.type == emexParserValueTypeNumber)
             {
-                machine_options.memory_size = pr.value * 1024;
+                machineOptions.memoryLength = pr.value * 1024;
             }
             else
             {
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
             parser_return_t pr = parse_value_from_string(argv[++i]);
             if(pr.type == emexParserValueTypeNumber)
             {
-                machine_options.memory_size = pr.value * 1024 * 1024;
+                machineOptions.memoryLength = pr.value * 1024 * 1024;
             }
             else
             {
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
             parser_return_t pr = parse_value_from_string(argv[++i]);
             if(pr.type == emexParserValueTypeNumber)
             {
-                machine_options.memory_size = pr.value * 1024 * 1024 * 1024;
+                machineOptions.memoryLength = pr.value * 1024 * 1024 * 1024;
             }
             else
             {
@@ -115,24 +115,27 @@ int main(int argc, char *argv[])
         {
             if(strcmp(argv[i + 1], "on") == 0)
             {
-                if(!machine_support.display)
+                if(!machineSupport.display)
                 {
                     diag_warn(NULL, "--display flag is not supported in this distribution of the emex64 toolchain\n");
                 }
-                machine_options.display.enabled = true;
+                else
+                {
+                    machineOptions.displayOptions.enabled = true;
+                }
             }
             else if(strcmp(argv[i + 1], "off") == 0)
             {
-                machine_options.display.enabled = false;
+                machineOptions.displayOptions.enabled = false;
             }
             else if(strcmp(argv[i + 1], "required") == 0)
             {
-                if(!machine_support.display)
+                if(!machineOptions.displayOptions.enabled)
                 {
                     diag_error(NULL, "-display flag is not supported in this distribution of the emex64 toolchain\n");
                     return 1;
                 }
-                machine_options.display.enabled = true;
+                machineOptions.displayOptions.enabled = true;
             }
             else
             {
@@ -145,11 +148,11 @@ int main(int argc, char *argv[])
         {
             if(strcmp(argv[i + 1], "off") == 0)
             {
-                machine_options.keyboard_mode = kKeyboardModeOff;
+                machineOptions.keyboardPeripheralMode = kE64PeripheralModeOff;
             }
             else if(strcmp(argv[i + 1], "8042") == 0)
             {
-                machine_options.keyboard_mode = kKeyboardMode8042;
+                machineOptions.keyboardPeripheralMode = kE64PeripheralMode8042;
             }
             else
             {
@@ -162,11 +165,11 @@ int main(int argc, char *argv[])
         {
             if(strcmp(argv[i + 1], "off") == 0)
             {
-                machine_options.mouse_mode = kMouseModeOff;
+                machineOptions.mousePeripheralMode = kE64PeripheralModeOff;
             }
             else if(strcmp(argv[i + 1], "8042") == 0)
             {
-                machine_options.mouse_mode = kMouseMode8042;
+                machineOptions.mousePeripheralMode = kE64PeripheralMode8042;
             }
             else
             {
@@ -180,7 +183,7 @@ int main(int argc, char *argv[])
             parser_return_t pr_width = parse_value_from_string(argv[++i]);
             parser_return_t pr_height = parse_value_from_string(argv[++i]);
 
-            if(!machine_support.display)
+            if(!machineSupport.display)
             {
                 diag_warn(NULL, "--display:resolution flag is not supported in this distribution of the emex64 toolchain\n");
                 continue;
@@ -189,8 +192,8 @@ int main(int argc, char *argv[])
             if(pr_width.type == emexParserValueTypeNumber && 
                pr_height.type == emexParserValueTypeNumber)
             {
-                machine_options.display.width = pr_width.value;
-                machine_options.display.height = pr_height.value;
+                machineOptions.displayOptions.width = pr_width.value;
+                machineOptions.displayOptions.height = pr_height.value;
             }
             else
             {
@@ -206,7 +209,7 @@ int main(int argc, char *argv[])
     }
 
     /* creating new emex64 virtual machine */
-    emex64_machine_t *machine = emex64_machine_alloc(machine_options);
+    emex64_machine_t *machine = emex64_machine_alloc(machineOptions);
     if(machine == NULL)
     {
         diag_error(NULL, "failed to allocated machine\n");

@@ -19,8 +19,8 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef EMEX64VM_MMIO_H
-#define EMEX64VM_MMIO_H
+#ifndef E64MMIO_H
+#define E64MMIO_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -52,4 +52,4 @@ E64MMIOBusRef E64MMIOBusCreate(EFAllocatorRef allocatorRef);
 bool E64MMIOBusRegisterRegion(E64MMIOBusRef MMIOBusRef, E64MMIORegionRef MMIORegionRef);
 E64MMIORegionRef E64MMIOBusGetRegionForAddress(E64MMIOBusRef MMIOBusRef, uint64_t addr);
 
-#endif /* EMEX64VM_MMIO_H */
+#endif /* E64MMIO_H */

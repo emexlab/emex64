@@ -19,8 +19,8 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef EMEX64VM_MEMORY_H
-#define EMEX64VM_MEMORY_H
+#ifndef E64MEMORY_H
+#define E64MEMORY_H
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -104,4 +104,4 @@ bool E64MemoryAction(E64MemoryRef memoryRef, uint64_t addr, size_t size, uint64_
 void E64MemoryCoreAction(E64MemoryRef memoryRef, emex64_core_t *core, uint64_t addr, size_t size, uint64_t *value, kE64MemoryAction action);
 bool E64MemoryCoreCopyIn(E64MemoryRef memoryRef, emex64_core_t *core, uint8_t *dst, uint64_t addr, size_t len, kE64MemoryAction read_action);
 
-#endif /* EMEX64VM_MEMORY_H */
+#endif /* E64MEMORY_H */
