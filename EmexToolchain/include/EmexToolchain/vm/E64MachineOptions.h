@@ -25,7 +25,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
-#include <EmexFoundation/runtime/EFBase.h>
+#include <EmexFoundation/EmexFoundation.h>
 
 typedef enum: UInt8 {
     kE64PeripheralModeOff,
