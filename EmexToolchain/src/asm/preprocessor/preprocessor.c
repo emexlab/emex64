@@ -275,14 +275,15 @@ Boolean assembler_preprocessor_run(assembler_invocation_t *inv)
                             free(hdr_path);
                             goto failure;
                         }
-                        free(hdr_path);
 
                         if(!assembler_code_inject_file(inv, li, file))
                         {
                             diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(inv->line[li]->token[1]), "couldn't inject header at path '%s' into invocation", hdr_path);
                             emex_file_dealloc(file);
+                            free(hdr_path);
                             goto failure;
                         }
+                        free(hdr_path);
 
                         li--; /* file was inseted at this location */
                         break;
