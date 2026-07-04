@@ -30,7 +30,6 @@
 /* legacy wrapper */
 #define diag_log_legacy(severity, at, msg, ...) \
     do { \
-        _Pragma("GCC warning \"diag_log_* API is deprecated; call diagnostic_report() directly and use the diagnostic_consumer_t infrastructure\"") \
         if((at) == NULL) \
         { \
             diagnostic_report(NULL, severity, NULL, msg __VA_OPT__(,) __VA_ARGS__); \
