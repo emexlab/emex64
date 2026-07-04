@@ -83,6 +83,11 @@ EFTypeID E64MachineGetTypeID(void)
     return E64MachineClass.typeID;
 }
 
+E64MachineRef E64MachineCreate(EFAllocatorRef allocatorRef)
+{
+    return E64MachineCreateWithOptions(allocatorRef, E64MachineOptionsGetDefault());
+}
+
 E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
                                           E64MachineOptions options)
 {
@@ -182,6 +187,94 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
     }
 
     return machine;
+}
+
+emex64_core_t *E64MachineGetCore(E64MachineRef machineRef)
+{
+    __E64Machine machine = (__E64Machine)machineRef;
+    if(machine == NULL)
+    {
+        return NULL;
+    }
+
+    return machine->core;
+}
+
+E64MemoryRef E64MachineGetMemory(E64MachineRef machineRef)
+{
+    __E64Machine machine = (__E64Machine)machineRef;
+    if(machine == NULL)
+    {
+        return NULL;
+    }
+
+    return machine->memory;
+}
+
+E64MMIOBusRef E64MachineGetMMIOBus(E64MachineRef machineRef)
+{
+    __E64Machine machine = (__E64Machine)machineRef;
+    if(machine == NULL)
+    {
+        return NULL;
+    }
+
+    return machine->mmio_bus;
+}
+
+emex64_intc_t *E64MachineGetIC(E64MachineRef machineRef)
+{
+    __E64Machine machine = (__E64Machine)machineRef;
+    if(machine == NULL)
+    {
+        return NULL;
+    }
+
+    return machine->intc;
+}
+
+emex64_timer_t *E64MachineGetTimer(E64MachineRef machineRef)
+{
+    __E64Machine machine = (__E64Machine)machineRef;
+    if(machine == NULL)
+    {
+        return NULL;
+    }
+
+    return machine->timer;
+}
+
+emex64_uart_t *E64MachineGetUART(E64MachineRef machineRef)
+{
+    __E64Machine machine = (__E64Machine)machineRef;
+    if(machine == NULL)
+    {
+        return NULL;
+    }
+
+    return machine->uart;
+}
+
+emex64_display_t *E64MachineGetDisplay(E64MachineRef machineRef)
+{
+    __E64Machine machine = (__E64Machine)machineRef;
+    if(machine == NULL)
+    {
+        return NULL;
+    }
+
+    return machine->display;
+}
+
+emex64_8042_t *E64MachineGet8042(E64MachineRef machineRef)
+{
+    __E64Machine machine = (__E64Machine)machineRef;
+    if(machine == NULL)
+    {
+        return NULL;
+    }
+
+    return machine->emex8042;
 }
 
 E64MachineSupport E64MachineSupportGet(void)
