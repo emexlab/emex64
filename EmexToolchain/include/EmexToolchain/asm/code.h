@@ -23,8 +23,6 @@
 #define EMEX64ASM_CODE_H
 
 #include <stdlib.h>
-#include <stdbool.h>
-#include <stdint.h>
 #include <EmexToolchain/support/file.h>
 #include <EmexToolchain/asm/type.h>
 #include <EmexToolchain/asm/invocation.h>
