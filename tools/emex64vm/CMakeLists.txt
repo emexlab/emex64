@@ -7,7 +7,7 @@ add_executable(emex64vm
 )
 
 target_link_libraries(emex64vm
-    PRIVATE emex64
+    PRIVATE EmexToolchain
 )
 
 target_compile_features(emex64vm PRIVATE c_std_23)

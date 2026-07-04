@@ -15,7 +15,7 @@ else()
 endif()
 
 target_link_libraries(emex64ld
-    PRIVATE emex64
+    PRIVATE EmexToolchain
 )
 
 install(TARGETS emex64ld

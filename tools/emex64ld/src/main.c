@@ -19,7 +19,7 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <emex64lib/linker/linker.h>
+#include <EmexToolchain/linker/linker.h>
 
 int main(int argc, const char *argv[])
 {

@@ -8,10 +8,10 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
 option(EMEX64_BUILD_TOOLS "Builds tools that make interfacing the emex64 toolchain easy" ON)
 option(EMEX64_BUILD_EXAMPLES "Builds examples that showcase how to use the emex64 toolchain" OFF)
-option(EMEX64LIB_STATIC "Build emex64lib as a static library" OFF)
+option(EMEX64LIB_STATIC "Build EmexToolchain as a static library" OFF)
 
 add_subdirectory(EmexFoundation)
-add_subdirectory(emex64lib)
+add_subdirectory(EmexToolchain)
 
 if(EMEX64_BUILD_TOOLS)
     add_subdirectory(tools/emex64vm)
@@ -81,7 +81,7 @@ else()
         include(CheckIPOSupported)
         check_ipo_supported(RESULT _ipo_supported OUTPUT _ipo_output)
         if(_ipo_supported)
-            set_target_properties(emex64 PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+            set_target_properties(EmexToolchain PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
 
             if(EMEX64_BUILD_TOOLS)
                 target_compile_options(emex64asm PRIVATE ${_EMEX64_WARN_FLAGS} ${_EMEX64_OPT_FLAGS})
@@ -97,7 +97,7 @@ else()
         endif()
     endif()
 
-    target_compile_options(emex64 PRIVATE ${_EMEX64_WARN_FLAGS} ${_EMEX64_OPT_FLAGS})
+    target_compile_options(EmexToolchain PRIVATE ${_EMEX64_WARN_FLAGS} ${_EMEX64_OPT_FLAGS})
 
     if(EMEX64_BUILD_TOOLS)
         target_compile_options(emex64asm PRIVATE ${_EMEX64_WARN_FLAGS} ${_EMEX64_OPT_FLAGS})

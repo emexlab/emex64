@@ -26,10 +26,10 @@
 #include <string.h>
 #include <pthread.h>
 
-#include <emex64lib/support/diagnostic/log.h>
-#include <emex64lib/support/parser.h>
+#include <EmexToolchain/support/diagnostic/log.h>
+#include <EmexToolchain/support/parser.h>
 
-#include <emex64lib/vm/machine.h>
+#include <EmexToolchain/vm/machine.h>
 
 int main(int argc, char *argv[])
 {

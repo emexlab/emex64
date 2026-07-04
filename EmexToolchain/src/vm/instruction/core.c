@@ -1,0 +1,36 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ *
+ * Copyright (C) 2026 emexlab
+ *
+ * This file is part of emex64.
+ *
+ * emex64 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * emex64 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with emex64. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#include <EmexToolchain/vm/instruction/instruction.h>
+#include <EmexToolchain/vm/instruction/core.h>
+
+void emex64_op_hlt(emex64_core_t *core)
+{
+    emex64_instr_termcond(core->op.param_cnt != 0);
+
+    core->halted = true;
+}
+
+void emex64_op_nop(emex64_core_t *core)
+{
+    emex64_instr_termcond(core->op.param_cnt != 0);
+    /* doing nothing */
+}

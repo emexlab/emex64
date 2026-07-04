@@ -1,0 +1,38 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ *
+ * Copyright (C) 2026 emexlab
+ *
+ * This file is part of emex64.
+ *
+ * emex64 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * emex64 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with emex64. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <EmexToolchain/vm/device/board/controller/power.h>
+#include <EmexToolchain/vm/machine.h>
+
+uint64_t emex64_platform_read(emex64_core_t *core, void *device, uint64_t offset, int size)
+{
+    return 1;
+}
+
+void emex64_platform_write(emex64_core_t *core, void *device, uint64_t offset, uint64_t value, int size)
+{
+    if(value == 0)
+    {
+        emex64_core_terminate(core->machine->core);
+    }
+}
