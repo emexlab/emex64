@@ -23,34 +23,34 @@
 #define EMEX64VM_INSTRUCTION_CTRL_H
 
 #include <EmexToolchain/vm/E64Machine.h>
-#include <EmexToolchain/vm/core.h>
+#include <EmexToolchain/vm/E64Core.h>
 #include <EmexToolchain/vm/E64Memory.h>
 
-void emex64_op_b(emex64_core_t *core);
-void emex64_op_cmp(emex64_core_t *core);
-void emex64_op_be(emex64_core_t *core);
-void emex64_op_bne(emex64_core_t *core);
-void emex64_op_blt(emex64_core_t *core);
-void emex64_op_bgt(emex64_core_t *core);
-void emex64_op_ble(emex64_core_t *core);
-void emex64_op_bge(emex64_core_t *core);
-void emex64_op_bz(emex64_core_t *core);
-void emex64_op_bnz(emex64_core_t *core);
+void emex64_op_b(__E64Core core);
+void emex64_op_cmp(__E64Core core);
+void emex64_op_be(__E64Core core);
+void emex64_op_bne(__E64Core core);
+void emex64_op_blt(__E64Core core);
+void emex64_op_bgt(__E64Core core);
+void emex64_op_ble(__E64Core core);
+void emex64_op_bge(__E64Core core);
+void emex64_op_bz(__E64Core core);
+void emex64_op_bnz(__E64Core core);
 
-void emex64_op_blw(emex64_core_t *core);
-void emex64_op_wret(emex64_core_t *core);
-void emex64_op_iret(emex64_core_t *core);
+void emex64_op_blw(__E64Core core);
+void emex64_op_wret(__E64Core core);
+void emex64_op_iret(__E64Core core);
 
-void emex64_op_bl(emex64_core_t *core);
-void emex64_op_ret(emex64_core_t *core);
+void emex64_op_bl(__E64Core core);
+void emex64_op_ret(__E64Core core);
 
-static inline void emex64_push_il(emex64_core_t *core, UInt64 value)
+static inline void emex64_push_il(__E64Core core, UInt64 value)
 {
     E64MemoryCoreAction(core->machine->memory, core, core->rl[kE64RegisterSP], sizeof(UInt64), &value, kE64MemoryActionWrite);
     core->rl[kE64RegisterSP] -= 8;
 }
 
-static inline UInt64 emex64_pop_il(emex64_core_t *core)
+static inline UInt64 emex64_pop_il(__E64Core core)
 {
     core->rl[kE64RegisterSP] += 8;
 

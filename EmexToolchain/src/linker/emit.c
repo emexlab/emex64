@@ -25,7 +25,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <EmexToolchain/support/diagnostic/log.h>
-#include <EmexToolchain/vm/core.h>
+#include <EmexToolchain/vm/E64Core.h>
 #include <EmexToolchain/linker/emit.h>
 #include <EmexToolchain/linker/linker.h>
 

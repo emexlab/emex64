@@ -22,25 +22,25 @@
 #ifndef EMEX64VM_INSTRUCTION_DATA_H
 #define EMEX64VM_INSTRUCTION_DATA_H
 
-#include <EmexToolchain/vm/core.h>
+#include <EmexToolchain/vm/E64Core.h>
 
-void emex64_op_mov(emex64_core_t *core);
-void emex64_op_swp(emex64_core_t *core);
-void emex64_op_swpz(emex64_core_t *core);
-void emex64_op_push(emex64_core_t *core);
-void emex64_op_pop(emex64_core_t *core);
-void emex64_op_ldb(emex64_core_t *core);
-void emex64_op_ldw(emex64_core_t *core);
-void emex64_op_ldd(emex64_core_t *core);
-void emex64_op_ldq(emex64_core_t *core);
-void emex64_op_stb(emex64_core_t *core);
-void emex64_op_stw(emex64_core_t *core);
-void emex64_op_std(emex64_core_t *core);
-void emex64_op_stq(emex64_core_t *core);
+void emex64_op_mov(__E64Core core);
+void emex64_op_swp(__E64Core core);
+void emex64_op_swpz(__E64Core core);
+void emex64_op_push(__E64Core core);
+void emex64_op_pop(__E64Core core);
+void emex64_op_ldb(__E64Core core);
+void emex64_op_ldw(__E64Core core);
+void emex64_op_ldd(__E64Core core);
+void emex64_op_ldq(__E64Core core);
+void emex64_op_stb(__E64Core core);
+void emex64_op_stw(__E64Core core);
+void emex64_op_std(__E64Core core);
+void emex64_op_stq(__E64Core core);
 
-void emex64_op_clr(emex64_core_t *core);
+void emex64_op_clr(__E64Core core);
 
-void emex64_op_cmov(emex64_core_t *core);
-void emex64_op_cmovb(emex64_core_t *core);
+void emex64_op_cmov(__E64Core core);
+void emex64_op_cmovb(__E64Core core);
 
 #endif /* EMEX64VM_INSTRUCTION_DATA_H */

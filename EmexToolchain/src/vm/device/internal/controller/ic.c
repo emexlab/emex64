@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <EmexToolchain/support/likely.h>
-#include <EmexToolchain/vm/core.h>
+#include <EmexToolchain/vm/E64Core.h>
 #include <EmexToolchain/vm/E64Machine.h>
 #include <EmexToolchain/vm/E64Memory.h>
 #include <EmexToolchain/vm/instruction/ctrl.h>
@@ -106,7 +106,7 @@ static int find_pending_irq(emex64_intc_t *intc)
     return -1;
 }
 
-Boolean emex64_serve_interrupt_if_needed(emex64_core_t *core)
+Boolean emex64_serve_interrupt_if_needed(E64CoreRef core)
 {    
     /* check if interrupts are globally enabled */
     if(!(core->machine->intc->ctrl & EMEX64_INTC_CTRL_ENABLE))
@@ -209,7 +209,7 @@ Boolean emex64_serve_interrupt_if_needed(emex64_core_t *core)
     return true;
 }
 
-UInt64 emex64_intc_read(emex64_core_t *core, void *device, UInt64 offset, int size)
+UInt64 emex64_intc_read(E64CoreRef core, void *device, UInt64 offset, int size)
 {
     emex64_intc_t *intc = (emex64_intc_t *)device;
 
@@ -230,7 +230,7 @@ UInt64 emex64_intc_read(emex64_core_t *core, void *device, UInt64 offset, int si
     }
 }
 
-void emex64_intc_write(emex64_core_t *core, void *device, UInt64 offset, UInt64 value, int size)
+void emex64_intc_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, int size)
 {
     emex64_intc_t *intc = (emex64_intc_t *)device;
     

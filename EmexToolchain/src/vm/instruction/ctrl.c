@@ -25,8 +25,8 @@
 #include <stdio.h>
 
 static inline UInt64 emex64_branch_pc(UInt64 pc,
-                                        UInt64 v,
-                                        E64ParameterCoding coding)
+                                      UInt64 v,
+                                      E64ParameterCoding coding)
 {
     switch(coding)
     {
@@ -43,14 +43,14 @@ static inline UInt64 emex64_branch_pc(UInt64 pc,
     }
 }
 
-void emex64_op_b(emex64_core_t *core)
+void emex64_op_b(__E64Core core)
 {
     emex64_instr_termcond(core->op.param_cnt != 1);
     core->op.ilen = 0;
     core->rl[kE64RegisterPC] = emex64_branch_pc(core->rl[kE64RegisterPC], *(core->op.param[0]), core->op.param_coding[0]);
 }
 
-void emex64_op_cmp(emex64_core_t *core)
+void emex64_op_cmp(__E64Core core)
 {
     emex64_instr_termcond(core->op.param_cnt != 2);
 
@@ -60,7 +60,7 @@ void emex64_op_cmp(emex64_core_t *core)
     core->rl[kE64RegisterCF] = (a == b) * kE64CompareFlagZ | (a <  b) * kE64CompareFlagL | (a >  b) * kE64CompareFlagG;
 }
 
-void emex64_op_be(emex64_core_t *core)
+void emex64_op_be(__E64Core core)
 {
     emex64_instr_termcond(core->op.param_cnt != 1);
     
@@ -70,7 +70,7 @@ void emex64_op_be(emex64_core_t *core)
     }
 }
 
-void emex64_op_bne(emex64_core_t *core)
+void emex64_op_bne(__E64Core core)
 {
     emex64_instr_termcond(core->op.param_cnt != 1);
     
@@ -80,7 +80,7 @@ void emex64_op_bne(emex64_core_t *core)
     }
 }
 
-void emex64_op_blt(emex64_core_t *core)
+void emex64_op_blt(__E64Core core)
 {
     emex64_instr_termcond(core->op.param_cnt != 1);
     
@@ -90,7 +90,7 @@ void emex64_op_blt(emex64_core_t *core)
     }
 }
 
-void emex64_op_bgt(emex64_core_t *core)
+void emex64_op_bgt(__E64Core core)
 {
     emex64_instr_termcond(core->op.param_cnt != 1);
     
@@ -100,7 +100,7 @@ void emex64_op_bgt(emex64_core_t *core)
     }
 }
 
-void emex64_op_ble(emex64_core_t *core)
+void emex64_op_ble(__E64Core core)
 {
     emex64_instr_termcond(core->op.param_cnt != 1);
     
@@ -110,7 +110,7 @@ void emex64_op_ble(emex64_core_t *core)
     }
 }
 
-void emex64_op_bge(emex64_core_t *core)
+void emex64_op_bge(__E64Core core)
 {
     emex64_instr_termcond(core->op.param_cnt != 1);
     
@@ -120,7 +120,7 @@ void emex64_op_bge(emex64_core_t *core)
     }
 }
 
-void emex64_op_bz(emex64_core_t *core)
+void emex64_op_bz(__E64Core core)
 {
     emex64_instr_termcond(core->op.param_cnt != 2);
     
@@ -131,7 +131,7 @@ void emex64_op_bz(emex64_core_t *core)
     }
 }
 
-void emex64_op_bnz(emex64_core_t *core)
+void emex64_op_bnz(__E64Core core)
 {
     emex64_instr_termcond(core->op.param_cnt != 2);
     
@@ -143,7 +143,7 @@ void emex64_op_bnz(emex64_core_t *core)
 }
 
 /* call convention not needed, emex64 supports arguments directly in bl (biggest L ever, we gotta make a call convention) */
-void emex64_op_blw(emex64_core_t *core)
+void emex64_op_blw(__E64Core core)
 {
     emex64_instr_termcond(core->op.param_cnt < 1);
 
@@ -200,7 +200,7 @@ void emex64_op_blw(emex64_core_t *core)
     core->rl[kE64RegisterPC] = emex64_branch_pc(core->rl[kE64RegisterPC], param_imm[0], core->op.param_coding[0]);
 }
 
-void emex64_op_wret(emex64_core_t *core)
+void emex64_op_wret(__E64Core core)
 {
     emex64_instr_termcond(core->op.param_cnt != 0);
 
@@ -239,7 +239,7 @@ void emex64_op_wret(emex64_core_t *core)
     core->op.ilen = 0;
 }
 
-void emex64_op_iret(emex64_core_t *core)
+void emex64_op_iret(__E64Core core)
 {
     emex64_instr_termcond(core->op.param_cnt != 0);
 
@@ -292,7 +292,7 @@ void emex64_op_iret(emex64_core_t *core)
     core->halted = false;
 }
 
-void emex64_op_bl(emex64_core_t *core)
+void emex64_op_bl(__E64Core core)
 {
     emex64_instr_termcond(core->op.param_cnt < 1);
 
@@ -308,7 +308,7 @@ void emex64_op_bl(emex64_core_t *core)
     core->rl[kE64RegisterPC] = emex64_branch_pc(core->rl[kE64RegisterPC], *(core->op.param[0]), core->op.param_coding[0]);
 }
 
-void emex64_op_ret(emex64_core_t *core)
+void emex64_op_ret(__E64Core core)
 {
     emex64_instr_termcond(core->op.param_cnt != 0);
 

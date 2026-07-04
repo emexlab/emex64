@@ -28,7 +28,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <EmexToolchain/support/file.h>
-#include <EmexToolchain/vm/core.h>
+#include <EmexToolchain/vm/E64Core.h>
 #include <EmexFoundation/EmexFoundation.h>
 
 #define EMEX64_PAGE_SIZE 0x2000
@@ -101,7 +101,7 @@ Boolean E64MemoryLoadImage(E64MemoryRef memoryRef, emex_file_t *file);
 Boolean E64MemoryAction(E64MemoryRef memoryRef, UInt64 addr, size_t size, UInt64 *value, kE64MemoryAction action);
 
 /* API that only the VM shall use */
-void E64MemoryCoreAction(E64MemoryRef memoryRef, emex64_core_t *core, UInt64 addr, size_t size, UInt64 *value, kE64MemoryAction action);
-Boolean E64MemoryCoreCopyIn(E64MemoryRef memoryRef, emex64_core_t *core, UInt8 *dst, UInt64 addr, size_t len, kE64MemoryAction read_action);
+void E64MemoryCoreAction(E64MemoryRef memoryRef, E64CoreRef core, UInt64 addr, size_t size, UInt64 *value, kE64MemoryAction action);
+Boolean E64MemoryCoreCopyIn(E64MemoryRef memoryRef, E64CoreRef core, UInt8 *dst, UInt64 addr, size_t len, kE64MemoryAction read_action);
 
 #endif /* E64MEMORY_H */

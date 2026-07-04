@@ -20,7 +20,7 @@
  */
 
 #include <EmexToolchain/vm/E64Machine.h>
-#include <EmexToolchain/vm/core.h>
+#include <EmexToolchain/vm/E64Core.h>
 #include <EmexToolchain/vm/device/board/controller/8042.h>
 #include <string.h>
 #include <pthread.h>
@@ -297,7 +297,7 @@ void emex64_8042_send_mouse(emex64_8042_t *dev, UInt8 byte)
     }
 }
 
-UInt64 emex64_8042_read(emex64_core_t *core, void *device, UInt64 offset, int size)
+UInt64 emex64_8042_read(E64CoreRef core, void *device, UInt64 offset, int size)
 {
     emex64_8042_t *dev = device;
     UInt64 val = 0;
@@ -329,7 +329,7 @@ UInt64 emex64_8042_read(emex64_core_t *core, void *device, UInt64 offset, int si
     return val;
 }
 
-void emex64_8042_write(emex64_core_t *core,
+void emex64_8042_write(E64CoreRef core,
                        void *device,
                        UInt64 offset,
                        UInt64 value,

@@ -25,7 +25,7 @@
 #include <EmexToolchain/vm/E64MMIO.h>
 #include <EmexFoundation/EmexFoundation.h>
 
-UInt64 emex64_mmio_fallback_read(emex64_core_t *core,
+UInt64 emex64_mmio_fallback_read(E64CoreRef core,
                                    void *device,
                                    UInt64 offset,
                                    int size)
@@ -33,7 +33,7 @@ UInt64 emex64_mmio_fallback_read(emex64_core_t *core,
     return 0;
 }
 
-void emex64_mmio_fallback_write(emex64_core_t *core,
+void emex64_mmio_fallback_write(E64CoreRef core,
                                 void *device,
                                 UInt64 offset,
                                 UInt64 value,

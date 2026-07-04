@@ -31,7 +31,7 @@
 #include <stdatomic.h>
 #include <CoreGraphics/CoreGraphics.h>
 #include <EmexToolchain/vm/device/board/display.h>
-#include <EmexToolchain/vm/core.h>
+#include <EmexToolchain/vm/E64Core.h>
 
 typedef struct {
     UInt8 sc;

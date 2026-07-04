@@ -236,10 +236,14 @@ int main(int argc, char *argv[])
     }
     
     /* executing virtual machines 1st core TODO: Implement multicore */
-    emex64_core_execute(machine->core);
-
-    /* deallocating machine */
+    E64CoreRef core = E64MachineGetCore(machine);
+    if(core == NULL)
+    {
+        diag_error(NULL, "failed to aquire core from machine\n");
+        EFRelease(machine);
+        return 1;
+    }
+    E64Exception exception = E64CoreExecute(core);
     EFRelease(machine);
-
-    return 0;
+    return exception == kE64ExceptionNone ? 0 : 1;
 }

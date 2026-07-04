@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-UInt64 emex64_rtc_read(emex64_core_t *core,
+UInt64 emex64_rtc_read(E64CoreRef core,
                        void *device,
                        UInt64 offset,
                        int size)

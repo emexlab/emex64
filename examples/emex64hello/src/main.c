@@ -201,8 +201,14 @@ int main(void)
         return 1;
     }
 
-    emex64_core_execute(machine->core);
+    E64CoreRef core = E64MachineGetCore(machine);
+    if(core == NULL)
+    {
+        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to aquire core from machine");
+        EFRelease(machine);
+        return 1;
+    }
+    E64Exception exception = E64CoreExecute(core);
     EFRelease(machine);
-
-    return 0;
+    return exception == kE64ExceptionNone ? 0 : 1;
 }

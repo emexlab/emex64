@@ -25,7 +25,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <EmexToolchain/vm/E64MachineOptions.h>
-#include <EmexToolchain/vm/core.h>
+#include <EmexToolchain/vm/E64Core.h>
 #include <EmexToolchain/vm/E64Memory.h>
 #include <EmexToolchain/vm/E64MMIO.h>
 #include <EmexToolchain/vm/device/internal/timer.h>
@@ -38,7 +38,8 @@
 typedef struct __E64Machine *E64MachineRef;
 
 typedef struct __E64Machine {
-    emex64_core_t *core;
+    EFObject header;
+    E64CoreRef core;
     E64MemoryRef memory;
     E64MMIOBusRef mmio_bus;
     emex64_intc_t *intc;
@@ -53,7 +54,7 @@ EFTypeID E64MachineGetTypeID(void);
 E64MachineRef E64MachineCreate(EFAllocatorRef allocatorRef);
 E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef, E64MachineOptions options);
 
-emex64_core_t *E64MachineGetCore(E64MachineRef machineRef);
+E64CoreRef E64MachineGetCore(E64MachineRef machineRef);
 E64MemoryRef E64MachineGetMemory(E64MachineRef machineRef);
 E64MMIOBusRef E64MachineGetMMIOBus(E64MachineRef machineRef);
 emex64_intc_t *E64MachineGetIC(E64MachineRef machineRef);

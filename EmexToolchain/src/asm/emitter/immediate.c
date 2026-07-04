@@ -20,7 +20,7 @@
  */
 
 #include <EmexToolchain/asm/emitter/immediate.h>
-#include <EmexToolchain/vm/core.h>
+#include <EmexToolchain/vm/E64Core.h>
 
 void assembler_emit_imm5(assembler_invocation_t *inv,
                          UInt8 imm)

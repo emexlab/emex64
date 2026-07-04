@@ -26,10 +26,10 @@
 #include <stdbool.h>
 #include <EmexFoundation/EmexFoundation.h>
 
-typedef struct emex64_core emex64_core_t;
+typedef struct __E64Core *E64CoreRef;
 
-typedef UInt64 (*mmio_read_fn)(emex64_core_t *core, void *device, UInt64 offset, int size);
-typedef void (*mmio_write_fn)(emex64_core_t *core, void *device, UInt64 offset, UInt64 value, int size);
+typedef UInt64 (*mmio_read_fn)(E64CoreRef core, void *device, UInt64 offset, int size);
+typedef void (*mmio_write_fn)(E64CoreRef core, void *device, UInt64 offset, UInt64 value, int size);
 
 typedef EFObjectRef E64MMIORegionRef;
 

@@ -24,7 +24,7 @@
 #include <EmexToolchain/vm/E64Machine.h>
 #include <EmexToolchain/vm/device/internal/controller/mem.h>
 
-UInt64 emex64_mc_read(emex64_core_t *core,
+UInt64 emex64_mc_read(E64CoreRef core,
                         void *device,
                         UInt64 offset,
                         int size)
@@ -41,7 +41,7 @@ UInt64 emex64_mc_read(emex64_core_t *core,
     return E64MemoryIsKTRRLocked(core->machine->memory);
 }
 
-void emex64_mc_write(emex64_core_t *core,
+void emex64_mc_write(E64CoreRef core,
                      void *device,
                      UInt64 offset,
                      UInt64 value,

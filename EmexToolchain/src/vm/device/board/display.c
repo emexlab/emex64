@@ -521,7 +521,7 @@ void emex64_display_dealloc(emex64_display_t *display)
     }
 }
 
-UInt64 emex64_fb_read(emex64_core_t *core,
+UInt64 emex64_fb_read(E64CoreRef core,
                       void *device,
                       UInt64 offset,
                       int size)
@@ -559,7 +559,7 @@ UInt64 emex64_fb_read(emex64_core_t *core,
     #endif /* EMEX64VM_DEVICE_DISPLAY */
 }
 
-void emex64_fb_write(emex64_core_t *core,
+void emex64_fb_write(E64CoreRef core,
                    void *device,
                    UInt64 offset,
                    UInt64 value,

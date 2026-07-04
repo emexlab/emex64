@@ -35,8 +35,8 @@
 #define RTC_REG_YEAR    0x28
 #define RTC_REG_WEEKDAY 0x30
 
-typedef struct emex64_core emex64_core_t;
+typedef struct __E64Core *E64CoreRef;
 
-UInt64 emex64_rtc_read(emex64_core_t *core, void *device, UInt64 offset, int size);
+UInt64 emex64_rtc_read(E64CoreRef core, void *device, UInt64 offset, int size);
 
 #endif /* EMEX64VM_DEVICE_RTC_H */

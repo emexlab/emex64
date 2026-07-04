@@ -51,7 +51,7 @@
 /* control register bits */
 #define EMEX64_INTC_CTRL_ENABLE   (1 << 0)
 
-typedef struct emex64_core emex64_core_t;
+typedef struct __E64Core *E64CoreRef;
 typedef struct __E64Machine *E64MachineRef;
 
 typedef struct emex64_intc {
@@ -67,9 +67,9 @@ void emex64_intc_dealloc(emex64_intc_t *intc);
 
 void emex64_raise_interrupt(E64MachineRef machineRef, int irq_line);
 void emex64_clear_interrupt(E64MachineRef machineRef, int irq_line);
-Boolean emex64_serve_interrupt_if_needed(emex64_core_t *core);
+Boolean emex64_serve_interrupt_if_needed(E64CoreRef core);
 
-UInt64 emex64_intc_read(emex64_core_t *core, void *device, UInt64 offset, int size);
-void emex64_intc_write(emex64_core_t *core, void *device, UInt64 offset, UInt64 value, int size);
+UInt64 emex64_intc_read(E64CoreRef core, void *device, UInt64 offset, int size);
+void emex64_intc_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, int size);
 
 #endif /* EMEX64VM_DEVICE_IC_H */

@@ -189,7 +189,7 @@ void emex64_uart_dealloc(emex64_uart_t *u)
     free(u);
 }
 
-UInt64 emex64_uart_read(emex64_core_t *core, void *device, UInt64 offset, int size)
+UInt64 emex64_uart_read(E64CoreRef core, void *device, UInt64 offset, int size)
 {
     emex64_uart_t *u = (emex64_uart_t *)device;
 
@@ -225,7 +225,7 @@ UInt64 emex64_uart_read(emex64_core_t *core, void *device, UInt64 offset, int si
     return result;
 }
 
-void emex64_uart_write(emex64_core_t *core, void *device, UInt64 offset, UInt64 value, int size)
+void emex64_uart_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, int size)
 {
     emex64_uart_t *u = (emex64_uart_t *)device;
 

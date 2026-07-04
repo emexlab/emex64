@@ -390,23 +390,12 @@ typedef enum: UInt8 {
 #define EMEX64_MAX_ARGS 26
 #define EMEX64_MAX_ILEN (1 + EMEX64_MAX_ARGS * 9)
 
-typedef struct emex64_core emex64_core_t;
-
 /* definition of the handler of each operation */
-typedef void (*emex64_opfunc_t)(emex64_core_t *core);
-
+typedef struct __E64Core *E64CoreRef;
 typedef struct __E64Machine *E64MachineRef;
 
-typedef struct emex64_opfunc_entry {
-    emex64_opfunc_t func;
-    UInt8 minargs;
-    UInt8 maxargs;
-    UInt32 argmask;
-} emex64_opfunc_entry_t;
-
-extern const emex64_opfunc_entry_t kE64OpfuncTable[];
-
-typedef struct emex64_core {
+typedef struct __E64Core {
+    EFObject header;
 
     /* the pthread this core is running on on the host */
     pthread_t pthread;
@@ -444,7 +433,7 @@ typedef struct emex64_core {
          * how to decode the instruction.
          */
         E64Opcode opcode;
-        emex64_opfunc_entry_t opce;
+        const struct emex64_opfunc_entry *opce;
 
         /*
          * pointer array for parameters, at emulation we
@@ -508,11 +497,23 @@ typedef struct emex64_core {
 
     /* pointer back to machine */
     E64MachineRef machine;
-} emex64_core_t;
+} *__E64Core;
 
-emex64_core_t *emex64_core_alloc(void);
-void emex64_core_dealloc(emex64_core_t *core);
-void emex64_core_execute(emex64_core_t *core);
-void emex64_core_terminate(emex64_core_t *core);
+typedef void (*emex64_opfunc_t)(__E64Core core);
+
+typedef struct emex64_opfunc_entry {
+    emex64_opfunc_t func;
+    UInt8 minargs;
+    UInt8 maxargs;
+    UInt32 argmask;
+} emex64_opfunc_entry_t;
+
+extern const emex64_opfunc_entry_t kE64OpfuncTable[];
+
+EFTypeID E64CoreGetTypeID(void);
+
+E64CoreRef E64CoreCreate(EFAllocatorRef allocatorRef);
+E64Exception E64CoreExecute(E64CoreRef coreRef);
+void E64CoreTerminate(E64CoreRef coreRef);
 
 #endif /* EMEX64VM_CORE_H */

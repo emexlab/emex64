@@ -26,7 +26,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <EmexToolchain/support/virtual/vbitwalker.h>
-#include <EmexToolchain/vm/core.h>
+#include <EmexToolchain/vm/E64Core.h>
 
 typedef enum: UInt8 {
     kAssemblerTokenTypeInvalid,

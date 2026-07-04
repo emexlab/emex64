@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <unistd.h>
-#include <EmexToolchain/vm/core.h>
+#include <EmexToolchain/vm/E64Core.h>
 #include <EmexToolchain/vm/E64Memory.h>
 #include <EmexToolchain/vm/E64Machine.h>
 #include <EmexToolchain/vm/device/internal/controller/ic.h>
@@ -118,9 +118,30 @@ static const UInt8 kImmBits[] = {
     [kE64ParameterCodingAddr64] = 64,
 };
 
-emex64_core_t *emex64_core_alloc()
+static EFClass E64CoreClass = {
+    .name = "E64Core",
+    .typeID = kEFNotATypeID,
+    .init = NULL,
+    .deinit = NULL,
+    .equal = NULL,
+    .copyDescription = NULL,
+};
+
+static void E64CoreRegisterClass(void)
 {
-    emex64_core_t *core = calloc(1, sizeof(emex64_core_t));
+    EFClassRegister(&E64CoreClass);
+}
+
+EFTypeID E64CoreGetTypeID(void)
+{
+    static pthread_once_t once = PTHREAD_ONCE_INIT;
+    pthread_once(&once, E64CoreRegisterClass);
+    return E64CoreClass.typeID;
+}
+
+E64CoreRef E64CoreCreate(EFAllocatorRef allocatorRef)
+{
+    __E64Core core = (__E64Core)EFObjectAlloc(allocatorRef, E64CoreGetTypeID(), sizeof(struct __E64Core));
     if(core == NULL)
     {
         return NULL;
@@ -138,12 +159,7 @@ emex64_core_t *emex64_core_alloc()
     return core;
 }
 
-void emex64_core_dealloc(emex64_core_t *core)
-{
-    free(core);
-}
-
-static inline void emex64_core_execute_instruction_at_pc(emex64_core_t *core)
+static inline void __E64CoreExecuteInstructionAtPC(__E64Core core)
 {
     if(unlikely(core->halted))
     {
@@ -167,13 +183,13 @@ static inline void emex64_core_execute_instruction_at_pc(emex64_core_t *core)
     }
 
     core->op.opcode = opcode;
-    core->op.opce = kE64OpfuncTable[opcode];
+    core->op.opce = &kE64OpfuncTable[opcode];
 
     /*
      * parameter decoder, this decoding loop decodes
      * all parameters the instruction defines.
      */
-    UInt8 maxarg = core->op.opce.maxargs;
+    UInt8 maxarg = core->op.opce->maxargs;
     UInt8 i = 0;
     for(; i < maxarg; i++)
     {
@@ -219,21 +235,21 @@ escape_from_la:
     core->op.ilen = (UInt32)((bb.pos + 7u) >> 3);
 
     /* the part of executing the instruction */
-    core->op.opce.func(core);
+    core->op.opce->func(core);
     core->rl[kE64RegisterPC] += core->op.ilen;   /* FIXME: IDK if it should increment or not due to interrupts */
 
     return;
 }
 
-static void *emex64_core_execute_thread(void *arg)
+static void *__E64CoreExecutionThread(void *arg)
 {
     assert(arg != NULL);
 
     /* execution loop */
-    emex64_core_t *core = arg;
+    __E64Core core = arg;
     for(;;)
     {
-        emex64_core_execute_instruction_at_pc(core);
+        __E64CoreExecuteInstructionAtPC(core);
         emex64_serve_interrupt_if_needed(core);
 
         /*
@@ -271,11 +287,12 @@ static void *emex64_core_execute_thread(void *arg)
 }
 
 
-void emex64_core_execute(emex64_core_t *core)
+E64Exception E64CoreExecute(E64CoreRef coreRef)
 {
+    __E64Core core = (__E64Core)coreRef;
     assert(core != NULL && core->pthread == 0);
 
-    pthread_create(&(core->pthread), NULL, emex64_core_execute_thread, (void*)core);
+    pthread_create(&(core->pthread), NULL, __E64CoreExecutionThread, (void*)core);
 
     #if EMEX64VM_DEVICE_DISPLAY
     #if defined(__APPLE__)
@@ -288,10 +305,13 @@ void emex64_core_execute(emex64_core_t *core)
     #endif /* #if EMEX64VM_DEVICE_DISPLAY */
     
     pthread_join(core->pthread, NULL);
+
+    return core->cr_state.crexc.exception;
 }
 
-void emex64_core_terminate(emex64_core_t *core)
+void E64CoreTerminate(E64CoreRef coreRef)
 {
+    __E64Core core = (__E64Core)coreRef;
     assert(core != NULL && core->pthread != 0);
 
     #if EMEX64VM_DEVICE_DISPLAY

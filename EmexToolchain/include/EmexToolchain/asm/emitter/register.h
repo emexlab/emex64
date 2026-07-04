@@ -22,7 +22,7 @@
 #ifndef EMEX64ASM_EMITTER_REGISTER_H
 #define EMEX64ASM_EMITTER_REGISTER_H
 
-#include <EmexToolchain/vm/core.h>
+#include <EmexToolchain/vm/E64Core.h>
 #include <EmexToolchain/asm/invocation.h>
 
 E64Register register_from_string(const char *name);

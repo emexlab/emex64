@@ -37,7 +37,7 @@
 #define EMEX64_FB_REG_WIDTH   0x10    /* readonly word: telling screen width */
 #define EMEX64_FB_FRAMEBUFFER 0x18
 
-typedef struct emex64_core emex64_core_t;
+typedef struct __E64Core *E64CoreRef;
 typedef struct __E64Machine *E64MachineRef;
 
 typedef struct {
@@ -57,8 +57,8 @@ void emex64_display_dealloc(emex64_display_t *display);
 
 void *display_start(void *arg);
 
-UInt64 emex64_fb_read(emex64_core_t *core, void *device, UInt64 offset, int size);
-void emex64_fb_write(emex64_core_t *core, void *device, UInt64 offset, UInt64 value, int size);
+UInt64 emex64_fb_read(E64CoreRef core, void *device, UInt64 offset, int size);
+void emex64_fb_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, int size);
 
 #endif /* __linux__ | __APPLE__ */
 

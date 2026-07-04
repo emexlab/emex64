@@ -80,7 +80,7 @@ add_library(EmexToolchain ${LIB_TYPE}
     src/vm/E64Machine.c
     src/vm/E64Memory.c
     src/vm/E64MMIO.c
-    src/vm/core.c
+    src/vm/E64Core.c
 
         ## Instruction Handlers
         src/vm/instruction/core.c

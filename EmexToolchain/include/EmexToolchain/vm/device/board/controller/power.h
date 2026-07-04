@@ -29,9 +29,9 @@
 
 #define PLATFORM_REG_PWR        0x00
 
-typedef struct emex64_core emex64_core_t;
+typedef struct __E64Core *E64CoreRef;
 
-UInt64 emex64_platform_read(emex64_core_t *core, void *device, UInt64 offset, int size);
-void emex64_platform_write(emex64_core_t *core, void *device, UInt64 offset, UInt64 value, int size);
+UInt64 emex64_platform_read(E64CoreRef core, void *device, UInt64 offset, int size);
+void emex64_platform_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, int size);
 
 #endif /* EMEX64VM_DEVICE_PLATFORM_H */

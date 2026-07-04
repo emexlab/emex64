@@ -30,7 +30,7 @@ static void __E64MachineDeinit(EFObjectRef machineRef)
     __E64Machine machine = (__E64Machine)machineRef;
     if(machine->core != NULL)
     {
-        emex64_core_dealloc(machine->core);
+        EFRelease(machine->core);
     }
     if(machine->memory != NULL)
     {
@@ -109,7 +109,7 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
         EFRelease(machine);
     }
 
-    machine->core = emex64_core_alloc();
+    machine->core = E64CoreCreate(allocatorRef);
     if(machine->core == NULL)
     {
         EFRelease(machine);
@@ -189,7 +189,7 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
     return machine;
 }
 
-emex64_core_t *E64MachineGetCore(E64MachineRef machineRef)
+E64CoreRef E64MachineGetCore(E64MachineRef machineRef)
 {
     __E64Machine machine = (__E64Machine)machineRef;
     if(machine == NULL)

@@ -22,31 +22,31 @@
 #ifndef EMEX64VM_INSTRUCTION_ALU_H
 #define EMEX64VM_INSTRUCTION_ALU_H
 
-#include <EmexToolchain/vm/core.h>
+#include <EmexToolchain/vm/E64Core.h>
 
-void emex64_op_add(emex64_core_t *core);
-void emex64_op_sub(emex64_core_t *core);
-void emex64_op_mul(emex64_core_t *core);
-void emex64_op_div(emex64_core_t *core);
-void emex64_op_idiv(emex64_core_t *core);
-void emex64_op_mod(emex64_core_t *core);
-void emex64_op_not(emex64_core_t *core);
-void emex64_op_neg(emex64_core_t *core);
-void emex64_op_and(emex64_core_t *core);
-void emex64_op_or(emex64_core_t *core);
-void emex64_op_xor(emex64_core_t *core);
-void emex64_op_shr(emex64_core_t *core);
-void emex64_op_shl(emex64_core_t *core);
-void emex64_op_sar(emex64_core_t *core);
-void emex64_op_ror(emex64_core_t *core);
-void emex64_op_rol(emex64_core_t *core);
+void emex64_op_add(__E64Core core);
+void emex64_op_sub(__E64Core core);
+void emex64_op_mul(__E64Core core);
+void emex64_op_div(__E64Core core);
+void emex64_op_idiv(__E64Core core);
+void emex64_op_mod(__E64Core core);
+void emex64_op_not(__E64Core core);
+void emex64_op_neg(__E64Core core);
+void emex64_op_and(__E64Core core);
+void emex64_op_or(__E64Core core);
+void emex64_op_xor(__E64Core core);
+void emex64_op_shr(__E64Core core);
+void emex64_op_shl(__E64Core core);
+void emex64_op_sar(__E64Core core);
+void emex64_op_ror(__E64Core core);
+void emex64_op_rol(__E64Core core);
 
-void emex64_op_pdep(emex64_core_t *core);
-void emex64_op_pext(emex64_core_t *core);
-void emex64_op_bswapw(emex64_core_t *core);
-void emex64_op_bswapd(emex64_core_t *core);
-void emex64_op_bswapq(emex64_core_t *core);
-void emex64_op_inc(emex64_core_t *core);
-void emex64_op_dec(emex64_core_t *core);
+void emex64_op_pdep(__E64Core core);
+void emex64_op_pext(__E64Core core);
+void emex64_op_bswapw(__E64Core core);
+void emex64_op_bswapd(__E64Core core);
+void emex64_op_bswapq(__E64Core core);
+void emex64_op_inc(__E64Core core);
+void emex64_op_dec(__E64Core core);
 
 #endif /* EMEX64VM_INSTRUCTION_ALU_H */

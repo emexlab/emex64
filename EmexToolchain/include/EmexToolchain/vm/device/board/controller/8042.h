@@ -30,7 +30,7 @@
 #define EMEX64_8042_DATA    0x00
 #define EMEX64_8042_STATUS  0x08
 
-typedef struct emex64_core emex64_core_t;
+typedef struct __E64Core *E64CoreRef;
 typedef struct __E64Machine *E64MachineRef;
 
 typedef struct {
@@ -67,7 +67,7 @@ void emex64_8042_send_keyboard_break(emex64_8042_t *dev, kEmexKeyPhys key);
 
 void emex64_8042_send_mouse(emex64_8042_t *dev, UInt8 byte);
 
-UInt64 emex64_8042_read(emex64_core_t *core, void *device, UInt64 offset, int size);
-void emex64_8042_write(emex64_core_t *core, void *device, UInt64 offset, UInt64 value, int size);
+UInt64 emex64_8042_read(E64CoreRef core, void *device, UInt64 offset, int size);
+void emex64_8042_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, int size);
 
 #endif /* EMEX64VM_DEVICE_8042_H */

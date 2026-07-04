@@ -23,7 +23,7 @@
 #define EMEX64ASM_EMITTER_OPCODE_H
 
 #include <stdbool.h>
-#include <EmexToolchain/vm/core.h>
+#include <EmexToolchain/vm/E64Core.h>
 #include <EmexToolchain/asm/invocation.h>
 
 E64Opcode opcode_from_string(const char *name);

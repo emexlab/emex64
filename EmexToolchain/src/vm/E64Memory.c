@@ -30,7 +30,7 @@
 #include <EmexToolchain/support/diagnostic/log.h>
 #include <EmexToolchain/support/likely.h>
 #include <EmexToolchain/vm/E64Memory.h>
-#include <EmexToolchain/vm/core.h>
+#include <EmexToolchain/vm/E64Core.h>
 #include <EmexToolchain/vm/E64Machine.h>
 #include <EmexToolchain/vm/E64MMIO.h>
 
@@ -174,7 +174,7 @@ Boolean E64MemoryAccessIsWithinBounds(E64MemoryRef memoryRef,
 }
 
 static inline emex64_mmu_entry_lookup_t emex64_mmu_lookup_pte(E64Memory memory,
-                                                              emex64_core_t *core,
+                                                              E64CoreRef core,
                                                               UInt64 pt_addr,
                                                               UInt16 idx)
 {
@@ -201,7 +201,7 @@ static inline emex64_mmu_entry_lookup_t emex64_mmu_lookup_pte(E64Memory memory,
 }
 
 static inline Boolean emex64_mmu_access_pxd(E64Memory memory,
-                                         emex64_core_t *core,
+                                         E64CoreRef core,
                                          UInt64 pt_addr,
                                          UInt16 pxd_idx,
                                          kE64MemoryAction acc,
@@ -263,7 +263,7 @@ static inline Boolean emex64_mmu_access_pxd(E64Memory memory,
 }
 
 static inline Boolean emex64_mmu_translate(E64Memory memory,
-                                        emex64_core_t *core,
+                                        E64CoreRef core,
                                         UInt64 vaddr,
                                         kE64MemoryAction action,
                                         UInt64 *paddr)
@@ -446,7 +446,7 @@ Boolean E64MemoryAction(E64MemoryRef memoryRef,
 }
 
 void E64MemoryCoreAction(E64MemoryRef memoryRef,
-                            emex64_core_t *core,
+                            E64CoreRef core,
                             UInt64 addr,
                             size_t size,
                             UInt64 *value,
@@ -645,7 +645,7 @@ rw_fastpath:
 }
 
 Boolean E64MemoryCoreCopyIn(E64MemoryRef memoryRef,
-                            emex64_core_t *core,
+                            E64CoreRef core,
                             UInt8 *dst,
                             UInt64 addr,
                             size_t len,

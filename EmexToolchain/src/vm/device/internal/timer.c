@@ -185,7 +185,7 @@ void emex64_timer_tick(emex64_timer_t *timer,
     }
 }
 
-UInt64 emex64_timer_read(emex64_core_t *core,
+UInt64 emex64_timer_read(E64CoreRef core,
                          void *device,
                          UInt64 offset,
                          int size)
@@ -209,7 +209,7 @@ UInt64 emex64_timer_read(emex64_core_t *core,
     }
 }
 
-void emex64_timer_write(emex64_core_t *core,
+void emex64_timer_write(E64CoreRef core,
                       void *device,
                       UInt64 offset,
                       UInt64 value,

@@ -31,9 +31,9 @@
 #define EMEX64_MC_REG_KTRR_SIZE     0x08
 #define EMEX64_MC_REG_KTRR_LOCKED   0x10
 
-typedef struct emex64_core emex64_core_t;
+typedef struct __E64Core *E64CoreRef;
 
-UInt64 emex64_mc_read(emex64_core_t *core, void *device, UInt64 offset, int size);
-void emex64_mc_write(emex64_core_t *core, void *device, UInt64 offset, UInt64 value, int size);
+UInt64 emex64_mc_read(E64CoreRef core, void *device, UInt64 offset, int size);
+void emex64_mc_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, int size);
 
 #endif /* EMEX64VM_DEVICE_MC_H */
