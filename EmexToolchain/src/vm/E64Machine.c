@@ -24,6 +24,11 @@
 #include <EmexToolchain/vm/device/internal/controller/mem.h>
 #include <EmexToolchain/vm/device/board/controller/power.h>
 #include <EmexToolchain/vm/device/board/rtc.h>
+#include <EmexToolchain/vm/device/internal/timer.h>
+#include <EmexToolchain/vm/device/internal/controller/ic.h>
+#include <EmexToolchain/vm/device/board/uart.h>
+#include <EmexToolchain/vm/device/board/controller/8042.h>
+#include <EmexToolchain/vm/device/board/display.h>
 
 static void __E64MachineDeinit(EFObjectRef machineRef)
 {

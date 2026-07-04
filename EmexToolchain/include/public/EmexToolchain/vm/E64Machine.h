@@ -28,11 +28,7 @@
 #include <EmexToolchain/vm/E64Core.h>
 #include <EmexToolchain/vm/E64Memory.h>
 #include <EmexToolchain/vm/E64MMIO.h>
-#include <EmexToolchain/vm/device/internal/timer.h>
-#include <EmexToolchain/vm/device/internal/controller/ic.h>
-#include <EmexToolchain/vm/device/board/uart.h>
-#include <EmexToolchain/vm/device/board/controller/8042.h>
-#include <EmexToolchain/vm/device/board/display.h>
+#include <EmexToolchain/vm/device/base.h>
 #include <EmexFoundation/EmexFoundation.h>
 
 typedef struct __E64Machine *E64MachineRef;
@@ -42,11 +38,11 @@ typedef struct __E64Machine {
     E64CoreRef core;
     E64MemoryRef memory;
     E64MMIOBusRef mmio_bus;
-    emex64_intc_t *intc;
-    emex64_timer_t *timer;
-    emex64_uart_t *uart;
-    emex64_display_t *display;
-    emex64_8042_t *emex8042;
+    void *intc;
+    void *timer;
+    void *uart;
+    void *display;
+    void *emex8042;
 } *__E64Machine;
 
 EFTypeID E64MachineGetTypeID(void);
@@ -57,10 +53,5 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef, E64Machin
 E64CoreRef E64MachineGetCore(E64MachineRef machineRef);
 E64MemoryRef E64MachineGetMemory(E64MachineRef machineRef);
 E64MMIOBusRef E64MachineGetMMIOBus(E64MachineRef machineRef);
-emex64_intc_t *E64MachineGetIC(E64MachineRef machineRef);
-emex64_timer_t *E64MachineGetTimer(E64MachineRef machineRef);
-emex64_uart_t *E64MachineGetUART(E64MachineRef machineRef);
-emex64_display_t *E64MachineGetDisplay(E64MachineRef machineRef);
-emex64_8042_t *E64MachineGet8042(E64MachineRef machineRef);
 
 #endif /* E64MACHINE_H */

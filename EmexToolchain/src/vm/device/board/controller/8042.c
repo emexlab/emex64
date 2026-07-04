@@ -22,6 +22,7 @@
 #include <EmexToolchain/vm/E64Machine.h>
 #include <EmexToolchain/vm/E64Core.h>
 #include <EmexToolchain/vm/device/board/controller/8042.h>
+#include <EmexToolchain/vm/device/internal/controller/ic.h>
 #include <string.h>
 #include <pthread.h>
 

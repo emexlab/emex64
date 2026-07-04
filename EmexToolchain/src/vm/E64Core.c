@@ -38,6 +38,7 @@
 #include <EmexToolchain/vm/instruction/data.h>
 #include <EmexToolchain/vm/instruction/alu.h>
 #include <EmexToolchain/vm/instruction/ctrl.h>
+#include <EmexToolchain/vm/device/board/display.h>
 #include <EmexToolchain/support/bitbolt.h>
 #include <EmexToolchain/support/likely.h>
 
@@ -318,7 +319,7 @@ void E64CoreTerminate(E64CoreRef coreRef)
     #if defined(__APPLE__)
     /* FIXME: this doesn't work */
     CFRunLoopStop(CFRunLoopGetMain());
-    if(core->machine->display->enabled)
+    if(((emex64_display_t*)(core->machine->display))->enabled)
     {
         exit(0); /* FIXME: this is so it works anyways */
     }

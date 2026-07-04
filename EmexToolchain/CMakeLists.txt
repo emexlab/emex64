@@ -177,13 +177,12 @@ add_dependencies(EmexToolchain emex64_header_gen)
 
 target_include_directories(EmexToolchain
     PRIVATE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>
-)
-
-target_include_directories(EmexToolchain
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/private>
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/public>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include/public>
         $<INSTALL_INTERFACE:include>
 )
 
@@ -241,7 +240,7 @@ install(TARGETS EmexToolchain
     RUNTIME DESTINATION bin
 )
 
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/public/
     DESTINATION include
     FILES_MATCHING
         PATTERN "*.h"
