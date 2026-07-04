@@ -28,70 +28,70 @@
 
 typedef enum: uint8_t {
     /* core operations */
-    kEmex64OpcodeHLT =      0b00000000,
-    kEmex64OpcodeNOP =      0b00000001,
+    kE64OpcodeHLT =      0b00000000,
+    kE64OpcodeNOP =      0b00000001,
 
     /* data operations */
-    kEmex64OpcodeMOV =      0b00000010,
-    kEmex64OpcodeSWP =      0b00000011,
-    kEmex64OpcodeSWPZ =     0b00000100,
-    kEmex64OpcodePUSH =     0b00000101,
-    kEmex64OpcodePOP =      0b00000110,
-    kEmex64OpcodeLDB =      0b00000111,
-    kEmex64OpcodeLDW =      0b00001000,
-    kEmex64OpcodeLDD =      0b00001001,
-    kEmex64OpcodeLDQ =      0b00001010,
-    kEmex64OpcodeSTB =      0b00001011,
-    kEmex64OpcodeSTW =      0b00001100,
-    kEmex64OpcodeSTD =      0b00001101,
-    kEmex64OpcodeSTQ =      0b00001110,
+    kE64OpcodeMOV =      0b00000010,
+    kE64OpcodeSWP =      0b00000011,
+    kE64OpcodeSWPZ =     0b00000100,
+    kE64OpcodePUSH =     0b00000101,
+    kE64OpcodePOP =      0b00000110,
+    kE64OpcodeLDB =      0b00000111,
+    kE64OpcodeLDW =      0b00001000,
+    kE64OpcodeLDD =      0b00001001,
+    kE64OpcodeLDQ =      0b00001010,
+    kE64OpcodeSTB =      0b00001011,
+    kE64OpcodeSTW =      0b00001100,
+    kE64OpcodeSTD =      0b00001101,
+    kE64OpcodeSTQ =      0b00001110,
 
     /* alu operations */
-    kEmex64OpcodeADD =      0b00001111,
-    kEmex64OpcodeSUB =      0b00010000,
-    kEmex64OpcodeMUL =      0b00010001,
-    kEmex64OpcodeDIV =      0b00010010,
-    kEmex64OpcodeIDIV =     0b00010011,
-    kEmex64OpcodeMOD =      0b00010100,
-    kEmex64OpcodeNOT =      0b00010101,
-    kEmex64OpcodeNEG =      0b00010110,
-    kEmex64OpcodeAND =      0b00010111,
-    kEmex64OpcodeOR  =      0b00011000,
-    kEmex64OpcodeXOR =      0b00011001,
-    kEmex64OpcodeSHR =      0b00011010,
-    kEmex64OpcodeSHL =      0b00011011,
-    kEmex64OpcodeSAR =      0b00011100,
-    kEmex64OpcodeROR =      0b00011101,
-    kEmex64OpcodeROL =      0b00011110,
-    kEmex64OpcodePDEP =     0b00011111,
-    kEmex64OpcodePEXT =     0b00100000,
-    kEmex64OpcodeBSWAPW =   0b00100001,
-    kEmex64OpcodeBSWAPD =   0b00100010,
-    kEmex64OpcodeBSWAPQ =   0b00100011,
-    kEmex64OpcodeINC =      0b00100100,
-    kEmex64OpcodeDEC =      0b00100101,
+    kE64OpcodeADD =      0b00001111,
+    kE64OpcodeSUB =      0b00010000,
+    kE64OpcodeMUL =      0b00010001,
+    kE64OpcodeDIV =      0b00010010,
+    kE64OpcodeIDIV =     0b00010011,
+    kE64OpcodeMOD =      0b00010100,
+    kE64OpcodeNOT =      0b00010101,
+    kE64OpcodeNEG =      0b00010110,
+    kE64OpcodeAND =      0b00010111,
+    kE64OpcodeOR  =      0b00011000,
+    kE64OpcodeXOR =      0b00011001,
+    kE64OpcodeSHR =      0b00011010,
+    kE64OpcodeSHL =      0b00011011,
+    kE64OpcodeSAR =      0b00011100,
+    kE64OpcodeROR =      0b00011101,
+    kE64OpcodeROL =      0b00011110,
+    kE64OpcodePDEP =     0b00011111,
+    kE64OpcodePEXT =     0b00100000,
+    kE64OpcodeBSWAPW =   0b00100001,
+    kE64OpcodeBSWAPD =   0b00100010,
+    kE64OpcodeBSWAPQ =   0b00100011,
+    kE64OpcodeINC =      0b00100100,
+    kE64OpcodeDEC =      0b00100101,
 
     /* control flow operations */
-    kEmex64OpcodeB =        0b00100110,
-    kEmex64OpcodeCMP =      0b00100111,
-    kEmex64OpcodeBE =       0b00101000,
-    kEmex64OpcodeBNE =      0b00101001,
-    kEmex64OpcodeBLT =      0b00101010,
-    kEmex64OpcodeBGT =      0b00101011,
-    kEmex64OpcodeBLE =      0b00101100,
-    kEmex64OpcodeBGE =      0b00101101,
-    kEmex64OpcodeBZ =       0b00101110,
-    kEmex64OpcodeBNZ =      0b00101111,
-    kEmex64OpcodeBLW =      0b00110000,
-    kEmex64OpcodeWRET =     0b00110001,
-    kEmex64OpcodeIRET =     0b00110010,
-    kEmex64OpcodeBL =       0b00110011,
-    kEmex64OpcodeRET =      0b00110100,
+    kE64OpcodeB =        0b00100110,
+    kE64OpcodeCMP =      0b00100111,
+    kE64OpcodeBE =       0b00101000,
+    kE64OpcodeBNE =      0b00101001,
+    kE64OpcodeBLT =      0b00101010,
+    kE64OpcodeBGT =      0b00101011,
+    kE64OpcodeBLE =      0b00101100,
+    kE64OpcodeBGE =      0b00101101,
+    kE64OpcodeBZ =       0b00101110,
+    kE64OpcodeBNZ =      0b00101111,
+    kE64OpcodeBLW =      0b00110000,
+    kE64OpcodeWRET =     0b00110001,
+    kE64OpcodeIRET =     0b00110010,
+    kE64OpcodeBL =       0b00110011,
+    kE64OpcodeRET =      0b00110100,
 
     /* data operations v2 */
-    kEmex64OpcodeCLR =      0b00110101,
-    kEmex64OpcodeCMOV =     0b00110110,
-    kEmex64OpcodeCMOVB =    0b00110111,
+    kE64OpcodeCLR =      0b00110101,
+    kE64OpcodeCMOV =     0b00110110,
+    kE64OpcodeCMOVB =    0b00110111,
 
     /*
      * for floating point later (ideas atleast):
@@ -109,10 +109,10 @@ typedef enum: uint8_t {
      * ... (what not)
      */
 
-    kEmex64OpcodeMAX = kEmex64OpcodeCMOVB,
+    kE64OpcodeMAX = kE64OpcodeCMOVB,
 
-    kEmex64OpcodeInvalid =  0b11111111,
-} kEmex64Opcode;
+    kE64OpcodeInvalid =  0b11111111,
+} kE64Opcode;
 
 typedef enum: uint8_t {
     /*
@@ -120,14 +120,14 @@ typedef enum: uint8_t {
      * instruction can have such a end coding, like
      * dynamic instructions.
      */
-    kEmex64ParameterCodingEnd =     0b000,
+    kE64ParameterCodingEnd =     0b000,
 
-    kEmex64ParameterCodingReg =     0b001,
-    kEmex64ParameterCodingImm5 =    0b010,
-    kEmex64ParameterCodingImm8  =   0b011,
-    kEmex64ParameterCodingImm16 =   0b100,
-    kEmex64ParameterCodingImm32 =   0b101,
-    kEmex64ParameterCodingImm64 =   0b110,
+    kE64ParameterCodingReg =     0b001,
+    kE64ParameterCodingImm5 =    0b010,
+    kE64ParameterCodingImm8  =   0b011,
+    kE64ParameterCodingImm16 =   0b100,
+    kE64ParameterCodingImm32 =   0b101,
+    kE64ParameterCodingImm64 =   0b110,
 
     /*
      * this means the decoder has to first skip until
@@ -135,8 +135,8 @@ typedef enum: uint8_t {
      * data, this coding has been added for compatibility
      * for dynamic symbol relocation.
      */
-    kEmex64ParameterCodingAddr64 =  0b111
-} kEmex64ParameterCoding;
+    kE64ParameterCodingAddr64 =  0b111
+} kE64ParameterCoding;
 
 typedef enum: uint8_t {
     /*
@@ -146,7 +146,7 @@ typedef enum: uint8_t {
      * executing the instruction at which PC points to at
      * that time.
      */
-    kEmex64RegisterPC =     0b00000,
+    kE64RegisterPC =     0b00000,
 
     /*
      * stack pointer: it points to the current address at
@@ -157,7 +157,7 @@ typedef enum: uint8_t {
      * things, as heap allocation is way more expensive,
      * than a simple register decrement.
      */
-    kEmex64RegisterSP =     0b00001,
+    kE64RegisterSP =     0b00001,
 
     /*
      * frame pointer: it points to the address at which the
@@ -172,19 +172,19 @@ typedef enum: uint8_t {
      * simplistic, for now that will be the soulution,
      * cannot be guranteed that this ABI choice wont change.
      */
-    kEmex64RegisterFP =     0b00010,
+    kE64RegisterFP =     0b00010,
 
     /*
      * control flag: used by control flow instructions like
      * cmp, je, jne.. basically used for if else statements.
      */
-    kEmex64RegisterCF =     0b00011,
+    kE64RegisterCF =     0b00011,
 
     /*
      * floating point control register: can be used in
      * userspace.
      */
-    kEmex64RegisterFPC =    0b00100,
+    kE64RegisterFPC =    0b00100,
 
     /*
      * general purpose registers: these registers arent used
@@ -193,32 +193,32 @@ typedef enum: uint8_t {
      * general purpose registers, because they got no fixed
      * purpose like pc, sp, fp, cf.
      */
-    kEmex64RegisterR0 =     0b00101,
-    kEmex64RegisterR1 =     0b00110,
-    kEmex64RegisterR2 =     0b00111,
-    kEmex64RegisterR3 =     0b01000,
-    kEmex64RegisterR4 =     0b01001,
-    kEmex64RegisterR5 =     0b01010,
-    kEmex64RegisterR6 =     0b01011,
-    kEmex64RegisterR7 =     0b01100,
-    kEmex64RegisterR8 =     0b01101,
-    kEmex64RegisterR9 =     0b01110,
-    kEmex64RegisterR10 =    0b01111,
-    kEmex64RegisterR11 =    0b10000,
-    kEmex64RegisterR12 =    0b10001,
-    kEmex64RegisterR13 =    0b10010,
-    kEmex64RegisterR14 =    0b10011,
-    kEmex64RegisterR15 =    0b10100,
-    kEmex64RegisterR16 =    0b10101,
-    kEmex64RegisterR17 =    0b10110,
-    kEmex64RegisterR18 =    0b10111,
-    kEmex64RegisterR19 =    0b11000,
-    kEmex64RegisterR20 =    0b11001,
-    kEmex64RegisterR21 =    0b11010,
-    kEmex64RegisterR22 =    0b11011,
-    kEmex64RegisterR23 =    0b11100,
-    kEmex64RegisterR24 =    0b11101,
-    kEmex64RegisterR25 =    0b11110,
+    kE64RegisterR0 =     0b00101,
+    kE64RegisterR1 =     0b00110,
+    kE64RegisterR2 =     0b00111,
+    kE64RegisterR3 =     0b01000,
+    kE64RegisterR4 =     0b01001,
+    kE64RegisterR5 =     0b01010,
+    kE64RegisterR6 =     0b01011,
+    kE64RegisterR7 =     0b01100,
+    kE64RegisterR8 =     0b01101,
+    kE64RegisterR9 =     0b01110,
+    kE64RegisterR10 =    0b01111,
+    kE64RegisterR11 =    0b10000,
+    kE64RegisterR12 =    0b10001,
+    kE64RegisterR13 =    0b10010,
+    kE64RegisterR14 =    0b10011,
+    kE64RegisterR15 =    0b10100,
+    kE64RegisterR16 =    0b10101,
+    kE64RegisterR17 =    0b10110,
+    kE64RegisterR18 =    0b10111,
+    kE64RegisterR19 =    0b11000,
+    kE64RegisterR20 =    0b11001,
+    kE64RegisterR21 =    0b11010,
+    kE64RegisterR22 =    0b11011,
+    kE64RegisterR23 =    0b11100,
+    kE64RegisterR24 =    0b11101,
+    kE64RegisterR25 =    0b11110,
 
     /*
      * return register: also a general purpose register but
@@ -227,83 +227,83 @@ typedef enum: uint8_t {
      * return without any crazy memory math a value for
      * example.
      */
-    kEmex64RegisterRR =     0b11111,
+    kE64RegisterRR =     0b11111,
 
-    kEmex64RegisterMAX = kEmex64RegisterRR,
+    kE64RegisterMAX = kE64RegisterRR,
 
-    kEmex64RegisterInvalid =    0b11111111,
-} kEmex64Register;
-
-typedef enum: uint8_t {
-    kEmex64ControlRegisterCR0 = 0b00000,    /* CREL:    elevation control register */
-    kEmex64ControlRegisterCR1 = 0b00001,    /* CRKSP:   kernel stack pointer (the stack pointer the interrupt controller will use when receiving interrupt) */
-    kEmex64ControlRegisterCR2 = 0b00010,    /* CREXC:   exception register (first 3bits for the exception) */
-    kEmex64ControlRegisterCR3 = 0b00011,    /* CRVEC:   cpu vector table */
-    kEmex64ControlRegisterCR4 = 0b00100,    /* CRPTB:   page table pointer (first 8bits are the flags and the rest is the physical address where the page table is) */
-    kEmex64ControlRegisterCR5 = 0b00101,    /* CRFPC:   kernel only floating point control register */
-    kEmex64ControlRegisterCR6 = 0b00110,
-    kEmex64ControlRegisterCR7 = 0b00111,
-    kEmex64ControlRegisterCR8 = 0b01000,
-    kEmex64ControlRegisterCR9 = 0b01001,
-    kEmex64ControlRegisterCR10 = 0b01010,
-    kEmex64ControlRegisterCR11 = 0b01011,
-    kEmex64ControlRegisterCR12 = 0b01100,
-    kEmex64ControlRegisterCR13 = 0b01101,
-    kEmex64ControlRegisterCR14 = 0b01110,
-    kEmex64ControlRegisterCR15 = 0b01111,
-    kEmex64ControlRegisterCR16 = 0b10000,
-    kEmex64ControlRegisterCR17 = 0b10001,
-    kEmex64ControlRegisterCR18 = 0b10010,
-    kEmex64ControlRegisterCR19 = 0b10011,
-    kEmex64ControlRegisterCR20 = 0b10100,
-    kEmex64ControlRegisterCR21 = 0b10101,
-    kEmex64ControlRegisterCR22 = 0b10110,
-    kEmex64ControlRegisterCR23 = 0b10111,
-    kEmex64ControlRegisterCR24 = 0b11000,
-    kEmex64ControlRegisterCR25 = 0b11001,
-    kEmex64ControlRegisterCR26 = 0b11010,
-    kEmex64ControlRegisterCR27 = 0b11011,
-    kEmex64ControlRegisterCR28 = 0b11100,
-    kEmex64ControlRegisterCR29 = 0b11101,
-    kEmex64ControlRegisterCR30 = 0b11110,
-    kEmex64ControlRegisterCR31 = 0b11111,
-} kEmex64ControlRegister;
+    kE64RegisterInvalid =    0b11111111,
+} kE64Register;
 
 typedef enum: uint8_t {
-    kEmex64FloatingRegisterFR0 = 0b00000,
-    kEmex64FloatingRegisterFR1 = 0b00001,
-    kEmex64FloatingRegisterFR2 = 0b00010,
-    kEmex64FloatingRegisterFR3 = 0b00011,
-    kEmex64FloatingRegisterFR4 = 0b00100,
-    kEmex64FloatingRegisterFR5 = 0b00101,
-    kEmex64FloatingRegisterFR6 = 0b00110,
-    kEmex64FloatingRegisterFR7 = 0b00111,
-    kEmex64FloatingRegisterFR8 = 0b01000,
-    kEmex64FloatingRegisterFR9 = 0b01001,
-    kEmex64FloatingRegisterFR10 = 0b01010,
-    kEmex64FloatingRegisterFR11 = 0b01011,
-    kEmex64FloatingRegisterFR12 = 0b01100,
-    kEmex64FloatingRegisterFR13 = 0b01101,
-    kEmex64FloatingRegisterFR14 = 0b01110,
-    kEmex64FloatingRegisterFR15 = 0b01111,
-    kEmex64FloatingRegisterFR16 = 0b10000,
-    kEmex64FloatingRegisterFR17 = 0b10001,
-    kEmex64FloatingRegisterFR18 = 0b10010,
-    kEmex64FloatingRegisterFR19 = 0b10011,
-    kEmex64FloatingRegisterFR20 = 0b10100,
-    kEmex64FloatingRegisterFR21 = 0b10101,
-    kEmex64FloatingRegisterFR22 = 0b10110,
-    kEmex64FloatingRegisterFR23 = 0b10111,
-    kEmex64FloatingRegisterFR24 = 0b11000,
-    kEmex64FloatingRegisterFR25 = 0b11001,
-    kEmex64FloatingRegisterFR26 = 0b11010,
-    kEmex64FloatingRegisterFR27 = 0b11011,
-    kEmex64FloatingRegisterFR28 = 0b11100,
-    kEmex64FloatingRegisterFR29 = 0b11101,
-    kEmex64FloatingRegisterFR30 = 0b11110,
-    kEmex64FloatingRegisterFR31 = 0b11111,
-    kEmex64FloatingRegisterMAX = kEmex64FloatingRegisterFR31
-} kEmex64FloatingRegister;
+    kE64ControlRegisterCR0 = 0b00000,    /* CREL:    elevation control register */
+    kE64ControlRegisterCR1 = 0b00001,    /* CRKSP:   kernel stack pointer (the stack pointer the interrupt controller will use when receiving interrupt) */
+    kE64ControlRegisterCR2 = 0b00010,    /* CREXC:   exception register (first 3bits for the exception) */
+    kE64ControlRegisterCR3 = 0b00011,    /* CRVEC:   cpu vector table */
+    kE64ControlRegisterCR4 = 0b00100,    /* CRPTB:   page table pointer (first 8bits are the flags and the rest is the physical address where the page table is) */
+    kE64ControlRegisterCR5 = 0b00101,    /* CRFPC:   kernel only floating point control register */
+    kE64ControlRegisterCR6 = 0b00110,
+    kE64ControlRegisterCR7 = 0b00111,
+    kE64ControlRegisterCR8 = 0b01000,
+    kE64ControlRegisterCR9 = 0b01001,
+    kE64ControlRegisterCR10 = 0b01010,
+    kE64ControlRegisterCR11 = 0b01011,
+    kE64ControlRegisterCR12 = 0b01100,
+    kE64ControlRegisterCR13 = 0b01101,
+    kE64ControlRegisterCR14 = 0b01110,
+    kE64ControlRegisterCR15 = 0b01111,
+    kE64ControlRegisterCR16 = 0b10000,
+    kE64ControlRegisterCR17 = 0b10001,
+    kE64ControlRegisterCR18 = 0b10010,
+    kE64ControlRegisterCR19 = 0b10011,
+    kE64ControlRegisterCR20 = 0b10100,
+    kE64ControlRegisterCR21 = 0b10101,
+    kE64ControlRegisterCR22 = 0b10110,
+    kE64ControlRegisterCR23 = 0b10111,
+    kE64ControlRegisterCR24 = 0b11000,
+    kE64ControlRegisterCR25 = 0b11001,
+    kE64ControlRegisterCR26 = 0b11010,
+    kE64ControlRegisterCR27 = 0b11011,
+    kE64ControlRegisterCR28 = 0b11100,
+    kE64ControlRegisterCR29 = 0b11101,
+    kE64ControlRegisterCR30 = 0b11110,
+    kE64ControlRegisterCR31 = 0b11111,
+} kE64ControlRegister;
+
+typedef enum: uint8_t {
+    kE64FloatingRegisterFR0 = 0b00000,
+    kE64FloatingRegisterFR1 = 0b00001,
+    kE64FloatingRegisterFR2 = 0b00010,
+    kE64FloatingRegisterFR3 = 0b00011,
+    kE64FloatingRegisterFR4 = 0b00100,
+    kE64FloatingRegisterFR5 = 0b00101,
+    kE64FloatingRegisterFR6 = 0b00110,
+    kE64FloatingRegisterFR7 = 0b00111,
+    kE64FloatingRegisterFR8 = 0b01000,
+    kE64FloatingRegisterFR9 = 0b01001,
+    kE64FloatingRegisterFR10 = 0b01010,
+    kE64FloatingRegisterFR11 = 0b01011,
+    kE64FloatingRegisterFR12 = 0b01100,
+    kE64FloatingRegisterFR13 = 0b01101,
+    kE64FloatingRegisterFR14 = 0b01110,
+    kE64FloatingRegisterFR15 = 0b01111,
+    kE64FloatingRegisterFR16 = 0b10000,
+    kE64FloatingRegisterFR17 = 0b10001,
+    kE64FloatingRegisterFR18 = 0b10010,
+    kE64FloatingRegisterFR19 = 0b10011,
+    kE64FloatingRegisterFR20 = 0b10100,
+    kE64FloatingRegisterFR21 = 0b10101,
+    kE64FloatingRegisterFR22 = 0b10110,
+    kE64FloatingRegisterFR23 = 0b10111,
+    kE64FloatingRegisterFR24 = 0b11000,
+    kE64FloatingRegisterFR25 = 0b11001,
+    kE64FloatingRegisterFR26 = 0b11010,
+    kE64FloatingRegisterFR27 = 0b11011,
+    kE64FloatingRegisterFR28 = 0b11100,
+    kE64FloatingRegisterFR29 = 0b11101,
+    kE64FloatingRegisterFR30 = 0b11110,
+    kE64FloatingRegisterFR31 = 0b11111,
+    kE64FloatingRegisterMAX = kE64FloatingRegisterFR31
+} kE64FloatingRegister;
 
 typedef union {
     uint64_t u64;
@@ -315,10 +315,10 @@ typedef union {
 } FPReg;
 
 typedef enum: uint8_t {
-    kEmex64ElevationLevelUser =             0b00,
-    kEmex64ElevationLevelKernel =           0b01,
-    kEmex64ElevationLevelSecureMonitor =    0b10    /* used for software kernel secure mechanism like apples PPL */
-} kEmex64ElevationLevel;
+    kE64ElevationLevelUser =             0b00,
+    kE64ElevationLevelKernel =           0b01,
+    kE64ElevationLevelSecureMonitor =    0b10    /* used for software kernel secure mechanism like apples PPL */
+} kE64ElevationLevel;
 
 /*
  * these flags is what the CF register contains of, yk we talked
@@ -333,17 +333,17 @@ typedef enum: uint8_t {
  *
  */
 typedef enum: uint8_t {
-    kEmex64CompareFlagZ =   0x1,
-    kEmex64CompareFlagL =   0x2,
-    kEmex64CompareFlagG =   0x4
-} kEmex64CompareFlag;
+    kE64CompareFlagZ =   0x1,
+    kE64CompareFlagL =   0x2,
+    kE64CompareFlagG =   0x4
+} kE64CompareFlag;
 
 typedef enum: uint8_t {
     /*
      * normal state, simply a marker to say nothing
      * to trigger a interrupt for.
      */
-    kEmex64ExceptionNone =              0b000,
+    kE64ExceptionNone =              0b000,
 
     /*
      * this exception means that a memory address was
@@ -351,27 +351,27 @@ typedef enum: uint8_t {
      * if the cpu writes to memory that it doesnt have
      * access to this exception is triggered.
      */
-    kEmex64ExceptionBadAccess =         0b001,
+    kE64ExceptionBadAccess =         0b001,
 
     /*
      * this exception means that the current cpu state
      * did not have the appropriate permissions to
      * access a certain register for example.
      */
-    kEmex64ExceptionPermission =        0b010,
+    kE64ExceptionPermission =        0b010,
 
     /*
      * this exception means that the cpu regocnised a
      * instruction that was not valid was being tried
      * to decode.
      */
-    kEmex64ExceptionBadInstruction =    0b011,
+    kE64ExceptionBadInstruction =    0b011,
 
     /*
      * the alu tried to perform illegal math operations
      * like for example N / 0 or N % 0.
      */
-    kEmex64ExceptionBadArithmetic =     0b100,
+    kE64ExceptionBadArithmetic =     0b100,
 
     /*
      * when the MMU sees a page is dirty and a user program
@@ -379,13 +379,13 @@ typedef enum: uint8_t {
      * when a page was accessed that is not accessible or
      * not mapped.
      */
-    kEmex64ExceptionPageFault =         0b101,
+    kE64ExceptionPageFault =         0b101,
 
     /*
      * KTRR exception!?
      */
-    kEmex64ExceptionKTRRViolation =     0b110,
-} kEmex64Exception;
+    kE64ExceptionKTRRViolation =     0b110,
+} kE64Exception;
 
 #define EMEX64_MAX_ARGS 26
 #define EMEX64_MAX_ILEN (1 + EMEX64_MAX_ARGS * 9)
@@ -404,7 +404,7 @@ typedef struct emex64_opfunc_entry {
     uint32_t argmask;
 } emex64_opfunc_entry_t;
 
-extern const emex64_opfunc_entry_t kEmex64OpfuncTable[];
+extern const emex64_opfunc_entry_t kE64OpfuncTable[];
 
 typedef struct emex64_core {
 
@@ -412,8 +412,8 @@ typedef struct emex64_core {
     pthread_t pthread;
 
     /* a array of all (control) registers */
-    uint64_t rl[kEmex64RegisterMAX + 1];
-    FPReg frl[kEmex64FloatingRegisterMAX + 1];
+    uint64_t rl[kE64RegisterMAX + 1];
+    FPReg frl[kE64FloatingRegisterMAX + 1];
 
     /* data of currently decoding or decoded operation */
     struct {
@@ -443,7 +443,7 @@ typedef struct emex64_core {
          * execute. The opcode entry which tells the decoder
          * how to decode the instruction.
          */
-        kEmex64Opcode opcode;
+        kE64Opcode opcode;
         emex64_opfunc_entry_t opce;
 
         /*
@@ -454,7 +454,7 @@ typedef struct emex64_core {
          */
         uint8_t param_cnt;
         uint64_t *param[EMEX64_MAX_ARGS];
-        kEmex64ParameterCoding param_coding[EMEX64_MAX_ARGS];
+        kE64ParameterCoding param_coding[EMEX64_MAX_ARGS];
     } op;
 
     /*
@@ -463,7 +463,7 @@ typedef struct emex64_core {
      */
     struct {
         struct {
-            kEmex64ElevationLevel level;
+            kE64ElevationLevel level;
         } crel;
 
         struct {
@@ -471,7 +471,7 @@ typedef struct emex64_core {
         } crksp;
 
         struct {
-            kEmex64Exception exception;
+            kE64Exception exception;
         } crexc;
 
         /*

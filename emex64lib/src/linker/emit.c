@@ -692,8 +692,8 @@ static void emit_boot_header(vbitwalker_t *vb,
                              uint64_t entry)
 {
     vbitwalker_seek(vb, 0, 0);
-    vbitwalker_write(vb, kEmex64OpcodeB, 8);
-    vbitwalker_write(vb, kEmex64ParameterCodingAddr64, 3);
+    vbitwalker_write(vb, kE64OpcodeB, 8);
+    vbitwalker_write(vb, kE64ParameterCodingAddr64, 3);
     vbitwalker_align_byte(vb);
     vbitwalker_write(vb, entry, 64);
 }

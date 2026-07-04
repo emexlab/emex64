@@ -25,8 +25,8 @@
 #include <emex64lib/vm/core.h>
 #include <emex64lib/asm/invocation.h>
 
-kEmex64Register register_from_string(const char *name);
+kE64Register register_from_string(const char *name);
 
-void assembler_emit_register(assembler_invocation_t *inv, kEmex64Register reg);
+void assembler_emit_register(assembler_invocation_t *inv, kE64Register reg);
 
 #endif /* EMEX64ASM_EMITTER_REGISTER_H */

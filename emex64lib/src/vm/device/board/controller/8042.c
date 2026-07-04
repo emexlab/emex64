@@ -160,14 +160,14 @@ emex64_8042_t *emex64_8042_alloc(emex64_machine_t *machine,
     dev->mouse_enabled = true;
     dev->status = 0x10;
 
-    Emex64MMIORegionRef MMIO8042Region = Emex64MMIORegionCreate(kEFAllocatorDefault, EMEX64_8042_BASE, EMEX64_8042_SIZE, dev, emex64_8042_read, emex64_8042_write);
+    E64MMIORegionRef MMIO8042Region = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_8042_BASE, EMEX64_8042_SIZE, dev, emex64_8042_read, emex64_8042_write);
     if(MMIO8042Region == NULL)
     {
         free(dev);
         return NULL;
     }
 
-    bool success = Emex64MMIOBusRegisterRegion(machine->mmio_bus, MMIO8042Region);
+    bool success = E64MMIOBusRegisterRegion(machine->mmio_bus, MMIO8042Region);
     EFRelease(MMIO8042Region);
     if(!success)
     {

@@ -54,8 +54,8 @@ void emex64_op_push(emex64_core_t *core)
 
     for(uint8_t i = 0; i < core->op.param_cnt; i++)
     {
-        Emex64MemoryCoreAction(core->machine->memory, core, core->rl[kEmex64RegisterSP], sizeof(uint64_t), core->op.param[i], kEmex64MemoryActionWrite);
-        core->rl[kEmex64RegisterSP] -= 8;
+        E64MemoryCoreAction(core->machine->memory, core, core->rl[kE64RegisterSP], sizeof(uint64_t), core->op.param[i], kE64MemoryActionWrite);
+        core->rl[kE64RegisterSP] -= 8;
     }
 }
 
@@ -65,8 +65,8 @@ void emex64_op_pop(emex64_core_t *core)
 
     for(uint8_t i = 0; i < core->op.param_cnt; i++)
     {
-        core->rl[kEmex64RegisterSP] += 8;
-        Emex64MemoryCoreAction(core->machine->memory, core, core->rl[kEmex64RegisterSP], sizeof(uint64_t), core->op.param[i], kEmex64MemoryActionRead);
+        core->rl[kE64RegisterSP] += 8;
+        E64MemoryCoreAction(core->machine->memory, core, core->rl[kE64RegisterSP], sizeof(uint64_t), core->op.param[i], kE64MemoryActionRead);
     }
 }
 
@@ -74,56 +74,56 @@ void emex64_op_ldb(emex64_core_t *core)
 {
     emex64_instr_termcond(core->op.param_cnt != 2);
 
-    Emex64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), sizeof(uint8_t), core->op.param[0], kEmex64MemoryActionRead);
+    E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), sizeof(uint8_t), core->op.param[0], kE64MemoryActionRead);
 }
 
 void emex64_op_ldw(emex64_core_t *core)
 {
     emex64_instr_termcond(core->op.param_cnt != 2);
 
-    Emex64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), sizeof(uint16_t), core->op.param[0], kEmex64MemoryActionRead);
+    E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), sizeof(uint16_t), core->op.param[0], kE64MemoryActionRead);
 }
 
 void emex64_op_ldd(emex64_core_t *core)
 {
     emex64_instr_termcond(core->op.param_cnt != 2);
 
-    Emex64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), sizeof(uint32_t), core->op.param[0], kEmex64MemoryActionRead);
+    E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), sizeof(uint32_t), core->op.param[0], kE64MemoryActionRead);
 }
 
 void emex64_op_ldq(emex64_core_t *core)
 {
     emex64_instr_termcond(core->op.param_cnt != 2);
 
-    Emex64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), sizeof(uint64_t), core->op.param[0], kEmex64MemoryActionRead);
+    E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), sizeof(uint64_t), core->op.param[0], kE64MemoryActionRead);
 }
 
 void emex64_op_stb(emex64_core_t *core)
 {
     emex64_instr_termcond(core->op.param_cnt != 2);
 
-    Emex64MemoryCoreAction(core->machine->memory, core, *(core->op.param[0]), sizeof(uint8_t), core->op.param[1], kEmex64MemoryActionWrite);
+    E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[0]), sizeof(uint8_t), core->op.param[1], kE64MemoryActionWrite);
 }
 
 void emex64_op_stw(emex64_core_t *core)
 {
     emex64_instr_termcond(core->op.param_cnt != 2);
 
-    Emex64MemoryCoreAction(core->machine->memory, core, *(core->op.param[0]), sizeof(uint16_t), core->op.param[1], kEmex64MemoryActionWrite);
+    E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[0]), sizeof(uint16_t), core->op.param[1], kE64MemoryActionWrite);
 }
 
 void emex64_op_std(emex64_core_t *core)
 {
     emex64_instr_termcond(core->op.param_cnt != 2);
 
-    Emex64MemoryCoreAction(core->machine->memory, core, *(core->op.param[0]), sizeof(uint32_t), core->op.param[1], kEmex64MemoryActionWrite);
+    E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[0]), sizeof(uint32_t), core->op.param[1], kE64MemoryActionWrite);
 }
 
 void emex64_op_stq(emex64_core_t *core)
 {
     emex64_instr_termcond(core->op.param_cnt != 2);
 
-    Emex64MemoryCoreAction(core->machine->memory, core, *(core->op.param[0]), sizeof(uint64_t), core->op.param[1], kEmex64MemoryActionWrite);
+    E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[0]), sizeof(uint64_t), core->op.param[1], kE64MemoryActionWrite);
 }
 
 void emex64_op_clr(emex64_core_t *core)
@@ -140,9 +140,9 @@ void emex64_op_cmov(emex64_core_t *core)
 {
     emex64_instr_termcond(core->op.param_cnt != 2);
 
-    if(core->cr_state.crel.level < kEmex64ElevationLevelKernel)
+    if(core->cr_state.crel.level < kE64ElevationLevelKernel)
     {
-        core->cr_state.crexc.exception = kEmex64ExceptionPermission;
+        core->cr_state.crexc.exception = kE64ExceptionPermission;
         return;
     }
 
@@ -151,17 +151,17 @@ void emex64_op_cmov(emex64_core_t *core)
 
     switch(cr_select)
     {
-        case kEmex64ControlRegisterCR0: /* elevation level */
+        case kE64ControlRegisterCR0: /* elevation level */
             core->cr_state.crel.level = cr_value;
             break;
-        case kEmex64ControlRegisterCR1: /* kernel stack pointer */
+        case kE64ControlRegisterCR1: /* kernel stack pointer */
             core->cr_state.crksp.address = cr_value;
             break;
-        case kEmex64ControlRegisterCR2: /* exception  */
+        case kE64ControlRegisterCR2: /* exception  */
             core->cr_state.crexc.exception = cr_value;
             break;
-        case kEmex64ControlRegisterCR4: /* page table */
-            core->cr_state.crptb.enabled = (cr_value & EMEX64_MEMORY_MMU_MASK_FLAGS) & kEmex64MMUPTPresent;
+        case kE64ControlRegisterCR4: /* page table */
+            core->cr_state.crptb.enabled = (cr_value & EMEX64_MEMORY_MMU_MASK_FLAGS) & kE64MMUPTPresent;
             core->cr_state.crptb.pgd_addr = ((cr_value & EMEX64_MEMORY_MMU_MASK_PFN) >> 8) << 13;
             break;
     }
@@ -176,31 +176,31 @@ void emex64_op_cmovb(emex64_core_t *core)
 
     switch(cr_select)
     {
-        case kEmex64ControlRegisterCR0: /* elevation level */
+        case kE64ControlRegisterCR0: /* elevation level */
             *cr_recv = core->cr_state.crel.level;
             break;
-        case kEmex64ControlRegisterCR1: /* kernel stack pointer */
-            if(core->cr_state.crel.level < kEmex64ElevationLevelKernel)
+        case kE64ControlRegisterCR1: /* kernel stack pointer */
+            if(core->cr_state.crel.level < kE64ElevationLevelKernel)
             {
-                core->cr_state.crexc.exception = kEmex64ExceptionPermission;
+                core->cr_state.crexc.exception = kE64ExceptionPermission;
                 return;
             }
 
             *cr_recv = core->cr_state.crksp.address;
             break;
-        case kEmex64ControlRegisterCR2: /* exception  */
+        case kE64ControlRegisterCR2: /* exception  */
             *cr_recv = core->cr_state.crexc.exception;
             break;
-        case kEmex64ControlRegisterCR4: /* page table */
-            if(core->cr_state.crel.level < kEmex64ElevationLevelKernel)
+        case kE64ControlRegisterCR4: /* page table */
+            if(core->cr_state.crel.level < kE64ElevationLevelKernel)
             {
-                core->cr_state.crexc.exception = kEmex64ExceptionPermission;
+                core->cr_state.crexc.exception = kE64ExceptionPermission;
                 return;
             }
 
             *cr_recv = 0;
             *cr_recv |= ((core->cr_state.crptb.pgd_addr >> 13) << 8) & EMEX64_MEMORY_MMU_MASK_PFN;
-            *cr_recv |= -(uint64_t)core->cr_state.crptb.enabled & kEmex64MMUPTPresent;
+            *cr_recv |= -(uint64_t)core->cr_state.crptb.enabled & kE64MMUPTPresent;
             break;
     }
 }

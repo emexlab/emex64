@@ -38,25 +38,25 @@
 
 void assembler_emit_end(assembler_invocation_t *inv)
 {
-    vbitwalker_write(inv->out_vbitwalker, kEmex64ParameterCodingEnd, 3);
+    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingEnd, 3);
 }
 
-bool opcode_arg_is_branch_target(kEmex64Opcode op,
+bool opcode_arg_is_branch_target(kE64Opcode op,
                                  uint64_t argno)
 {
     switch(op)
     {
-        case kEmex64OpcodeB:
-        case kEmex64OpcodeBE:
-        case kEmex64OpcodeBNE:
-        case kEmex64OpcodeBLE:
-        case kEmex64OpcodeBGE:
-        case kEmex64OpcodeBLT:
-        case kEmex64OpcodeBGT:
-        case kEmex64OpcodeBLW:
+        case kE64OpcodeB:
+        case kE64OpcodeBE:
+        case kE64OpcodeBNE:
+        case kE64OpcodeBLE:
+        case kE64OpcodeBGE:
+        case kE64OpcodeBLT:
+        case kE64OpcodeBGT:
+        case kE64OpcodeBLW:
             return argno == 0;
-        case kEmex64OpcodeBZ:
-        case kEmex64OpcodeBNZ:
+        case kE64OpcodeBZ:
+        case kE64OpcodeBNZ:
             return argno == 1;
         default:
             return false;
@@ -71,8 +71,8 @@ bool assembler_emit_instruction(assembler_line_t *al)
         return false;
     }
 
-    const kEmex64Opcode opcode = al->token[0]->instruction_identifier.v;
-    const emex64_opfunc_entry_t *entry = &kEmex64OpfuncTable[opcode];
+    const kE64Opcode opcode = al->token[0]->instruction_identifier.v;
+    const emex64_opfunc_entry_t *entry = &kE64OpfuncTable[opcode];
 
     uint64_t operand_total = 0;
     kAssemblerTokenType ptype;
@@ -164,7 +164,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
                 label = strdup(operand[0]->str);
             }
 
-            vbitwalker_write(al->inv->out_vbitwalker, kEmex64ParameterCodingAddr64, 3);
+            vbitwalker_write(al->inv->out_vbitwalker, kE64ParameterCodingAddr64, 3);
             vbitwalker_align_byte(al->inv->out_vbitwalker);
 
             if(!assembler_label_relocate_append(al->inv, label, local, operand[0]))

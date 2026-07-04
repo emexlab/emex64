@@ -340,8 +340,8 @@ bool assembler_lexer_classify(assembler_token_t *at)
             }
 
             /* checking if it is a register */
-            kEmex64Register reg = register_from_string(at->str);
-            if(reg != kEmex64RegisterInvalid)
+            kE64Register reg = register_from_string(at->str);
+            if(reg != kE64RegisterInvalid)
             {
                 at->register_identifier.v = reg;
                 at->type = kAssemblerTokenTypeRegister;
@@ -349,8 +349,8 @@ bool assembler_lexer_classify(assembler_token_t *at)
             }
 
             /* checking if it is a opcode */
-            kEmex64Opcode op = opcode_from_string(at->str);
-            if(op != kEmex64OpcodeInvalid)
+            kE64Opcode op = opcode_from_string(at->str);
+            if(op != kE64OpcodeInvalid)
             {
                 at->instruction_identifier.v = op;
                 at->type = kAssemblerTokenTypeInstruction;

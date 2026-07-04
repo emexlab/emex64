@@ -42,43 +42,43 @@ void emex64_mmio_fallback_write(emex64_core_t *core,
     return;
 }
 
-typedef struct Emex64Region {
+typedef struct E64Region {
     EFObject header;
     uint64_t base_addr;
     uint64_t size;
     void *device;
     mmio_read_fn read;
     mmio_write_fn write;
-} *Emex64MMIORegion;
+} *E64MMIORegion;
 
-static EFClass Emex64MMIORegionClass = {
-    .name = "Emex64MMIORegion",
+static EFClass E64MMIORegionClass = {
+    .name = "E64MMIORegion",
     .typeID = kEFNotATypeID,
     .init = NULL,
     .deinit = NULL,
     .equal = NULL,
 };
 
-static void Emex64MMIORegionRegisterClass(void)
+static void E64MMIORegionRegisterClass(void)
 {
-    EFClassRegister(&Emex64MMIORegionClass);
+    EFClassRegister(&E64MMIORegionClass);
 }
 
-EFTypeID Emex64MMIORegionGetTypeID(void)
+EFTypeID E64MMIORegionGetTypeID(void)
 {
     static pthread_once_t once = PTHREAD_ONCE_INIT;
-    pthread_once(&once, Emex64MMIORegionRegisterClass);
-    return Emex64MMIORegionClass.typeID;
+    pthread_once(&once, E64MMIORegionRegisterClass);
+    return E64MMIORegionClass.typeID;
 }
 
-Emex64MMIORegionRef Emex64MMIORegionCreate(EFAllocatorRef allocatorRef,
+E64MMIORegionRef E64MMIORegionCreate(EFAllocatorRef allocatorRef,
                                            uint64_t base,
                                            uint64_t size,
                                            void *device,
                                            mmio_read_fn read,
                                            mmio_write_fn write)
 {
-    Emex64MMIORegion MMIORegion = EFObjectAlloc(allocatorRef, Emex64MMIORegionGetTypeID(), sizeof(struct Emex64Region));
+    E64MMIORegion MMIORegion = EFObjectAlloc(allocatorRef, E64MMIORegionGetTypeID(), sizeof(struct E64Region));
     if(MMIORegion == NULL)
     {
         return NULL;
@@ -90,12 +90,12 @@ Emex64MMIORegionRef Emex64MMIORegionCreate(EFAllocatorRef allocatorRef,
     MMIORegion->read = read;
     MMIORegion->write = write;
 
-    return (Emex64MMIORegionRef)MMIORegion;
+    return (E64MMIORegionRef)MMIORegion;
 }
 
-uint64_t Emex64MMIORegionGetBaseAddress(Emex64MMIORegionRef MMIORegionRef)
+uint64_t E64MMIORegionGetBaseAddress(E64MMIORegionRef MMIORegionRef)
 {
-    Emex64MMIORegion MMIORegion = (Emex64MMIORegion)MMIORegionRef;
+    E64MMIORegion MMIORegion = (E64MMIORegion)MMIORegionRef;
     if(MMIORegion == NULL)
     {
         return 0;
@@ -104,9 +104,9 @@ uint64_t Emex64MMIORegionGetBaseAddress(Emex64MMIORegionRef MMIORegionRef)
     return MMIORegion->base_addr;
 }
 
-uint64_t Emex64MMIORegionGetSize(Emex64MMIORegionRef MMIORegionRef)
+uint64_t E64MMIORegionGetSize(E64MMIORegionRef MMIORegionRef)
 {
-    Emex64MMIORegion MMIORegion = (Emex64MMIORegion)MMIORegionRef;
+    E64MMIORegion MMIORegion = (E64MMIORegion)MMIORegionRef;
     if(MMIORegion == NULL)
     {
         return 0;
@@ -115,9 +115,9 @@ uint64_t Emex64MMIORegionGetSize(Emex64MMIORegionRef MMIORegionRef)
     return MMIORegion->size;
 }
 
-void *Emex64MMIORegionGetDevice(Emex64MMIORegionRef MMIORegionRef)
+void *E64MMIORegionGetDevice(E64MMIORegionRef MMIORegionRef)
 {
-    Emex64MMIORegion MMIORegion = (Emex64MMIORegion)MMIORegionRef;
+    E64MMIORegion MMIORegion = (E64MMIORegion)MMIORegionRef;
     if(MMIORegion == NULL)
     {
         return NULL;
@@ -126,9 +126,9 @@ void *Emex64MMIORegionGetDevice(Emex64MMIORegionRef MMIORegionRef)
     return MMIORegion->device;
 }
 
-mmio_read_fn Emex64MMIORegionGetReadSymbol(Emex64MMIORegionRef MMIORegionRef)
+mmio_read_fn E64MMIORegionGetReadSymbol(E64MMIORegionRef MMIORegionRef)
 {
-    Emex64MMIORegion MMIORegion = (Emex64MMIORegion)MMIORegionRef;
+    E64MMIORegion MMIORegion = (E64MMIORegion)MMIORegionRef;
     if(MMIORegion == NULL)
     {
         return emex64_mmio_fallback_read;
@@ -137,9 +137,9 @@ mmio_read_fn Emex64MMIORegionGetReadSymbol(Emex64MMIORegionRef MMIORegionRef)
     return MMIORegion->read;
 }
 
-mmio_write_fn Emex64MMIORegionGetWriteSymbol(Emex64MMIORegionRef MMIORegionRef)
+mmio_write_fn E64MMIORegionGetWriteSymbol(E64MMIORegionRef MMIORegionRef)
 {
-    Emex64MMIORegion MMIORegion = (Emex64MMIORegion)MMIORegionRef;
+    E64MMIORegion MMIORegion = (E64MMIORegion)MMIORegionRef;
     if(MMIORegion == NULL)
     {
         return emex64_mmio_fallback_write;
@@ -148,44 +148,44 @@ mmio_write_fn Emex64MMIORegionGetWriteSymbol(Emex64MMIORegionRef MMIORegionRef)
     return MMIORegion->write;
 }
 
-typedef struct Emex64MMIOBus {
+typedef struct E64MMIOBus {
     EFObject header;
     EFIndex lastRegionIndex;
     EFMutableArrayRef regions;
-} *Emex64MMIOBus;
+} *E64MMIOBus;
 
-static void __Emex64MMIOBusDeinit(Emex64MMIOBusRef MMIOBusRef)
+static void __E64MMIOBusDeinit(E64MMIOBusRef MMIOBusRef)
 {
-    Emex64MMIOBus MMIOBus = (Emex64MMIOBus)MMIOBusRef;
+    E64MMIOBus MMIOBus = (E64MMIOBus)MMIOBusRef;
     if(MMIOBus->regions != NULL)
     {
         EFRelease(MMIOBus->regions);
     }
 }
 
-static EFClass Emex64MMIOBusClass = {
-    .name = "Emex64MMIOBus",
+static EFClass E64MMIOBusClass = {
+    .name = "E64MMIOBus",
     .typeID = kEFNotATypeID,
     .init = NULL,
-    .deinit = __Emex64MMIOBusDeinit,
+    .deinit = __E64MMIOBusDeinit,
     .equal = NULL,
 };
 
-static void Emex64MMIOBusRegisterClass(void)
+static void E64MMIOBusRegisterClass(void)
 {
-    EFClassRegister(&Emex64MMIOBusClass);
+    EFClassRegister(&E64MMIOBusClass);
 }
 
-EFTypeID Emex64MMIOBusGetTypeID(void)
+EFTypeID E64MMIOBusGetTypeID(void)
 {
     static pthread_once_t once = PTHREAD_ONCE_INIT;
-    pthread_once(&once, Emex64MMIOBusRegisterClass);
-    return Emex64MMIOBusClass.typeID;
+    pthread_once(&once, E64MMIOBusRegisterClass);
+    return E64MMIOBusClass.typeID;
 }
 
-Emex64MMIOBusRef Emex64MMIOBusCreate(EFAllocatorRef allocatorRef)
+E64MMIOBusRef E64MMIOBusCreate(EFAllocatorRef allocatorRef)
 {
-    Emex64MMIOBus MMIOBus = EFObjectAlloc(allocatorRef, Emex64MMIOBusGetTypeID(), sizeof(struct Emex64MMIOBus));
+    E64MMIOBus MMIOBus = EFObjectAlloc(allocatorRef, E64MMIOBusGetTypeID(), sizeof(struct E64MMIOBus));
     if(MMIOBus == NULL)
     {
         return NULL;
@@ -199,15 +199,15 @@ Emex64MMIOBusRef Emex64MMIOBusCreate(EFAllocatorRef allocatorRef)
         return NULL;
     }
 
-    return (Emex64MMIOBusRef)MMIOBus;
+    return (E64MMIOBusRef)MMIOBus;
 }
 
-bool Emex64MMIOBusRegisterRegion(Emex64MMIOBusRef MMIOBusRef,
-                                 Emex64MMIORegionRef MMIORegionRef)
+bool E64MMIOBusRegisterRegion(E64MMIOBusRef MMIOBusRef,
+                                 E64MMIORegionRef MMIORegionRef)
 {
 
-    Emex64MMIOBus MMIOBus = (Emex64MMIOBus)MMIOBusRef;
-    if(MMIOBus == NULL || MMIORegionRef == NULL || EFGetTypeID(MMIORegionRef) != Emex64MMIORegionGetTypeID())
+    E64MMIOBus MMIOBus = (E64MMIOBus)MMIOBusRef;
+    if(MMIOBus == NULL || MMIORegionRef == NULL || EFGetTypeID(MMIORegionRef) != E64MMIORegionGetTypeID())
     {
         return false;
     }
@@ -221,22 +221,22 @@ bool Emex64MMIOBusRegisterRegion(Emex64MMIOBusRef MMIOBusRef,
     return true;
 }
 
-Emex64MMIORegionRef Emex64MMIOBusGetRegionForAddress(Emex64MMIOBusRef MMIOBusRef,
+E64MMIORegionRef E64MMIOBusGetRegionForAddress(E64MMIOBusRef MMIOBusRef,
                                                      uint64_t addr)
 {
-    Emex64MMIOBus MMIOBus = (Emex64MMIOBus)MMIOBusRef;
+    E64MMIOBus MMIOBus = (E64MMIOBus)MMIOBusRef;
     if(MMIOBus == NULL)
     {
         return NULL;
     }
 
     /* fast path */
-    Emex64MMIORegion lastMMIORegion = (Emex64MMIORegion)EFArrayGetValueAtIndex(MMIOBus->regions, MMIOBus->lastRegionIndex);
+    E64MMIORegion lastMMIORegion = (E64MMIORegion)EFArrayGetValueAtIndex(MMIOBus->regions, MMIOBus->lastRegionIndex);
     if(lastMMIORegion != NULL)
     {
         if(addr >= lastMMIORegion->base_addr && addr < lastMMIORegion->base_addr + lastMMIORegion->size)
         {
-            return (Emex64MMIORegionRef)lastMMIORegion;
+            return (E64MMIORegionRef)lastMMIORegion;
         }
     }
 
@@ -244,7 +244,7 @@ Emex64MMIORegionRef Emex64MMIOBusGetRegionForAddress(Emex64MMIOBusRef MMIOBusRef
     EFIndex count = EFArrayGetCount(MMIOBus->regions);
     for(EFIndex index = 0; index < count; index++)
     {
-        Emex64MMIORegion MMIORegion = (Emex64MMIORegion)EFArrayGetValueAtIndex(MMIOBus->regions, index);
+        E64MMIORegion MMIORegion = (E64MMIORegion)EFArrayGetValueAtIndex(MMIOBus->regions, index);
         if(addr >= MMIORegion->base_addr && addr < MMIORegion->base_addr + MMIORegion->size)
         {
             MMIOBus->lastRegionIndex = index;

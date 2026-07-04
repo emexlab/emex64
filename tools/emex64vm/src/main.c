@@ -223,7 +223,7 @@ int main(int argc, char *argv[])
             return 1;
         }
 
-        bool success = Emex64MemoryLoadImage(machine->memory, file);
+        bool success = E64MemoryLoadImage(machine->memory, file);
         emex_file_dealloc(file);
         if(!success)
         {

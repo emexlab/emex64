@@ -31,14 +31,14 @@ uint64_t emex64_mc_read(emex64_core_t *core,
 {
     if(offset == EMEX64_MC_REG_SIZE)
     {
-        return Emex64MemoryGetSize(core->machine->memory);
+        return E64MemoryGetSize(core->machine->memory);
     }
     else if(offset == EMEX64_MC_REG_KTRR_SIZE)
     {
-        return Emex64MemoryGetKTRRSize(core->machine->memory);
+        return E64MemoryGetKTRRSize(core->machine->memory);
     }
     
-    return Emex64MemoryIsKTRRLocked(core->machine->memory);
+    return E64MemoryIsKTRRLocked(core->machine->memory);
 }
 
 void emex64_mc_write(emex64_core_t *core,
@@ -49,21 +49,21 @@ void emex64_mc_write(emex64_core_t *core,
 {
     if(offset == EMEX64_MC_REG_KTRR_SIZE)
     {
-        if(!Emex64MemorySetKTRRSize(core->machine->memory, value))
+        if(!E64MemorySetKTRRSize(core->machine->memory, value))
         {
-            core->cr_state.crexc.exception = kEmex64ExceptionKTRRViolation;
+            core->cr_state.crexc.exception = kE64ExceptionKTRRViolation;
             return;
         }
     }
     else if(offset == EMEX64_MC_REG_KTRR_LOCKED)
     {
-        if(Emex64MemoryIsKTRRLocked(core->machine->memory))
+        if(E64MemoryIsKTRRLocked(core->machine->memory))
         {
-            core->cr_state.crexc.exception = kEmex64ExceptionKTRRViolation;
+            core->cr_state.crexc.exception = kE64ExceptionKTRRViolation;
             return;
         }
 
-        Emex64MemoryLockKTRR(core->machine->memory);
+        E64MemoryLockKTRR(core->machine->memory);
     }
 
     return;

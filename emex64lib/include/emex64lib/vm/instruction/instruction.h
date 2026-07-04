@@ -25,7 +25,7 @@
 #define emex64_instr_termcond(case)                                 \
     if(case)                                                        \
     {                                                               \
-        core->cr_state.crexc.exception = kEmex64ExceptionBadAccess; \
+        core->cr_state.crexc.exception = kE64ExceptionBadAccess; \
         return;                                                     \
     }    
 

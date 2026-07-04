@@ -22,67 +22,67 @@
 #include <emex64lib/support/pack.h>
 #include <emex64lib/asm/emitter/opcode.h>
 
-kEmex64Opcode opcode_from_string(const char *name)
+kE64Opcode opcode_from_string(const char *name)
 {
     switch(pack_name(name))
     {
-        case PACK('b'): return kEmex64OpcodeB;
-        case PACK('b','e'): return kEmex64OpcodeBE;
-        case PACK('b','l'): return kEmex64OpcodeBL;
-        case PACK('b','z'): return kEmex64OpcodeBZ;
-        case PACK('o','r'): return kEmex64OpcodeOR;
-        case PACK('a','d','d'): return kEmex64OpcodeADD;
-        case PACK('a','n','d'): return kEmex64OpcodeAND;
-        case PACK('b','g','e'): return kEmex64OpcodeBGE;
-        case PACK('b','g','t'): return kEmex64OpcodeBGT;
-        case PACK('b','l','e'): return kEmex64OpcodeBLE;
-        case PACK('b','l','t'): return kEmex64OpcodeBLT;
-        case PACK('b','l','w'): return kEmex64OpcodeBLW;
-        case PACK('b','n','e'): return kEmex64OpcodeBNE;
-        case PACK('b','n','z'): return kEmex64OpcodeBNZ;
-        case PACK('c','l','r'): return kEmex64OpcodeCLR;
-        case PACK('c','m','p'): return kEmex64OpcodeCMP;
-        case PACK('d','e','c'): return kEmex64OpcodeDEC;
-        case PACK('d','i','v'): return kEmex64OpcodeDIV;
-        case PACK('h','l','t'): return kEmex64OpcodeHLT;
-        case PACK('i','n','c'): return kEmex64OpcodeINC;
-        case PACK('l','d','b'): return kEmex64OpcodeLDB;
-        case PACK('l','d','d'): return kEmex64OpcodeLDD;
-        case PACK('l','d','q'): return kEmex64OpcodeLDQ;
-        case PACK('l','d','w'): return kEmex64OpcodeLDW;
-        case PACK('m','u','l'): return kEmex64OpcodeMUL;
-        case PACK('m','o','d'): return kEmex64OpcodeMOD;
-        case PACK('m','o','v'): return kEmex64OpcodeMOV;
-        case PACK('n','e','g'): return kEmex64OpcodeNEG;
-        case PACK('n','o','p'): return kEmex64OpcodeNOP;
-        case PACK('n','o','t'): return kEmex64OpcodeNOT;
-        case PACK('p','o','p'): return kEmex64OpcodePOP;
-        case PACK('r','e','t'): return kEmex64OpcodeRET;
-        case PACK('r','o','l'): return kEmex64OpcodeROL;
-        case PACK('r','o','r'): return kEmex64OpcodeROR;
-        case PACK('s','a','r'): return kEmex64OpcodeSAR;
-        case PACK('s','h','r'): return kEmex64OpcodeSHR;
-        case PACK('s','h','l'): return kEmex64OpcodeSHL;
-        case PACK('s','t','b'): return kEmex64OpcodeSTB;
-        case PACK('s','t','d'): return kEmex64OpcodeSTD;
-        case PACK('s','t','q'): return kEmex64OpcodeSTQ;
-        case PACK('s','t','w'): return kEmex64OpcodeSTW;
-        case PACK('s','u','b'): return kEmex64OpcodeSUB;
-        case PACK('s','w','p'): return kEmex64OpcodeSWP;
-        case PACK('x','o','r'): return kEmex64OpcodeXOR;
-        case PACK('c','m','o','v'): return kEmex64OpcodeCMOV;
-        case PACK('i','d','i','v'): return kEmex64OpcodeIDIV;
-        case PACK('i','r','e','t'): return kEmex64OpcodeIRET;
-        case PACK('p','d','e','p'): return kEmex64OpcodePDEP;
-        case PACK('p','e','x','t'): return kEmex64OpcodePEXT;
-        case PACK('p','u','s','h'): return kEmex64OpcodePUSH;
-        case PACK('s','w','p','z'): return kEmex64OpcodeSWPZ;
-        case PACK('w','r','e','t'): return kEmex64OpcodeWRET;
-        case PACK('c','m','o','v','b'): return kEmex64OpcodeCMOVB;
-        case PACK('b','s','w','a','p','d'): return kEmex64OpcodeBSWAPD;
-        case PACK('b','s','w','a','p','q'): return kEmex64OpcodeBSWAPQ;
-        case PACK('b','s','w','a','p','w'): return kEmex64OpcodeBSWAPW;
-        default: return kEmex64OpcodeInvalid;
+        case PACK('b'): return kE64OpcodeB;
+        case PACK('b','e'): return kE64OpcodeBE;
+        case PACK('b','l'): return kE64OpcodeBL;
+        case PACK('b','z'): return kE64OpcodeBZ;
+        case PACK('o','r'): return kE64OpcodeOR;
+        case PACK('a','d','d'): return kE64OpcodeADD;
+        case PACK('a','n','d'): return kE64OpcodeAND;
+        case PACK('b','g','e'): return kE64OpcodeBGE;
+        case PACK('b','g','t'): return kE64OpcodeBGT;
+        case PACK('b','l','e'): return kE64OpcodeBLE;
+        case PACK('b','l','t'): return kE64OpcodeBLT;
+        case PACK('b','l','w'): return kE64OpcodeBLW;
+        case PACK('b','n','e'): return kE64OpcodeBNE;
+        case PACK('b','n','z'): return kE64OpcodeBNZ;
+        case PACK('c','l','r'): return kE64OpcodeCLR;
+        case PACK('c','m','p'): return kE64OpcodeCMP;
+        case PACK('d','e','c'): return kE64OpcodeDEC;
+        case PACK('d','i','v'): return kE64OpcodeDIV;
+        case PACK('h','l','t'): return kE64OpcodeHLT;
+        case PACK('i','n','c'): return kE64OpcodeINC;
+        case PACK('l','d','b'): return kE64OpcodeLDB;
+        case PACK('l','d','d'): return kE64OpcodeLDD;
+        case PACK('l','d','q'): return kE64OpcodeLDQ;
+        case PACK('l','d','w'): return kE64OpcodeLDW;
+        case PACK('m','u','l'): return kE64OpcodeMUL;
+        case PACK('m','o','d'): return kE64OpcodeMOD;
+        case PACK('m','o','v'): return kE64OpcodeMOV;
+        case PACK('n','e','g'): return kE64OpcodeNEG;
+        case PACK('n','o','p'): return kE64OpcodeNOP;
+        case PACK('n','o','t'): return kE64OpcodeNOT;
+        case PACK('p','o','p'): return kE64OpcodePOP;
+        case PACK('r','e','t'): return kE64OpcodeRET;
+        case PACK('r','o','l'): return kE64OpcodeROL;
+        case PACK('r','o','r'): return kE64OpcodeROR;
+        case PACK('s','a','r'): return kE64OpcodeSAR;
+        case PACK('s','h','r'): return kE64OpcodeSHR;
+        case PACK('s','h','l'): return kE64OpcodeSHL;
+        case PACK('s','t','b'): return kE64OpcodeSTB;
+        case PACK('s','t','d'): return kE64OpcodeSTD;
+        case PACK('s','t','q'): return kE64OpcodeSTQ;
+        case PACK('s','t','w'): return kE64OpcodeSTW;
+        case PACK('s','u','b'): return kE64OpcodeSUB;
+        case PACK('s','w','p'): return kE64OpcodeSWP;
+        case PACK('x','o','r'): return kE64OpcodeXOR;
+        case PACK('c','m','o','v'): return kE64OpcodeCMOV;
+        case PACK('i','d','i','v'): return kE64OpcodeIDIV;
+        case PACK('i','r','e','t'): return kE64OpcodeIRET;
+        case PACK('p','d','e','p'): return kE64OpcodePDEP;
+        case PACK('p','e','x','t'): return kE64OpcodePEXT;
+        case PACK('p','u','s','h'): return kE64OpcodePUSH;
+        case PACK('s','w','p','z'): return kE64OpcodeSWPZ;
+        case PACK('w','r','e','t'): return kE64OpcodeWRET;
+        case PACK('c','m','o','v','b'): return kE64OpcodeCMOVB;
+        case PACK('b','s','w','a','p','d'): return kE64OpcodeBSWAPD;
+        case PACK('b','s','w','a','p','q'): return kE64OpcodeBSWAPQ;
+        case PACK('b','s','w','a','p','w'): return kE64OpcodeBSWAPW;
+        default: return kE64OpcodeInvalid;
     }
 }
 
@@ -93,7 +93,7 @@ bool opcode_arg_accepts_reg_only(const emex64_opfunc_entry_t *opce,
 }
 
 void assembler_emit_opcode(assembler_invocation_t *inv,
-                           kEmex64Opcode op)
+                           kE64Opcode op)
 {
     vbitwalker_write(inv->out_vbitwalker, op, 8);
 }

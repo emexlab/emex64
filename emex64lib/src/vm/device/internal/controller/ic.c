@@ -37,14 +37,14 @@ emex64_intc_t *emex64_intc_alloc(emex64_machine_t *machine)
         return NULL;
     }
 
-    Emex64MMIORegionRef ICRegion = Emex64MMIORegionCreate(kEFAllocatorDefault, EMEX64_IC_BASE, EMEX64_INTC_SIZE, intc, emex64_intc_read, emex64_intc_write);
+    E64MMIORegionRef ICRegion = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_IC_BASE, EMEX64_INTC_SIZE, intc, emex64_intc_read, emex64_intc_write);
     if(ICRegion == NULL)
     {
         free(intc);
         return NULL;
     }
 
-    bool success = Emex64MMIOBusRegisterRegion(machine->mmio_bus, ICRegion);
+    bool success = E64MMIOBusRegisterRegion(machine->mmio_bus, ICRegion);
     EFRelease(ICRegion);
     if(!success)
     {
@@ -115,7 +115,7 @@ bool emex64_serve_interrupt_if_needed(emex64_core_t *core)
     }
     
     /* check if were already servicing an interrupt (unless nesting allowed) */
-    if(core->in_interrupt || core->op.opcode == kEmex64OpcodeIRET)
+    if(core->in_interrupt || core->op.opcode == kE64OpcodeIRET)
     {
         return false;
     }
@@ -136,7 +136,7 @@ bool emex64_serve_interrupt_if_needed(emex64_core_t *core)
     /* read handler address from vector table */
     uint64_t vector_addr = core->machine->intc->vector_base + (irq * 8);
     uint64_t handler_addr;
-    if(!Emex64MemoryAction(core->machine->memory, vector_addr, 8, &handler_addr, kEmex64MemoryActionRead))
+    if(!E64MemoryAction(core->machine->memory, vector_addr, 8, &handler_addr, kE64MemoryActionRead))
     {
         core->machine->intc->current_irq = -1;
         return false;
@@ -144,7 +144,7 @@ bool emex64_serve_interrupt_if_needed(emex64_core_t *core)
     handler_addr = TO_HOST64(handler_addr);
 
     /* jump to handler */
-    uint64_t oldsp = core->rl[kEmex64RegisterSP];
+    uint64_t oldsp = core->rl[kE64RegisterSP];
     uint64_t oldel = core->cr_state.crel.level;
 
     /*
@@ -160,48 +160,48 @@ bool emex64_serve_interrupt_if_needed(emex64_core_t *core)
      *       distinct between read vs write access.
      *       my beautiful decoder is doomed.
      */
-    core->cr_state.crel.level = kEmex64ElevationLevelKernel;
-    core->rl[kEmex64RegisterSP] = core->cr_state.crksp.address;
+    core->cr_state.crel.level = kE64ElevationLevelKernel;
+    core->rl[kE64RegisterSP] = core->cr_state.crksp.address;
 
     /* creating interrupt stack frame */
     emex64_push_il(core, oldel);
-    emex64_push_il(core, core->rl[kEmex64RegisterPC]);
+    emex64_push_il(core, core->rl[kE64RegisterPC]);
     emex64_push_il(core, oldsp);
-    emex64_push_il(core, core->rl[kEmex64RegisterFP]);
-    emex64_push_il(core, core->rl[kEmex64RegisterCF]);
-    emex64_push_il(core, core->rl[kEmex64RegisterFPC]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR0]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR1]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR2]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR3]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR4]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR5]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR6]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR7]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR8]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR9]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR10]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR11]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR12]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR13]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR14]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR15]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR16]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR17]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR18]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR19]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR20]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR21]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR22]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR23]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR24]);
-    emex64_push_il(core, core->rl[kEmex64RegisterR25]);
+    emex64_push_il(core, core->rl[kE64RegisterFP]);
+    emex64_push_il(core, core->rl[kE64RegisterCF]);
+    emex64_push_il(core, core->rl[kE64RegisterFPC]);
+    emex64_push_il(core, core->rl[kE64RegisterR0]);
+    emex64_push_il(core, core->rl[kE64RegisterR1]);
+    emex64_push_il(core, core->rl[kE64RegisterR2]);
+    emex64_push_il(core, core->rl[kE64RegisterR3]);
+    emex64_push_il(core, core->rl[kE64RegisterR4]);
+    emex64_push_il(core, core->rl[kE64RegisterR5]);
+    emex64_push_il(core, core->rl[kE64RegisterR6]);
+    emex64_push_il(core, core->rl[kE64RegisterR7]);
+    emex64_push_il(core, core->rl[kE64RegisterR8]);
+    emex64_push_il(core, core->rl[kE64RegisterR9]);
+    emex64_push_il(core, core->rl[kE64RegisterR10]);
+    emex64_push_il(core, core->rl[kE64RegisterR11]);
+    emex64_push_il(core, core->rl[kE64RegisterR12]);
+    emex64_push_il(core, core->rl[kE64RegisterR13]);
+    emex64_push_il(core, core->rl[kE64RegisterR14]);
+    emex64_push_il(core, core->rl[kE64RegisterR15]);
+    emex64_push_il(core, core->rl[kE64RegisterR16]);
+    emex64_push_il(core, core->rl[kE64RegisterR17]);
+    emex64_push_il(core, core->rl[kE64RegisterR18]);
+    emex64_push_il(core, core->rl[kE64RegisterR19]);
+    emex64_push_il(core, core->rl[kE64RegisterR20]);
+    emex64_push_il(core, core->rl[kE64RegisterR21]);
+    emex64_push_il(core, core->rl[kE64RegisterR22]);
+    emex64_push_il(core, core->rl[kE64RegisterR23]);
+    emex64_push_il(core, core->rl[kE64RegisterR24]);
+    emex64_push_il(core, core->rl[kE64RegisterR25]);
 
     /* storing it as frame pointer  */
-    core->rl[kEmex64RegisterFP] = core->rl[kEmex64RegisterSP];
+    core->rl[kE64RegisterFP] = core->rl[kE64RegisterSP];
 
     /* performing jump */
-    core->rl[kEmex64RegisterPC] = handler_addr;
+    core->rl[kE64RegisterPC] = handler_addr;
     core->op.ilen = 0;
     core->in_interrupt = true;
     core->halted = false;

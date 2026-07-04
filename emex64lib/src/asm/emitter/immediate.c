@@ -25,42 +25,42 @@
 void assembler_emit_imm5(assembler_invocation_t *inv,
                          uint8_t imm)
 {
-    vbitwalker_write(inv->out_vbitwalker, kEmex64ParameterCodingImm5, 3);
+    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingImm5, 3);
     vbitwalker_write(inv->out_vbitwalker, imm, 5);
 }
 
 void assembler_emit_imm8(assembler_invocation_t *inv,
                          uint8_t imm)
 {
-    vbitwalker_write(inv->out_vbitwalker, kEmex64ParameterCodingImm8, 3);
+    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingImm8, 3);
     vbitwalker_write(inv->out_vbitwalker, imm, 8);
 }
 
 void assembler_emit_imm16(assembler_invocation_t *inv,
                           uint16_t imm)
 {
-    vbitwalker_write(inv->out_vbitwalker, kEmex64ParameterCodingImm16, 3);
+    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingImm16, 3);
     vbitwalker_write(inv->out_vbitwalker, imm, 16);
 }
 
 void assembler_emit_imm32(assembler_invocation_t *inv,
                           uint32_t imm)
 {
-    vbitwalker_write(inv->out_vbitwalker, kEmex64ParameterCodingImm32, 3);
+    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingImm32, 3);
     vbitwalker_write(inv->out_vbitwalker, imm, 32);
 }
 
 void assembler_emit_imm64(assembler_invocation_t *inv,
                           uint64_t imm)
 {
-    vbitwalker_write(inv->out_vbitwalker, kEmex64ParameterCodingImm64, 3);
+    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingImm64, 3);
     vbitwalker_write(inv->out_vbitwalker, imm, 64);
 }
 
 void assembler_emit_addr64(assembler_invocation_t *inv,
                            uint64_t addr)
 {
-    vbitwalker_write(inv->out_vbitwalker, kEmex64ParameterCodingAddr64, 3);
+    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingAddr64, 3);
     vbitwalker_align_byte(inv->out_vbitwalker);
     vbitwalker_write(inv->out_vbitwalker, addr, 64);
 }

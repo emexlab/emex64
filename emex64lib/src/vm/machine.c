@@ -33,13 +33,13 @@ emex64_machine_t *emex64_machine_alloc(emex64_machine_options_t options)
         return NULL;
     }
     
-    machine->memory = Emex64MemoryCreate(NULL, options.memory_size);
+    machine->memory = E64MemoryCreate(NULL, options.memory_size);
     if(machine->memory == NULL)
     {
         goto out_release_machine;
     }
     
-    machine->mmio_bus = Emex64MMIOBusCreate(NULL);
+    machine->mmio_bus = E64MMIOBusCreate(NULL);
     if(machine->mmio_bus == NULL)
     {
         goto out_release_memory;
@@ -82,39 +82,39 @@ emex64_machine_t *emex64_machine_alloc(emex64_machine_options_t options)
         goto out_release_8042;
     }
     
-    Emex64MMIORegionRef RTCMMIORegion = Emex64MMIORegionCreate(NULL, EMEX64_RTC_BASE, EMEX64_RTC_SIZE, NULL, emex64_rtc_read, NULL);
+    E64MMIORegionRef RTCMMIORegion = E64MMIORegionCreate(NULL, EMEX64_RTC_BASE, EMEX64_RTC_SIZE, NULL, emex64_rtc_read, NULL);
     if(RTCMMIORegion == NULL)
     {
         goto out_release_display;
     }
 
-    bool success = Emex64MMIOBusRegisterRegion(machine->mmio_bus, RTCMMIORegion);
+    bool success = E64MMIOBusRegisterRegion(machine->mmio_bus, RTCMMIORegion);
     EFRelease(RTCMMIORegion);
     if(!success)
     {
         goto out_release_display;
     }
 
-    Emex64MMIORegionRef MCRegion = Emex64MMIORegionCreate(NULL, EMEX64_MC_BASE, EMEX64_MC_SIZE, NULL, emex64_mc_read, emex64_mc_write);
+    E64MMIORegionRef MCRegion = E64MMIORegionCreate(NULL, EMEX64_MC_BASE, EMEX64_MC_SIZE, NULL, emex64_mc_read, emex64_mc_write);
     if(MCRegion == NULL)
     {
         goto out_release_display;
     }
     
-    success = Emex64MMIOBusRegisterRegion(machine->mmio_bus, MCRegion);
+    success = E64MMIOBusRegisterRegion(machine->mmio_bus, MCRegion);
     EFRelease(MCRegion);
     if(!success)
     {
         goto out_release_display;
     }
     
-    Emex64MMIORegionRef PlatformRegion = Emex64MMIORegionCreate(NULL, EMEX64_PLATFORM_BASE, EMEX64_PLATFORM_SIZE, NULL, emex64_platform_read, emex64_platform_write);
+    E64MMIORegionRef PlatformRegion = E64MMIORegionCreate(NULL, EMEX64_PLATFORM_BASE, EMEX64_PLATFORM_SIZE, NULL, emex64_platform_read, emex64_platform_write);
     if(PlatformRegion == NULL)
     {
         goto out_release_display;
     }
     
-    success = Emex64MMIOBusRegisterRegion(machine->mmio_bus, PlatformRegion);
+    success = E64MMIOBusRegisterRegion(machine->mmio_bus, PlatformRegion);
     EFRelease(PlatformRegion);
     if(!success)
     {
