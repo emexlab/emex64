@@ -20,6 +20,7 @@
  */
 
 #include <stdio.h>
+#include <inttypes.h>
 #include <EmexToolchain/support/diagnostic/consumer.h>
 
 static void __diagnostic_consumer_consume_diagnostic_fallback_handler(diagnostic_consumer_t *consumer,
@@ -27,7 +28,7 @@ static void __diagnostic_consumer_consume_diagnostic_fallback_handler(diagnostic
 {
     if(diagnostic->location != NULL)
     {
-        fprintf(stderr, "%s:%llu:%llu: ", diagnostic->location->file_name, diagnostic->location->ln, diagnostic->location->col);
+        fprintf(stderr, "%s:%" PRIu64 ":%" PRIu64 ":", diagnostic->location->file_name, diagnostic->location->ln, diagnostic->location->col);
     }
 
     /* fallback when no consumer was specified */
