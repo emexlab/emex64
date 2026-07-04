@@ -216,6 +216,14 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    E64MemoryRef memory = E64MachineGetMemory(machine);
+    if(memory == NULL)
+    {
+        diag_error(NULL, "failed to aquire memory from machine\n");
+        EFRelease(machine);
+        return 1;
+    }
+
     if(firmware_image_path != NULL)
     {
         emex_file_t *file = emex_file_alloc(firmware_image_path, in_data_file_policy);
@@ -227,7 +235,7 @@ int main(int argc, char *argv[])
             return 1;
         }
 
-        Boolean success = E64MemoryLoadImage(machine->memory, file);
+        Boolean success = E64MemoryLoadImage(memory, file);
         emex_file_dealloc(file);
         if(!success)
         {

@@ -192,12 +192,20 @@ int main(void)
         return 1;
     }
 
-    success = E64MemoryLoadImage(machine->memory, firmware_file);
+    E64MemoryRef memory = E64MachineGetMemory(machine);
+    if(memory == NULL)
+    {
+        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to aquire memory from machine");
+        EFRelease(machine);
+        return 1;
+    }
+
+    success = E64MemoryLoadImage(memory, firmware_file);
     emex_file_dealloc(firmware_file);
     if(!success)
     {
-        EFRelease(machine);
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to load virtual firmware file");
+        EFRelease(machine);
         return 1;
     }
 
