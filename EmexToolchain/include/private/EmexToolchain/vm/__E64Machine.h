@@ -26,17 +26,22 @@
 #include <EmexToolchain/vm/E64Core.h>
 #include <EmexToolchain/vm/E64Memory.h>
 #include <EmexToolchain/vm/E64MMIO.h>
+#include <EmexToolchain/vm/device/internal/timer.h>
+#include <EmexToolchain/vm/device/internal/controller/ic.h>
+#include <EmexToolchain/vm/device/board/uart.h>
+#include <EmexToolchain/vm/device/board/controller/8042.h>
+#include <EmexToolchain/vm/device/board/display.h>
 
 typedef struct __E64Machine {
     EFObject header;
     E64CoreRef core;
     E64MemoryRef memory;
     E64MMIOBusRef mmio_bus;
-    void *intc;
-    void *timer;
-    void *uart;
-    void *display;
-    void *emex8042;
+    emex64_intc_t *intc;
+    emex64_timer_t *timer;
+    emex64_uart_t *uart;
+    emex64_display_t *display;
+    emex64_8042_t *emex8042;
 } *__E64Machine;
 
 #endif /* __E64MACHINE_H */

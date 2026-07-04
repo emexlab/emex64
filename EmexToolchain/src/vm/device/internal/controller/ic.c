@@ -73,7 +73,7 @@ void emex64_raise_interrupt(E64MachineRef machineRef,
         return;
     }
     
-    ((emex64_intc_t*)(machineRef->intc))->pending |= (1ULL << irq_line);
+    machineRef->intc->pending |= (1ULL << irq_line);
 }
 
 void emex64_clear_interrupt(E64MachineRef machineRef,
@@ -84,7 +84,7 @@ void emex64_clear_interrupt(E64MachineRef machineRef,
         return;
     }
     
-    ((emex64_intc_t*)(machineRef->intc))->pending &= ~(1ULL << irq_line);
+    machineRef->intc->pending &= ~(1ULL << irq_line);
 }
 
 static int find_pending_irq(emex64_intc_t *intc)
@@ -109,7 +109,7 @@ static int find_pending_irq(emex64_intc_t *intc)
 Boolean emex64_serve_interrupt_if_needed(E64CoreRef core)
 {    
     /* check if interrupts are globally enabled */
-    if(!(((emex64_intc_t*)(core->machine->intc))->ctrl & EMEX64_INTC_CTRL_ENABLE))
+    if(!(core->machine->intc->ctrl & EMEX64_INTC_CTRL_ENABLE))
     {
         return false;
     }
@@ -128,17 +128,17 @@ Boolean emex64_serve_interrupt_if_needed(E64CoreRef core)
     }
     
     /* mark which IRQ were servicing */
-    ((emex64_intc_t*)(core->machine->intc))->current_irq = irq;
+    core->machine->intc->current_irq = irq;
     
     /* clear pending bit (edge-triggered style) */
-    ((emex64_intc_t*)(core->machine->intc))->pending &= ~(1ULL << irq);
+    core->machine->intc->pending &= ~(1ULL << irq);
 
     /* read handler address from vector table */
-    UInt64 vector_addr = ((emex64_intc_t*)(core->machine->intc))->vector_base + (irq * 8);
+    UInt64 vector_addr = core->machine->intc->vector_base + (irq * 8);
     UInt64 handler_addr;
     if(!E64MemoryAction(core->machine->memory, vector_addr, 8, &handler_addr, kE64MemoryActionTypeRead))
     {
-        ((emex64_intc_t*)(core->machine->intc))->current_irq = -1;
+        core->machine->intc->current_irq = -1;
         return false;
     }
     handler_addr = TO_HOST64(handler_addr);

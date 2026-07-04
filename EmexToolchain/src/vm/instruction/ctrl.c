@@ -21,7 +21,6 @@
 
 #include <EmexToolchain/vm/instruction/instruction.h>
 #include <EmexToolchain/vm/instruction/ctrl.h>
-#include <EmexToolchain/vm/device/internal/controller/ic.h>
 #include <EmexToolchain/vm/E64Machine.h>
 #include <stdio.h>
 
@@ -288,7 +287,7 @@ void emex64_op_iret(__E64Core core)
 
     core->rl[kE64RegisterSP] = oldsp;
 
-    ((emex64_intc_t*)(core->machine->intc))->current_irq = -1;
+    core->machine->intc->current_irq = -1;
     core->in_interrupt = false;
     core->halted = false;
 }
