@@ -26,7 +26,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <EmexToolchain/vm/core.h>
-#include <EmexToolchain/vm/memory.h>
+#include <EmexToolchain/vm/E64Memory.h>
 #include <EmexToolchain/vm/machine.h>
 #include <EmexToolchain/vm/device/internal/controller/ic.h>
 #include <EmexToolchain/vm/device/internal/timer.h>

@@ -24,7 +24,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <EmexToolchain/support/virtual/vfd.h>
-#include <EmexToolchain/vm/memory.h>
+#include <EmexToolchain/vm/E64Memory.h>
 
 vfd_t *vfd_open(const char *path,
                 int flg,

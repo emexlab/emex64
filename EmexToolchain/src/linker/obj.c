@@ -25,7 +25,7 @@
 #include <EmexToolchain/support/diagnostic/log.h>
 #include <EmexToolchain/linker/linker.h>
 #include <EmexToolchain/linker/obj.h>
-#include <EmexToolchain/vm/memory.h>
+#include <EmexToolchain/vm/E64Memory.h>
 
 static unsigned long obj_sec_align(linker_object_t *o, int32_t idx)
 {

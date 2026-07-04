@@ -22,7 +22,7 @@
 #ifndef EMEX64VM_DEVICE_BASE_H
 #define EMEX64VM_DEVICE_BASE_H
 
-#include <EmexToolchain/vm/memory.h>
+#include <EmexToolchain/vm/E64Memory.h>
 
 #define EMEX64_MMIO_BASE        0x0020000000000000
 

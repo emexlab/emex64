@@ -21,7 +21,7 @@
 
 #include <sys/mman.h>
 #include <EmexToolchain/support/virtual/vpage.h>
-#include <EmexToolchain/vm/memory.h>
+#include <EmexToolchain/vm/E64Memory.h>
 
 static vpage_t *vpage_get_first(vpage_t *p)
 {

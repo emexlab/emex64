@@ -26,8 +26,8 @@
 #include <stdbool.h>
 #include <EmexToolchain/vm/options.h>
 #include <EmexToolchain/vm/core.h>
-#include <EmexToolchain/vm/memory.h>
-#include <EmexToolchain/vm/mmio.h>
+#include <EmexToolchain/vm/E64Memory.h>
+#include <EmexToolchain/vm/E64MMIO.h>
 #include <EmexToolchain/vm/device/internal/timer.h>
 #include <EmexToolchain/vm/device/internal/controller/ic.h>
 #include <EmexToolchain/vm/device/board/uart.h>

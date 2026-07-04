@@ -78,8 +78,8 @@ add_library(EmexToolchain ${LIB_TYPE}
     # Virtual Machine API
     src/vm/core.c
     src/vm/machine.c
-    src/vm/memory.c
-    src/vm/mmio.c
+    src/vm/E64Memory.c
+    src/vm/E64MMIO.c
 
         ## Instruction Handlers
         src/vm/instruction/core.c

@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
-#include <EmexToolchain/vm/mmio.h>
+#include <EmexToolchain/vm/E64MMIO.h>
 #include <EmexFoundation/EmexFoundation.h>
 
 uint64_t emex64_mmio_fallback_read(emex64_core_t *core,

@@ -29,10 +29,10 @@
 #include <assert.h>
 #include <EmexToolchain/support/diagnostic/log.h>
 #include <EmexToolchain/support/likely.h>
-#include <EmexToolchain/vm/memory.h>
+#include <EmexToolchain/vm/E64Memory.h>
 #include <EmexToolchain/vm/core.h>
 #include <EmexToolchain/vm/machine.h>
-#include <EmexToolchain/vm/mmio.h>
+#include <EmexToolchain/vm/E64MMIO.h>
 
 typedef struct E64Memory {
     EFObject header;

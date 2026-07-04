@@ -24,7 +24,7 @@
 
 #include <EmexToolchain/vm/machine.h>
 #include <EmexToolchain/vm/core.h>
-#include <EmexToolchain/vm/memory.h>
+#include <EmexToolchain/vm/E64Memory.h>
 
 void emex64_op_b(emex64_core_t *core);
 void emex64_op_cmp(emex64_core_t *core);
