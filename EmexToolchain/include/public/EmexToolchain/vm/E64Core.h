@@ -39,4 +39,7 @@ E64CoreRef E64CoreCreate(EFAllocatorRef allocatorRef);
 E64Exception E64CoreExecute(E64CoreRef coreRef);
 void E64CoreTerminate(E64CoreRef coreRef);
 
+UInt64 E64CoreGetValueFromRegister(E64CoreRef coreRef, E64Register reg);
+void E64CoreSetRegisterWithValue(E64CoreRef coreRef, E64Register reg, UInt64 value);
+
 #endif /* EMEX64VM_CORE_H */

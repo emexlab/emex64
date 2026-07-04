@@ -333,3 +333,26 @@ void E64CoreTerminate(E64CoreRef coreRef)
     
     pthread_cancel(core->pthread);
 }
+
+UInt64 E64CoreGetValueFromRegister(E64CoreRef coreRef,
+                                   E64Register reg)
+{
+    __E64Core core = (__E64Core)coreRef;
+    if(core == NULL || reg > kE64RegisterMAX)
+    {
+        return 0;
+    }
+    return core->rl[reg];
+}
+
+void E64CoreSetRegisterWithValue(E64CoreRef coreRef,
+                                 E64Register reg,
+                                 UInt64 value)
+{
+    __E64Core core = (__E64Core)coreRef;
+    if(core == NULL || reg > kE64RegisterMAX)
+    {
+        return;
+    }
+    core->rl[reg] = value;
+}
