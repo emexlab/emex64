@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <EmexToolchain/vm/device/board/controller/power.h>
-#include <EmexToolchain/vm/machine.h>
+#include <EmexToolchain/vm/E64Machine.h>
 
 uint64_t emex64_platform_read(emex64_core_t *core, void *device, uint64_t offset, int size)
 {

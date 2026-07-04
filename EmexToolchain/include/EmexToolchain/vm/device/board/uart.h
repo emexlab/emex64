@@ -45,7 +45,7 @@
 #define UART_CTRL_TX_IRQ_EN    (1 << 1)
 #define UART_CTRL_RESET        (1 << 2)
 
-typedef struct emex64_machine emex64_machine_t;
+typedef struct __E64Machine *E64MachineRef;
 
 typedef struct {
     uint8_t rx_buf[UART_BUF_SIZE];
@@ -57,10 +57,10 @@ typedef struct {
     pthread_mutex_t mutex;
     atomic_bool running;
 
-    emex64_machine_t *machine;
+    E64MachineRef machine;
 } emex64_uart_t;
 
-emex64_uart_t *emex64_uart_alloc(emex64_machine_t *machine);
+emex64_uart_t *emex64_uart_alloc(E64MachineRef machine);
 void emex64_uart_dealloc(emex64_uart_t *u);
 
 uint64_t emex64_uart_read(emex64_core_t *core, void *device, uint64_t offset, int size);

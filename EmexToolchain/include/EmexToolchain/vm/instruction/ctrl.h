@@ -22,7 +22,7 @@
 #ifndef EMEX64VM_INSTRUCTION_CTRL_H
 #define EMEX64VM_INSTRUCTION_CTRL_H
 
-#include <EmexToolchain/vm/machine.h>
+#include <EmexToolchain/vm/E64Machine.h>
 #include <EmexToolchain/vm/core.h>
 #include <EmexToolchain/vm/E64Memory.h>
 

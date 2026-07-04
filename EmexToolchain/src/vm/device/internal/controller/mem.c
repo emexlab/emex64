@@ -21,7 +21,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <EmexToolchain/vm/machine.h>
+#include <EmexToolchain/vm/E64Machine.h>
 #include <EmexToolchain/vm/device/internal/controller/mem.h>
 
 uint64_t emex64_mc_read(emex64_core_t *core,

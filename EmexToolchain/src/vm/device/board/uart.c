@@ -25,7 +25,7 @@
 #include <termios.h>
 #include <pthread.h>
 #include <unistd.h>
-#include <EmexToolchain/vm/machine.h>
+#include <EmexToolchain/vm/E64Machine.h>
 #include <EmexToolchain/vm/device/board/uart.h>
 #include <EmexToolchain/vm/device/internal/controller/ic.h>
 
@@ -148,7 +148,7 @@ static inline void emex64_uart_stop(emex64_uart_t *u)
     uart_restore_mode();
 }
 
-emex64_uart_t *emex64_uart_alloc(emex64_machine_t *machine)
+emex64_uart_t *emex64_uart_alloc(E64MachineRef machine)
 {
     emex64_uart_t *u = malloc(sizeof(emex64_uart_t));
     if(u == NULL)

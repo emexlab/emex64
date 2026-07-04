@@ -19,7 +19,7 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/vm/machine.h>
+#include <EmexToolchain/vm/E64Machine.h>
 #include <EmexToolchain/vm/core.h>
 #include <EmexToolchain/vm/device/board/controller/8042.h>
 #include <string.h>
@@ -141,7 +141,7 @@ static const ps2_scancode_t kEmexKeyPhysToPS2Set1[] = {
 #define STATUS_OBF          0x01
 #define STATUS_MOUSE_OBF    0x20
 
-emex64_8042_t *emex64_8042_alloc(emex64_machine_t *machine,
+emex64_8042_t *emex64_8042_alloc(E64MachineRef machine,
                                  bool keyboard_attached,
                                  bool mouse_attached)
 {

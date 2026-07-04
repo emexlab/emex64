@@ -41,7 +41,7 @@
 
 #define TIMER_VIRTUAL_FREQ  1000000ULL
 
-typedef struct emex64_machine emex64_machine_t;
+typedef struct __E64Machine *E64MachineRef;
 
 typedef struct emex64_timer {
     uint64_t ctrl;
@@ -52,11 +52,11 @@ typedef struct emex64_timer {
     uint64_t host_freq;
     uint64_t last_host_cycles;
     
-    emex64_machine_t *machine;
+    E64MachineRef machine;
     uint64_t tick_remainder;
 } emex64_timer_t;
 
-emex64_timer_t *emex64_timer_alloc(emex64_machine_t *core);
+emex64_timer_t *emex64_timer_alloc(E64MachineRef machine);
 void emex64_timer_dealloc(emex64_timer_t *timer);
 void emex64_timer_tick(emex64_timer_t *timer, uint64_t host_cycles);
 uint64_t emex64_get_host_cycles(void);

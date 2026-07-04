@@ -395,7 +395,7 @@ typedef struct emex64_core emex64_core_t;
 /* definition of the handler of each operation */
 typedef void (*emex64_opfunc_t)(emex64_core_t *core);
 
-typedef struct emex64_machine emex64_machine_t;
+typedef struct __E64Machine *E64MachineRef;
 
 typedef struct emex64_opfunc_entry {
     emex64_opfunc_t func;
@@ -507,7 +507,7 @@ typedef struct emex64_core {
     bool in_interrupt;
 
     /* pointer back to machine */
-    emex64_machine_t *machine;
+    E64MachineRef machine;
 } emex64_core_t;
 
 emex64_core_t *emex64_core_alloc(void);

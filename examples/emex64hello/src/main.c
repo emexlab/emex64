@@ -24,7 +24,7 @@
 #include <EmexToolchain/support/diagnostic/log.h>
 #include <EmexToolchain/asm/invocation.h>
 #include <EmexToolchain/linker/linker.h>
-#include <EmexToolchain/vm/machine.h>
+#include <EmexToolchain/vm/E64Machine.h>
 
 static inline emex_file_t *emex_file_alloc_vopen(const char *path,
                                                  emex_file_policy_t policy)
@@ -184,7 +184,7 @@ int main(void)
     E64MachineOptions machineOptions = E64MachineOptionsGetDefault();
     machineOptions.displayOptions.enabled = false;
 
-    emex64_machine_t *machine = emex64_machine_alloc(machineOptions);
+    E64MachineRef machine = E64MachineCreateWithOptions(kEFAllocatorDefault, machineOptions);
     if(machine == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate virtual machine");
@@ -196,12 +196,13 @@ int main(void)
     emex_file_dealloc(firmware_file);
     if(!success)
     {
+        EFRelease(machine);
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to load virtual firmware file");
         return 1;
     }
 
     emex64_core_execute(machine->core);
-    emex64_machine_dealloc(machine);
+    EFRelease(machine);
 
     return 0;
 }

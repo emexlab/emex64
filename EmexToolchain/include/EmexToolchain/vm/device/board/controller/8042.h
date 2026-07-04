@@ -31,7 +31,7 @@
 #define EMEX64_8042_STATUS  0x08
 
 typedef struct emex64_core emex64_core_t;
-typedef struct emex64_machine emex64_machine_t;
+typedef struct __E64Machine *E64MachineRef;
 
 typedef struct {
     uint8_t status;
@@ -51,13 +51,13 @@ typedef struct {
     bool expecting_mouse_data;
 
     pthread_mutex_t lock;
-    emex64_machine_t *machine;
+    E64MachineRef machine;
 
     bool keyboard_attached;
     bool mouse_attached;
 } emex64_8042_t;
 
-emex64_8042_t *emex64_8042_alloc(emex64_machine_t *machine, bool keyboard_attached, bool mouse_attached);
+emex64_8042_t *emex64_8042_alloc(E64MachineRef machine, bool keyboard_attached, bool mouse_attached);
 void emex64_8042_dealloc(emex64_8042_t *dev);
 
 /* for display backend */

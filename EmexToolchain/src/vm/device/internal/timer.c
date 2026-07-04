@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
-#include <EmexToolchain/vm/machine.h>
+#include <EmexToolchain/vm/E64Machine.h>
 #include <EmexToolchain/vm/device/internal/timer.h>
 #include <EmexToolchain/vm/device/internal/controller/ic.h>
 
@@ -91,7 +91,7 @@ static uint64_t detect_host_freq(void)
 #endif
 }
 
-emex64_timer_t *emex64_timer_alloc(emex64_machine_t *machine)
+emex64_timer_t *emex64_timer_alloc(E64MachineRef machine)
 {
     /* allocate timer */
     emex64_timer_t *timer = malloc(sizeof(emex64_timer_t));

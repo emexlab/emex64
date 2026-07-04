@@ -21,10 +21,12 @@
 
 #include <EmexToolchain/vm/instruction/instruction.h>
 #include <EmexToolchain/vm/instruction/ctrl.h>
-#include <EmexToolchain/vm/machine.h>
+#include <EmexToolchain/vm/E64Machine.h>
 #include <stdio.h>
 
-static inline uint64_t emex64_branch_pc(uint64_t pc, uint64_t v, kE64ParameterCoding coding)
+static inline uint64_t emex64_branch_pc(uint64_t pc,
+                                        uint64_t v,
+                                        kE64ParameterCoding coding)
 {
     switch(coding)
     {

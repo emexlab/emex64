@@ -19,8 +19,8 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef E64MACHINE_OPTIONS_H
-#define E64MACHINE_OPTIONS_H
+#ifndef E64MACHINEOPTIONS_H
+#define E64MACHINEOPTIONS_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -50,4 +50,4 @@ typedef struct {
     E64PeripheralMode mousePeripheralMode;
 } E64MachineOptions;
 
-#endif /* E64MACHINE_OPTIONS_H */
+#endif /* E64MACHINEOPTIONS_H */

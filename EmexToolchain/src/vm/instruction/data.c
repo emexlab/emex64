@@ -21,7 +21,7 @@
 
 #include <EmexToolchain/vm/instruction/instruction.h>
 #include <EmexToolchain/vm/instruction/data.h>
-#include <EmexToolchain/vm/machine.h>
+#include <EmexToolchain/vm/E64Machine.h>
 #include <EmexToolchain/vm/E64Memory.h>
 
 void emex64_op_mov(emex64_core_t *core)

@@ -38,7 +38,7 @@
 #define EMEX64_FB_FRAMEBUFFER 0x18
 
 typedef struct emex64_core emex64_core_t;
-typedef struct emex64_machine emex64_machine_t;
+typedef struct __E64Machine *E64MachineRef;
 
 typedef struct {
     uint8_t enabled;
@@ -52,7 +52,7 @@ typedef struct {
     uint64_t fb_size;
 } emex64_display_t;
 
-emex64_display_t *emex64_display_alloc(emex64_machine_t *machine, bool install, uint16_t width, uint16_t height);
+emex64_display_t *emex64_display_alloc(E64MachineRef machine, bool install, uint16_t width, uint16_t height);
 void emex64_display_dealloc(emex64_display_t *display);
 
 void *display_start(void *arg);

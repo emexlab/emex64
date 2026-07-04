@@ -24,12 +24,12 @@
 #include <string.h>
 #include <EmexToolchain/support/likely.h>
 #include <EmexToolchain/vm/core.h>
-#include <EmexToolchain/vm/machine.h>
+#include <EmexToolchain/vm/E64Machine.h>
 #include <EmexToolchain/vm/E64Memory.h>
 #include <EmexToolchain/vm/instruction/ctrl.h>
 #include <EmexToolchain/vm/device/internal/controller/ic.h>
 
-emex64_intc_t *emex64_intc_alloc(emex64_machine_t *machine)
+emex64_intc_t *emex64_intc_alloc(E64MachineRef machineRef)
 {
     emex64_intc_t *intc = malloc(sizeof(emex64_intc_t));
     if(intc == NULL)
@@ -44,7 +44,7 @@ emex64_intc_t *emex64_intc_alloc(emex64_machine_t *machine)
         return NULL;
     }
 
-    bool success = E64MMIOBusRegisterRegion(machine->mmio_bus, ICRegion);
+    bool success = E64MMIOBusRegisterRegion(machineRef->mmio_bus, ICRegion);
     EFRelease(ICRegion);
     if(!success)
     {
@@ -65,7 +65,7 @@ void emex64_intc_dealloc(emex64_intc_t *intc)
     free(intc);
 }
 
-void emex64_raise_interrupt(emex64_machine_t *machine,
+void emex64_raise_interrupt(E64MachineRef machineRef,
                             int irq_line)
 {
     if(irq_line < 0 || irq_line > EMEX64_IRQ_MAX)
@@ -73,10 +73,10 @@ void emex64_raise_interrupt(emex64_machine_t *machine,
         return;
     }
     
-    machine->intc->pending |= (1ULL << irq_line);
+    machineRef->intc->pending |= (1ULL << irq_line);
 }
 
-void emex64_clear_interrupt(emex64_machine_t *machine,
+void emex64_clear_interrupt(E64MachineRef machineRef,
                             int irq_line)
 {
     if(irq_line < 0 || irq_line > EMEX64_IRQ_MAX)
@@ -84,7 +84,7 @@ void emex64_clear_interrupt(emex64_machine_t *machine,
         return;
     }
     
-    machine->intc->pending &= ~(1ULL << irq_line);
+    machineRef->intc->pending &= ~(1ULL << irq_line);
 }
 
 static int find_pending_irq(emex64_intc_t *intc)

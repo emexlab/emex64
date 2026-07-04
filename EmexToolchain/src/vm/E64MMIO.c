@@ -57,6 +57,7 @@ static EFClass E64MMIORegionClass = {
     .init = NULL,
     .deinit = NULL,
     .equal = NULL,
+    .copyDescription = NULL,
 };
 
 static void E64MMIORegionRegisterClass(void)

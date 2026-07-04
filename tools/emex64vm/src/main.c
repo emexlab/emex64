@@ -29,7 +29,7 @@
 #include <EmexToolchain/support/diagnostic/log.h>
 #include <EmexToolchain/support/parser.h>
 
-#include <EmexToolchain/vm/machine.h>
+#include <EmexToolchain/vm/E64Machine.h>
 
 int main(int argc, char *argv[])
 {
@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
     }
 
     /* creating new emex64 virtual machine */
-    emex64_machine_t *machine = emex64_machine_alloc(machineOptions);
+    E64MachineRef machine = E64MachineCreateWithOptions(kEFAllocatorDefault, machineOptions);
     if(machine == NULL)
     {
         diag_error(NULL, "failed to allocated machine\n");
@@ -223,6 +223,7 @@ int main(int argc, char *argv[])
     fail:
         {
             diag_error(NULL, "failed to load firmware image\n");
+            EFRelease(machine);
             return 1;
         }
 
@@ -238,7 +239,7 @@ int main(int argc, char *argv[])
     emex64_core_execute(machine->core);
 
     /* deallocating machine */
-    emex64_machine_dealloc(machine);
+    EFRelease(machine);
 
     return 0;
 }

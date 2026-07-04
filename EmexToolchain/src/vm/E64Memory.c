@@ -31,7 +31,7 @@
 #include <EmexToolchain/support/likely.h>
 #include <EmexToolchain/vm/E64Memory.h>
 #include <EmexToolchain/vm/core.h>
-#include <EmexToolchain/vm/machine.h>
+#include <EmexToolchain/vm/E64Machine.h>
 #include <EmexToolchain/vm/E64MMIO.h>
 
 typedef struct E64Memory {

@@ -28,7 +28,7 @@
 #include <stdatomic.h>
 #include <unistd.h>
 #include <EmexToolchain/support/diagnostic/log.h>
-#include <EmexToolchain/vm/machine.h>
+#include <EmexToolchain/vm/E64Machine.h>
 #include <EmexToolchain/vm/device/board/display.h>
 
 #if defined(__linux__) && EMEX64VM_DEVICE_DISPLAY
@@ -407,7 +407,7 @@ void *display_start(void *arg)
 
 extern void *display_start(void *arg);
 
-emex64_display_t *emex64_display_alloc(emex64_machine_t *machine,
+emex64_display_t *emex64_display_alloc(E64MachineRef machine,
                                        bool install,
                                        uint16_t width,
                                        uint16_t height)

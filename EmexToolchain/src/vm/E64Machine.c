@@ -20,141 +20,168 @@
  */
 
 #include <stdlib.h>
-#include <EmexToolchain/vm/machine.h>
+#include <EmexToolchain/vm/E64Machine.h>
 #include <EmexToolchain/vm/device/internal/controller/mem.h>
 #include <EmexToolchain/vm/device/board/controller/power.h>
 #include <EmexToolchain/vm/device/board/rtc.h>
 
-emex64_machine_t *emex64_machine_alloc(E64MachineOptions options)
+static void __E64MachineDeinit(EFObjectRef machineRef)
 {
-    emex64_machine_t *machine = calloc(1, sizeof(emex64_machine_t));
+    __E64Machine machine = (__E64Machine)machineRef;
+    if(machine->core != NULL)
+    {
+        emex64_core_dealloc(machine->core);
+    }
+    if(machine->memory != NULL)
+    {
+        EFRelease(machine->memory);
+    }
+    if(machine->mmio_bus != NULL)
+    {
+        EFRelease(machine->mmio_bus);
+    }
+    if(machine->intc != NULL)
+    {
+        emex64_intc_dealloc(machine->intc);
+    }
+    if(machine->timer != NULL)
+    {
+        emex64_timer_dealloc(machine->timer);
+    }
+    if(machine->uart != NULL)
+    {
+        emex64_uart_dealloc(machine->uart);
+    }
+    if(machine->display != NULL)
+    {
+        emex64_display_dealloc(machine->display);
+    }
+    if(machine->emex8042 != NULL)
+    {
+        emex64_8042_dealloc(machine->emex8042);
+    }
+}
+
+static EFClass E64MachineClass = {
+    .name = "E64Machine",
+    .typeID = kEFNotATypeID,
+    .init = NULL,
+    .deinit = __E64MachineDeinit,
+    .equal = NULL,
+    .copyDescription = NULL,
+};
+
+static void E64MachineRegisterClass(void)
+{
+    EFClassRegister(&E64MachineClass);
+}
+
+EFTypeID E64MachineGetTypeID(void)
+{
+    static pthread_once_t once = PTHREAD_ONCE_INIT;
+    pthread_once(&once, E64MachineRegisterClass);
+    return E64MachineClass.typeID;
+}
+
+E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
+                                          E64MachineOptions options)
+{
+    __E64Machine machine = (__E64Machine)EFObjectAlloc(allocatorRef, E64MachineGetTypeID(), sizeof(struct __E64Machine));
     if(machine == NULL)
     {
         return NULL;
     }
-    
-    machine->memory = E64MemoryCreate(NULL, options.memoryLength);
+
+    machine->memory = E64MemoryCreate(allocatorRef, options.memoryLength);
     if(machine->memory == NULL)
     {
-        goto out_release_machine;
+        EFRelease(machine);
     }
-    
-    machine->mmio_bus = E64MMIOBusCreate(NULL);
+
+    machine->mmio_bus = E64MMIOBusCreate(allocatorRef);
     if(machine->mmio_bus == NULL)
     {
-        goto out_release_memory;
+        EFRelease(machine);
     }
-    
+
     machine->core = emex64_core_alloc();
     if(machine->core == NULL)
     {
-        goto out_release_mmio;
+        EFRelease(machine);
     }
+    /* machine->core->machine = EFRetain(machine); FIXME: retain cycle */
     machine->core->machine = machine;
-    
+
     machine->intc = emex64_intc_alloc(machine);
     if(machine->intc == NULL)
     {
-        goto out_release_core;
+        EFRelease(machine);
     }
-    
+
     machine->timer = emex64_timer_alloc(machine);
     if(machine->timer == NULL)
     {
-        goto out_release_intc;
+        EFRelease(machine);
     }
-    
+
     machine->uart = emex64_uart_alloc(machine);
     if(machine->uart == NULL)
     {
-        goto out_release_timer;
+        EFRelease(machine);
     }
-    
+
     machine->emex8042 = emex64_8042_alloc(machine, options.keyboardPeripheralMode == kE64PeripheralMode8042, options.mousePeripheralMode == kE64PeripheralMode8042);
     if(machine->emex8042 == NULL)
     {
-        goto out_release_uart;
+        EFRelease(machine);
     }
-    
+
     machine->display = emex64_display_alloc(machine, options.displayOptions.enabled, options.displayOptions.width, options.displayOptions.height);
     if(machine->display == NULL)
     {
-        goto out_release_8042;
+        EFRelease(machine);
     }
-    
+
     E64MMIORegionRef RTCMMIORegion = E64MMIORegionCreate(NULL, EMEX64_RTC_BASE, EMEX64_RTC_SIZE, NULL, emex64_rtc_read, NULL);
     if(RTCMMIORegion == NULL)
     {
-        goto out_release_display;
+        EFRelease(machine);
     }
 
     bool success = E64MMIOBusRegisterRegion(machine->mmio_bus, RTCMMIORegion);
     EFRelease(RTCMMIORegion);
     if(!success)
     {
-        goto out_release_display;
+        EFRelease(machine);
     }
 
     E64MMIORegionRef MCRegion = E64MMIORegionCreate(NULL, EMEX64_MC_BASE, EMEX64_MC_SIZE, NULL, emex64_mc_read, emex64_mc_write);
     if(MCRegion == NULL)
     {
-        goto out_release_display;
+        EFRelease(machine);
     }
     
     success = E64MMIOBusRegisterRegion(machine->mmio_bus, MCRegion);
     EFRelease(MCRegion);
     if(!success)
     {
-        goto out_release_display;
+        EFRelease(machine);
     }
-    
+
     E64MMIORegionRef PlatformRegion = E64MMIORegionCreate(NULL, EMEX64_PLATFORM_BASE, EMEX64_PLATFORM_SIZE, NULL, emex64_platform_read, emex64_platform_write);
     if(PlatformRegion == NULL)
     {
-        goto out_release_display;
+        EFRelease(machine);
     }
     
     success = E64MMIOBusRegisterRegion(machine->mmio_bus, PlatformRegion);
     EFRelease(PlatformRegion);
     if(!success)
     {
-        goto out_release_display;
+        EFRelease(machine);
     }
 
     return machine;
-
-out_release_display:
-    emex64_display_dealloc(machine->display);
-out_release_8042:
-    emex64_8042_dealloc(machine->emex8042);
-out_release_uart:
-    emex64_uart_dealloc(machine->uart);
-out_release_timer:
-    emex64_timer_dealloc(machine->timer);
-out_release_intc:
-    emex64_intc_dealloc(machine->intc);
-out_release_core:
-    emex64_core_dealloc(machine->core);
-out_release_mmio:
-    EFRelease(machine->mmio_bus);
-out_release_memory:
-    EFRelease(machine->memory);
-out_release_machine:
-    free(machine);
-    return NULL;
-}
-
-void emex64_machine_dealloc(emex64_machine_t *machine)
-{
-    emex64_8042_dealloc(machine->emex8042);
-    emex64_display_dealloc(machine->display);
-    emex64_uart_dealloc(machine->uart);
-    emex64_timer_dealloc(machine->timer);
-    emex64_intc_dealloc(machine->intc);
-    emex64_core_dealloc(machine->core);
-    EFRelease(machine->mmio_bus);
-    EFRelease(machine->memory);
-    free(machine);
 }
 
 E64MachineSupport E64MachineSupportGet(void)

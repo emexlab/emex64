@@ -52,21 +52,21 @@
 #define EMEX64_INTC_CTRL_ENABLE   (1 << 0)
 
 typedef struct emex64_core emex64_core_t;
-typedef struct emex64_machine emex64_machine_t;
+typedef struct __E64Machine *E64MachineRef;
 
 typedef struct emex64_intc {
     uint64_t pending;
     uint64_t enabled;
     uint64_t ctrl;
     uint64_t vector_base;
-    int64_t  current_irq;
+    int64_t current_irq;
 } emex64_intc_t;
 
-emex64_intc_t *emex64_intc_alloc(emex64_machine_t *machine);
+emex64_intc_t *emex64_intc_alloc(E64MachineRef machineRef);
 void emex64_intc_dealloc(emex64_intc_t *intc);
 
-void emex64_raise_interrupt(emex64_machine_t *machine, int irq_line);
-void emex64_clear_interrupt(emex64_machine_t *machine, int irq_line);
+void emex64_raise_interrupt(E64MachineRef machineRef, int irq_line);
+void emex64_clear_interrupt(E64MachineRef machineRef, int irq_line);
 bool emex64_serve_interrupt_if_needed(emex64_core_t *core);
 
 uint64_t emex64_intc_read(emex64_core_t *core, void *device, uint64_t offset, int size);
