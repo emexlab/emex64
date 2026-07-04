@@ -22,9 +22,6 @@
 #ifndef E64MACHINEOPTIONS_H
 #define E64MACHINEOPTIONS_H
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
 #include <EmexFoundation/EmexFoundation.h>
 
 typedef enum: UInt8 {
