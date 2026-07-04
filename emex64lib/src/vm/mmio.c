@@ -150,22 +150,16 @@ mmio_write_fn Emex64MMIORegionGetWriteSymbol(Emex64MMIORegionRef MMIORegionRef)
 
 typedef struct Emex64MMIOBus {
     EFObject header;
-    Emex64MMIORegion last_region;
-    Emex64MMIORegion regions[MAX_MMIO_REGIONS];
-    int region_count;
+    EFIndex lastRegionIndex;
+    EFMutableArrayRef regions;
 } *Emex64MMIOBus;
 
 static void __Emex64MMIOBusDeinit(Emex64MMIOBusRef MMIOBusRef)
 {
     Emex64MMIOBus MMIOBus = (Emex64MMIOBus)MMIOBusRef;
-    if(MMIOBus == NULL || MMIOBus->region_count >= MAX_MMIO_REGIONS)
+    if(MMIOBus->regions != NULL)
     {
-        return;
-    }
-
-    for(int i = 0; i < MMIOBus->region_count; i++)
-    {
-        EFRelease(MMIOBus->regions[i]);
+        EFRelease(MMIOBus->regions);
     }
 }
 
@@ -197,8 +191,13 @@ Emex64MMIOBusRef Emex64MMIOBusCreate(EFAllocatorRef allocatorRef)
         return NULL;
     }
 
-    MMIOBus->last_region = NULL;
-    MMIOBus->region_count = 0;
+    MMIOBus->lastRegionIndex = 0;
+    MMIOBus->regions = EFArrayCreateMutable(allocatorRef, kEFArrayCallbacksObjectCallbacks, 0);
+    if(MMIOBus->regions == NULL)
+    {
+        EFRelease(MMIOBus);
+        return NULL;
+    }
 
     return (Emex64MMIOBusRef)MMIOBus;
 }
@@ -208,18 +207,16 @@ bool Emex64MMIOBusRegisterRegion(Emex64MMIOBusRef MMIOBusRef,
 {
 
     Emex64MMIOBus MMIOBus = (Emex64MMIOBus)MMIOBusRef;
-    if(MMIOBus == NULL || MMIOBus->region_count >= MAX_MMIO_REGIONS)
+    if(MMIOBus == NULL || MMIORegionRef == NULL || EFGetTypeID(MMIORegionRef) != Emex64MMIORegionGetTypeID())
     {
         return false;
     }
 
     /* region registration */
-    MMIORegionRef = EFRetain(MMIORegionRef);
-    if(MMIORegionRef == NULL)
+    if(!EFArrayAppendValue(MMIOBus->regions, MMIORegionRef))
     {
         return false;
     }
-    MMIOBus->regions[MMIOBus->region_count++] = MMIORegionRef;
 
     return true;
 }
@@ -234,22 +231,24 @@ Emex64MMIORegionRef Emex64MMIOBusGetRegionForAddress(Emex64MMIOBusRef MMIOBusRef
     }
 
     /* fast path */
-    if(MMIOBus->last_region != NULL &&
-       addr >= MMIOBus->last_region->base_addr &&
-       addr < MMIOBus->last_region->base_addr + MMIOBus->last_region->size)
+    Emex64MMIORegion lastMMIORegion = (Emex64MMIORegion)EFArrayGetValueAtIndex(MMIOBus->regions, MMIOBus->lastRegionIndex);
+    if(lastMMIORegion != NULL)
     {
-        return MMIOBus->last_region;
+        if(addr >= lastMMIORegion->base_addr && addr < lastMMIORegion->base_addr + lastMMIORegion->size)
+        {
+            return (Emex64MMIORegionRef)lastMMIORegion;
+        }
     }
 
     /* finding mmio region, hopefully x3 */
-    for(int i = 0; i < MMIOBus->region_count; i++)
+    EFIndex count = EFArrayGetCount(MMIOBus->regions);
+    for(EFIndex index = 0; index < count; index++)
     {
-        Emex64MMIORegion r = MMIOBus->regions[i];
-        if(addr >= r->base_addr &&
-           addr < r->base_addr + r->size)
+        Emex64MMIORegion MMIORegion = (Emex64MMIORegion)EFArrayGetValueAtIndex(MMIOBus->regions, index);
+        if(addr >= MMIORegion->base_addr && addr < MMIORegion->base_addr + MMIORegion->size)
         {
-            MMIOBus->last_region = r;
-            return r;
+            MMIOBus->lastRegionIndex = index;
+            return MMIORegion;
         }
     }
 

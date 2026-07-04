@@ -31,8 +31,6 @@ typedef struct emex64_core emex64_core_t;
 typedef uint64_t (*mmio_read_fn)(emex64_core_t *core, void *device, uint64_t offset, int size);
 typedef void (*mmio_write_fn)(emex64_core_t *core, void *device, uint64_t offset, uint64_t value, int size);
 
-#define MAX_MMIO_REGIONS 32
-
 typedef EFObjectRef Emex64MMIORegionRef;
 
 EFTypeID Emex64MMIORegionGetTypeID(void);
