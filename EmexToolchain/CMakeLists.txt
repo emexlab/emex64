@@ -176,6 +176,11 @@ set_source_files_properties(src/linker/driver.c PROPERTIES OBJECT_DEPENDS ${EMEX
 add_dependencies(EmexToolchain emex64_header_gen)
 
 target_include_directories(EmexToolchain
+    PRIVATE
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>
+)
+
+target_include_directories(EmexToolchain
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
