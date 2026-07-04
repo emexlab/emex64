@@ -42,4 +42,6 @@ void E64CoreTerminate(E64CoreRef coreRef);
 UInt64 E64CoreGetValueFromRegister(E64CoreRef coreRef, E64Register reg);
 void E64CoreSetRegisterWithValue(E64CoreRef coreRef, E64Register reg, UInt64 value);
 
+E64Exception E64CoreGetException(E64CoreRef coreRef);
+
 #endif /* EMEX64VM_CORE_H */

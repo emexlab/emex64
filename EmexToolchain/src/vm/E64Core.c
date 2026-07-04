@@ -356,3 +356,13 @@ void E64CoreSetRegisterWithValue(E64CoreRef coreRef,
     }
     core->rl[reg] = value;
 }
+
+E64Exception E64CoreGetException(E64CoreRef coreRef)
+{
+    __E64Core core = (__E64Core)coreRef;
+    if(core == NULL)
+    {
+        return kE64ExceptionNone;
+    }
+    return core->cr_state.crexc.exception;
+}
