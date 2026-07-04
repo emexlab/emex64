@@ -69,14 +69,14 @@ typedef enum: UInt8 {
     kE64MMUPTWrite =     0b00010000, /* marks a PTE as writable (most MMU's don't have that, but this one does) */
     kE64MMUPTExec =      0b00100000, /* marks a PTE as executable (means the CPU core can fetch instructions from it and execute them) */
     kE64MMUPTAccessed =  0b01000000, /* marks a PTE as accessed (MMU sets this bit when this has been accessed) */
-} kE64MMUPT;
+} E64MMUPT;
 
 typedef enum: UInt8 {
-    kE64MemoryActionRead =           kE64MMUPTRead,
-    kE64MemoryActionWrite =          kE64MMUPTWrite,
-    kE64MemoryActionExecute =        kE64MMUPTExec,
-    kE64MemoryActionPageDirectory,
-} kE64MemoryAction;
+    kE64MemoryActionTypeRead =          kE64MMUPTRead,
+    kE64MemoryActionTypeWrite =         kE64MMUPTWrite,
+    kE64MemoryActionTypeExecute =       kE64MMUPTExec,
+    kE64MemoryActionTypePageDirectory,
+} E64MemoryActionType;
 
 typedef EFObjectRef E64MemoryRef;
 
@@ -98,10 +98,10 @@ Boolean E64MemoryAccessIsWithinBounds(E64MemoryRef memoryRef, UInt64 address, UI
 
 Boolean E64MemoryLoadImage(E64MemoryRef memoryRef, emex_file_t *file);
 
-Boolean E64MemoryAction(E64MemoryRef memoryRef, UInt64 addr, size_t size, UInt64 *value, kE64MemoryAction action);
+Boolean E64MemoryAction(E64MemoryRef memoryRef, UInt64 addr, size_t size, UInt64 *value, E64MemoryActionType actionType);
 
 /* API that only the VM shall use */
-void E64MemoryCoreAction(E64MemoryRef memoryRef, E64CoreRef core, UInt64 addr, size_t size, UInt64 *value, kE64MemoryAction action);
-Boolean E64MemoryCoreCopyIn(E64MemoryRef memoryRef, E64CoreRef core, UInt8 *dst, UInt64 addr, size_t len, kE64MemoryAction read_action);
+void E64MemoryCoreAction(E64MemoryRef memoryRef, E64CoreRef core, UInt64 addr, size_t size, UInt64 *value, E64MemoryActionType actionType);
+Boolean E64MemoryCoreCopyIn(E64MemoryRef memoryRef, E64CoreRef core, UInt8 *dst, UInt64 addr, size_t len, E64MemoryActionType actionType);
 
 #endif /* E64MEMORY_H */

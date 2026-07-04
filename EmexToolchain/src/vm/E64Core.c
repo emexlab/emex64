@@ -167,7 +167,7 @@ static inline void __E64CoreExecuteInstructionAtPC(__E64Core core)
     }
 
     /* TODO: KTRR check is missing */
-    if(unlikely(!E64MemoryCoreCopyIn(core->machine->memory, core, core->op.inscache,  core->rl[kE64RegisterPC], EMEX64_MAX_ILEN, kE64MemoryActionExecute)))
+    if(unlikely(!E64MemoryCoreCopyIn(core->machine->memory, core, core->op.inscache,  core->rl[kE64RegisterPC], EMEX64_MAX_ILEN, kE64MemoryActionTypeExecute)))
     {
         /* callee wrote exception already */
         return;

@@ -46,7 +46,7 @@ void emex64_op_ret(__E64Core core);
 
 static inline void emex64_push_il(__E64Core core, UInt64 value)
 {
-    E64MemoryCoreAction(core->machine->memory, core, core->rl[kE64RegisterSP], sizeof(UInt64), &value, kE64MemoryActionWrite);
+    E64MemoryCoreAction(core->machine->memory, core, core->rl[kE64RegisterSP], sizeof(UInt64), &value, kE64MemoryActionTypeWrite);
     core->rl[kE64RegisterSP] -= 8;
 }
 
@@ -55,7 +55,7 @@ static inline UInt64 emex64_pop_il(__E64Core core)
     core->rl[kE64RegisterSP] += 8;
 
     UInt64 value = 0;
-    E64MemoryCoreAction(core->machine->memory, core, core->rl[kE64RegisterSP], sizeof(UInt64), &value, kE64MemoryActionRead);
+    E64MemoryCoreAction(core->machine->memory, core, core->rl[kE64RegisterSP], sizeof(UInt64), &value, kE64MemoryActionTypeRead);
     return value;
 }
 

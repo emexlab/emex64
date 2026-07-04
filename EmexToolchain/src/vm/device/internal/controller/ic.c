@@ -136,7 +136,7 @@ Boolean emex64_serve_interrupt_if_needed(E64CoreRef core)
     /* read handler address from vector table */
     UInt64 vector_addr = core->machine->intc->vector_base + (irq * 8);
     UInt64 handler_addr;
-    if(!E64MemoryAction(core->machine->memory, vector_addr, 8, &handler_addr, kE64MemoryActionRead))
+    if(!E64MemoryAction(core->machine->memory, vector_addr, 8, &handler_addr, kE64MemoryActionTypeRead))
     {
         core->machine->intc->current_irq = -1;
         return false;

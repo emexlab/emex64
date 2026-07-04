@@ -78,7 +78,7 @@ EFTypeID E64MemoryGetTypeID(void)
 }
 
 E64MemoryRef E64MemoryCreate(EFAllocatorRef allocatorRef,
-                                   UInt64 size)
+                             UInt64 size)
 {
     E64Memory memory = EFObjectAlloc(allocatorRef, E64MemoryGetTypeID(), sizeof(struct E64Memory));
     if(memory == NULL)
@@ -201,11 +201,11 @@ static inline emex64_mmu_entry_lookup_t emex64_mmu_lookup_pte(E64Memory memory,
 }
 
 static inline Boolean emex64_mmu_access_pxd(E64Memory memory,
-                                         E64CoreRef core,
-                                         UInt64 pt_addr,
-                                         UInt16 pxd_idx,
-                                         kE64MemoryAction acc,
-                                         UInt64 *oaddr)
+                                            E64CoreRef core,
+                                            UInt64 pt_addr,
+                                            UInt16 pxd_idx,
+                                            E64MemoryActionType actionType,
+                                            UInt64 *oaddr)
 {
     emex64_mmu_entry_lookup_t lookup = emex64_mmu_lookup_pte(memory, core, pt_addr, pxd_idx);
     if(unlikely(lookup.fail))
@@ -214,9 +214,9 @@ static inline Boolean emex64_mmu_access_pxd(E64Memory memory,
     }
 
     UInt64 mmu_flags = 0;
-    if(acc != kE64MemoryActionPageDirectory)
+    if(actionType != kE64MemoryActionTypePageDirectory)
     {
-        UInt8 checkflg = acc;
+        UInt8 checkflg = actionType;
 
         /*
          * if CR0 is user then we need to add user
@@ -243,16 +243,16 @@ static inline Boolean emex64_mmu_access_pxd(E64Memory memory,
         return false;
     }
 
-    switch(acc)
+    switch(actionType)
     {
-        case kE64MemoryActionPageDirectory:
+        case kE64MemoryActionTypePageDirectory:
             /* not a normal page access */
             break;
-        case kE64MemoryActionWrite:
+        case kE64MemoryActionTypeWrite:
             mmu_flags |= kE64MMUPTDirty;
             /* fallthrough */
-        case kE64MemoryActionRead:
-        case kE64MemoryActionExecute:
+        case kE64MemoryActionTypeRead:
+        case kE64MemoryActionTypeExecute:
             mmu_flags |= kE64MMUPTAccessed;
             *(lookup.pte) = (*(lookup.pte) & ~EMEX64_MEMORY_MMU_MASK_FLAGS) | mmu_flags;
     }
@@ -263,10 +263,10 @@ static inline Boolean emex64_mmu_access_pxd(E64Memory memory,
 }
 
 static inline Boolean emex64_mmu_translate(E64Memory memory,
-                                        E64CoreRef core,
-                                        UInt64 vaddr,
-                                        kE64MemoryAction action,
-                                        UInt64 *paddr)
+                                           E64CoreRef core,
+                                           UInt64 vaddr,
+                                           E64MemoryActionType actionType,
+                                           UInt64 *paddr)
 {
     /*
      * getting page global directory from physical frame number
@@ -278,10 +278,10 @@ static inline Boolean emex64_mmu_translate(E64Memory memory,
     UInt64 pud_addr, pmd_addr, pte_addr, phys_page_base_addr;
 
     /* now access each table */
-    if(!emex64_mmu_access_pxd(memory, core, pgd_addr, ((vaddr >> 43) & 0x3FF), kE64MemoryActionPageDirectory, &pud_addr) ||   /* 10 bits for each level index  */
-       !emex64_mmu_access_pxd(memory, core, pud_addr, ((vaddr >> 33) & 0x3FF), kE64MemoryActionPageDirectory, &pmd_addr) ||
-       !emex64_mmu_access_pxd(memory, core, pmd_addr, ((vaddr >> 23) & 0x3FF), kE64MemoryActionPageDirectory, &pte_addr) ||
-       !emex64_mmu_access_pxd(memory, core, pte_addr, ((vaddr >> 13) & 0x3FF), action, &phys_page_base_addr))
+    if(!emex64_mmu_access_pxd(memory, core, pgd_addr, ((vaddr >> 43) & 0x3FF), kE64MemoryActionTypePageDirectory, &pud_addr) ||   /* 10 bits for each level index  */
+       !emex64_mmu_access_pxd(memory, core, pud_addr, ((vaddr >> 33) & 0x3FF), kE64MemoryActionTypePageDirectory, &pmd_addr) ||
+       !emex64_mmu_access_pxd(memory, core, pmd_addr, ((vaddr >> 23) & 0x3FF), kE64MemoryActionTypePageDirectory, &pte_addr) ||
+       !emex64_mmu_access_pxd(memory, core, pte_addr, ((vaddr >> 13) & 0x3FF), actionType, &phys_page_base_addr))
     {
         return false;
     }
@@ -350,7 +350,7 @@ Boolean E64MemoryLoadImage(E64MemoryRef memoryRef,
 Boolean E64MemoryAction(E64MemoryRef memoryRef,
                         UInt64 addr, size_t size,
                         UInt64 *value,
-                        kE64MemoryAction action)
+                        E64MemoryActionType actionType)
 {
     E64Memory memory = (E64MemoryRef)memoryRef;
     if(memory == NULL)
@@ -370,11 +370,11 @@ Boolean E64MemoryAction(E64MemoryRef memoryRef,
 
     UInt8 *mem_ptr = memory->memory + addr;
 
-    switch(action)
+    switch(actionType)
     {
-        case kE64MemoryActionPageDirectory:
-        case kE64MemoryActionExecute:
-        case kE64MemoryActionRead:
+        case kE64MemoryActionTypePageDirectory:
+        case kE64MemoryActionTypeExecute:
+        case kE64MemoryActionTypeRead:
             switch(size)
             {
                 case 1:
@@ -405,7 +405,7 @@ Boolean E64MemoryAction(E64MemoryRef memoryRef,
                     return false;
             }
             return true;
-        case kE64MemoryActionWrite:
+        case kE64MemoryActionTypeWrite:
             if(unlikely(memory->ktrr_size > addr))
             {
                 return false;
@@ -446,11 +446,11 @@ Boolean E64MemoryAction(E64MemoryRef memoryRef,
 }
 
 void E64MemoryCoreAction(E64MemoryRef memoryRef,
-                            E64CoreRef core,
-                            UInt64 addr,
-                            size_t size,
-                            UInt64 *value,
-                            kE64MemoryAction action)
+                         E64CoreRef core,
+                         UInt64 addr,
+                         size_t size,
+                         UInt64 *value,
+                         E64MemoryActionType actionType)
 {
     E64Memory memory = (E64MemoryRef)memoryRef;
     if(memory == NULL)
@@ -490,13 +490,13 @@ void E64MemoryCoreAction(E64MemoryRef memoryRef,
         if(likely(mmio_region != NULL))
         {
             UInt64 offset = addr - E64MMIORegionGetBaseAddress(mmio_region);
-            switch(action)
+            switch(actionType)
             {
-                case kE64MemoryActionRead:
+                case kE64MemoryActionTypeRead:
                     mmio_read_fn read = E64MMIORegionGetReadSymbol(mmio_region);
                     *value = read(core, device, offset, (int)size);
                     return;
-                case kE64MemoryActionWrite:
+                case kE64MemoryActionTypeWrite:
                     mmio_write_fn write = E64MMIORegionGetWriteSymbol(mmio_region);
                     write(core, device, offset, *value, (int)size);
                     return;
@@ -517,7 +517,7 @@ void E64MemoryCoreAction(E64MemoryRef memoryRef,
      */
     if(core->cr_state.crptb.enabled && !core->in_interrupt)
     {
-        if(!emex64_mmu_translate(memory, core, addr, action, &addr))
+        if(!emex64_mmu_translate(memory, core, addr, actionType, &addr))
         {
             core->cr_state.crexc.exception = kE64ExceptionPageFault;
             return;
@@ -537,21 +537,21 @@ void E64MemoryCoreAction(E64MemoryRef memoryRef,
         UInt64 hi_shift = lo_size * 8;
         UInt64 lo_val, hi_val, lo_mask;
 
-        switch(action)
+        switch(actionType)
         {
-            case kE64MemoryActionPageDirectory:
-            case kE64MemoryActionExecute:
-            case kE64MemoryActionRead:
-                E64MemoryCoreAction(memoryRef, core, addr, lo_size, &lo_val, action);
-                E64MemoryCoreAction(memoryRef, core, page_end, hi_size, &hi_val, action);
+            case kE64MemoryActionTypePageDirectory:
+            case kE64MemoryActionTypeExecute:
+            case kE64MemoryActionTypeRead:
+                E64MemoryCoreAction(memoryRef, core, addr, lo_size, &lo_val, actionType);
+                E64MemoryCoreAction(memoryRef, core, page_end, hi_size, &hi_val, actionType);
                 *value = lo_val | (hi_val << hi_shift);
                 return;
-            case kE64MemoryActionWrite:
+            case kE64MemoryActionTypeWrite:
                 lo_mask = (lo_size == 8) ? ~0ULL : (1ULL << hi_shift) - 1;
                 lo_val = *value & lo_mask;
                 hi_val = *value >> hi_shift;
-                E64MemoryCoreAction(memoryRef, core, addr, lo_size, &lo_val, action);
-                E64MemoryCoreAction(memoryRef, core, page_end, hi_size, &hi_val, action);
+                E64MemoryCoreAction(memoryRef, core, addr, lo_size, &lo_val, actionType);
+                E64MemoryCoreAction(memoryRef, core, page_end, hi_size, &hi_val, actionType);
                 return;
         }
         return;
@@ -567,11 +567,11 @@ rw_fastpath:
 
         UInt8 *mem_ptr = memory->memory + addr;
 
-        switch(action)
+        switch(actionType)
         {
-            case kE64MemoryActionPageDirectory:
-            case kE64MemoryActionExecute:
-            case kE64MemoryActionRead:
+            case kE64MemoryActionTypePageDirectory:
+            case kE64MemoryActionTypeExecute:
+            case kE64MemoryActionTypeRead:
                 switch(size)
                 {
                     case 1:
@@ -603,7 +603,7 @@ rw_fastpath:
                         return;
                 }
                 return;
-            case kE64MemoryActionWrite:
+            case kE64MemoryActionTypeWrite:
                 if(unlikely(memory->ktrr_size > addr))
                 {
                     core->cr_state.crexc.exception = kE64ExceptionKTRRViolation;
@@ -649,7 +649,7 @@ Boolean E64MemoryCoreCopyIn(E64MemoryRef memoryRef,
                             UInt8 *dst,
                             UInt64 addr,
                             size_t len,
-                            kE64MemoryAction action)
+                            E64MemoryActionType actionType)
 {
     E64Memory memory = (E64MemoryRef)memoryRef;
     if(memory == NULL)
@@ -658,7 +658,7 @@ Boolean E64MemoryCoreCopyIn(E64MemoryRef memoryRef,
     }
 
     /* do not allow other actions than rx */
-    assert(action != kE64MemoryActionWrite);
+    assert(actionType != kE64MemoryActionTypeWrite);
 
     if(unlikely((core->cr_state.crexc.exception == kE64ExceptionBadAccess || core->cr_state.crexc.exception == kE64ExceptionKTRRViolation) && !core->in_interrupt))
     {
@@ -682,7 +682,7 @@ Boolean E64MemoryCoreCopyIn(E64MemoryRef memoryRef,
 
         if(paging)
         {
-            if(unlikely(!emex64_mmu_translate(memory, core, addr, action, &paddr)))
+            if(unlikely(!emex64_mmu_translate(memory, core, addr, actionType, &paddr)))
             {
                 core->cr_state.crexc.exception = kE64ExceptionPageFault;
                 return false;
