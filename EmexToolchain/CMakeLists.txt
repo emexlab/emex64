@@ -76,10 +76,11 @@ add_library(EmexToolchain ${LIB_TYPE}
         src/support/hashmap/hashmap.c
 
     # Virtual Machine API
-    src/vm/core.c
+    src/vm/E64MachineOptions.c
     src/vm/E64Machine.c
     src/vm/E64Memory.c
     src/vm/E64MMIO.c
+    src/vm/core.c
 
         ## Instruction Handlers
         src/vm/instruction/core.c

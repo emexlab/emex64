@@ -276,32 +276,3 @@ emex64_8042_t *E64MachineGet8042(E64MachineRef machineRef)
 
     return machine->emex8042;
 }
-
-E64MachineSupport E64MachineSupportGet(void)
-{
-    E64MachineSupport support;
-    #if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || defined(__APPLE__))
-    support.display = true;
-    #else
-    support.display = false;
-    #endif /* EMEX64VM_DEVICE_DISPLAY */
-    return support;
-}
-
-E64MachineOptions E64MachineOptionsGetDefault(void)
-{
-    E64MachineOptions options;
-    #if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || defined(__APPLE__))
-    options.displayOptions.enabled = true;
-    options.keyboardPeripheralMode = kE64PeripheralMode8042;
-    options.mousePeripheralMode = kE64PeripheralMode8042;
-    #else
-    options.displayOptions.enabled = false;
-    options.keyboardPeripheralMode = kE64PeripheralModeOff;
-    options.mousePeripheralMode = kE64PeripheralModeOff;
-    #endif /* EMEX64VM_DEVICE_DISPLAY */
-    options.displayOptions.width = 640;
-    options.displayOptions.height = 480;
-    options.memoryLength = 100 * 1024 * 1024;
-    return options;
-}

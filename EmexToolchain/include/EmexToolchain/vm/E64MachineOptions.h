@@ -50,4 +50,7 @@ typedef struct {
     E64PeripheralMode mousePeripheralMode;
 } E64MachineOptions;
 
+E64MachineSupport E64MachineSupportGet(void);
+E64MachineOptions E64MachineOptionsGetDefault(void);
+
 #endif /* E64MACHINEOPTIONS_H */

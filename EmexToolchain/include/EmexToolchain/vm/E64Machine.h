@@ -62,7 +62,4 @@ emex64_uart_t *E64MachineGetUART(E64MachineRef machineRef);
 emex64_display_t *E64MachineGetDisplay(E64MachineRef machineRef);
 emex64_8042_t *E64MachineGet8042(E64MachineRef machineRef);
 
-E64MachineSupport E64MachineSupportGet(void);
-E64MachineOptions E64MachineOptionsGetDefault(void);
-
 #endif /* E64MACHINE_H */
