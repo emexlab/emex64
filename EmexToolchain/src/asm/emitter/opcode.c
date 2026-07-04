@@ -22,7 +22,7 @@
 #include <EmexToolchain/support/pack.h>
 #include <EmexToolchain/asm/emitter/opcode.h>
 
-kE64Opcode opcode_from_string(const char *name)
+E64Opcode opcode_from_string(const char *name)
 {
     switch(pack_name(name))
     {
@@ -93,7 +93,7 @@ bool opcode_arg_accepts_reg_only(const emex64_opfunc_entry_t *opce,
 }
 
 void assembler_emit_opcode(assembler_invocation_t *inv,
-                           kE64Opcode op)
+                           E64Opcode op)
 {
     vbitwalker_write(inv->out_vbitwalker, op, 8);
 }

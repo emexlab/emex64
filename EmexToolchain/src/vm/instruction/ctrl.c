@@ -26,7 +26,7 @@
 
 static inline uint64_t emex64_branch_pc(uint64_t pc,
                                         uint64_t v,
-                                        kE64ParameterCoding coding)
+                                        E64ParameterCoding coding)
 {
     switch(coding)
     {

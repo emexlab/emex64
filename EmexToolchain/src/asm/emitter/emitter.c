@@ -41,7 +41,7 @@ void assembler_emit_end(assembler_invocation_t *inv)
     vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingEnd, 3);
 }
 
-bool opcode_arg_is_branch_target(kE64Opcode op,
+bool opcode_arg_is_branch_target(E64Opcode op,
                                  uint64_t argno)
 {
     switch(op)
@@ -71,7 +71,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
         return false;
     }
 
-    const kE64Opcode opcode = al->token[0]->instruction_identifier.v;
+    const E64Opcode opcode = al->token[0]->instruction_identifier.v;
     const emex64_opfunc_entry_t *entry = &kE64OpfuncTable[opcode];
 
     uint64_t operand_total = 0;

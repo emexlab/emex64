@@ -112,7 +112,7 @@ typedef enum: uint8_t {
     kE64OpcodeMAX = kE64OpcodeCMOVB,
 
     kE64OpcodeInvalid =  0b11111111,
-} kE64Opcode;
+} E64Opcode;
 
 typedef enum: uint8_t {
     /*
@@ -136,7 +136,7 @@ typedef enum: uint8_t {
      * for dynamic symbol relocation.
      */
     kE64ParameterCodingAddr64 =  0b111
-} kE64ParameterCoding;
+} E64ParameterCoding;
 
 typedef enum: uint8_t {
     /*
@@ -232,7 +232,7 @@ typedef enum: uint8_t {
     kE64RegisterMAX = kE64RegisterRR,
 
     kE64RegisterInvalid =    0b11111111,
-} kE64Register;
+} E64Register;
 
 typedef enum: uint8_t {
     kE64ControlRegisterCR0 = 0b00000,    /* CREL:    elevation control register */
@@ -267,7 +267,7 @@ typedef enum: uint8_t {
     kE64ControlRegisterCR29 = 0b11101,
     kE64ControlRegisterCR30 = 0b11110,
     kE64ControlRegisterCR31 = 0b11111,
-} kE64ControlRegister;
+} E64ControlRegister;
 
 typedef enum: uint8_t {
     kE64FloatingRegisterFR0 = 0b00000,
@@ -303,7 +303,7 @@ typedef enum: uint8_t {
     kE64FloatingRegisterFR30 = 0b11110,
     kE64FloatingRegisterFR31 = 0b11111,
     kE64FloatingRegisterMAX = kE64FloatingRegisterFR31
-} kE64FloatingRegister;
+} E64FloatingRegister;
 
 typedef union {
     uint64_t u64;
@@ -318,7 +318,7 @@ typedef enum: uint8_t {
     kE64ElevationLevelUser =             0b00,
     kE64ElevationLevelKernel =           0b01,
     kE64ElevationLevelSecureMonitor =    0b10    /* used for software kernel secure mechanism like apples PPL */
-} kE64ElevationLevel;
+} E64ElevationLevel;
 
 /*
  * these flags is what the CF register contains of, yk we talked
@@ -336,7 +336,7 @@ typedef enum: uint8_t {
     kE64CompareFlagZ =   0x1,
     kE64CompareFlagL =   0x2,
     kE64CompareFlagG =   0x4
-} kE64CompareFlag;
+} E64CompareFlag;
 
 typedef enum: uint8_t {
     /*
@@ -385,7 +385,7 @@ typedef enum: uint8_t {
      * KTRR exception!?
      */
     kE64ExceptionKTRRViolation =     0b110,
-} kE64Exception;
+} E64Exception;
 
 #define EMEX64_MAX_ARGS 26
 #define EMEX64_MAX_ILEN (1 + EMEX64_MAX_ARGS * 9)
@@ -443,7 +443,7 @@ typedef struct emex64_core {
          * execute. The opcode entry which tells the decoder
          * how to decode the instruction.
          */
-        kE64Opcode opcode;
+        E64Opcode opcode;
         emex64_opfunc_entry_t opce;
 
         /*
@@ -454,7 +454,7 @@ typedef struct emex64_core {
          */
         uint8_t param_cnt;
         uint64_t *param[EMEX64_MAX_ARGS];
-        kE64ParameterCoding param_coding[EMEX64_MAX_ARGS];
+        E64ParameterCoding param_coding[EMEX64_MAX_ARGS];
     } op;
 
     /*
@@ -463,7 +463,7 @@ typedef struct emex64_core {
      */
     struct {
         struct {
-            kE64ElevationLevel level;
+            E64ElevationLevel level;
         } crel;
 
         struct {
@@ -471,7 +471,7 @@ typedef struct emex64_core {
         } crksp;
 
         struct {
-            kE64Exception exception;
+            E64Exception exception;
         } crexc;
 
         /*

@@ -83,10 +83,10 @@ typedef struct assembler_token {
             size_t len;
         } string_literal;
         struct {
-            kE64Register v;
+            E64Register v;
         } register_identifier;
         struct {
-            kE64Opcode v;
+            E64Opcode v;
         } instruction_identifier;
         struct {
             kAssemblerKeyword v;

@@ -23,7 +23,7 @@
 #include <EmexToolchain/support/pack.h>
 #include <EmexToolchain/asm/emitter/register.h>
 
-kE64Register register_from_string(const char *name)
+E64Register register_from_string(const char *name)
 {
     switch(pack_name(name))
     {
@@ -64,7 +64,7 @@ kE64Register register_from_string(const char *name)
 }
 
 void assembler_emit_register(assembler_invocation_t *inv,
-                             kE64Register reg)
+                             E64Register reg)
 {
     assert(reg <= kE64RegisterMAX);
 
