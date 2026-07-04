@@ -24,8 +24,8 @@
 #include <EmexToolchain/vm/E64Machine.h>
 #include <stdio.h>
 
-static inline uint64_t emex64_branch_pc(uint64_t pc,
-                                        uint64_t v,
+static inline UInt64 emex64_branch_pc(UInt64 pc,
+                                        UInt64 v,
                                         E64ParameterCoding coding)
 {
     switch(coding)
@@ -148,8 +148,8 @@ void emex64_op_blw(emex64_core_t *core)
     emex64_instr_termcond(core->op.param_cnt < 1);
 
     /* backup all parameters from pointer to not malform double passed registers for example */
-    uint64_t param_imm[32] = {};
-    for(uint8_t i = 0; i < core->op.param_cnt; i++)
+    UInt64 param_imm[32] = {};
+    for(UInt8 i = 0; i < core->op.param_cnt; i++)
     {
         param_imm[i] = *(core->op.param[i]);
     }
@@ -187,7 +187,7 @@ void emex64_op_blw(emex64_core_t *core)
     emex64_push_il(core, core->rl[kE64RegisterR25]);
 
     /* writing parameters */
-    for(uint8_t i = 1; i < core->op.param_cnt && i < (kE64RegisterR25 - 1); i++)
+    for(UInt8 i = 1; i < core->op.param_cnt && i < (kE64RegisterR25 - 1); i++)
     {
         core->rl[(kE64RegisterR0 - 1) + i] = param_imm[i];
     }
@@ -280,7 +280,7 @@ void emex64_op_iret(emex64_core_t *core)
     core->rl[kE64RegisterFPC] = emex64_pop_il(core);
     core->rl[kE64RegisterCF] = emex64_pop_il(core);
     core->rl[kE64RegisterFP] = emex64_pop_il(core);
-    uint64_t oldsp = emex64_pop_il(core);
+    UInt64 oldsp = emex64_pop_il(core);
     core->rl[kE64RegisterPC] = emex64_pop_il(core);
     core->cr_state.crel.level = emex64_pop_il(core);
     core->op.ilen = 0;

@@ -37,7 +37,7 @@
  *       linker relaxation.
  */
 
-static bool obj_register_symbols(linker_invocation_t *inv,
+static Boolean obj_register_symbols(linker_invocation_t *inv,
                                  linker_object_t *o)
 {
     if(o->idx_symtab < 0)
@@ -53,7 +53,7 @@ static bool obj_register_symbols(linker_invocation_t *inv,
     for(size_t i = 0; i < nsyms; i++)
     {
         ELF64_Sym *sym = &syms[i];
-        uint8_t bind = sym->st_info >> 4;
+        UInt8 bind = sym->st_info >> 4;
 
         if(bind != kELFSymbolTableBindingGlobal)
         {
@@ -74,7 +74,7 @@ static bool obj_register_symbols(linker_invocation_t *inv,
             continue;
         }
 
-        uint64_t addr = 0;
+        UInt64 addr = 0;
 
         if(sym->st_shndx == kELFSectionHeaderNumberAbsolute)
         {
@@ -105,10 +105,10 @@ static bool obj_register_symbols(linker_invocation_t *inv,
     return true;
 }
 
-static uint64_t sym_resolve(linker_invocation_t *inv,
+static UInt64 sym_resolve(linker_invocation_t *inv,
                             const linker_object_t *o,
-                            uint32_t sym_idx,
-                            bool *success)
+                            UInt32 sym_idx,
+                            Boolean *success)
 {
     *success = true;
 
@@ -179,7 +179,7 @@ static uint64_t sym_resolve(linker_invocation_t *inv,
     return 0;
 }
 
-static bool obj_apply_relocs(linker_invocation_t *inv,
+static Boolean obj_apply_relocs(linker_invocation_t *inv,
                              const linker_object_t *o,
                              vbitwalker_t *vb)
 {
@@ -191,9 +191,9 @@ static bool obj_apply_relocs(linker_invocation_t *inv,
 
         for(size_t i = 0; i < cnt; i++)
         {
-            uint32_t type = (uint32_t)ELF32_R_TYPE(rela[i].r_info);
-            uint32_t sym_idx = (uint32_t)ELF32_R_SYM(rela[i].r_info);
-            uint64_t offset = rela[i].r_offset;
+            UInt32 type = (UInt32)ELF32_R_TYPE(rela[i].r_info);
+            UInt32 sym_idx = (UInt32)ELF32_R_SYM(rela[i].r_info);
+            UInt64 offset = rela[i].r_offset;
             int64_t  addend = rela[i].r_addend;
 
             if(type != R_EMEX64_ABS64)
@@ -202,14 +202,14 @@ static bool obj_apply_relocs(linker_invocation_t *inv,
                 return false;
             }
 
-            bool success = false;
-            uint64_t sym_addr = sym_resolve(inv, o, sym_idx, &success);
+            Boolean success = false;
+            UInt64 sym_addr = sym_resolve(inv, o, sym_idx, &success);
             if(!success)
             {
                 /* error printed by callee */
                 return false;
             }
-            uint64_t value = sym_addr + (uint64_t)addend;
+            UInt64 value = sym_addr + (UInt64)addend;
 
             vbitwalker_seek(vb, o->base_text + offset, 0);
             vbitwalker_write(vb, value, 64);
@@ -224,9 +224,9 @@ static bool obj_apply_relocs(linker_invocation_t *inv,
 
         for(size_t i = 0; i < cnt; i++)
         {
-            uint32_t type = (uint32_t)ELF32_R_TYPE(rela[i].r_info);
-            uint32_t sym_idx = (uint32_t)ELF32_R_SYM(rela[i].r_info);
-            uint64_t offset = rela[i].r_offset;
+            UInt32 type = (UInt32)ELF32_R_TYPE(rela[i].r_info);
+            UInt32 sym_idx = (UInt32)ELF32_R_SYM(rela[i].r_info);
+            UInt64 offset = rela[i].r_offset;
             int64_t addend = rela[i].r_addend;
 
             if(type != R_EMEX64_ABS64)
@@ -235,14 +235,14 @@ static bool obj_apply_relocs(linker_invocation_t *inv,
                 return false;
             }
 
-            bool success = false;
-            uint64_t sym_addr = sym_resolve(inv, o, sym_idx, &success);
+            Boolean success = false;
+            UInt64 sym_addr = sym_resolve(inv, o, sym_idx, &success);
             if(!success)
             {
                 /* error printed by callee */
                 return false;
             }
-            uint64_t value = sym_addr + (uint64_t)addend;
+            UInt64 value = sym_addr + (UInt64)addend;
 
             vbitwalker_seek(vb, o->base_data + offset, 0);
             vbitwalker_write(vb, value, 64);
@@ -255,12 +255,12 @@ static bool obj_apply_relocs(linker_invocation_t *inv,
 /* barely ported end */
 
 typedef struct {
-    uint8_t *data;
+    UInt8 *data;
     size_t len;
     size_t cap;
 } buf_t;
 
-static bool buf_reserve(buf_t *b, size_t extra)
+static Boolean buf_reserve(buf_t *b, size_t extra)
 {
     if(b->len + extra <= b->cap)
     {
@@ -271,7 +271,7 @@ static bool buf_reserve(buf_t *b, size_t extra)
     {
         ncap *= 2;
     }
-    uint8_t *nd = realloc(b->data, ncap);
+    UInt8 *nd = realloc(b->data, ncap);
     if(!nd)
     {
         return false;
@@ -281,7 +281,7 @@ static bool buf_reserve(buf_t *b, size_t extra)
     return true;
 }
 
-static bool buf_append(buf_t *b, const void *src, size_t n)
+static Boolean buf_append(buf_t *b, const void *src, size_t n)
 {
     if(!buf_reserve(b, n))
     {
@@ -292,15 +292,15 @@ static bool buf_append(buf_t *b, const void *src, size_t n)
     return true;
 }
 
-static bool buf_append_u8(buf_t *b, uint8_t v)
+static Boolean buf_append_u8(buf_t *b, UInt8 v)
 {
     return buf_append(b, &v, 1);
 }
 
-static bool __attribute__((unused)) buf_append_u64(buf_t *b, uint64_t v)
+static Boolean __attribute__((unused)) buf_append_u64(buf_t *b, UInt64 v)
 {
     /* little-endian */
-    uint8_t tmp[8];
+    UInt8 tmp[8];
     for(int i = 0; i < 8; i++)
     {
         tmp[i] = v & 0xff; v >>= 8;
@@ -321,7 +321,7 @@ static size_t strtab_intern(buf_t *strtab, const char *s)
     return off;
 }
 
-static bool __linker_link_relocatable(linker_invocation_t *inv,
+static Boolean __linker_link_relocatable(linker_invocation_t *inv,
                                       emex_file_t *output)
 {
     buf_t text = {0}, data = {0};
@@ -339,7 +339,7 @@ static bool __linker_link_relocatable(linker_invocation_t *inv,
 
     /* making sure the file entry maztches the new output path */
     ELF64_Sym file_sym = {
-        .st_name = (uint32_t)strtab_intern(&strtab_buf, file_name),
+        .st_name = (UInt32)strtab_intern(&strtab_buf, file_name),
         .st_info = ELF_SYM_INFO(kELFSymbolTableBindingLocal, kELFSymbolTableTypeFile),
         .st_other = kELFSymbolVisibilityDefault,
         .st_shndx = kELFSectionHeaderNumberAbsolute,
@@ -356,11 +356,11 @@ static bool __linker_link_relocatable(linker_invocation_t *inv,
     buf_append(&sym_buf, &sec_data, sizeof(sec_data));
     buf_append(&sym_buf, &sec_bss, sizeof(sec_bss));
 
-    uint32_t first_global = (uint32_t)(sym_buf.len / sizeof(ELF64_Sym));
+    UInt32 first_global = (UInt32)(sym_buf.len / sizeof(ELF64_Sym));
 
-    const uint64_t text_region_base = (uint64_t)BOOT_HEADER_SIZE;
-    const uint64_t data_region_base = inv->out_text_off;
-    const uint64_t bss_region_base = inv->out_data_off;
+    const UInt64 text_region_base = (UInt64)BOOT_HEADER_SIZE;
+    const UInt64 data_region_base = inv->out_text_off;
+    const UInt64 bss_region_base = inv->out_data_off;
 
     /* copy all data and text sections */
     for(linker_object_t *o = inv->obj; o; o = o->next)
@@ -393,7 +393,7 @@ static bool __linker_link_relocatable(linker_invocation_t *inv,
         for(size_t i = 0; i < nsyms; i++)
         {
             ELF64_Sym *sym = &syms[i];
-            uint8_t bind = sym->st_info >> 4;
+            UInt8 bind = sym->st_info >> 4;
 
             if(bind != kELFSymbolTableBindingGlobal)
             {
@@ -417,7 +417,7 @@ static bool __linker_link_relocatable(linker_invocation_t *inv,
             /* check if we already have this symbol */
             size_t n = sym_buf.len / sizeof(ELF64_Sym);
             ELF64_Sym *out_syms = (ELF64_Sym *)sym_buf.data;
-            bool already_exists = false;
+            Boolean already_exists = false;
             for(size_t s = first_global; s < n; s++)
             {
                 if(strcmp((char*)(strtab_buf.data + out_syms[s].st_name), name) == 0)
@@ -431,8 +431,8 @@ static bool __linker_link_relocatable(linker_invocation_t *inv,
                 continue;
             }
 
-            uint64_t value = 0;
-            uint16_t shndx = kELFSectionHeaderNumberAbsolute;
+            UInt64 value = 0;
+            UInt16 shndx = kELFSectionHeaderNumberAbsolute;
 
             if((int32_t)sym->st_shndx == o->idx_text)
             {
@@ -456,7 +456,7 @@ static bool __linker_link_relocatable(linker_invocation_t *inv,
             }
 
             ELF64_Sym new_sym = {
-                .st_name = (uint32_t)strtab_intern(&strtab_buf, name),
+                .st_name = (UInt32)strtab_intern(&strtab_buf, name),
                 .st_info = ELF_SYM_INFO(kELFSymbolTableBindingGlobal, kELFSymbolTableTypeNoType),
                 .st_other = kELFSymbolVisibilityDefault,
                 .st_shndx = shndx,
@@ -478,15 +478,15 @@ static bool __linker_link_relocatable(linker_invocation_t *inv,
                 size_t cnt = rs->sh_size / sizeof(ELF64_Rela); \
                 for(size_t i = 0; i < cnt; i++) \
                 { \
-                    uint32_t type = ELF32_R_TYPE(rela[i].r_info); \
-                    uint32_t in_sym = ELF32_R_SYM(rela[i].r_info); \
+                    UInt32 type = ELF32_R_TYPE(rela[i].r_info); \
+                    UInt32 in_sym = ELF32_R_SYM(rela[i].r_info); \
                     int64_t addend = rela[i].r_addend; \
                     if(type != R_EMEX64_ABS64) \
                     { \
                         diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "unsupported relocation type %u", type); \
                         continue; \
                     } \
-                    uint64_t offset = ((base_addr) + rela[i].r_offset) - (region_base); \
+                    UInt64 offset = ((base_addr) + rela[i].r_offset) - (region_base); \
                     \
                     \
                     const char *name = NULL; \
@@ -507,25 +507,25 @@ static bool __linker_link_relocatable(linker_invocation_t *inv,
                     /* Find or create the matching output symbol (by name) */ \
                     size_t n = sym_buf.len / sizeof(ELF64_Sym); \
                     ELF64_Sym *out_syms = (ELF64_Sym *)sym_buf.data; \
-                    uint32_t out_sym_idx = 0; \
+                    UInt32 out_sym_idx = 0; \
                     for(size_t s = first_global; s < n; s++) \
                     { \
                         if(strcmp((char*)(strtab_buf.data + out_syms[s].st_name), name) == 0) \
                         { \
-                            out_sym_idx = (uint32_t)s; break; \
+                            out_sym_idx = (UInt32)s; break; \
                         } \
                     } \
                     if(out_sym_idx == 0) \
                     { \
                         ELF64_Sym usym = { \
-                            .st_name = (uint32_t)strtab_intern(&strtab_buf, name), \
+                            .st_name = (UInt32)strtab_intern(&strtab_buf, name), \
                             .st_info = ELF_SYM_INFO(kELFSymbolTableBindingGlobal, kELFSymbolTableTypeNoType), \
                             .st_other = kELFSymbolVisibilityDefault, \
                             .st_shndx = kELFSectionHeaderNumberUndefined, \
                             .st_value = 0, \
                             .st_size = 0, \
                         }; \
-                        out_sym_idx = (uint32_t)(sym_buf.len / sizeof(ELF64_Sym)); \
+                        out_sym_idx = (UInt32)(sym_buf.len / sizeof(ELF64_Sym)); \
                         buf_append(&sym_buf, &usym, sizeof(usym)); \
                     } \
                     \
@@ -546,14 +546,14 @@ static bool __linker_link_relocatable(linker_invocation_t *inv,
     }
 
     /* build shstrtab */
-    uint32_t shname_text = (uint32_t)strtab_intern(&shstrtab_buf, ".text");
-    uint32_t shname_data = (uint32_t)strtab_intern(&shstrtab_buf, ".data");
-    uint32_t shname_bss = (uint32_t)strtab_intern(&shstrtab_buf, ".bss");
-    uint32_t shname_rela_text = (uint32_t)strtab_intern(&shstrtab_buf, ".rela.text");
-    uint32_t shname_rela_data = (uint32_t)strtab_intern(&shstrtab_buf, ".rela.data");
-    uint32_t shname_symtab = (uint32_t)strtab_intern(&shstrtab_buf, ".symtab");
-    uint32_t shname_strtab = (uint32_t)strtab_intern(&shstrtab_buf, ".strtab");
-    uint32_t shname_shstrtab  = (uint32_t)strtab_intern(&shstrtab_buf, ".shstrtab");
+    UInt32 shname_text = (UInt32)strtab_intern(&shstrtab_buf, ".text");
+    UInt32 shname_data = (UInt32)strtab_intern(&shstrtab_buf, ".data");
+    UInt32 shname_bss = (UInt32)strtab_intern(&shstrtab_buf, ".bss");
+    UInt32 shname_rela_text = (UInt32)strtab_intern(&shstrtab_buf, ".rela.text");
+    UInt32 shname_rela_data = (UInt32)strtab_intern(&shstrtab_buf, ".rela.data");
+    UInt32 shname_symtab = (UInt32)strtab_intern(&shstrtab_buf, ".symtab");
+    UInt32 shname_strtab = (UInt32)strtab_intern(&shstrtab_buf, ".strtab");
+    UInt32 shname_shstrtab  = (UInt32)strtab_intern(&shstrtab_buf, ".shstrtab");
 
     /* calculate file layout */
     size_t ehdr_size = sizeof(ELF64_Ehdr);
@@ -689,7 +689,7 @@ static bool __linker_link_relocatable(linker_invocation_t *inv,
 }
 
 static void emit_boot_header(vbitwalker_t *vb,
-                             uint64_t entry)
+                             UInt64 entry)
 {
     vbitwalker_seek(vb, 0, 0);
     vbitwalker_write(vb, kE64OpcodeB, 8);
@@ -698,7 +698,7 @@ static void emit_boot_header(vbitwalker_t *vb,
     vbitwalker_write(vb, entry, 64);
 }
 
-static bool __linker_link_firmware(linker_invocation_t *inv,
+static Boolean __linker_link_firmware(linker_invocation_t *inv,
                                    emex_file_t *output)
 {
     vbitwalker_t *vb = emex_file_dup_vbitwalker(output, BW_LITTLE_ENDIAN);
@@ -757,14 +757,14 @@ static bool __linker_link_firmware(linker_invocation_t *inv,
         return false;
     }
 
-    uint64_t entry_addr = gsym->addr;
+    UInt64 entry_addr = gsym->addr;
     emit_boot_header(vb, entry_addr);
 
     vbitwalker_sync(vb);
     vbitwalker_dealloc(vb);
 
-    uint64_t total_text = inv->out_text_off - BOOT_HEADER_SIZE;
-    uint64_t total_data = inv->out_data_off - inv->out_text_off;
+    UInt64 total_text = inv->out_text_off - BOOT_HEADER_SIZE;
+    UInt64 total_data = inv->out_data_off - inv->out_text_off;
 
     if(inv->options.verbose)
     {
@@ -782,12 +782,12 @@ static bool __linker_link_firmware(linker_invocation_t *inv,
     return true;
 }
 
-bool linker_link(linker_options_t options,
+Boolean linker_link(linker_options_t options,
                  linker_diagnostic_consumer_t *diagnostic_consumer,
                  emex_file_t **input_file,
-                 uint64_t input_file_cnt,
+                 UInt64 input_file_cnt,
                  emex_file_t **linker_script_file,
-                 uint64_t linker_script_file_cnt,
+                 UInt64 linker_script_file_cnt,
                  emex_file_t *output)
 {
     linker_invocation_t *inv = linker_invocation_alloc(options, diagnostic_consumer);
@@ -796,7 +796,7 @@ bool linker_link(linker_options_t options,
         return false;
     }
 
-    for(uint64_t i = 0; i < input_file_cnt; i++)
+    for(UInt64 i = 0; i < input_file_cnt; i++)
     {
         if(!linker_load_object(inv, input_file[i]))
         {
@@ -807,7 +807,7 @@ bool linker_link(linker_options_t options,
     }
     linker_layout(inv);
 
-    for(uint64_t i = 0; i < linker_script_file_cnt; i++)
+    for(UInt64 i = 0; i < linker_script_file_cnt; i++)
     {
         if(!linker_script_parse(inv, linker_script_file[i]))
         {
@@ -834,7 +834,7 @@ bool linker_link(linker_options_t options,
         obj = obj->next;
     }
 
-    bool success = false;
+    Boolean success = false;
     switch(options.emit_mode)
     {
         case kEmitModeRelocatableObject:

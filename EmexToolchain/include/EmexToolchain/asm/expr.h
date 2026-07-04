@@ -28,9 +28,9 @@
 
 typedef struct {
     assembler_token_t **tok;
-    uint64_t count;
-    uint64_t pos;
-    bool error;
+    UInt64 count;
+    UInt64 pos;
+    Boolean error;
     assembler_token_t *blame;
     const char *why;
 } assembler_expr_t;
@@ -39,6 +39,6 @@ assembler_token_t *expr_peek(assembler_expr_t *e);
 int64_t expr_primary(assembler_expr_t *e);
 int64_t expr_term(assembler_expr_t *e);
 int64_t expr_addsub(assembler_expr_t *e);
-bool assembler_eval_const(assembler_token_t **tok, uint64_t count, int64_t *out);
+Boolean assembler_eval_const(assembler_token_t **tok, UInt64 count, int64_t *out);
 
 #endif /* EMEX64ASM_EXPR_H */

@@ -97,13 +97,13 @@ size_t VpageObjGetSize(VpageObjRef vpageObjRef)
     return vpage_get_size(obj->root);
 }
 
-bool VpageObjExtendPage(VpageObjRef vpageObjRef)
+Boolean VpageObjExtendPage(VpageObjRef vpageObjRef)
 {
     VpageObj obj = (VpageObj)vpageObjRef;
     return vpage_gib_page(obj->root);
 }
 
-bool VpageObjMergePage(VpageObjRef vpageObjRef)
+Boolean VpageObjMergePage(VpageObjRef vpageObjRef)
 {
     VpageObj obj = (VpageObj)vpageObjRef;
     return vpage_bind_page(obj->root);
@@ -111,7 +111,7 @@ bool VpageObjMergePage(VpageObjRef vpageObjRef)
 
 size_t VpageObjWrite(VpageObjRef vpageObjRef,
                      size_t off,
-                     const uint8_t *b,
+                     const UInt8 *b,
                      size_t len)
 {
     VpageObj obj = (VpageObj)vpageObjRef;
@@ -120,7 +120,7 @@ size_t VpageObjWrite(VpageObjRef vpageObjRef,
 
 size_t VpageObjRead(VpageObjRef vpageObjRef,
                     size_t off,
-                    uint8_t *b,
+                    UInt8 *b,
                     size_t len)
 {
     VpageObj obj = (VpageObj)vpageObjRef;

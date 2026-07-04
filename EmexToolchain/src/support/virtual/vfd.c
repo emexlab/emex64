@@ -235,7 +235,7 @@ int vfd_truncate(vfd_t *d, off_t length)
 
             if(newlen < oldlen)
             {
-                static const uint8_t zeros[EMEX64_PAGE_SIZE] = {0};
+                static const UInt8 zeros[EMEX64_PAGE_SIZE] = {0};
                 size_t pos = newlen;
                 while(pos < oldlen)
                 {
@@ -405,11 +405,11 @@ int vfd_puts(vfd_t *d, const char *s)
 }
  
 static inline int vfd_putnbr_base_unsigned(vfd_t *d,
-                                           uint64_t n,
+                                           UInt64 n,
                                            const char *base)
 {
     int count = 0;
-    uint64_t radix = 0;
+    UInt64 radix = 0;
  
     while(base[radix])
     {
@@ -435,7 +435,7 @@ static inline int vfd_putnbr_signed(vfd_t *d, long n)
         n = -n;
     }
  
-    count += vfd_putnbr_base_unsigned(d, (uint64_t)n, "0123456789");
+    count += vfd_putnbr_base_unsigned(d, (UInt64)n, "0123456789");
  
     return count;
 }
@@ -532,7 +532,7 @@ void vfdprintf(vfd_t *d, char *fmt, ...)
                                     break;
                                 case 'u':
                                     i += 2;
-                                    vfd_putnbr_base_unsigned(d, va_arg(args, uint64_t), "0123456789");
+                                    vfd_putnbr_base_unsigned(d, va_arg(args, UInt64), "0123456789");
                                     break;
                                 default:
                                     break;

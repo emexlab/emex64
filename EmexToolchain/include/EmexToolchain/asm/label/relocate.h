@@ -29,12 +29,12 @@ typedef struct assembler_invocation assembler_invocation_t;
 
 typedef struct reloc_table_entry {
     char *name;                             /* resolved label name */
-    bool local;                             /* must be resolved at assemble time */
+    Boolean local;                             /* must be resolved at assemble time */
     size_t byte_pos;                        /* position */
     assembler_token_t *at_link;        /* link to the originator of the entry */
     struct reloc_table_entry *next;         /* pointer to next entry */
 } reloc_table_entry_t;
 
-bool assembler_label_relocate_append(assembler_invocation_t *inv, char *label_str, bool local, assembler_token_t *at_link);
+Boolean assembler_label_relocate_append(assembler_invocation_t *inv, char *label_str, Boolean local, assembler_token_t *at_link);
 
 #endif /* EMEX64ASM_LABEL_RELOCATE_H */

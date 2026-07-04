@@ -64,7 +64,7 @@ static void *uart_input_thread(void *arg)
 {
     emex64_uart_t *u = (emex64_uart_t *)arg;
 
-    uint8_t ch;
+    UInt8 ch;
     
     while(atomic_load(&u->running)) 
     {
@@ -98,7 +98,7 @@ static void *uart_input_thread(void *arg)
         
         pthread_mutex_lock(&u->mutex);
         
-        uint32_t next = (u->rx_tail + 1) % UART_BUF_SIZE;
+        UInt32 next = (u->rx_tail + 1) % UART_BUF_SIZE;
 
         if(next == u->rx_head)
         {
@@ -163,7 +163,7 @@ emex64_uart_t *emex64_uart_alloc(E64MachineRef machine)
         return NULL;
     }
 
-    bool success = E64MMIOBusRegisterRegion(machine->mmio_bus, UARTRegion);
+    Boolean success = E64MMIOBusRegisterRegion(machine->mmio_bus, UARTRegion);
     EFRelease(UARTRegion);
     if(!success)
     {
@@ -189,12 +189,12 @@ void emex64_uart_dealloc(emex64_uart_t *u)
     free(u);
 }
 
-uint64_t emex64_uart_read(emex64_core_t *core, void *device, uint64_t offset, int size)
+UInt64 emex64_uart_read(emex64_core_t *core, void *device, UInt64 offset, int size)
 {
     emex64_uart_t *u = (emex64_uart_t *)device;
 
     pthread_mutex_lock(&u->mutex);
-    uint64_t result = 0;
+    UInt64 result = 0;
 
     switch(offset)
     {
@@ -225,7 +225,7 @@ uint64_t emex64_uart_read(emex64_core_t *core, void *device, uint64_t offset, in
     return result;
 }
 
-void emex64_uart_write(emex64_core_t *core, void *device, uint64_t offset, uint64_t value, int size)
+void emex64_uart_write(emex64_core_t *core, void *device, UInt64 offset, UInt64 value, int size)
 {
     emex64_uart_t *u = (emex64_uart_t *)device;
 
@@ -240,7 +240,7 @@ void emex64_uart_write(emex64_core_t *core, void *device, uint64_t offset, uint6
             uart_update_irq(u);
             break;
         case UART_REG_CONTROL:
-            u->control = (uint32_t)value;
+            u->control = (UInt32)value;
             if(value & UART_CTRL_RESET)
             {
                 u->rx_head = u->rx_tail = 0;

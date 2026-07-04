@@ -36,10 +36,10 @@
 
 typedef struct E64Memory {
     EFObject header;
-    uint8_t *memory;
-    uint64_t memory_size;
-    uint64_t ktrr_size;
-    bool ktrr_locked;
+    UInt8 *memory;
+    UInt64 memory_size;
+    UInt64 ktrr_size;
+    Boolean ktrr_locked;
 } *E64Memory;
 
 static void __E64MemoryDeinit(E64MemoryRef memoryRef)
@@ -61,8 +61,8 @@ static EFClass E64MemoryClass = {
 };
 
 typedef struct emex64_mmu_entry_lookup {
-    bool fail;
-    uint64_t *pte;
+    Boolean fail;
+    UInt64 *pte;
 } emex64_mmu_entry_lookup_t;
 
 static void E64MemoryRegisterClass(void)
@@ -78,7 +78,7 @@ EFTypeID E64MemoryGetTypeID(void)
 }
 
 E64MemoryRef E64MemoryCreate(EFAllocatorRef allocatorRef,
-                                   uint64_t size)
+                                   UInt64 size)
 {
     E64Memory memory = EFObjectAlloc(allocatorRef, E64MemoryGetTypeID(), sizeof(struct E64Memory));
     if(memory == NULL)
@@ -109,7 +109,7 @@ void E64MemoryLockKTRR(E64MemoryRef memoryRef)
     memory->ktrr_locked = true;
 }
 
-bool E64MemoryIsKTRRLocked(E64MemoryRef memoryRef)
+Boolean E64MemoryIsKTRRLocked(E64MemoryRef memoryRef)
 {
     E64Memory memory = (E64MemoryRef)memoryRef;
     if(memory == NULL)
@@ -120,7 +120,7 @@ bool E64MemoryIsKTRRLocked(E64MemoryRef memoryRef)
     return memory->ktrr_locked;
 }
 
-uint64_t E64MemoryGetKTRRSize(E64MemoryRef memoryRef)
+UInt64 E64MemoryGetKTRRSize(E64MemoryRef memoryRef)
 {
     E64Memory memory = (E64MemoryRef)memoryRef;
     if(memory == NULL)
@@ -131,8 +131,8 @@ uint64_t E64MemoryGetKTRRSize(E64MemoryRef memoryRef)
     return memory->ktrr_size;
 }
 
-bool E64MemorySetKTRRSize(E64MemoryRef memoryRef,
-                             uint64_t size)
+Boolean E64MemorySetKTRRSize(E64MemoryRef memoryRef,
+                             UInt64 size)
 {
     E64Memory memory = (E64MemoryRef)memoryRef;
     if(memory == NULL || memory->ktrr_locked)
@@ -144,7 +144,7 @@ bool E64MemorySetKTRRSize(E64MemoryRef memoryRef,
     return true;
 }
 
-uint64_t E64MemoryGetSize(E64MemoryRef memoryRef)
+UInt64 E64MemoryGetSize(E64MemoryRef memoryRef)
 {
     E64Memory memory = (E64MemoryRef)memoryRef;
     if(memory == NULL)
@@ -155,9 +155,9 @@ uint64_t E64MemoryGetSize(E64MemoryRef memoryRef)
     return memory->memory_size;
 }
 
-bool E64MemoryAccessIsWithinBounds(E64MemoryRef memoryRef,
-                                      uint64_t address,
-                                      uint64_t size)
+Boolean E64MemoryAccessIsWithinBounds(E64MemoryRef memoryRef,
+                                      UInt64 address,
+                                      UInt64 size)
 {
     E64Memory memory = (E64MemoryRef)memoryRef;
     if(memory == NULL)
@@ -165,7 +165,7 @@ bool E64MemoryAccessIsWithinBounds(E64MemoryRef memoryRef,
         return false;
     }
 
-    uint64_t addr_end = address + size;
+    UInt64 addr_end = address + size;
     if(address > addr_end || memory->memory_size < addr_end)
     {
         return false;
@@ -175,8 +175,8 @@ bool E64MemoryAccessIsWithinBounds(E64MemoryRef memoryRef,
 
 static inline emex64_mmu_entry_lookup_t emex64_mmu_lookup_pte(E64Memory memory,
                                                               emex64_core_t *core,
-                                                              uint64_t pt_addr,
-                                                              uint16_t idx)
+                                                              UInt64 pt_addr,
+                                                              UInt16 idx)
 {
     /*
      * bounds check pt_addr and check if it
@@ -189,8 +189,8 @@ static inline emex64_mmu_entry_lookup_t emex64_mmu_lookup_pte(E64Memory memory,
     }
 
     /* now access the table and check its entry too */
-    uint64_t *pt = (uint64_t*)&memory->memory[pt_addr];
-    uint64_t *pte = &pt[idx];
+    UInt64 *pt = (UInt64*)&memory->memory[pt_addr];
+    UInt64 *pte = &pt[idx];
 
     if(unlikely(!((*pte & EMEX64_MEMORY_MMU_MASK_FLAGS) & kE64MMUPTPresent)))
     {
@@ -200,12 +200,12 @@ static inline emex64_mmu_entry_lookup_t emex64_mmu_lookup_pte(E64Memory memory,
     return (emex64_mmu_entry_lookup_t){ .fail = false, .pte = pte };
 }
 
-static inline bool emex64_mmu_access_pxd(E64Memory memory,
+static inline Boolean emex64_mmu_access_pxd(E64Memory memory,
                                          emex64_core_t *core,
-                                         uint64_t pt_addr,
-                                         uint16_t pxd_idx,
+                                         UInt64 pt_addr,
+                                         UInt16 pxd_idx,
                                          kE64MemoryAction acc,
-                                         uint64_t *oaddr)
+                                         UInt64 *oaddr)
 {
     emex64_mmu_entry_lookup_t lookup = emex64_mmu_lookup_pte(memory, core, pt_addr, pxd_idx);
     if(unlikely(lookup.fail))
@@ -213,10 +213,10 @@ static inline bool emex64_mmu_access_pxd(E64Memory memory,
         return false;
     }
 
-    uint64_t mmu_flags = 0;
+    UInt64 mmu_flags = 0;
     if(acc != kE64MemoryActionPageDirectory)
     {
-        uint8_t checkflg = acc;
+        UInt8 checkflg = acc;
 
         /*
          * if CR0 is user then we need to add user
@@ -236,8 +236,8 @@ static inline bool emex64_mmu_access_pxd(E64Memory memory,
         }
     }
 
-    uint64_t pfn = (*(lookup.pte) & EMEX64_MEMORY_MMU_MASK_PFN) >> 8;
-    uint64_t physaddr = EMEX64_PAGE_ROUND_DOWN(pfn << 13);
+    UInt64 pfn = (*(lookup.pte) & EMEX64_MEMORY_MMU_MASK_PFN) >> 8;
+    UInt64 physaddr = EMEX64_PAGE_ROUND_DOWN(pfn << 13);
     if(unlikely(!EMEX64_IN_PHYS_MEMORY(physaddr, EMEX64_PAGE_SIZE, memory->memory, memory->memory_size)))
     {
         return false;
@@ -262,20 +262,20 @@ static inline bool emex64_mmu_access_pxd(E64Memory memory,
     return true;
 }
 
-static inline bool emex64_mmu_translate(E64Memory memory,
+static inline Boolean emex64_mmu_translate(E64Memory memory,
                                         emex64_core_t *core,
-                                        uint64_t vaddr,
+                                        UInt64 vaddr,
                                         kE64MemoryAction action,
-                                        uint64_t *paddr)
+                                        UInt64 *paddr)
 {
     /*
      * getting page global directory from physical frame number
      * stored in the 5th level (yk the control register x3).
      */
-    uint64_t pgd_addr = core->cr_state.crptb.pgd_addr;
+    UInt64 pgd_addr = core->cr_state.crptb.pgd_addr;
 
     /* still unknown page directory addresses */
-    uint64_t pud_addr, pmd_addr, pte_addr, phys_page_base_addr;
+    UInt64 pud_addr, pmd_addr, pte_addr, phys_page_base_addr;
 
     /* now access each table */
     if(!emex64_mmu_access_pxd(memory, core, pgd_addr, ((vaddr >> 43) & 0x3FF), kE64MemoryActionPageDirectory, &pud_addr) ||   /* 10 bits for each level index  */
@@ -291,7 +291,7 @@ static inline bool emex64_mmu_translate(E64Memory memory,
     return true;
 }
 
-bool E64MemoryLoadImage(E64MemoryRef memoryRef,
+Boolean E64MemoryLoadImage(E64MemoryRef memoryRef,
                            emex_file_t *file)
 {
     E64Memory memory = (E64MemoryRef)memoryRef;
@@ -347,9 +347,9 @@ bool E64MemoryLoadImage(E64MemoryRef memoryRef,
     return true;
 }
 
-bool E64MemoryAction(E64MemoryRef memoryRef,
-                        uint64_t addr, size_t size,
-                        uint64_t *value,
+Boolean E64MemoryAction(E64MemoryRef memoryRef,
+                        UInt64 addr, size_t size,
+                        UInt64 *value,
                         kE64MemoryAction action)
 {
     E64Memory memory = (E64MemoryRef)memoryRef;
@@ -368,7 +368,7 @@ bool E64MemoryAction(E64MemoryRef memoryRef,
         return false;
     }
 
-    uint8_t *mem_ptr = memory->memory + addr;
+    UInt8 *mem_ptr = memory->memory + addr;
 
     switch(action)
     {
@@ -378,25 +378,25 @@ bool E64MemoryAction(E64MemoryRef memoryRef,
             switch(size)
             {
                 case 1:
-                    *value = *(uint8_t *)mem_ptr;
+                    *value = *(UInt8 *)mem_ptr;
                     break;
                 case 2:
                 {
-                    uint16_t tmp;
+                    UInt16 tmp;
                     memcpy(&tmp, mem_ptr, 2);
                     *value = TO_HOST16(tmp);
                     break;
                 }
                 case 4:
                 {
-                    uint32_t tmp;
+                    UInt32 tmp;
                     memcpy(&tmp, mem_ptr, 4);
                     *value = TO_HOST32(tmp);
                     break;
                 }
                 case 8:
                 {
-                    uint64_t tmp;
+                    UInt64 tmp;
                     memcpy(&tmp, mem_ptr, 8);
                     *value = TO_HOST64(tmp);
                     break;
@@ -413,25 +413,25 @@ bool E64MemoryAction(E64MemoryRef memoryRef,
             switch(size)
             {
                 case 1:
-                    *(uint8_t *)mem_ptr = (uint8_t)*value;
+                    *(UInt8 *)mem_ptr = (UInt8)*value;
                     break;
                 case 2:
                 {
-                    uint16_t tmp = (uint16_t)*value;
+                    UInt16 tmp = (UInt16)*value;
                     tmp = TO_HOST16(tmp);
                     memcpy(mem_ptr, &tmp, 2);
                     break;
                 }
                 case 4:
                 {
-                    uint32_t tmp = (uint32_t)*value;
+                    UInt32 tmp = (UInt32)*value;
                     tmp = TO_HOST32(tmp);
                     memcpy(mem_ptr, &tmp, 4);
                     break;
                 }
                 case 8:
                 {
-                    uint64_t tmp = (uint64_t)*value;
+                    UInt64 tmp = (UInt64)*value;
                     tmp = TO_HOST64(tmp);
                     memcpy(mem_ptr, &tmp, 8);
                     break;
@@ -447,9 +447,9 @@ bool E64MemoryAction(E64MemoryRef memoryRef,
 
 void E64MemoryCoreAction(E64MemoryRef memoryRef,
                             emex64_core_t *core,
-                            uint64_t addr,
+                            UInt64 addr,
                             size_t size,
-                            uint64_t *value,
+                            UInt64 *value,
                             kE64MemoryAction action)
 {
     E64Memory memory = (E64MemoryRef)memoryRef;
@@ -489,7 +489,7 @@ void E64MemoryCoreAction(E64MemoryRef memoryRef,
         void *device = E64MMIORegionGetDevice(mmio_region);
         if(likely(mmio_region != NULL))
         {
-            uint64_t offset = addr - E64MMIORegionGetBaseAddress(mmio_region);
+            UInt64 offset = addr - E64MMIORegionGetBaseAddress(mmio_region);
             switch(action)
             {
                 case kE64MemoryActionRead:
@@ -528,14 +528,14 @@ void E64MemoryCoreAction(E64MemoryRef memoryRef,
         goto rw_fastpath;
     }
 
-    uint64_t page_end = (addr & ~EMEX64_PAGE_MASK) + EMEX64_PAGE_SIZE;
+    UInt64 page_end = (addr & ~EMEX64_PAGE_MASK) + EMEX64_PAGE_SIZE;
     size_t lo_size = (size_t)(page_end - addr);
 
     if(lo_size < size)
     {
         size_t hi_size = size - lo_size;
-        uint64_t hi_shift = lo_size * 8;
-        uint64_t lo_val, hi_val, lo_mask;
+        UInt64 hi_shift = lo_size * 8;
+        UInt64 lo_val, hi_val, lo_mask;
 
         switch(action)
         {
@@ -565,7 +565,7 @@ rw_fastpath:
             return;
         }
 
-        uint8_t *mem_ptr = memory->memory + addr;
+        UInt8 *mem_ptr = memory->memory + addr;
 
         switch(action)
         {
@@ -575,25 +575,25 @@ rw_fastpath:
                 switch(size)
                 {
                     case 1:
-                        *value = *(uint8_t *)mem_ptr;
+                        *value = *(UInt8 *)mem_ptr;
                         break;
                     case 2:
                     {
-                        uint16_t tmp;
+                        UInt16 tmp;
                         memcpy(&tmp, mem_ptr, 2);
                         *value = TO_HOST16(tmp);
                         break;
                     }
                     case 4:
                     {
-                        uint32_t tmp;
+                        UInt32 tmp;
                         memcpy(&tmp, mem_ptr, 4);
                         *value = TO_HOST32(tmp);
                         break;
                     }
                     case 8:
                     {
-                        uint64_t tmp;
+                        UInt64 tmp;
                         memcpy(&tmp, mem_ptr, 8);
                         *value = TO_HOST64(tmp);
                         break;
@@ -612,25 +612,25 @@ rw_fastpath:
                 switch(size)
                 {
                     case 1:
-                        *(uint8_t *)mem_ptr = (uint8_t)*value;
+                        *(UInt8 *)mem_ptr = (UInt8)*value;
                         break;
                     case 2:
                     {
-                        uint16_t tmp = (uint16_t)*value;
+                        UInt16 tmp = (UInt16)*value;
                         tmp = TO_HOST16(tmp);
                         memcpy(mem_ptr, &tmp, 2);
                         break;
                     }
                     case 4:
                     {
-                        uint32_t tmp = (uint32_t)*value;
+                        UInt32 tmp = (UInt32)*value;
                         tmp = TO_HOST32(tmp);
                         memcpy(mem_ptr, &tmp, 4);
                         break;
                     }
                     case 8:
                     {
-                        uint64_t tmp = (uint64_t)*value;
+                        UInt64 tmp = (UInt64)*value;
                         tmp = TO_HOST64(tmp);
                         memcpy(mem_ptr, &tmp, 8);
                         break;
@@ -644,10 +644,10 @@ rw_fastpath:
     }
 }
 
-bool E64MemoryCoreCopyIn(E64MemoryRef memoryRef,
+Boolean E64MemoryCoreCopyIn(E64MemoryRef memoryRef,
                             emex64_core_t *core,
-                            uint8_t *dst,
-                            uint64_t addr,
+                            UInt8 *dst,
+                            UInt64 addr,
                             size_t len,
                             kE64MemoryAction action)
 {
@@ -672,12 +672,12 @@ bool E64MemoryCoreCopyIn(E64MemoryRef memoryRef,
         return false;
     }
 
-    bool paging = core->cr_state.crptb.enabled && !core->in_interrupt;
+    Boolean paging = core->cr_state.crptb.enabled && !core->in_interrupt;
 
     /* walking the MMU once per page */
     while(len > 0)
     {
-        uint64_t paddr = addr;
+        UInt64 paddr = addr;
         size_t chunk = len;
 
         if(paging)

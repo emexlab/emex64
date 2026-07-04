@@ -24,12 +24,12 @@
 #include <EmexToolchain/vm/device/board/controller/power.h>
 #include <EmexToolchain/vm/E64Machine.h>
 
-uint64_t emex64_platform_read(emex64_core_t *core, void *device, uint64_t offset, int size)
+UInt64 emex64_platform_read(emex64_core_t *core, void *device, UInt64 offset, int size)
 {
     return 1;
 }
 
-void emex64_platform_write(emex64_core_t *core, void *device, uint64_t offset, uint64_t value, int size)
+void emex64_platform_write(emex64_core_t *core, void *device, UInt64 offset, UInt64 value, int size)
 {
     if(value == 0)
     {

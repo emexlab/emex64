@@ -74,10 +74,10 @@ void assembler_invocation_dealloc(assembler_invocation_t *inv)
     }
     free(inv->file);
 
-    for(uint64_t i = 0; i < inv->line_cnt; i++)
+    for(UInt64 i = 0; i < inv->line_cnt; i++)
     {
         free(inv->line[i]->str);
-        for(uint64_t j = 0; j < inv->line[i]->token_cnt; j++)
+        for(UInt64 j = 0; j < inv->line[i]->token_cnt; j++)
         {
             if(inv->line[i]->token[j]->type == kAssemblerTokenTypeString)
             {
@@ -115,7 +115,7 @@ void assembler_invocation_dealloc(assembler_invocation_t *inv)
     free(inv);
 }
 
-bool assembler_invocation_emit(assembler_invocation_t *inv,
+Boolean assembler_invocation_emit(assembler_invocation_t *inv,
                                emex_file_t *input,
                                emex_file_t *output)
 {

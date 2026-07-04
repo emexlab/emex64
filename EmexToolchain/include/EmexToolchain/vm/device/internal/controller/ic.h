@@ -55,10 +55,10 @@ typedef struct emex64_core emex64_core_t;
 typedef struct __E64Machine *E64MachineRef;
 
 typedef struct emex64_intc {
-    uint64_t pending;
-    uint64_t enabled;
-    uint64_t ctrl;
-    uint64_t vector_base;
+    UInt64 pending;
+    UInt64 enabled;
+    UInt64 ctrl;
+    UInt64 vector_base;
     int64_t current_irq;
 } emex64_intc_t;
 
@@ -67,9 +67,9 @@ void emex64_intc_dealloc(emex64_intc_t *intc);
 
 void emex64_raise_interrupt(E64MachineRef machineRef, int irq_line);
 void emex64_clear_interrupt(E64MachineRef machineRef, int irq_line);
-bool emex64_serve_interrupt_if_needed(emex64_core_t *core);
+Boolean emex64_serve_interrupt_if_needed(emex64_core_t *core);
 
-uint64_t emex64_intc_read(emex64_core_t *core, void *device, uint64_t offset, int size);
-void emex64_intc_write(emex64_core_t *core, void *device, uint64_t offset, uint64_t value, int size);
+UInt64 emex64_intc_read(emex64_core_t *core, void *device, UInt64 offset, int size);
+void emex64_intc_write(emex64_core_t *core, void *device, UInt64 offset, UInt64 value, int size);
 
 #endif /* EMEX64VM_DEVICE_IC_H */

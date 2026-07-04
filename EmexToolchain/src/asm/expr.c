@@ -142,7 +142,7 @@ int64_t expr_addsub(assembler_expr_t *e)
     return v;
 }
 
-bool assembler_eval_const(assembler_token_t **tok, uint64_t count, int64_t *out)
+Boolean assembler_eval_const(assembler_token_t **tok, UInt64 count, int64_t *out)
 {
     assembler_expr_t e = {
         .tok = tok, .count = count, .pos = 0,

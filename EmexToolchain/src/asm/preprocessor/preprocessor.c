@@ -28,7 +28,7 @@
 #include <EmexToolchain/asm/code.h>
 
 static inline char *__assembler_preprocessor_include_directive_get_token(const char *token,
-                                                                         bool *system_hdr)
+                                                                         Boolean *system_hdr)
 {
     assert(token != NULL && system_hdr != NULL);
 
@@ -66,7 +66,7 @@ static inline char *__assembler_preprocessor_include_directive_get_token(const c
     return hdr;
 }
 
-bool assembler_preprocessor_run(assembler_invocation_t *inv)
+Boolean assembler_preprocessor_run(assembler_invocation_t *inv)
 {
     /* allocating macro storage */
     assembler_macro_storage_t *storage = assembler_macro_storage_alloc();
@@ -77,7 +77,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
     }
 
     /* adding predefined macro definitions */
-    for(uint64_t i = 0; i < inv->definition_cnt; i++)
+    for(UInt64 i = 0; i < inv->definition_cnt; i++)
     {
         const char **inject_token = calloc(1, sizeof(char*));
         if(inject_token == NULL)
@@ -102,7 +102,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
     assembler_condition_state_t state;
     assembler_condition_state_init(&state);
 
-    for(uint64_t li = 0; li < inv->line_cnt; li++)
+    for(UInt64 li = 0; li < inv->line_cnt; li++)
     {
         if(inv->line[li]->token_cnt <= 0 || /* whitespaces stay this type if im not wrong UwU */
            inv->line[li]->type == kAssemblerLineTypeIgnore)
@@ -121,7 +121,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                 goto handle_preprocessor_directive;
             }
 
-            for(uint64_t ti = 0; ti < inv->line[li]->token_cnt; ti++)
+            for(UInt64 ti = 0; ti < inv->line[li]->token_cnt; ti++)
             {
                 if((ti == 1 && type == kAssemblerPreprocessorDirectiveTypeDefine) ||
                    (ti == 1 && type == kAssemblerPreprocessorDirectiveTypeUndefine))
@@ -140,7 +140,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                 }
 
                 /* matching macro */
-                uint16_t macro_nest_remaining = UINT16_MAX;
+                UInt16 macro_nest_remaining = UINT16_MAX;
 
             repeat:
                 {
@@ -150,12 +150,12 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         continue;
                     }
 
-                    uint64_t old_token_cnt = inv->line[li]->token_cnt;
-                    uint64_t new_tokens = found_match->inject_token_cnt;
-                    uint64_t tail = old_token_cnt - ti - 1;
-                    uint64_t new_token_cnt = old_token_cnt - 1 + new_tokens;
-                    uint64_t column_number = inv->line[li]->token[ti]->column_num;
-                    uint64_t real_len = inv->line[li]->token[ti]->real_len;
+                    UInt64 old_token_cnt = inv->line[li]->token_cnt;
+                    UInt64 new_tokens = found_match->inject_token_cnt;
+                    UInt64 tail = old_token_cnt - ti - 1;
+                    UInt64 new_token_cnt = old_token_cnt - 1 + new_tokens;
+                    UInt64 column_number = inv->line[li]->token[ti]->column_num;
+                    UInt64 real_len = inv->line[li]->token[ti]->real_len;
 
                     /* the consumed token always dies */
                     free(inv->line[li]->token[ti]->str);
@@ -189,7 +189,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
 
                     inv->line[li]->token_cnt = new_token_cnt;
 
-                    for(uint64_t k = 0; k < new_tokens; k++)
+                    for(UInt64 k = 0; k < new_tokens; k++)
                     {
                         assembler_token_t *at = calloc(1, sizeof(assembler_token_t));
                         if(at == NULL)
@@ -239,7 +239,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         }
 
                         /* extracting hdr path token and type of hdr path token */
-                        bool system_hdr = false;
+                        Boolean system_hdr = false;
                         char *hdr_token = __assembler_preprocessor_include_directive_get_token(inv->line[li]->token[1]->str, &system_hdr);
                         if(hdr_token == NULL)
                         {
@@ -299,7 +299,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         break;
                     case kAssemblerPreprocessorDirectiveTypeIf:
                     {
-                        bool parent_active = !state.in_a_condition || state.condition_met;
+                        Boolean parent_active = !state.in_a_condition || state.condition_met;
                         if(!assembler_condition_state_push(&state))
                         {
                             diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(inv->line[li]->token[0]), "failed to push condition frame onto condition state");
@@ -309,7 +309,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         
                     express_if_directive:
                         {
-                            bool raw;
+                            Boolean raw;
                             if(inv->line[li]->token_cnt >= 2 && strlen(inv->line[li]->token[1]->str) > 0)
                             {
                                 parser_return_t pret = parse_value_from_string(inv->line[li]->token[1]->str);
@@ -332,7 +332,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                     }
                     case kAssemblerPreprocessorDirectiveTypeIfDefined:
                     {
-                        bool parent_active = !state.in_a_condition || state.condition_met;
+                        Boolean parent_active = !state.in_a_condition || state.condition_met;
                         if(!assembler_condition_state_push(&state))
                         {
                             diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(inv->line[li]->token[0]), "failed to push condition frame onto condition state");
@@ -340,7 +340,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         }
                         state.parent_active = parent_active;
                         
-                        bool raw = false;
+                        Boolean raw = false;
                         if(inv->line[li]->token_cnt >= 2 && strlen(inv->line[li]->token[1]->str) > 0)
                         {
                             assembler_macro_t *found_match = assembler_macro_storage_lookup(storage, inv->line[li]->token[1]->str);
@@ -358,7 +358,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                     }
                     case kAssemblerPreprocessorDirectiveTypeIfNotDefined:
                     {
-                        bool parent_active = !state.in_a_condition || state.condition_met;
+                        Boolean parent_active = !state.in_a_condition || state.condition_met;
                         if(!assembler_condition_state_push(&state))
                         {
                             diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(inv->line[li]->token[0]), "failed to push condition frame onto condition state");
@@ -366,7 +366,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
                         }
                         state.parent_active = parent_active;
                         
-                        bool raw = true;
+                        Boolean raw = true;
                         if(inv->line[li]->token_cnt >= 2 && strlen(inv->line[li]->token[1]->str) > 0)
                         {
                             assembler_macro_t *found_match = assembler_macro_storage_lookup(storage, inv->line[li]->token[1]->str);
@@ -449,7 +449,7 @@ bool assembler_preprocessor_run(assembler_invocation_t *inv)
         diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(state.last_condition_line->token[0]), "%%if%% was defined but no matching %%endif%% was found.");
     }
     
-    bool in_a_condition = state.in_a_condition;
+    Boolean in_a_condition = state.in_a_condition;
     assembler_condition_state_deinit(&state);
     assembler_macro_storage_dealloc(storage);
     return !in_a_condition;

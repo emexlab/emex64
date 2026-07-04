@@ -43,7 +43,7 @@ typedef diagnostic_consumer_t assembler_diagnostic_consumer_t;
 typedef struct assembler_diagnostic_consumer_context {
     assembler_diagnostic_options_t options;
     diagnostic_t **diagnostic;
-    uint64_t diagnostic_cnt;
+    UInt64 diagnostic_cnt;
     vfd_t *d;
 } assembler_diagnostic_consumer_context_t;
 

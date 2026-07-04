@@ -30,12 +30,12 @@
 
 static _Thread_local jmp_buf overflow_jmp;
 
-static bool parse_base(const char *digits,
+static Boolean parse_base(const char *digits,
                        int base,
-                       uint64_t *num)
+                       UInt64 *num)
 {
     errno = 0;
-    uint64_t v = strtoull(digits, NULL, base);
+    UInt64 v = strtoull(digits, NULL, base);
     if(errno == ERANGE)
     {
         return false;
@@ -47,14 +47,14 @@ static bool parse_base(const char *digits,
     return true;
 }
 
-static bool parse_type_is_hex(const char *line,
-                              uint64_t *num)
+static Boolean parse_type_is_hex(const char *line,
+                              UInt64 *num)
 {
     /* checking if user specified it as type hexadecimal  */
     if(line[0] != '0' || (line[1] != 'x' && line[1] != 'X')) return false;
 
     /* next check is to make sure if the string really is a hexadecimal  */
-    for(uint64_t i = 2;; i++)
+    for(UInt64 i = 2;; i++)
     {
         if(line[i] == '\0')
         {
@@ -76,14 +76,14 @@ static bool parse_type_is_hex(const char *line,
     return false;
 }
 
-static bool parse_type_is_bin(const char *line,
-                              uint64_t *num)
+static Boolean parse_type_is_bin(const char *line,
+                              UInt64 *num)
 {
     /* checking if used specified it as a type binary */
     if(line[0] != '0' || (line[1] != 'b' && line[1] != 'B')) return false;
 
     /* checking if rest of the string complies to a binary */
-    for(uint64_t i = 2;; i++)
+    for(UInt64 i = 2;; i++)
     {
         if(line[i] == '\0')
         {
@@ -103,11 +103,11 @@ static bool parse_type_is_bin(const char *line,
     return false;
 }
 
-static bool parse_type_is_dec(const char *line,
-                              uint64_t *num)
+static Boolean parse_type_is_dec(const char *line,
+                              UInt64 *num)
 {
     /* checking if string complies to a decimal */
-    for(uint64_t i = 0;; i++)
+    for(UInt64 i = 0;; i++)
     {
         if(line[i] == '\0')
         {
@@ -128,8 +128,8 @@ static bool parse_type_is_dec(const char *line,
     return false;
 }
 
-static bool parse_type_is_char(const char *line,
-                               uint64_t *num)
+static Boolean parse_type_is_char(const char *line,
+                               UInt64 *num)
 {
     /* checking if this is a string */
     if(line[0] != '\'' || line[2] == '\0')
@@ -173,15 +173,15 @@ static bool parse_type_is_char(const char *line,
 
     if(num != NULL)
     {
-        *num = (uint64_t)c;
+        *num = (UInt64)c;
     }
 
     return true;
 }
 
-static bool parse_type_is_buffer(const char *line,
-                                 uint64_t *num,
-                                 uint64_t *blen)
+static Boolean parse_type_is_buffer(const char *line,
+                                 UInt64 *num,
+                                 UInt64 *blen)
 {
     /* checking if user specified value as character buffer */
     size_t len = strlen(line);
@@ -261,7 +261,7 @@ parser_return_t parse_value_from_string(const char *str)
         return (parser_return_t){ .type = emexParserValueTypeOverflow };
     }
 
-    uint64_t num = 0, len = 0;
+    UInt64 num = 0, len = 0;
 
     if(parse_type_is_hex(str, &num) ||
        parse_type_is_bin(str, &num) ||

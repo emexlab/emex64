@@ -29,7 +29,7 @@ int main(int argc, const char *argv[])
         return 1;
     }
 
-    bool success = linker_driver_drive_the_fucking_car(driver);
+    Boolean success = linker_driver_drive_the_fucking_car(driver);
     linker_driver_dealloc(driver);
     return success ? 0 : 1;
 }

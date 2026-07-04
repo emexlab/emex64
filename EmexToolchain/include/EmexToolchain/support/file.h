@@ -27,7 +27,7 @@
 #include <EmexToolchain/support/virtual/vbitwalker.h>
 #include <EmexToolchain/support/virtual/vfd.h>
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     kEmexFileTypeUnknown,
     kEmexFileTypeDirectory,
     kEmexFileTypeAssembly,
@@ -41,7 +41,7 @@ typedef enum: uint8_t {
     kEmexFileTypeObject
 } kEmexFileType;
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     kEmexFilePolicyPermissionRead =     0b00000001,
     kEmexFilePolicyPermissionWrite =    0b00000010,
     kEmexFilePolicyPermissionExecute =  0b00000100,
@@ -49,9 +49,9 @@ typedef enum: uint8_t {
 
 typedef struct emex_file_policy {
     kEmexFilePolicyPermission needed_permission;    /* permissions them selves */
-    bool must_exist;
-    bool must_be_file;
-    bool create_on_open;
+    Boolean must_exist;
+    Boolean must_be_file;
+    Boolean create_on_open;
 } emex_file_policy_t;
 
 extern emex_file_policy_t in_data_file_policy;
@@ -73,17 +73,17 @@ emex_file_t *emex_file_alloc_vfd(const char *path, emex_file_policy_t policy, vf
 emex_file_t *emex_file_alloc_unsaved(const char *path, emex_file_policy_t policy, const char *content);
 void emex_file_dealloc(emex_file_t *f);
 
-bool emex_file_open(emex_file_t *f);
+Boolean emex_file_open(emex_file_t *f);
 void emex_file_close(emex_file_t *f);
 
 vfd_t *emex_file_dup_vfd(emex_file_t *f);
 vbitwalker_t *emex_file_dup_vbitwalker(emex_file_t *f, bw_endian_t endian);
 
-bool emex_file_map(emex_file_t *f);
+Boolean emex_file_map(emex_file_t *f);
 void emex_file_unmap(emex_file_t *f);
 
 void emex_file_unlink(emex_file_t *f);
 
-kEmexFileType emex_file_type_for_path(const char *path, bool must_exist);
+kEmexFileType emex_file_type_for_path(const char *path, Boolean must_exist);
 
 #endif /* EMEX64_FILE_H */

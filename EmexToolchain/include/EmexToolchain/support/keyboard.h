@@ -24,7 +24,7 @@
 
 #include <stdint.h>
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     kEmexKeyPhysEsc,
     kEmexKeyPhysF1,
     kEmexKeyPhysF2,

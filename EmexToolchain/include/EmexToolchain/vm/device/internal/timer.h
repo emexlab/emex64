@@ -44,24 +44,24 @@
 typedef struct __E64Machine *E64MachineRef;
 
 typedef struct emex64_timer {
-    uint64_t ctrl;
-    uint64_t count;
-    uint64_t compare;
-    uint64_t status;
+    UInt64 ctrl;
+    UInt64 count;
+    UInt64 compare;
+    UInt64 status;
     
-    uint64_t host_freq;
-    uint64_t last_host_cycles;
+    UInt64 host_freq;
+    UInt64 last_host_cycles;
     
     E64MachineRef machine;
-    uint64_t tick_remainder;
+    UInt64 tick_remainder;
 } emex64_timer_t;
 
 emex64_timer_t *emex64_timer_alloc(E64MachineRef machine);
 void emex64_timer_dealloc(emex64_timer_t *timer);
-void emex64_timer_tick(emex64_timer_t *timer, uint64_t host_cycles);
-uint64_t emex64_get_host_cycles(void);
+void emex64_timer_tick(emex64_timer_t *timer, UInt64 host_cycles);
+UInt64 emex64_get_host_cycles(void);
 
-uint64_t emex64_timer_read(emex64_core_t *core, void *device, uint64_t offset, int size);
-void emex64_timer_write(emex64_core_t *core, void *device, uint64_t offset, uint64_t value, int size);
+UInt64 emex64_timer_read(emex64_core_t *core, void *device, UInt64 offset, int size);
+void emex64_timer_write(emex64_core_t *core, void *device, UInt64 offset, UInt64 value, int size);
 
 #endif /* EMEX64VM_DEVICE_TIMER_H */

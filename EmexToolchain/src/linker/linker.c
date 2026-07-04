@@ -25,7 +25,7 @@
 #include <EmexToolchain/support/diagnostic/log.h>
 #include <EmexToolchain/linker/linker.h>
 
-const uint8_t ident[EI_NIDENT] = { ELF_MAGIC_0, ELF_MAGIC_1, ELF_MAGIC_2, ELF_MAGIC_3, ELF_CLASS64, ELF_DATA2LSB, EV_CURRENT };
+const UInt8 ident[EI_NIDENT] = { ELF_MAGIC_0, ELF_MAGIC_1, ELF_MAGIC_2, ELF_MAGIC_3, ELF_CLASS64, ELF_DATA2LSB, EV_CURRENT };
 
 linker_invocation_t *linker_invocation_alloc(linker_options_t options,
                                              linker_diagnostic_consumer_t *diagnostic_consumer)
@@ -81,10 +81,10 @@ void linker_invocation_dealloc(linker_invocation_t *inv)
     free(inv);
 }
 
-bool linker_symbol_append_definition(linker_invocation_t *inv,
+Boolean linker_symbol_append_definition(linker_invocation_t *inv,
                                      const char *name,
                                      const char *object_path,
-                                     uint64_t addr)
+                                     UInt64 addr)
 {
     linker_symbol_t *sym = linker_symbol_lookup(inv, name);
     if(sym == NULL)

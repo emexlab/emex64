@@ -35,7 +35,7 @@ typedef struct {
     char *expr;
 } script_sym_t;
 
-bool linker_script_parse(linker_invocation_t *inv, emex_file_t *script_file);
-bool linker_script_apply(linker_invocation_t *inv, uint64_t image_end, uint64_t text_start, uint64_t data_start, uint64_t bss_start);
+Boolean linker_script_parse(linker_invocation_t *inv, emex_file_t *script_file);
+Boolean linker_script_apply(linker_invocation_t *inv, UInt64 image_end, UInt64 text_start, UInt64 data_start, UInt64 bss_start);
 
 #endif /* EMEX64LD_SCRIPT_H */

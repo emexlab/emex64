@@ -47,9 +47,9 @@ typedef struct linker_object {
     int32_t idx_symtab;
     int32_t idx_strtab;
 
-    uint64_t base_text; /* text base inside final object */
-    uint64_t base_data; /* data base inside final object */
-    uint64_t base_bss;  /* bss base inside final object */
+    UInt64 base_text; /* text base inside final object */
+    UInt64 base_data; /* data base inside final object */
+    UInt64 base_bss;  /* bss base inside final object */
 
     struct linker_object *next;
 } linker_object_t;
@@ -57,7 +57,7 @@ typedef struct linker_object {
 linker_object_t *linker_object_alloc(emex_file_t *object_file);
 void linker_object_dealloc(linker_object_t *obj);
 
-bool linker_load_object(linker_invocation_t *inv, emex_file_t *object_file);
+Boolean linker_load_object(linker_invocation_t *inv, emex_file_t *object_file);
 void linker_layout(linker_invocation_t *inv);
 
 #endif /* EMEX64LD_OBJ_H */

@@ -22,31 +22,31 @@
 #ifndef EMEX64_BITBOLT_H
 #define EMEX64_BITBOLT_H
 
-#include <stdint.h>
 #include <string.h>
+#include <EmexFoundation/EmexFoundation.h>
 
-extern uint64_t kMask[65];
+extern UInt64 kMask[65];
 
 typedef struct {
-    const uint8_t *buf;
-    uint32_t pos;
+    const UInt8 *buf;
+    UInt32 pos;
 } bitbolt_t;
 
-static inline uint64_t cpy64le(const uint8_t *p)
+static inline UInt64 cpy64le(const UInt8 *p)
 {
-    return  (uint64_t)p[0] | ((uint64_t)p[1] <<  8) | ((uint64_t)p[2] << 16) | ((uint64_t)p[3] << 24) | ((uint64_t)p[4] << 32) | ((uint64_t)p[5] << 40) | ((uint64_t)p[6] << 48) | ((uint64_t)p[7] << 56);
+    return  (UInt64)p[0] | ((UInt64)p[1] <<  8) | ((UInt64)p[2] << 16) | ((UInt64)p[3] << 24) | ((UInt64)p[4] << 32) | ((UInt64)p[5] << 40) | ((UInt64)p[6] << 48) | ((UInt64)p[7] << 56);
 }
 
-static inline uint64_t bb_read(bitbolt_t *bb,
+static inline UInt64 bb_read(bitbolt_t *bb,
                                unsigned n)
 {
-    const uint8_t *p = (const uint8_t *)bb->buf + (bb->pos >> 3);
-    uint64_t lo = cpy64le(p);
-    uint64_t hi = cpy64le(p + 8);
+    const UInt8 *p = (const UInt8 *)bb->buf + (bb->pos >> 3);
+    UInt64 lo = cpy64le(p);
+    UInt64 hi = cpy64le(p + 8);
 
     unsigned shift = bb->pos & 7;
 
-    uint64_t v;
+    UInt64 v;
     if(shift == 0)
     {
         v = lo;

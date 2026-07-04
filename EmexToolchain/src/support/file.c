@@ -74,7 +74,7 @@ static inline int emex_file_policy_to_prot(kEmexFilePolicyPermission p)
 
 static emex_file_t *__emex_file_alloc(const char *path,
                                       emex_file_policy_t policy,
-                                      bool care_about_file_exist_policy)
+                                      Boolean care_about_file_exist_policy)
 {
     emex_file_t *f = malloc(sizeof(emex_file_t));
     if(f == NULL)
@@ -206,7 +206,7 @@ void emex_file_dealloc(emex_file_t *f)
     free(f);
 }
 
-bool emex_file_open(emex_file_t *f)
+Boolean emex_file_open(emex_file_t *f)
 {
     if(f->d != NULL)
     {
@@ -257,7 +257,7 @@ vbitwalker_t *emex_file_dup_vbitwalker(emex_file_t *f,
     return vbitwalker_alloc(f->d, endian);
 }
 
-bool emex_file_map(emex_file_t *f)
+Boolean emex_file_map(emex_file_t *f)
 {
     if(f->content != MAP_FAILED)
     {
@@ -362,7 +362,7 @@ static inline const char *get_extension(const char *path)
     return dot + 1;
 }
 
-kEmexFileType emex_file_type_for_path(const char *path, bool must_exist)
+kEmexFileType emex_file_type_for_path(const char *path, Boolean must_exist)
 {
     struct stat st;
     if(stat(path, &st) != 0)

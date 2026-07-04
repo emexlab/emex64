@@ -29,7 +29,7 @@
 #include <EmexToolchain/asm/invocation.h>
 #include <EmexToolchain/linker/type.h>
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     kAssemblerJobTypeAssembler,
     kAssemblerJobTypeDriver,
     kAssemblerJobTypeLinker
@@ -61,7 +61,7 @@ typedef struct {
     size_t tmp_path_cnt;
     char **tmp_paths;
 
-    uint64_t macro_cnt;
+    UInt64 macro_cnt;
     assembler_macro_definition_t *macro;
 
     int linker_flags_cnt;
@@ -76,6 +76,6 @@ void assembler_job_dealloc(assembler_job_t *job);
 assembler_driver_t *assembler_driver_alloc(int argc, const char **argv);
 void assembler_driver_dealloc(assembler_driver_t *driver);
 
-bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver);
+Boolean assembler_driver_drive_the_fucking_car(assembler_driver_t *driver);
 
 #endif /* EMEX64ASM_DRIVER_H */

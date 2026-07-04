@@ -22,11 +22,11 @@
 #ifndef EMEX64_DIAGNOSTIC_DIAGNOSTIC_H
 #define EMEX64_DIAGNOSTIC_DIAGNOSTIC_H
 
-#include <stdint.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     kDiagnosticSeverityNote,
     kDiagnosticSeverityWarning,
     kDiagnosticSeverityError,
@@ -34,15 +34,15 @@ typedef enum: uint8_t {
 } kDiagnosticSeverity;
 
 typedef struct diagnostic_location_text_range {
-    uint64_t start_col;
-    uint64_t end_col;
+    UInt64 start_col;
+    UInt64 end_col;
 } diagnostic_location_text_range_t;
 
 typedef struct diagnostic_location {
     char *file_name;
     char *line;
-    uint64_t ln;
-    uint64_t col;
+    UInt64 ln;
+    UInt64 col;
     diagnostic_location_text_range_t range;
 } diagnostic_location_t;
 

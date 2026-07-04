@@ -35,7 +35,7 @@ assembler_label_t *assembler_label_lookup(assembler_invocation_t *inv,
     return (assembler_label_t*)hashmap_gets(inv->label_hashmap, name);
 }
 
-bool assembler_label_append(assembler_token_t *at)
+Boolean assembler_label_append(assembler_token_t *at)
 {
     /* accessing compiler invocation */
     assembler_invocation_t *inv = at->al->inv;

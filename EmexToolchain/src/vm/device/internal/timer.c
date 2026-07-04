@@ -27,43 +27,43 @@
 #include <EmexToolchain/vm/device/internal/timer.h>
 #include <EmexToolchain/vm/device/internal/controller/ic.h>
 
-uint64_t emex64_get_host_cycles(void)
+UInt64 emex64_get_host_cycles(void)
 {
 #if defined(__x86_64__) || defined(_M_X64)
-    uint32_t lo, hi;
+    UInt32 lo, hi;
     __asm__ volatile ("rdtsc" : "=a"(lo), "=d"(hi));
-    return ((uint64_t)hi << 32) | lo;
+    return ((UInt64)hi << 32) | lo;
 #elif defined(__aarch64__)
-    uint64_t val;
+    UInt64 val;
     __asm__ volatile ("mrs %0, cntvct_el0" : "=r"(val));
     return val;
 #elif defined(__loongarch64)
-    uint64_t val;
+    UInt64 val;
     __asm__ volatile ("rdtime.d %0, $zero" : "=r"(val));
     return val;
 #else
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    return (uint64_t)ts.tv_sec * 1000000000ULL + ts.tv_nsec;
+    return (UInt64)ts.tv_sec * 1000000000ULL + ts.tv_nsec;
 #endif
 }
 
-static uint64_t detect_host_freq(void)
+static UInt64 detect_host_freq(void)
 {
 #if defined(__aarch64__)
-    uint64_t freq;
+    UInt64 freq;
     __asm__ volatile ("mrs %0, cntfrq_el0" : "=r"(freq));
     return freq;
 #elif defined(__x86_64__) || defined(_M_X64) || defined(__i386__) || defined(_M_IX86)
-    uint32_t eax, ebx, ecx, edx;
+    UInt32 eax, ebx, ecx, edx;
     __asm__ volatile ("cpuid" : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx) : "a"(0));
-    uint32_t max_level = eax;
+    UInt32 max_level = eax;
     if(max_level >= 0x15)
     {
         __asm__ volatile ("cpuid" : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx) : "a"(0x15), "c"(0));
         if(eax != 0 && ebx != 0 && ecx != 0)
         {
-            return ((uint64_t)ecx * ebx) / eax;
+            return ((UInt64)ecx * ebx) / eax;
         }
     }
     if(max_level >= 0x16)
@@ -71,20 +71,20 @@ static uint64_t detect_host_freq(void)
         __asm__ volatile ("cpuid" : "=a"(eax), "=b"(ebx), "=c"(ecx), "=d"(edx) : "a"(0x16), "c"(0));
         if((eax & 0xFFFF) != 0)
         {
-            return (uint64_t)(eax & 0xFFFF) * 1000000ULL;
+            return (UInt64)(eax & 0xFFFF) * 1000000ULL;
         }
     }
     struct timespec start_ts, end_ts;
-    uint32_t lo, hi;
+    UInt32 lo, hi;
     clock_gettime(CLOCK_MONOTONIC, &start_ts);
     __asm__ volatile ("rdtsc" : "=a"(lo), "=d"(hi));
-    uint64_t start_cycles = ((uint64_t)hi << 32) | lo;
+    UInt64 start_cycles = ((UInt64)hi << 32) | lo;
     usleep(100000);
     clock_gettime(CLOCK_MONOTONIC, &end_ts);
     __asm__ volatile ("rdtsc" : "=a"(lo), "=d"(hi));
-    uint64_t end_cycles = ((uint64_t)hi << 32) | lo;
-    uint64_t elapsed_ns = (end_ts.tv_sec - start_ts.tv_sec) * 1000000000ULL +  (end_ts.tv_nsec - start_ts.tv_nsec);
-    uint64_t elapsed_cycles = end_cycles - start_cycles;
+    UInt64 end_cycles = ((UInt64)hi << 32) | lo;
+    UInt64 elapsed_ns = (end_ts.tv_sec - start_ts.tv_sec) * 1000000000ULL +  (end_ts.tv_nsec - start_ts.tv_nsec);
+    UInt64 elapsed_cycles = end_cycles - start_cycles;
     return (elapsed_cycles * 1000000000ULL) / elapsed_ns;
 #else
     return 1000000000ULL;
@@ -109,7 +109,7 @@ emex64_timer_t *emex64_timer_alloc(E64MachineRef machine)
         return NULL;
     }
 
-    bool success = E64MMIOBusRegisterRegion(machine->mmio_bus, TimerRegion);
+    Boolean success = E64MMIOBusRegisterRegion(machine->mmio_bus, TimerRegion);
     EFRelease(TimerRegion);
     if(!success)
     {
@@ -133,7 +133,7 @@ void emex64_timer_dealloc(emex64_timer_t *timer)
 }
 
 void emex64_timer_tick(emex64_timer_t *timer,
-                       uint64_t host_cycles)
+                       UInt64 host_cycles)
 {
     /* checking if timer is not enabled */
     if(!(timer->ctrl & TIMER_CTRL_ENABLE))
@@ -144,7 +144,7 @@ void emex64_timer_tick(emex64_timer_t *timer,
     }
     
     /* calculate elappsed cycles */
-    uint64_t elapsed_host = host_cycles - timer->last_host_cycles;
+    UInt64 elapsed_host = host_cycles - timer->last_host_cycles;
     timer->last_host_cycles = host_cycles;
     if(elapsed_host == 0)
     {
@@ -153,15 +153,15 @@ void emex64_timer_tick(emex64_timer_t *timer,
 
     /*  calculating using virtual frequency the actual timer count */
     __uint128_t numerator = (__uint128_t)elapsed_host * TIMER_VIRTUAL_FREQ + timer->tick_remainder;
-    uint64_t virtual_ticks = (uint64_t)(numerator / timer->host_freq);
-    timer->tick_remainder  = (uint64_t)(numerator % timer->host_freq);
+    UInt64 virtual_ticks = (UInt64)(numerator / timer->host_freq);
+    timer->tick_remainder  = (UInt64)(numerator % timer->host_freq);
     if(virtual_ticks == 0)
     {
         return;
     }
     
     /* updating timer */
-    uint64_t old_count = timer->count;
+    UInt64 old_count = timer->count;
     timer->count += virtual_ticks;
     
     /* compare match */
@@ -185,9 +185,9 @@ void emex64_timer_tick(emex64_timer_t *timer,
     }
 }
 
-uint64_t emex64_timer_read(emex64_core_t *core,
+UInt64 emex64_timer_read(emex64_core_t *core,
                          void *device,
-                         uint64_t offset,
+                         UInt64 offset,
                          int size)
 {
     emex64_timer_t *timer = (emex64_timer_t *)device;
@@ -211,8 +211,8 @@ uint64_t emex64_timer_read(emex64_core_t *core,
 
 void emex64_timer_write(emex64_core_t *core,
                       void *device,
-                      uint64_t offset,
-                      uint64_t value,
+                      UInt64 offset,
+                      UInt64 value,
                       int size)
 {
     emex64_timer_t *timer = (emex64_timer_t *)device;

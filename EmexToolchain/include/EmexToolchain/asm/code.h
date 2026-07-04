@@ -32,9 +32,9 @@
 char *assembler_code_find_header(const char *name, const char *source_file);
 char *assembler_code_find_system_header(const char *name, const char **inc_dirs, size_t inc_cnt);
 
-bool assembler_code_inject_file(assembler_invocation_t *inv, uint64_t at_line_index, emex_file_t *inj_file);
+Boolean assembler_code_inject_file(assembler_invocation_t *inv, UInt64 at_line_index, emex_file_t *inj_file);
 
-bool assembler_code_preparse(assembler_invocation_t *inv, emex_file_t *input);
-bool assembler_code_postparse(assembler_invocation_t *inv);
+Boolean assembler_code_preparse(assembler_invocation_t *inv, emex_file_t *input);
+Boolean assembler_code_postparse(assembler_invocation_t *inv);
 
 #endif /* EMEX64ASM_CODE_H */

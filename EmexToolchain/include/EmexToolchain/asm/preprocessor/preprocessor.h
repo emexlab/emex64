@@ -29,6 +29,6 @@
 
 typedef struct assembler_invocation assembler_invocation_t;
 
-bool assembler_preprocessor_run(assembler_invocation_t *inv);
+Boolean assembler_preprocessor_run(assembler_invocation_t *inv);
 
 #endif /* EMEX64ASM_PREPROCESSOR_H */

@@ -25,8 +25,8 @@
 
 linker_symbol_t *linker_symbol_alloc(const char *name,
                                      const char *object_path,
-                                     uint64_t addr,
-                                     bool defined)
+                                     UInt64 addr,
+                                     Boolean defined)
 {
     linker_symbol_t *sym = malloc(sizeof(linker_symbol_t));
     if(sym == NULL)

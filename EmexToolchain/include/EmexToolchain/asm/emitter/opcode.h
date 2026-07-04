@@ -27,7 +27,7 @@
 #include <EmexToolchain/asm/invocation.h>
 
 E64Opcode opcode_from_string(const char *name);
-bool opcode_arg_accepts_reg_only(const emex64_opfunc_entry_t *opce, uint8_t arg);
+Boolean opcode_arg_accepts_reg_only(const emex64_opfunc_entry_t *opce, UInt8 arg);
 
 void assembler_emit_opcode(assembler_invocation_t *inv, E64Opcode op);
 

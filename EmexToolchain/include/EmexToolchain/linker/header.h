@@ -25,33 +25,33 @@
 #include <EmexToolchain/linker/type.h>
 
 typedef struct {
-    uint8_t e_ident[EI_NIDENT];
-    uint16_t e_type;
-    uint16_t e_machine;
-    uint32_t e_version;
-    uint64_t e_entry;
-    uint64_t e_phoff;
-    uint64_t e_shoff;
-    uint32_t e_flags;
-    uint16_t e_ehsize;
-    uint16_t e_phentsize;
-    uint16_t e_phnum;
-    uint16_t e_shentsize;
-    uint16_t e_shnum;
-    uint16_t e_shstrndx;
+    UInt8 e_ident[EI_NIDENT];
+    UInt16 e_type;
+    UInt16 e_machine;
+    UInt32 e_version;
+    UInt64 e_entry;
+    UInt64 e_phoff;
+    UInt64 e_shoff;
+    UInt32 e_flags;
+    UInt16 e_ehsize;
+    UInt16 e_phentsize;
+    UInt16 e_phnum;
+    UInt16 e_shentsize;
+    UInt16 e_shnum;
+    UInt16 e_shstrndx;
 } __attribute__((packed)) ELF64_Ehdr;
 
 typedef struct {
-    uint32_t sh_name;
-    uint32_t sh_type;
-    uint64_t sh_flags;
-    uint64_t sh_addr;
-    uint64_t sh_offset;
-    uint64_t sh_size;
-    uint32_t sh_link;
-    uint32_t sh_info;
-    uint64_t sh_addralign;
-    uint64_t sh_entsize;
+    UInt32 sh_name;
+    UInt32 sh_type;
+    UInt64 sh_flags;
+    UInt64 sh_addr;
+    UInt64 sh_offset;
+    UInt64 sh_size;
+    UInt32 sh_link;
+    UInt32 sh_info;
+    UInt64 sh_addralign;
+    UInt64 sh_entsize;
 } __attribute__((packed)) ELF64_Shdr;
 
 #define BOOT_HEADER_SIZE    10

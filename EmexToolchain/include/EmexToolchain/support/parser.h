@@ -22,9 +22,9 @@
 #ifndef EMEX64_PARSER_H
 #define EMEX64_PARSER_H
 
-#include <stdint.h>
+#include <EmexFoundation/EmexFoundation.h>
 
-typedef enum emexParserTypeValue: uint8_t {
+typedef enum emexParserTypeValue: UInt8 {
     emexParserValueTypeString,
     emexParserValueTypeNumber,
     emexParserValueTypeBuffer,
@@ -33,8 +33,8 @@ typedef enum emexParserTypeValue: uint8_t {
 
 typedef struct parsed_type_return {
     parser_value_type_t type;
-    uint64_t value;
-    uint64_t len;
+    UInt64 value;
+    UInt64 len;
 } parser_return_t;
 
 parser_return_t parse_value_from_string(const char *str);

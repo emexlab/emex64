@@ -28,7 +28,7 @@
 #include <EmexToolchain/support/virtual/vbitwalker.h>
 #include <EmexToolchain/vm/core.h>
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     kAssemblerTokenTypeInvalid,
     kAssemblerTokenTypeTooLong,
 
@@ -49,13 +49,13 @@ typedef enum: uint8_t {
     kAssemblerTokenTypeDivide,
 } kAssemblerTokenType;
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     kAssemblerKeywordSection,
     kAssemblerKeywordExtern,
     kAssemblerKeywordInvalid,
 } kAssemblerKeyword;
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     kAssemblerLineTypeNone,
     kAssemblerLineTypeIgnore,
     kAssemblerLineTypeAssembly,
@@ -76,7 +76,7 @@ typedef struct assembler_token {
 
     union {
         struct {
-            uint64_t v; /* signed by default */
+            UInt64 v; /* signed by default */
         } integer_literal;
         struct {
             char *buf;
@@ -98,7 +98,7 @@ typedef struct assembler_line {
     char *str;
     kAssemblerLineType type;                /* type of line */
     struct assembler_token **token;         /* subtokens */
-    uint64_t token_cnt;                     /* count of subtokens */
+    UInt64 token_cnt;                     /* count of subtokens */
     size_t line_num;                        /* line number in file */   
     size_t file_idx;                        /* index of file in compiler invocation */
     struct assembler_invocation *inv;       /* pointer back to compiler invocation */

@@ -110,7 +110,7 @@ int main(void)
         return 1;
     }
 
-    bool success = assembler_invocation_emit(inv, unsaved_file, object_file);
+    Boolean success = assembler_invocation_emit(inv, unsaved_file, object_file);
     assembler_invocation_dealloc(inv);
     assembler_diagnostic_consumer_dealloc(consumer);
     emex_file_dealloc(unsaved_file);

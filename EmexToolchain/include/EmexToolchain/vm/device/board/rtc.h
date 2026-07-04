@@ -37,6 +37,6 @@
 
 typedef struct emex64_core emex64_core_t;
 
-uint64_t emex64_rtc_read(emex64_core_t *core, void *device, uint64_t offset, int size);
+UInt64 emex64_rtc_read(emex64_core_t *core, void *device, UInt64 offset, int size);
 
 #endif /* EMEX64VM_DEVICE_RTC_H */

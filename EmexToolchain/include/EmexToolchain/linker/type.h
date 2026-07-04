@@ -22,8 +22,8 @@
 #ifndef EMEX64LD_TYPE_H
 #define EMEX64LD_TYPE_H
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <EmexFoundation/EmexFoundation.h>
 
 #define ELF_MAGIC_EMEX64    0x0E64
 
@@ -37,13 +37,13 @@
 
 #define EV_CURRENT  1
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     kELFTypeNone =  0,
     kELFTypeRel =   1,
     kELFTypeExec =  2,
 } kELFType;
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     kELFSectionHeaderTypeNull =     0,
     kELFSectionHeaderTypeProgbits = 1,
     kELFSectionHeaderTypeSymtab =  2,
@@ -52,19 +52,19 @@ typedef enum: uint8_t {
     kELFSectionHeaderTypeNobits =   8,
 } kELFSectionHeaderType;
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     kELFSectionFlagWrite =  (1 << 0),
     kELFSectionFlagAlloc =  (1 << 1),
     kELFSectionFlagExec =   (1 << 2),
 } kELFSectionFlag;
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     kELFSymbolTableBindingLocal =   0,
     kELFSymbolTableBindingGlobal =  1,
     kELFSymbolTableBindingWeak =    2,
 } kELFSymbolTableBinding;
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     kELFSymbolTableTypeNoType =     0,
     kELFSymbolTableTypeObject =     1,
     kELFSymbolTableTypeFunc =       2,
@@ -72,19 +72,19 @@ typedef enum: uint8_t {
     kELFSymbolTableTypeFile =       4,
 } kELFSymbolTableType;
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     kELFSymbolVisibilityDefault =   0,
     kELFSymbolVisibilityInternal =  1,
     kELFSymbolVisibilityHidden =    2,
     kELFSymbolVisibilityProtected = 3,
 } kELFSymbolVisibility;
 
-typedef enum: uint16_t {
+typedef enum: UInt16 {
     kELFSectionHeaderNumberUndefined =  0,
     kELFSectionHeaderNumberAbsolute =   0xFFF1,
 } kELFSectionHeaderNumber;
 
-typedef enum: uint16_t {
+typedef enum: UInt16 {
     kELFSectionHeaderIndexNull =        0,
     kELFSectionHeaderIndexText =        1,
     kELFSectionHeaderIndexData =        2,
@@ -97,7 +97,7 @@ typedef enum: uint16_t {
     kELFSectionHeaderIndexCount =       9,
 } kELFSectionHeaderIndex;
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     kEmitModeNone,
     kEmitModeFirmware,
     kEmitModeRelocatableObject,
@@ -109,10 +109,10 @@ typedef enum: uint8_t {
 
 #define ELF32_R_SYM(i) ((i) >> 32)
 #define ELF32_R_TYPE(i) ((i) & 0xFFFFFFFF)
-#define ELF64_R_INFO(s,t) (((uint64_t)(s) << 32) | (uint32_t)(t))
+#define ELF64_R_INFO(s,t) (((UInt64)(s) << 32) | (UInt32)(t))
 
 #define ELF_SYM_INFO(bind, type) (((bind) << 4) | ((type) & 0xf))
 
-extern const uint8_t ident[EI_NIDENT];
+extern const UInt8 ident[EI_NIDENT];
 
 #endif /* EMEX64LD_TYPE_H */

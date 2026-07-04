@@ -48,10 +48,10 @@
 typedef struct __E64Machine *E64MachineRef;
 
 typedef struct {
-    uint8_t rx_buf[UART_BUF_SIZE];
-    uint32_t rx_head, rx_tail;
-    uint32_t status;
-    uint32_t control;
+    UInt8 rx_buf[UART_BUF_SIZE];
+    UInt32 rx_head, rx_tail;
+    UInt32 status;
+    UInt32 control;
     
     pthread_t thread;
     pthread_mutex_t mutex;
@@ -63,7 +63,7 @@ typedef struct {
 emex64_uart_t *emex64_uart_alloc(E64MachineRef machine);
 void emex64_uart_dealloc(emex64_uart_t *u);
 
-uint64_t emex64_uart_read(emex64_core_t *core, void *device, uint64_t offset, int size);
-void emex64_uart_write(emex64_core_t *core, void *device, uint64_t offset, uint64_t value, int size);
+UInt64 emex64_uart_read(emex64_core_t *core, void *device, UInt64 offset, int size);
+void emex64_uart_write(emex64_core_t *core, void *device, UInt64 offset, UInt64 value, int size);
 
 #endif /* EMEX64VM_DEVICE_UART_H */

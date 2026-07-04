@@ -36,7 +36,7 @@ typedef struct {
 } lextok_token_t;
 
 lextok_token_t assembler_lexer_tok(const char *token);
-bool assembler_lexer_classify(assembler_token_t *at);
+Boolean assembler_lexer_classify(assembler_token_t *at);
 const char *assembler_lexer_str_for_token_type(kAssemblerTokenType type);
 
 #endif /* EMEX64ASM_LEXER_H */

@@ -22,10 +22,10 @@
 #ifndef EMEX64C_ASTUNIT_H
 #define EMEX64C_ASTUNIT_H
 
-#include <stdint.h>
 #include <stddef.h>
+#include <EmexFoundation/EmexFoundation.h>
 
-enum ASTNodeKind: uint8_t {
+enum ASTNodeKind: UInt8 {
     /* structures */
     ASTNodeKindTranslationUnit,
     ASTNodeKindFunctionDeclaration,
@@ -57,7 +57,7 @@ enum ASTNodeKind: uint8_t {
 };
 
 /* characters that are in between expressions */
-enum OpKind: uint8_t {
+enum OpKind: UInt8 {
     OpKindAdd,
     OpKindSub,
     OpKindMul,
@@ -69,7 +69,7 @@ enum OpKind: uint8_t {
 };
 
 /* characters that are right before literals */
-enum UnaryOpKind: uint8_t {
+enum UnaryOpKind: UInt8 {
     UnaryOpKindMinus,
     UnaryOpKindNot,
     UnaryOpKindBitwiseNot,
@@ -78,12 +78,12 @@ enum UnaryOpKind: uint8_t {
 };
 
 /* structure access */
-enum AccessKind: uint8_t {
+enum AccessKind: UInt8 {
     AccessKindDot,
     AccessKindArrow
 } AccessKind;
 
-enum DataType: uint8_t {
+enum DataType: UInt8 {
     DataTypeUnsignedChar,       /* 8 bit unsigned */
     DataTypeUnsignedShort,      /* 16 bit unsigned */
     DataTypeUnsignedInteger,    /* 32 bit unsigned */

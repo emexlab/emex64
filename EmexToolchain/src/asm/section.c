@@ -36,9 +36,9 @@
 #include <EmexToolchain/asm/code.h>
 #include <EmexToolchain/asm/expr.h>
 
-static bool __assembler_section_emit_value(assembler_invocation_t *inv,
+static Boolean __assembler_section_emit_value(assembler_invocation_t *inv,
                                            assembler_token_t **entry,
-                                           uint64_t entry_cnt,
+                                           UInt64 entry_cnt,
                                            int dbs)
 {
     if(entry_cnt == 1 && entry[0]->type == kAssemblerTokenTypeString)
@@ -71,16 +71,16 @@ static bool __assembler_section_emit_value(assembler_invocation_t *inv,
 
     if(dbs < 64)
     {
-        uint64_t umax = (UINT64_C(1) << dbs) - 1;
+        UInt64 umax = (UINT64_C(1) << dbs) - 1;
         int64_t smin = -(INT64_C(1) << (dbs - 1));
-        if(value < smin || (uint64_t)value > umax)
+        if(value < smin || (UInt64)value > umax)
         {
             diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(entry[0]), "value %ld doesn't fit in a %d bits data entry", (long long)value, dbs);
             return false;
         }
     }
 
-    vbitwalker_write(inv->out_vbitwalker, (uint64_t)value, dbs);
+    vbitwalker_write(inv->out_vbitwalker, (UInt64)value, dbs);
     return true;
 }
 
@@ -103,10 +103,10 @@ static int __assembler_section_dbs_get(const char *str)
     }
 }
 
-bool assembler_section_parse(assembler_invocation_t *inv)
+Boolean assembler_section_parse(assembler_invocation_t *inv)
 {
     /* only emitting data section into out virtual file descriptor */
-    for(uint64_t i = 0; i < inv->line_cnt; i++)
+    for(UInt64 i = 0; i < inv->line_cnt; i++)
     {
         if(inv->line[i]->type != kAssemblerLineTypeSection ||
            strcmp(inv->line[i]->token[1]->str, ".data") != 0)
@@ -210,16 +210,16 @@ bool assembler_section_parse(assembler_invocation_t *inv)
                 return false;
             }
 
-            uint64_t a = 2;
+            UInt64 a = 2;
             while(a < inv->line[i]->token_cnt)
             {
-                uint64_t start = a;
+                UInt64 start = a;
                 while(a < inv->line[i]->token_cnt && inv->line[i]->token[a]->type != kAssemblerTokenTypeComma)
                 {
                     a++;
                 }
                 assembler_token_t **entry = &inv->line[i]->token[start];
-                uint64_t entry_cnt = a - start;
+                UInt64 entry_cnt = a - start;
 
                 if(a < inv->line[i]->token_cnt)
                 {
@@ -248,7 +248,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
     }
 
     /* only emitting bss section into out virtual file descriptor */
-    for(uint64_t i = 0; i < inv->line_cnt; i++)
+    for(UInt64 i = 0; i < inv->line_cnt; i++)
     {
         if(inv->line[i]->type != kAssemblerLineTypeSection ||
            strcmp(inv->line[i]->token[1]->str, ".bss") != 0)
@@ -299,7 +299,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
                 return false;
             }
 
-            inv->out_vbitwalker->byte_pos += (uint64_t)(dbs / 8) * (uint64_t)count;
+            inv->out_vbitwalker->byte_pos += (UInt64)(dbs / 8) * (UInt64)count;
         }
         i--;
     }
@@ -307,7 +307,7 @@ bool assembler_section_parse(assembler_invocation_t *inv)
     vbitwalker_align_byte(inv->out_vbitwalker);
     if(inv->bss_section_start != UINT64_MAX)
     {
-        uint64_t bss_end = vbitwalker_bytes_used(inv->out_vbitwalker);
+        UInt64 bss_end = vbitwalker_bytes_used(inv->out_vbitwalker);
         inv->bss_section_size = bss_end > inv->bss_section_start ? bss_end - inv->bss_section_start : 0;
     }
 

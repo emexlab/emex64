@@ -26,8 +26,8 @@
 #include <pthread.h>
 
 typedef struct {
-    uint8_t length;
-    uint8_t data[4];
+    UInt8 length;
+    UInt8 data[4];
 } ps2_scancode_t;
 
 static const ps2_scancode_t kEmexKeyPhysToPS2Set1[] = {
@@ -142,8 +142,8 @@ static const ps2_scancode_t kEmexKeyPhysToPS2Set1[] = {
 #define STATUS_MOUSE_OBF    0x20
 
 emex64_8042_t *emex64_8042_alloc(E64MachineRef machine,
-                                 bool keyboard_attached,
-                                 bool mouse_attached)
+                                 Boolean keyboard_attached,
+                                 Boolean mouse_attached)
 {
     emex64_8042_t *dev = calloc(1, sizeof(emex64_8042_t));
     if(!dev)
@@ -167,7 +167,7 @@ emex64_8042_t *emex64_8042_alloc(E64MachineRef machine,
         return NULL;
     }
 
-    bool success = E64MMIOBusRegisterRegion(machine->mmio_bus, MMIO8042Region);
+    Boolean success = E64MMIOBusRegisterRegion(machine->mmio_bus, MMIO8042Region);
     EFRelease(MMIO8042Region);
     if(!success)
     {
@@ -186,8 +186,8 @@ void emex64_8042_dealloc(emex64_8042_t *dev)
 
 static void update_8042_interrupt(emex64_8042_t *dev)
 {
-    bool has_kbd = (dev->kbd_head   != dev->kbd_tail);
-    bool has_mouse = (dev->mouse_head != dev->mouse_tail);
+    Boolean has_kbd = (dev->kbd_head   != dev->kbd_tail);
+    Boolean has_mouse = (dev->mouse_head != dev->mouse_tail);
 
     if(has_kbd || has_mouse)
     {
@@ -210,7 +210,7 @@ static void update_8042_interrupt(emex64_8042_t *dev)
     }
 }
 
-void emex64_8042_send_keyboard(emex64_8042_t *dev, uint8_t scancode)
+void emex64_8042_send_keyboard(emex64_8042_t *dev, UInt8 scancode)
 {
     if(dev->keyboard_attached)
     {
@@ -237,7 +237,7 @@ void emex64_8042_send_keyboard_make(emex64_8042_t *dev, kEmexKeyPhys key)
     if(dev->keyboard_attached)
     {
         const ps2_scancode_t *sc = &kEmexKeyPhysToPS2Set1[key];
-        for(uint8_t i = 0; i < sc->length; i++)
+        for(UInt8 i = 0; i < sc->length; i++)
         {
             emex64_8042_send_keyboard(dev, sc->data[i]);
         }
@@ -275,7 +275,7 @@ void emex64_8042_send_keyboard_break(emex64_8042_t *dev, kEmexKeyPhys key)
     }  
 }
 
-void emex64_8042_send_mouse(emex64_8042_t *dev, uint8_t byte)
+void emex64_8042_send_mouse(emex64_8042_t *dev, UInt8 byte)
 {
     if(dev->mouse_attached)
     {
@@ -297,10 +297,10 @@ void emex64_8042_send_mouse(emex64_8042_t *dev, uint8_t byte)
     }
 }
 
-uint64_t emex64_8042_read(emex64_core_t *core, void *device, uint64_t offset, int size)
+UInt64 emex64_8042_read(emex64_core_t *core, void *device, UInt64 offset, int size)
 {
     emex64_8042_t *dev = device;
-    uint64_t val = 0;
+    UInt64 val = 0;
 
     pthread_mutex_lock(&dev->lock);
 
@@ -331,8 +331,8 @@ uint64_t emex64_8042_read(emex64_core_t *core, void *device, uint64_t offset, in
 
 void emex64_8042_write(emex64_core_t *core,
                        void *device,
-                       uint64_t offset,
-                       uint64_t value,
+                       UInt64 offset,
+                       UInt64 value,
                        int size)
 {
     emex64_8042_t *dev = device;

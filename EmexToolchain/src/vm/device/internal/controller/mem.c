@@ -24,9 +24,9 @@
 #include <EmexToolchain/vm/E64Machine.h>
 #include <EmexToolchain/vm/device/internal/controller/mem.h>
 
-uint64_t emex64_mc_read(emex64_core_t *core,
+UInt64 emex64_mc_read(emex64_core_t *core,
                         void *device,
-                        uint64_t offset,
+                        UInt64 offset,
                         int size)
 {
     if(offset == EMEX64_MC_REG_SIZE)
@@ -43,8 +43,8 @@ uint64_t emex64_mc_read(emex64_core_t *core,
 
 void emex64_mc_write(emex64_core_t *core,
                      void *device,
-                     uint64_t offset,
-                     uint64_t value,
+                     UInt64 offset,
+                     UInt64 value,
                      int size)
 {
     if(offset == EMEX64_MC_REG_KTRR_SIZE)

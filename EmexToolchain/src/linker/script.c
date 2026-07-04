@@ -28,7 +28,7 @@
 #include <EmexToolchain/linker/linker.h>
 #include <EmexToolchain/linker/script.h>
 
-bool linker_script_parse(linker_invocation_t *inv,
+Boolean linker_script_parse(linker_invocation_t *inv,
                          emex_file_t *script_file)
 {
     if(!emex_file_open(script_file))
@@ -157,16 +157,16 @@ bool linker_script_parse(linker_invocation_t *inv,
     return true;
 }
 
-bool linker_script_apply(linker_invocation_t *inv,
-                         uint64_t image_end,
-                         uint64_t text_start,
-                         uint64_t data_start,
-                         uint64_t bss_start)
+Boolean linker_script_apply(linker_invocation_t *inv,
+                         UInt64 image_end,
+                         UInt64 text_start,
+                         UInt64 data_start,
+                         UInt64 bss_start)
 {
     for(size_t i = 0; i < inv->script_sym_cnt; i++)
     {
         const char *expr = inv->script_syms[i].expr;
-        uint64_t value = 0;
+        UInt64 value = 0;
 
         if(strcmp(expr, "IMAGE_END") == 0)
         {
@@ -192,7 +192,7 @@ bool linker_script_apply(linker_invocation_t *inv,
         {
             /* parse hex / decimal number */
             char *endptr = NULL;
-            value = (uint64_t)strtoull(expr, &endptr, 0);
+            value = (UInt64)strtoull(expr, &endptr, 0);
             if(!endptr || *endptr != '\0')
             {
                 diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "unknown expression '%s' in linker script\n", expr);

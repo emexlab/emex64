@@ -26,32 +26,32 @@
 #include <EmexToolchain/asm/type.h>
 
 typedef struct assembler_directive_condition_frame {
-    bool in_a_condition;
-    bool condition_met;
-    bool in_a_else_condition;
-    bool finalized;
-    bool parent_active;
+    Boolean in_a_condition;
+    Boolean condition_met;
+    Boolean in_a_else_condition;
+    Boolean finalized;
+    Boolean parent_active;
     assembler_line_t *last_condition_line;
     struct assembler_directive_condition_frame *prev;
 } assembler_condition_frame_t;
 
 typedef struct assembler_directive_condition_state {
     assembler_condition_frame_t *frame;
-    bool in_a_condition;
-    bool condition_met;
-    bool in_a_else_condition;
-    bool finalized;
-    bool parent_active;
+    Boolean in_a_condition;
+    Boolean condition_met;
+    Boolean in_a_else_condition;
+    Boolean finalized;
+    Boolean parent_active;
     assembler_line_t *last_condition_line;
 } assembler_condition_state_t;
 
 void assembler_condition_frame_dealloc(assembler_condition_frame_t **frame);
-bool assembler_condition_frame_push(assembler_condition_frame_t **frame);
+Boolean assembler_condition_frame_push(assembler_condition_frame_t **frame);
 void assembler_condition_frame_pop(assembler_condition_frame_t **frame);
 
 void assembler_condition_state_init(assembler_condition_state_t *state);
 void assembler_condition_state_deinit(assembler_condition_state_t *state);
-bool assembler_condition_state_push(assembler_condition_state_t *state);
+Boolean assembler_condition_state_push(assembler_condition_state_t *state);
 void assembler_condition_state_pop(assembler_condition_state_t *state);
 
 #endif /* EMEX64ASM_CONDITION_H */

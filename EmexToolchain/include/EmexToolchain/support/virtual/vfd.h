@@ -29,7 +29,7 @@
 #include <sys/stat.h>
 #include <EmexToolchain/support/virtual/vpageobj.h>
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     kVFDTypeReal,
     kVFDTypeVirtual,
 } kVFDType;

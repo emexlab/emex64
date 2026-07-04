@@ -25,29 +25,29 @@
 #include <EmexToolchain/linker/type.h>
 
 typedef struct {
-    uint32_t st_name;
-    uint8_t st_info;
-    uint8_t st_other;
-    uint16_t st_shndx;
-    uint64_t st_value;
-    uint64_t st_size;
+    UInt32 st_name;
+    UInt8 st_info;
+    UInt8 st_other;
+    UInt16 st_shndx;
+    UInt64 st_value;
+    UInt64 st_size;
 } __attribute__((packed)) ELF64_Sym;
 
 typedef struct {
-    uint64_t r_offset;
-    uint64_t r_info;
+    UInt64 r_offset;
+    UInt64 r_info;
     int64_t r_addend;
 } __attribute__((packed)) ELF64_Rela;
 
 typedef struct linker_symbol {
     char *name;
     char *object_path;
-    uint64_t addr;
-    bool defined;
+    UInt64 addr;
+    Boolean defined;
     struct linker_symbol *next;
 } linker_symbol_t;
 
-linker_symbol_t *linker_symbol_alloc(const char *name, const char *object_path, uint64_t addr, bool defined);
+linker_symbol_t *linker_symbol_alloc(const char *name, const char *object_path, UInt64 addr, Boolean defined);
 void linker_symbol_dealloc(linker_symbol_t *sym);
 
 #endif /* EMEX64LD_SYM_H */

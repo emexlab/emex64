@@ -42,7 +42,7 @@ void ratchet_args_deinit(ratchet_args_t *ra)
     bzero(ra, sizeof(ratchet_args_t));
 }
 
-static inline bool __ratchet_args_gib(ratchet_args_t *ra)
+static inline Boolean __ratchet_args_gib(ratchet_args_t *ra)
 {
     if(ra->argc < ra->csize)
     {

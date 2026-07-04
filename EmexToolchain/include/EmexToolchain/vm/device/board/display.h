@@ -41,24 +41,24 @@ typedef struct emex64_core emex64_core_t;
 typedef struct __E64Machine *E64MachineRef;
 
 typedef struct {
-    uint8_t enabled;
-    uint8_t *palette;
-    uint8_t *fb;
+    UInt8 enabled;
+    UInt8 *palette;
+    UInt8 *fb;
     pthread_t pthread;
     emex64_8042_t *emex8042;
 
-    uint16_t width;
-    uint16_t height;
-    uint64_t fb_size;
+    UInt16 width;
+    UInt16 height;
+    UInt64 fb_size;
 } emex64_display_t;
 
-emex64_display_t *emex64_display_alloc(E64MachineRef machine, bool install, uint16_t width, uint16_t height);
+emex64_display_t *emex64_display_alloc(E64MachineRef machine, Boolean install, UInt16 width, UInt16 height);
 void emex64_display_dealloc(emex64_display_t *display);
 
 void *display_start(void *arg);
 
-uint64_t emex64_fb_read(emex64_core_t *core, void *device, uint64_t offset, int size);
-void emex64_fb_write(emex64_core_t *core, void *device, uint64_t offset, uint64_t value, int size);
+UInt64 emex64_fb_read(emex64_core_t *core, void *device, UInt64 offset, int size);
+void emex64_fb_write(emex64_core_t *core, void *device, UInt64 offset, UInt64 value, int size);
 
 #endif /* __linux__ | __APPLE__ */
 

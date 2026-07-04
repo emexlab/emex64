@@ -31,7 +31,7 @@
 #include <EmexToolchain/asm/emitter/register.h>
 #include <EmexToolchain/asm/emitter/opcode.h>
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     /* the nothing mode */
     kLextokTokenModeNone,
 
@@ -132,7 +132,7 @@ lextok_token_t assembler_lexer_tok(const char *token)
     retval.column = ltokptr - stokptr;
 
     /* perform copy */
-    uint16_t a = 0;
+    UInt16 a = 0;
     kLextokTokenMode token_mode = kLextokTokenModeNone;
     while(a <= LEXTOK_LENGHT_MAX)
     {
@@ -227,7 +227,7 @@ break_out:
     return retval;
 }
 
-static bool __assembly_lexer_validate_identifier(const char *s)
+static Boolean __assembly_lexer_validate_identifier(const char *s)
 {
     if(s == NULL || s[0] == '\0')
     {
@@ -277,7 +277,7 @@ static kAssemblerKeyword __assembler_lexer_keyword(const char *s)
     }
 }
 
-bool assembler_lexer_classify(assembler_token_t *at)
+Boolean assembler_lexer_classify(assembler_token_t *at)
 {
     /* first we need to find out what exactly they are */
     parser_return_t pret = parse_value_from_string(at->str);

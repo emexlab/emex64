@@ -44,7 +44,7 @@ emex64_intc_t *emex64_intc_alloc(E64MachineRef machineRef)
         return NULL;
     }
 
-    bool success = E64MMIOBusRegisterRegion(machineRef->mmio_bus, ICRegion);
+    Boolean success = E64MMIOBusRegisterRegion(machineRef->mmio_bus, ICRegion);
     EFRelease(ICRegion);
     if(!success)
     {
@@ -89,7 +89,7 @@ void emex64_clear_interrupt(E64MachineRef machineRef,
 
 static int find_pending_irq(emex64_intc_t *intc)
 {
-    uint64_t active = intc->pending & intc->enabled;
+    UInt64 active = intc->pending & intc->enabled;
     if(active == 0)
     {
         return -1;
@@ -106,7 +106,7 @@ static int find_pending_irq(emex64_intc_t *intc)
     return -1;
 }
 
-bool emex64_serve_interrupt_if_needed(emex64_core_t *core)
+Boolean emex64_serve_interrupt_if_needed(emex64_core_t *core)
 {    
     /* check if interrupts are globally enabled */
     if(!(core->machine->intc->ctrl & EMEX64_INTC_CTRL_ENABLE))
@@ -134,8 +134,8 @@ bool emex64_serve_interrupt_if_needed(emex64_core_t *core)
     core->machine->intc->pending &= ~(1ULL << irq);
 
     /* read handler address from vector table */
-    uint64_t vector_addr = core->machine->intc->vector_base + (irq * 8);
-    uint64_t handler_addr;
+    UInt64 vector_addr = core->machine->intc->vector_base + (irq * 8);
+    UInt64 handler_addr;
     if(!E64MemoryAction(core->machine->memory, vector_addr, 8, &handler_addr, kE64MemoryActionRead))
     {
         core->machine->intc->current_irq = -1;
@@ -144,8 +144,8 @@ bool emex64_serve_interrupt_if_needed(emex64_core_t *core)
     handler_addr = TO_HOST64(handler_addr);
 
     /* jump to handler */
-    uint64_t oldsp = core->rl[kE64RegisterSP];
-    uint64_t oldel = core->cr_state.crel.level;
+    UInt64 oldsp = core->rl[kE64RegisterSP];
+    UInt64 oldel = core->cr_state.crel.level;
 
     /*
      * must be kernel, because the IC is internal
@@ -209,7 +209,7 @@ bool emex64_serve_interrupt_if_needed(emex64_core_t *core)
     return true;
 }
 
-uint64_t emex64_intc_read(emex64_core_t *core, void *device, uint64_t offset, int size)
+UInt64 emex64_intc_read(emex64_core_t *core, void *device, UInt64 offset, int size)
 {
     emex64_intc_t *intc = (emex64_intc_t *)device;
 
@@ -224,13 +224,13 @@ uint64_t emex64_intc_read(emex64_core_t *core, void *device, uint64_t offset, in
         case EMEX64_INTC_REG_VECTOR:
             return intc->vector_base;
         case EMEX64_INTC_REG_CURRENT:
-            return (uint64_t)intc->current_irq;
+            return (UInt64)intc->current_irq;
         default:
             return 0;
     }
 }
 
-void emex64_intc_write(emex64_core_t *core, void *device, uint64_t offset, uint64_t value, int size)
+void emex64_intc_write(emex64_core_t *core, void *device, UInt64 offset, UInt64 value, int size)
 {
     emex64_intc_t *intc = (emex64_intc_t *)device;
     

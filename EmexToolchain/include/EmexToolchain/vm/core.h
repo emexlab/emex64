@@ -22,11 +22,11 @@
 #ifndef EMEX64VM_CORE_H
 #define EMEX64VM_CORE_H
 
-#include <stdint.h>
 #include <stdbool.h>
 #include <pthread.h>
+#include <EmexFoundation/EmexFoundation.h>
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     /* core operations */
     kE64OpcodeHLT =      0b00000000,
     kE64OpcodeNOP =      0b00000001,
@@ -114,7 +114,7 @@ typedef enum: uint8_t {
     kE64OpcodeInvalid =  0b11111111,
 } E64Opcode;
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     /*
      * defines the end of a instruction in case the
      * instruction can have such a end coding, like
@@ -138,7 +138,7 @@ typedef enum: uint8_t {
     kE64ParameterCodingAddr64 =  0b111
 } E64ParameterCoding;
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     /*
      * program counter: it points to the current address at
      * which the CPU currently is, it increments by the
@@ -234,7 +234,7 @@ typedef enum: uint8_t {
     kE64RegisterInvalid =    0b11111111,
 } E64Register;
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     kE64ControlRegisterCR0 = 0b00000,    /* CREL:    elevation control register */
     kE64ControlRegisterCR1 = 0b00001,    /* CRKSP:   kernel stack pointer (the stack pointer the interrupt controller will use when receiving interrupt) */
     kE64ControlRegisterCR2 = 0b00010,    /* CREXC:   exception register (first 3bits for the exception) */
@@ -269,7 +269,7 @@ typedef enum: uint8_t {
     kE64ControlRegisterCR31 = 0b11111,
 } E64ControlRegister;
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     kE64FloatingRegisterFR0 = 0b00000,
     kE64FloatingRegisterFR1 = 0b00001,
     kE64FloatingRegisterFR2 = 0b00010,
@@ -306,15 +306,15 @@ typedef enum: uint8_t {
 } E64FloatingRegister;
 
 typedef union {
-    uint64_t u64;
-    uint32_t u32;
+    UInt64 u64;
+    UInt32 u32;
     int64_t i64;
     int32_t i32;
     double f64;
     float f32;
 } FPReg;
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     kE64ElevationLevelUser =             0b00,
     kE64ElevationLevelKernel =           0b01,
     kE64ElevationLevelSecureMonitor =    0b10    /* used for software kernel secure mechanism like apples PPL */
@@ -332,13 +332,13 @@ typedef enum: uint8_t {
  * G = GREATER
  *
  */
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     kE64CompareFlagZ =   0x1,
     kE64CompareFlagL =   0x2,
     kE64CompareFlagG =   0x4
 } E64CompareFlag;
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     /*
      * normal state, simply a marker to say nothing
      * to trigger a interrupt for.
@@ -399,9 +399,9 @@ typedef struct __E64Machine *E64MachineRef;
 
 typedef struct emex64_opfunc_entry {
     emex64_opfunc_t func;
-    uint8_t minargs;
-    uint8_t maxargs;
-    uint32_t argmask;
+    UInt8 minargs;
+    UInt8 maxargs;
+    UInt32 argmask;
 } emex64_opfunc_entry_t;
 
 extern const emex64_opfunc_entry_t kE64OpfuncTable[];
@@ -412,7 +412,7 @@ typedef struct emex64_core {
     pthread_t pthread;
 
     /* a array of all (control) registers */
-    uint64_t rl[kE64RegisterMAX + 1];
+    UInt64 rl[kE64RegisterMAX + 1];
     FPReg frl[kE64FloatingRegisterMAX + 1];
 
     /* data of currently decoding or decoded operation */
@@ -429,14 +429,14 @@ typedef struct emex64_core {
          * a cache so they can like registers be used inside
          * the parameter pointer array.
          */
-        uint8_t inscache[EMEX64_MAX_ILEN + 8];
-        uint64_t immcache[EMEX64_MAX_ARGS];
+        UInt8 inscache[EMEX64_MAX_ILEN + 8];
+        UInt64 immcache[EMEX64_MAX_ARGS];
 
         /*
          * lenght of decoded instruction so that the cpu
          * can correctly increment the program counter.
          */
-        uint8_t ilen;
+        UInt8 ilen;
 
         /*
          * the opcode it self, so the cpu knows what to
@@ -452,8 +452,8 @@ typedef struct emex64_core {
          * each parameter into this array.. register
          * immediate, etc.
          */
-        uint8_t param_cnt;
-        uint64_t *param[EMEX64_MAX_ARGS];
+        UInt8 param_cnt;
+        UInt64 *param[EMEX64_MAX_ARGS];
         E64ParameterCoding param_coding[EMEX64_MAX_ARGS];
     } op;
 
@@ -467,7 +467,7 @@ typedef struct emex64_core {
         } crel;
 
         struct {
-            uint64_t address;
+            UInt64 address;
         } crksp;
 
         struct {
@@ -482,8 +482,8 @@ typedef struct emex64_core {
         */
 
         struct {
-            bool enabled;
-            uint64_t pgd_addr;
+            Boolean enabled;
+            UInt64 pgd_addr;
         } crptb;
 
         /*
@@ -498,13 +498,13 @@ typedef struct emex64_core {
      * cpu halting status (will later be in the same
      * control register as the exception register CR0).
      */
-    bool halted;
+    Boolean halted;
 
     /*
      * cpu cant get a second interrupt while handling
      * one, but will be unset when the cpu calls iret.
      */
-    bool in_interrupt;
+    Boolean in_interrupt;
 
     /* pointer back to machine */
     E64MachineRef machine;

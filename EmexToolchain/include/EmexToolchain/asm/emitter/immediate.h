@@ -25,12 +25,12 @@
 #include <stdint.h>
 #include <EmexToolchain/asm/invocation.h>
 
-void assembler_emit_imm5(assembler_invocation_t *inv, uint8_t imm);
-void assembler_emit_imm8(assembler_invocation_t *inv, uint8_t imm);
-void assembler_emit_imm16(assembler_invocation_t *inv, uint16_t imm);
-void assembler_emit_imm32(assembler_invocation_t *inv, uint32_t imm);
-void assembler_emit_imm64(assembler_invocation_t *inv, uint64_t imm);
-void assembler_emit_addr64(assembler_invocation_t *inv, uint64_t addr);
-void assembler_emit_imm(assembler_invocation_t *inv, uint64_t imm);
+void assembler_emit_imm5(assembler_invocation_t *inv, UInt8 imm);
+void assembler_emit_imm8(assembler_invocation_t *inv, UInt8 imm);
+void assembler_emit_imm16(assembler_invocation_t *inv, UInt16 imm);
+void assembler_emit_imm32(assembler_invocation_t *inv, UInt32 imm);
+void assembler_emit_imm64(assembler_invocation_t *inv, UInt64 imm);
+void assembler_emit_addr64(assembler_invocation_t *inv, UInt64 addr);
+void assembler_emit_imm(assembler_invocation_t *inv, UInt64 imm);
 
 #endif /* EMEX64ASM_EMITTER_IMMEDIATE_H */

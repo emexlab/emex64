@@ -23,9 +23,9 @@
 #include <stdlib.h>
 #include <time.h>
 
-uint64_t emex64_rtc_read(emex64_core_t *core,
+UInt64 emex64_rtc_read(emex64_core_t *core,
                        void *device,
-                       uint64_t offset,
+                       UInt64 offset,
                        int size)
 {
     time_t now = time(NULL);
@@ -44,7 +44,7 @@ uint64_t emex64_rtc_read(emex64_core_t *core,
         case RTC_REG_MONTH:
             return t->tm_mon + 1;
         case RTC_REG_YEAR:
-            return (uint64_t)((t->tm_year + 1900) % 100);
+            return (UInt64)((t->tm_year + 1900) % 100);
         case RTC_REG_WEEKDAY:
             return t->tm_wday;
         default:

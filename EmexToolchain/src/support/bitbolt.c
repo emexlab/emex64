@@ -21,7 +21,7 @@
 
 #include <EmexToolchain/support/bitbolt.h>
 
-uint64_t kMask[65];
+UInt64 kMask[65];
 
 __attribute__((constructor))
 void bitbolt_init(void)

@@ -31,7 +31,7 @@ typedef diagnostic_consumer_t linker_diagnostic_consumer_t;
 
 typedef struct linker_diagnostic_consumer_context {
     diagnostic_t **diagnostic;
-    uint64_t diagnostic_cnt;
+    UInt64 diagnostic_cnt;
     vfd_t *d;
 } linker_diagnostic_consumer_context_t;
 

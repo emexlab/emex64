@@ -26,6 +26,6 @@
 #include <stdbool.h>
 #include <EmexToolchain/asm/invocation.h>
 
-bool assembler_elf_emit(struct assembler_invocation *inv);
+Boolean assembler_elf_emit(struct assembler_invocation *inv);
 
 #endif /* EMEX64ASM_EMITTER_ELF_H */

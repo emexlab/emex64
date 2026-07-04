@@ -39,7 +39,7 @@ void assembler_condition_frame_dealloc(assembler_condition_frame_t **frame)
     }
 }
 
-bool assembler_condition_frame_push(assembler_condition_frame_t **frame)
+Boolean assembler_condition_frame_push(assembler_condition_frame_t **frame)
 {
     assembler_condition_frame_t *new = __assembler_condition_frame_alloc();
     if(new == NULL)
@@ -80,7 +80,7 @@ void assembler_condition_state_deinit(assembler_condition_state_t *state)
     bzero(state, sizeof(assembler_condition_state_t));
 }
 
-bool assembler_condition_state_push(assembler_condition_state_t *state)
+Boolean assembler_condition_state_push(assembler_condition_state_t *state)
 {
     if(!assembler_condition_frame_push(&state->frame))
     {

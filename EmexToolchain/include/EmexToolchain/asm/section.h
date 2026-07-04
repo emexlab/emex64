@@ -25,6 +25,6 @@
 #include <EmexToolchain/asm/type.h>
 #include <EmexToolchain/asm/invocation.h>
 
-bool assembler_section_parse(assembler_invocation_t *inv);
+Boolean assembler_section_parse(assembler_invocation_t *inv);
 
 #endif /* EMEX64ASM_SECTION_H */

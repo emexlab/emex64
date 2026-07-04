@@ -153,7 +153,7 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
         EFRelease(machine);
     }
 
-    bool success = E64MMIOBusRegisterRegion(machine->mmio_bus, RTCMMIORegion);
+    Boolean success = E64MMIOBusRegisterRegion(machine->mmio_bus, RTCMMIORegion);
     EFRelease(RTCMMIORegion);
     if(!success)
     {

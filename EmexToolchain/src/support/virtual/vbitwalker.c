@@ -66,8 +66,8 @@ void vbitwalker_reset(vbitwalker_t *vb)
 }
 
 int vbitwalker_write(vbitwalker_t *vb,
-                     uint64_t value,
-                     uint8_t num_bits)
+                     UInt64 value,
+                     UInt8 num_bits)
 {
     assert(vb != NULL);
 
@@ -76,7 +76,7 @@ int vbitwalker_write(vbitwalker_t *vb,
         return -1;
     }
 
-    uint64_t mask = (num_bits == 64) ? ~0ULL : ((1ULL << num_bits) - 1);
+    UInt64 mask = (num_bits == 64) ? ~0ULL : ((1ULL << num_bits) - 1);
     value &= mask;
 
     /*
@@ -85,14 +85,14 @@ int vbitwalker_write(vbitwalker_t *vb,
      */
     if(num_bits > 8)
     {
-        uint8_t num_bytes = (num_bits + 7) / 8;
+        UInt8 num_bytes = (num_bits + 7) / 8;
         if(vb->endian == BW_BIG_ENDIAN)
         {
             value = bswap_n(value, num_bytes);
         }
     }
 
-    uint8_t win[9] = {0};
+    UInt8 win[9] = {0};
     vfd_seek(vb->d, vb->byte_pos, SEEK_SET);
     if(vfd_read(vb->d, win, sizeof win) < 0)
     {
@@ -117,15 +117,15 @@ int vbitwalker_write(vbitwalker_t *vb,
     return 0;
 }
 
-uint64_t vbitwalker_read(vbitwalker_t *vb,
-                         uint8_t num_bits)
+UInt64 vbitwalker_read(vbitwalker_t *vb,
+                         UInt8 num_bits)
 {
     if(num_bits == 0 || num_bits > 64)
     {
         return 0;
     }
 
-    uint8_t win[9] = {0};
+    UInt8 win[9] = {0};
     vfd_seek(vb->d, vb->byte_pos, SEEK_SET);
     if(vfd_read(vb->d, win, sizeof win) < 0)
     {
@@ -135,13 +135,13 @@ uint64_t vbitwalker_read(vbitwalker_t *vb,
     __uint128_t chunk = load_window_le(win, sizeof win);
     chunk >>= vb->bit_idx;
 
-    uint64_t mask  = (num_bits == 64) ? UINT64_MAX : ((1ULL << num_bits) - 1);
-    uint64_t value = chunk & mask;
+    UInt64 mask  = (num_bits == 64) ? UINT64_MAX : ((1ULL << num_bits) - 1);
+    UInt64 value = chunk & mask;
 
     /* endian fix */
     if(num_bits > 8)
     {
-        uint8_t num_bytes = (num_bits + 7) / 8;
+        UInt8 num_bytes = (num_bits + 7) / 8;
         if(vb->endian == BW_BIG_ENDIAN)
         {
             value = bswap_n(value, num_bytes);
@@ -175,7 +175,7 @@ int vbitwalker_read_buf(vbitwalker_t *vb,
 
 void vbitwalker_seek(vbitwalker_t *vb,
                      size_t byte_pos,
-                     uint8_t bit_idx)
+                     UInt8 bit_idx)
 {
     vb->byte_pos = byte_pos;
     vb->bit_idx = bit_idx;

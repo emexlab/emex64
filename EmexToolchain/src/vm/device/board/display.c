@@ -319,7 +319,7 @@ void *display_start(void *arg)
         -1.f, 1.f,  0.f,0.f
     };
 
-    uint32_t idxs[] = { 0,1,2, 2,3,0 };
+    UInt32 idxs[] = { 0,1,2, 2,3,0 };
 
     GLuint vao,vbo,ebo;
     glGenVertexArrays(1,&vao);
@@ -373,7 +373,7 @@ void *display_start(void *arg)
         glfwPollEvents();
 
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER,pbo[pboIdx]);
-        uint8_t* ptr = (uint8_t*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER,0,display->fb_size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
+        UInt8* ptr = (UInt8*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER,0,display->fb_size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
         memcpy(ptr, display->fb, display->fb_size);
         glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
 
@@ -408,9 +408,9 @@ void *display_start(void *arg)
 extern void *display_start(void *arg);
 
 emex64_display_t *emex64_display_alloc(E64MachineRef machine,
-                                       bool install,
-                                       uint16_t width,
-                                       uint16_t height)
+                                       Boolean install,
+                                       UInt16 width,
+                                       UInt16 height)
 {
     if(width > 1920 || height > 1920)
     {
@@ -440,7 +440,7 @@ emex64_display_t *emex64_display_alloc(E64MachineRef machine,
         return NULL;
     }
 
-    bool success = E64MMIOBusRegisterRegion(machine->mmio_bus, FBRegion);
+    Boolean success = E64MMIOBusRegisterRegion(machine->mmio_bus, FBRegion);
     EFRelease(FBRegion);
     if(!success)
     {
@@ -459,7 +459,7 @@ emex64_display_t *emex64_display_alloc(E64MachineRef machine,
     /* setting up by default with grayscale */
     for (int i = 0; i < 256; i++)
     {
-        uint8_t gray = (uint8_t)i;
+        UInt8 gray = (UInt8)i;
 
         display->palette[i*3 + 0] = gray;
         display->palette[i*3 + 1] = gray;
@@ -522,9 +522,9 @@ void emex64_display_dealloc(emex64_display_t *display)
     }
 }
 
-uint64_t emex64_fb_read(emex64_core_t *core,
+UInt64 emex64_fb_read(emex64_core_t *core,
                       void *device,
-                      uint64_t offset,
+                      UInt64 offset,
                       int size)
 {
 
@@ -534,7 +534,7 @@ uint64_t emex64_fb_read(emex64_core_t *core,
     {
         if(offset >= EMEX64_FB_FRAMEBUFFER)
         {
-            uint64_t outvalue;
+            UInt64 outvalue;
             EMEX64_MEMORY_READ_HELPER(display->fb, offset - EMEX64_FB_FRAMEBUFFER, size, outvalue);
             return outvalue;
         }
@@ -562,8 +562,8 @@ uint64_t emex64_fb_read(emex64_core_t *core,
 
 void emex64_fb_write(emex64_core_t *core,
                    void *device,
-                   uint64_t offset,
-                   uint64_t value,
+                   UInt64 offset,
+                   UInt64 value,
                    int size)
 {
     #if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || defined(__APPLE__))

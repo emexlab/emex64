@@ -29,12 +29,12 @@ typedef struct assembler_invocation assembler_invocation_t;
 
 typedef struct {
     char *name;                             /* name of resolved label */
-    bool defined;                           /* label definitions are defined */
-    uint64_t addr;                          /* address of resolved label */
+    Boolean defined;                           /* label definitions are defined */
+    UInt64 addr;                          /* address of resolved label */
     assembler_token_t *at_link;             /* link to the originator of the label */
 } assembler_label_t;
 
-bool assembler_label_append(assembler_token_t *at);
+Boolean assembler_label_append(assembler_token_t *at);
 
 assembler_label_t *assembler_label_lookup(assembler_invocation_t *inv, const char *name);
 

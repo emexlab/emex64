@@ -82,7 +82,7 @@ void linker_diagnostic_consumer_dealloc(linker_diagnostic_consumer_t *consumer)
 
     linker_diagnostic_consumer_context_t *ctx = consumer->ctx;
     vfd_close(ctx->d);
-    for(uint64_t i = 0; i < ctx->diagnostic_cnt; i++)
+    for(UInt64 i = 0; i < ctx->diagnostic_cnt; i++)
     {
         diagnostic_dealloc(ctx->diagnostic[i]);
     }
@@ -96,7 +96,7 @@ void linker_diagnostic_consumer_emit(linker_diagnostic_consumer_t *consumer)
     linker_diagnostic_consumer_context_t *ctx = consumer->ctx;
 
     /* tiny diagnostic engine ^^ */
-    for(uint64_t i = 0; i < ctx->diagnostic_cnt; i++)
+    for(UInt64 i = 0; i < ctx->diagnostic_cnt; i++)
     {
         diagnostic_t *diagnostic = ctx->diagnostic[i];
         if(diagnostic->location != NULL)

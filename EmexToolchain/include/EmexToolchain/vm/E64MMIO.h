@@ -28,17 +28,17 @@
 
 typedef struct emex64_core emex64_core_t;
 
-typedef uint64_t (*mmio_read_fn)(emex64_core_t *core, void *device, uint64_t offset, int size);
-typedef void (*mmio_write_fn)(emex64_core_t *core, void *device, uint64_t offset, uint64_t value, int size);
+typedef UInt64 (*mmio_read_fn)(emex64_core_t *core, void *device, UInt64 offset, int size);
+typedef void (*mmio_write_fn)(emex64_core_t *core, void *device, UInt64 offset, UInt64 value, int size);
 
 typedef EFObjectRef E64MMIORegionRef;
 
 EFTypeID E64MMIORegionGetTypeID(void);
 
-E64MMIORegionRef E64MMIORegionCreate(EFAllocatorRef allocatorRef, uint64_t base, uint64_t size, void *device, mmio_read_fn read, mmio_write_fn write);
+E64MMIORegionRef E64MMIORegionCreate(EFAllocatorRef allocatorRef, UInt64 base, UInt64 size, void *device, mmio_read_fn read, mmio_write_fn write);
 
-uint64_t E64MMIORegionGetBaseAddress(E64MMIORegionRef MMIORegionRef);
-uint64_t E64MMIORegionGetSize(E64MMIORegionRef MMIORegionRef);
+UInt64 E64MMIORegionGetBaseAddress(E64MMIORegionRef MMIORegionRef);
+UInt64 E64MMIORegionGetSize(E64MMIORegionRef MMIORegionRef);
 void *E64MMIORegionGetDevice(E64MMIORegionRef MMIORegionRef);
 mmio_read_fn E64MMIORegionGetReadSymbol(E64MMIORegionRef MMIORegionRef);
 mmio_write_fn E64MMIORegionGetWriteSymbol(E64MMIORegionRef MMIORegionRef);
@@ -49,7 +49,7 @@ EFTypeID E64MMIOBusGetTypeID(void);
 
 E64MMIOBusRef E64MMIOBusCreate(EFAllocatorRef allocatorRef);
 
-bool E64MMIOBusRegisterRegion(E64MMIOBusRef MMIOBusRef, E64MMIORegionRef MMIORegionRef);
-E64MMIORegionRef E64MMIOBusGetRegionForAddress(E64MMIOBusRef MMIOBusRef, uint64_t addr);
+Boolean E64MMIOBusRegisterRegion(E64MMIOBusRef MMIOBusRef, E64MMIORegionRef MMIORegionRef);
+E64MMIORegionRef E64MMIOBusGetRegionForAddress(E64MMIOBusRef MMIOBusRef, UInt64 addr);
 
 #endif /* E64MMIO_H */

@@ -34,15 +34,15 @@ typedef struct {
     emex_file_t *output_file;
 
     emex_file_t **input_file;           /* borrowed */
-    uint64_t input_file_cnt;
+    UInt64 input_file_cnt;
 
     emex_file_t **linker_script_file;   /* borrowed */
-    uint64_t linker_script_file_cnt;
+    UInt64 linker_script_file_cnt;
 } linker_driver_t;
 
 linker_driver_t *linker_driver_alloc(int argc, const char **argv);
 void linker_driver_dealloc(linker_driver_t *driver);
 
-bool linker_driver_drive_the_fucking_car(linker_driver_t *driver);
+Boolean linker_driver_drive_the_fucking_car(linker_driver_t *driver);
 
 #endif /* EMEX64LD_DRIVER_H */

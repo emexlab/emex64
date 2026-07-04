@@ -24,7 +24,7 @@
 
 assembler_macro_t *assembler_macro_alloc(const char *match,
                                          const char **inject_token,
-                                         uint64_t token_cnt)
+                                         UInt64 token_cnt)
 {
     assembler_macro_t *macro = malloc(sizeof(assembler_macro_t));
     if(macro == NULL)
@@ -79,10 +79,10 @@ assembler_macro_t *assembler_macro_storage_lookup(assembler_macro_storage_t *sto
     return (assembler_macro_t*)hashmap_gets(storage->macro_map, match);
 }
 
-bool assembler_macro_storage_append_macro_char(assembler_macro_storage_t *storage,
+Boolean assembler_macro_storage_append_macro_char(assembler_macro_storage_t *storage,
                                                const char *match,
                                                const char **token,
-                                               uint64_t token_cnt)
+                                               UInt64 token_cnt)
 {
     /* checking if it is already defined */
     assembler_macro_t *found = assembler_macro_storage_lookup(storage, match);
@@ -111,10 +111,10 @@ bool assembler_macro_storage_append_macro_char(assembler_macro_storage_t *storag
     return true;
 }
 
-bool assembler_macro_storage_append_macro(assembler_macro_storage_t *storage,
+Boolean assembler_macro_storage_append_macro(assembler_macro_storage_t *storage,
                                           const char *match,
                                           assembler_token_t **token,
-                                          uint64_t token_cnt)
+                                          UInt64 token_cnt)
 {
     /* checking if it is already defined */
     const char **token_char = calloc(token_cnt, sizeof(const char *));
@@ -123,12 +123,12 @@ bool assembler_macro_storage_append_macro(assembler_macro_storage_t *storage,
         return false;
     }
 
-    for(uint64_t i = 0; i < token_cnt; i++)
+    for(UInt64 i = 0; i < token_cnt; i++)
     {
         token_char[i] = token[i]->str;
     }
 
-    bool success = assembler_macro_storage_append_macro_char(storage, match, token_char, token_cnt);
+    Boolean success = assembler_macro_storage_append_macro_char(storage, match, token_char, token_cnt);
     if(!success)
     {
         free(token_char);

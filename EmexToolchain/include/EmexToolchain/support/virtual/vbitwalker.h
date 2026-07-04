@@ -28,7 +28,7 @@
 typedef struct {
     vfd_t *d;
     size_t byte_pos;
-    uint8_t bit_idx;
+    UInt8 bit_idx;
     bw_endian_t endian;
 } vbitwalker_t;
 
@@ -37,12 +37,12 @@ void vbitwalker_dealloc(vbitwalker_t *fw);
 
 void vbitwalker_reset(vbitwalker_t *fw);
 
-int vbitwalker_write(vbitwalker_t *fw, uint64_t value, uint8_t num_bits);
-uint64_t vbitwalker_read(vbitwalker_t *fw, uint8_t num_bits);
+int vbitwalker_write(vbitwalker_t *fw, UInt64 value, UInt8 num_bits);
+UInt64 vbitwalker_read(vbitwalker_t *fw, UInt8 num_bits);
 int vbitwalker_write_buf(vbitwalker_t *fw, const char *buf, size_t len);
 int vbitwalker_read_buf(vbitwalker_t *fw, char *buf, size_t len);
 
-void vbitwalker_seek(vbitwalker_t *fw, size_t byte_pos, uint8_t bit_idx);
+void vbitwalker_seek(vbitwalker_t *fw, size_t byte_pos, UInt8 bit_idx);
 
 void vbitwalker_skip(vbitwalker_t *fw, size_t num_bits);
 

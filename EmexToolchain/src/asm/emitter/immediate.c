@@ -23,42 +23,42 @@
 #include <EmexToolchain/vm/core.h>
 
 void assembler_emit_imm5(assembler_invocation_t *inv,
-                         uint8_t imm)
+                         UInt8 imm)
 {
     vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingImm5, 3);
     vbitwalker_write(inv->out_vbitwalker, imm, 5);
 }
 
 void assembler_emit_imm8(assembler_invocation_t *inv,
-                         uint8_t imm)
+                         UInt8 imm)
 {
     vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingImm8, 3);
     vbitwalker_write(inv->out_vbitwalker, imm, 8);
 }
 
 void assembler_emit_imm16(assembler_invocation_t *inv,
-                          uint16_t imm)
+                          UInt16 imm)
 {
     vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingImm16, 3);
     vbitwalker_write(inv->out_vbitwalker, imm, 16);
 }
 
 void assembler_emit_imm32(assembler_invocation_t *inv,
-                          uint32_t imm)
+                          UInt32 imm)
 {
     vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingImm32, 3);
     vbitwalker_write(inv->out_vbitwalker, imm, 32);
 }
 
 void assembler_emit_imm64(assembler_invocation_t *inv,
-                          uint64_t imm)
+                          UInt64 imm)
 {
     vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingImm64, 3);
     vbitwalker_write(inv->out_vbitwalker, imm, 64);
 }
 
 void assembler_emit_addr64(assembler_invocation_t *inv,
-                           uint64_t addr)
+                           UInt64 addr)
 {
     vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingAddr64, 3);
     vbitwalker_align_byte(inv->out_vbitwalker);
@@ -66,26 +66,26 @@ void assembler_emit_addr64(assembler_invocation_t *inv,
 }
 
 void assembler_emit_imm(assembler_invocation_t *inv,
-                        uint64_t imm)
+                        UInt64 imm)
 {
     if(imm <= 0x1F)
     {
-        assembler_emit_imm5(inv, (uint8_t)imm);
+        assembler_emit_imm5(inv, (UInt8)imm);
     }
     else if(imm <= 0xFF)
     {
-        assembler_emit_imm8(inv, (uint8_t)imm);
+        assembler_emit_imm8(inv, (UInt8)imm);
     }
     else if(imm <= 0xFFFF)
     {
-        assembler_emit_imm16(inv, (uint16_t)imm);
+        assembler_emit_imm16(inv, (UInt16)imm);
     }
     else if(imm <= 0xFFFFFFFF)
     {
-        assembler_emit_imm32(inv, (uint32_t)imm);
+        assembler_emit_imm32(inv, (UInt32)imm);
     }
     else if(imm <= 0xFFFFFFFFFFFFFFFF)
     {
-        assembler_emit_imm64(inv, (uint64_t)imm);
+        assembler_emit_imm64(inv, (UInt64)imm);
     }
 }

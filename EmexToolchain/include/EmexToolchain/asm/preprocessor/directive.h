@@ -22,9 +22,9 @@
 #ifndef EMEX64ASM_DIRECTIVE_H
 #define EMEX64ASM_DIRECTIVE_H
 
-#include <stdint.h>
+#include <EmexFoundation/EmexFoundation.h>
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     /* sentinel */
     kAssemblerPreprocessorDirectiveTypeUnknown, /* the preprocessor shall flag this */
 

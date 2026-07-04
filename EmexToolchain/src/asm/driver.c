@@ -124,7 +124,7 @@ void assembler_job_dealloc(assembler_job_t *job)
     free(job);
 }
 
-bool assembler_driver_predrive(assembler_driver_t *driver,
+Boolean assembler_driver_predrive(assembler_driver_t *driver,
                                int argc,
                                const char **argv)
 {
@@ -345,7 +345,7 @@ bool assembler_driver_predrive(assembler_driver_t *driver,
 
         early_macro_append:
             {
-                uint64_t macro_slot = driver->macro_cnt++;
+                UInt64 macro_slot = driver->macro_cnt++;
                 if(driver->macro == NULL)
                 {
                     driver->macro = calloc(driver->macro_cnt, sizeof(assembler_macro_definition_t));
@@ -473,7 +473,7 @@ static void assembler_driver_append_additional_linker_flag(assembler_driver_t *d
     driver->linker_flags[driver->linker_flags_cnt++] = strdup(flag);
 }
 
-bool assembler_driver_jobgen(assembler_driver_t *driver)
+Boolean assembler_driver_jobgen(assembler_driver_t *driver)
 {
     /* -c is only meant to assemble one assembly file to a object file */
     if(driver->options.assemble_only && driver->input_file_count > 1)
@@ -528,7 +528,7 @@ bool assembler_driver_jobgen(assembler_driver_t *driver)
                     ratchet_args_append(&ra, new_buf);
                     free(new_buf);
                 }
-                for(uint64_t j = 0; j < driver->macro_cnt; j++)
+                for(UInt64 j = 0; j < driver->macro_cnt; j++)
                 {
                     const char *m = driver->macro[j].match;
                     const char *v = driver->macro[j].value;
@@ -705,7 +705,7 @@ assembler_driver_t *assembler_driver_alloc(int argc,
         fprintf(stderr, " }\n");
 
         fprintf(stderr, "macro[%llu]: { ", (unsigned long long)driver->macro_cnt);
-        for(uint64_t i = 0; i < driver->macro_cnt; i++)
+        for(UInt64 i = 0; i < driver->macro_cnt; i++)
         {
             if(i != 0)
             {
@@ -777,14 +777,14 @@ void assembler_driver_dealloc(assembler_driver_t *driver)
     }
     free(driver->inc_dirs);
 
-    for(uint64_t i = 0; i < driver->tmp_path_cnt; i++)
+    for(UInt64 i = 0; i < driver->tmp_path_cnt; i++)
     {
         unlink(driver->tmp_paths[i]);
         free(driver->tmp_paths[i]);
     }
     free(driver->tmp_paths);
 
-    for(uint64_t i = 0; i < driver->macro_cnt; i++)
+    for(UInt64 i = 0; i < driver->macro_cnt; i++)
     {
         free(driver->macro[i].match);
         free(driver->macro[i].value);
@@ -810,7 +810,7 @@ void assembler_driver_dealloc(assembler_driver_t *driver)
     free(driver);
 }
 
-bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
+Boolean assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
 {
     if(driver->options.assemble_only)
     {
@@ -833,7 +833,7 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
             return false;
         }
 
-        bool success = assembler_invocation_emit(inv, driver->input_file[0], output);
+        Boolean success = assembler_invocation_emit(inv, driver->input_file[0], output);
 
         emex_file_dealloc(output);
         assembler_invocation_dealloc(inv);
@@ -853,7 +853,7 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
                     return false;
                 }
 
-                bool success = assembler_driver_drive_the_fucking_car(subdriver);
+                Boolean success = assembler_driver_drive_the_fucking_car(subdriver);
                 assembler_driver_dealloc(subdriver);
                 if(!success)
                 {
@@ -868,7 +868,7 @@ bool assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
                     return false;
                 }
 
-                bool success = linker_driver_drive_the_fucking_car(subdriver);
+                Boolean success = linker_driver_drive_the_fucking_car(subdriver);
                 linker_driver_dealloc(subdriver);
                 if(!success)
                 {

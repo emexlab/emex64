@@ -26,7 +26,7 @@
 #include <EmexToolchain/linker/type.h>
 
 typedef struct linker_options {
-    bool verbose;
+    Boolean verbose;
     kEmitMode emit_mode;
     const char *entry_name; /* borrowed */
 } linker_options_t;

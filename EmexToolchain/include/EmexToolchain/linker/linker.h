@@ -42,15 +42,15 @@ typedef struct linker_invocation {
     script_sym_t *script_syms;
     size_t script_sym_cnt;
 
-    uint64_t out_text_off;
-    uint64_t out_data_off;
-    uint64_t out_bss_off;
+    UInt64 out_text_off;
+    UInt64 out_data_off;
+    UInt64 out_bss_off;
 } linker_invocation_t;
 
 linker_invocation_t *linker_invocation_alloc(linker_options_t options, linker_diagnostic_consumer_t *diagnostic_consumer);
 void linker_invocation_dealloc(linker_invocation_t *inv);
 
-bool linker_symbol_append_definition(linker_invocation_t *inv, const char *name, const char *object_path, uint64_t addr);
+Boolean linker_symbol_append_definition(linker_invocation_t *inv, const char *name, const char *object_path, UInt64 addr);
 linker_symbol_t *linker_symbol_lookup(linker_invocation_t *inv, const char *name);
 
 #endif /* EMEX64LD_LINKER_H */

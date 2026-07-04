@@ -19,6 +19,10 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#if defined(__APPLE__)
+#include <CoreFoundation/CFRunLoop.h>
+#endif /* __APPLE__ */
+
 #include <stdlib.h>
 #include <pthread.h>
 #include <string.h>
@@ -36,10 +40,6 @@
 #include <EmexToolchain/vm/instruction/ctrl.h>
 #include <EmexToolchain/support/bitbolt.h>
 #include <EmexToolchain/support/likely.h>
-
-#if defined(__APPLE__)
-#include <CoreFoundation/CFRunLoop.h>
-#endif /* __APPLE__ */
 
 const emex64_opfunc_entry_t kE64OpfuncTable[] = {
     /* core operations */
@@ -109,7 +109,7 @@ const emex64_opfunc_entry_t kE64OpfuncTable[] = {
     [kE64OpcodeCMOVB] = { .func = emex64_op_cmovb, .minargs = 2, .maxargs = 2, .argmask = 0b10000000000000000000000000000000 },
 };
 
-static const uint8_t kImmBits[] = {
+static const UInt8 kImmBits[] = {
     [kE64ParameterCodingImm5] = 5,
     [kE64ParameterCodingImm8] = 8,
     [kE64ParameterCodingImm16] = 16,
@@ -159,7 +159,7 @@ static inline void emex64_core_execute_instruction_at_pc(emex64_core_t *core)
 
     bitbolt_t bb = { core->op.inscache, 0 };
 
-    E64Opcode opcode = (uint8_t)bb_read(&bb, 8);
+    E64Opcode opcode = (UInt8)bb_read(&bb, 8);
     if(unlikely(opcode > kE64OpcodeMAX))
     {
         core->cr_state.crexc.exception = kE64ExceptionBadInstruction;
@@ -173,11 +173,11 @@ static inline void emex64_core_execute_instruction_at_pc(emex64_core_t *core)
      * parameter decoder, this decoding loop decodes
      * all parameters the instruction defines.
      */
-    uint8_t maxarg = core->op.opce.maxargs;
-    uint8_t i = 0;
+    UInt8 maxarg = core->op.opce.maxargs;
+    UInt8 i = 0;
     for(; i < maxarg; i++)
     {
-        E64ParameterCoding coding = (uint8_t)bb_read(&bb, 3);
+        E64ParameterCoding coding = (UInt8)bb_read(&bb, 3);
         core->op.param_coding[i] = coding;
         switch(coding)
         {
@@ -186,7 +186,7 @@ static inline void emex64_core_execute_instruction_at_pc(emex64_core_t *core)
                 goto escape_from_la;
             case kE64ParameterCodingReg:
             {
-                core->op.param[i] = &(core->rl[(uint8_t)bb_read(&bb, 5)]);
+                core->op.param[i] = &(core->rl[(UInt8)bb_read(&bb, 5)]);
                 break;
             }
             case kE64ParameterCodingAddr64:
@@ -216,7 +216,7 @@ escape_from_la:
      * very very very good.
      */
     core->op.param_cnt = i;
-    core->op.ilen = (uint32_t)((bb.pos + 7u) >> 3);
+    core->op.ilen = (UInt32)((bb.pos + 7u) >> 3);
 
     /* the part of executing the instruction */
     core->op.opce.func(core);

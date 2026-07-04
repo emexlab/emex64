@@ -22,22 +22,22 @@
 #ifndef EMEX64ASM_OPTIONS_H
 #define EMEX64ASM_OPTIONS_H
 
-#include <stdbool.h>
+#include <EmexFoundation/EmexFoundation.h>
 
 typedef struct assembler_driver_options {
-    bool assemble_only;
-    bool verbose;
-    bool in_process;
+    Boolean assemble_only;
+    Boolean verbose;
+    Boolean in_process;
 } assembler_driver_options_t;
 
 typedef struct assembler_invocation_options {
     /* features */
-    bool caret_diagnostics;         /* default: true */
-    bool color_diagnostics;         /* default: true */
+    Boolean caret_diagnostics;         /* default: true */
+    Boolean color_diagnostics;         /* default: true */
 
     /* warnings */
-    bool warning_error;             /* default: false */
-    bool warning_deprecated;        /* default: true */
+    Boolean warning_error;             /* default: false */
+    Boolean warning_deprecated;        /* default: true */
 } assembler_diagnostic_options_t;
 
 extern assembler_driver_options_t assembler_driver_options_default;

@@ -111,7 +111,7 @@ linker_object_t *linker_object_alloc(emex_file_t *object_file)
     }
 
     /* find known sections */
-    for(uint16_t i = 0; i < obj->ehdr->e_shnum; i++)
+    for(UInt16 i = 0; i < obj->ehdr->e_shnum; i++)
     {
         if(!obj->shstrtab)
         {
@@ -158,7 +158,7 @@ void linker_object_dealloc(linker_object_t *obj)
     free(obj);
 }
 
-bool linker_load_object(linker_invocation_t *inv,
+Boolean linker_load_object(linker_invocation_t *inv,
                         emex_file_t *object_file)
 {
     /* load object */

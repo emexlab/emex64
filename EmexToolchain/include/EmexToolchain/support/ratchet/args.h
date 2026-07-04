@@ -23,11 +23,11 @@
 #define EMEX_RATCHET_ARGS_H
 
 #include <stdint.h>
-#include <stdbool.h>
 #include <stddef.h>
+#include <EmexFoundation/EmexFoundation.h>
 
 typedef struct ratchet_args {
-    bool failed;    /* the rachet */
+    Boolean failed;    /* the rachet */
     size_t argc;
     size_t csize;
     char **args;

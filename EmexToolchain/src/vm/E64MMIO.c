@@ -25,9 +25,9 @@
 #include <EmexToolchain/vm/E64MMIO.h>
 #include <EmexFoundation/EmexFoundation.h>
 
-uint64_t emex64_mmio_fallback_read(emex64_core_t *core,
+UInt64 emex64_mmio_fallback_read(emex64_core_t *core,
                                    void *device,
-                                   uint64_t offset,
+                                   UInt64 offset,
                                    int size)
 {
     return 0;
@@ -35,8 +35,8 @@ uint64_t emex64_mmio_fallback_read(emex64_core_t *core,
 
 void emex64_mmio_fallback_write(emex64_core_t *core,
                                 void *device,
-                                uint64_t offset,
-                                uint64_t value,
+                                UInt64 offset,
+                                UInt64 value,
                                 int size)
 {
     return;
@@ -44,8 +44,8 @@ void emex64_mmio_fallback_write(emex64_core_t *core,
 
 typedef struct E64Region {
     EFObject header;
-    uint64_t base_addr;
-    uint64_t size;
+    UInt64 base_addr;
+    UInt64 size;
     void *device;
     mmio_read_fn read;
     mmio_write_fn write;
@@ -73,8 +73,8 @@ EFTypeID E64MMIORegionGetTypeID(void)
 }
 
 E64MMIORegionRef E64MMIORegionCreate(EFAllocatorRef allocatorRef,
-                                           uint64_t base,
-                                           uint64_t size,
+                                           UInt64 base,
+                                           UInt64 size,
                                            void *device,
                                            mmio_read_fn read,
                                            mmio_write_fn write)
@@ -94,7 +94,7 @@ E64MMIORegionRef E64MMIORegionCreate(EFAllocatorRef allocatorRef,
     return (E64MMIORegionRef)MMIORegion;
 }
 
-uint64_t E64MMIORegionGetBaseAddress(E64MMIORegionRef MMIORegionRef)
+UInt64 E64MMIORegionGetBaseAddress(E64MMIORegionRef MMIORegionRef)
 {
     E64MMIORegion MMIORegion = (E64MMIORegion)MMIORegionRef;
     if(MMIORegion == NULL)
@@ -105,7 +105,7 @@ uint64_t E64MMIORegionGetBaseAddress(E64MMIORegionRef MMIORegionRef)
     return MMIORegion->base_addr;
 }
 
-uint64_t E64MMIORegionGetSize(E64MMIORegionRef MMIORegionRef)
+UInt64 E64MMIORegionGetSize(E64MMIORegionRef MMIORegionRef)
 {
     E64MMIORegion MMIORegion = (E64MMIORegion)MMIORegionRef;
     if(MMIORegion == NULL)
@@ -203,7 +203,7 @@ E64MMIOBusRef E64MMIOBusCreate(EFAllocatorRef allocatorRef)
     return (E64MMIOBusRef)MMIOBus;
 }
 
-bool E64MMIOBusRegisterRegion(E64MMIOBusRef MMIOBusRef,
+Boolean E64MMIOBusRegisterRegion(E64MMIOBusRef MMIOBusRef,
                                  E64MMIORegionRef MMIORegionRef)
 {
 
@@ -223,7 +223,7 @@ bool E64MMIOBusRegisterRegion(E64MMIOBusRef MMIOBusRef,
 }
 
 E64MMIORegionRef E64MMIOBusGetRegionForAddress(E64MMIOBusRef MMIOBusRef,
-                                                     uint64_t addr)
+                                                     UInt64 addr)
 {
     E64MMIOBus MMIOBus = (E64MMIOBus)MMIOBusRef;
     if(MMIOBus == NULL)

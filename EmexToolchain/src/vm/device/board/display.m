@@ -35,11 +35,11 @@
 #include <EmexToolchain/vm/core.h>
 
 typedef struct {
-    uint8_t sc;
-    bool e0;
+    UInt8 sc;
+    Boolean e0;
 } ps2_code_t;
 
-kEmexKeyPhys mac_keycode_to_kEmexKeyPhys(uint16_t keyCode)
+kEmexKeyPhys mac_keycode_to_kEmexKeyPhys(UInt16 keyCode)
 {
     switch(keyCode)
     {
@@ -298,7 +298,7 @@ static GLuint linkProgram(GLuint vs, GLuint fs)
          1.f, 1.f,  1.f,0.f,
         -1.f, 1.f,  0.f,0.f
     };
-    uint16_t idxs[] = { 0,1,2, 2,3,0 };
+    UInt16 idxs[] = { 0,1,2, 2,3,0 };
 
     glGenVertexArrays(1, &_vao);
     glGenBuffers(1, &_vbo);
@@ -455,7 +455,7 @@ static NSString *backuped_windowname;
     }
 
     NSUInteger pressed = [NSEvent pressedMouseButtons];
-    uint8_t status = 0x08;
+    UInt8 status = 0x08;
 
     if(pressed & 0x0001)
     {
@@ -506,8 +506,8 @@ static NSString *backuped_windowname;
     }
 
     emex64_8042_send_mouse(d->emex8042, status);
-    emex64_8042_send_mouse(d->emex8042, (uint8_t)dx8);
-    emex64_8042_send_mouse(d->emex8042, (uint8_t)dy8);
+    emex64_8042_send_mouse(d->emex8042, (UInt8)dx8);
+    emex64_8042_send_mouse(d->emex8042, (UInt8)dy8);
 }
 
 - (void)mouseDown:(NSEvent *)event

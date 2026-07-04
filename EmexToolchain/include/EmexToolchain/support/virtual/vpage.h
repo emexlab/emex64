@@ -24,12 +24,12 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <stdbool.h>
 #include <sys/stat.h>
+#include <EmexFoundation/EmexFoundation.h>
 
 typedef struct vpage {
-    uint8_t *p;
+    UInt8 *p;
     size_t len;
     struct vpage *prev;
     struct vpage *next;
@@ -40,10 +40,10 @@ vpage_t *vpage_alloc();
 void vpage_dealloc(vpage_t *p);
 
 size_t vpage_get_size(vpage_t *p);
-bool vpage_gib_page(vpage_t *p);
-bool vpage_bind_page(vpage_t *p);
+Boolean vpage_gib_page(vpage_t *p);
+Boolean vpage_bind_page(vpage_t *p);
 
-size_t vpage_write(vpage_t *p, size_t off, const uint8_t *b, size_t len);
-size_t vpage_read(vpage_t *p, size_t off, uint8_t *b, size_t len);
+size_t vpage_write(vpage_t *p, size_t off, const UInt8 *b, size_t len);
+size_t vpage_read(vpage_t *p, size_t off, UInt8 *b, size_t len);
 
 #endif /* EMEX64_VPAGE_H */

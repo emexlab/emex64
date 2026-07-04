@@ -42,18 +42,18 @@
 
 #define EMEX64_MEMORY_WRITE_HELPER(mapping, offset, size, value)        \
     {                                                                   \
-        uint64_t mask = (size == 8) ? ~0ULL : (1ULL << (size * 8)) - 1; \
-        void *ptr = ((uint8_t*)mapping) + offset;                       \
-        uint64_t raw = *(uint64_t *)ptr;                                \
+        UInt64 mask = (size == 8) ? ~0ULL : (1ULL << (size * 8)) - 1; \
+        void *ptr = ((UInt8*)mapping) + offset;                       \
+        UInt64 raw = *(UInt64 *)ptr;                                \
         raw = (raw & ~mask) | (value & mask);                           \
-        *(uint64_t *)ptr = raw;                                         \
+        *(UInt64 *)ptr = raw;                                         \
     }
 
 #define EMEX64_MEMORY_READ_HELPER(mapping, offset, size, out_value)     \
     {                                                                   \
-        void *ptr = ((uint8_t*)mapping) + offset;                       \
-        uint64_t raw = *(uint64_t *)ptr;                                \
-        uint64_t mask = (size == 8) ? ~0ULL : (1ULL << (size * 8)) - 1; \
+        void *ptr = ((UInt8*)mapping) + offset;                       \
+        UInt64 raw = *(UInt64 *)ptr;                                \
+        UInt64 mask = (size == 8) ? ~0ULL : (1ULL << (size * 8)) - 1; \
         out_value = raw & mask;                                         \
     }
 
@@ -61,7 +61,7 @@
 #define EMEX64_MEMORY_MMU_MASK_PFN      0b1111111111111111111111111111111111111111111111111111111100000000
 
 /* page table entry bit flags */
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     kE64MMUPTPresent =   0b00000001, /* marks a PTE or PXD as present */
     kE64MMUPTUser =      0b00000010, /* marks a PTE as user accessible, meaning user mode can access that page */
     kE64MMUPTDirty =     0b00000100, /* marks a PTE as dirty, writes on it cause a page fault TODO: to be implemented */
@@ -71,7 +71,7 @@ typedef enum: uint8_t {
     kE64MMUPTAccessed =  0b01000000, /* marks a PTE as accessed (MMU sets this bit when this has been accessed) */
 } kE64MMUPT;
 
-typedef enum: uint8_t {
+typedef enum: UInt8 {
     kE64MemoryActionRead =           kE64MMUPTRead,
     kE64MemoryActionWrite =          kE64MMUPTWrite,
     kE64MemoryActionExecute =        kE64MMUPTExec,
@@ -82,26 +82,26 @@ typedef EFObjectRef E64MemoryRef;
 
 EFTypeID E64MemoryGetTypeID(void);
 
-E64MemoryRef E64MemoryCreate(EFAllocatorRef allocatorRef, uint64_t size);
+E64MemoryRef E64MemoryCreate(EFAllocatorRef allocatorRef, UInt64 size);
 
 /*
 E64MemoryRef E64MemoryCreateCopy(EVAllocator *allocator, E64MemoryRef memoryRef);
 */
 
 void E64MemoryLockKTRR(E64MemoryRef memoryRef);
-bool E64MemoryIsKTRRLocked(E64MemoryRef memoryRef);
-uint64_t E64MemoryGetKTRRSize(E64MemoryRef memoryRef);
-bool E64MemorySetKTRRSize(E64MemoryRef memoryRef, uint64_t size);
+Boolean E64MemoryIsKTRRLocked(E64MemoryRef memoryRef);
+UInt64 E64MemoryGetKTRRSize(E64MemoryRef memoryRef);
+Boolean E64MemorySetKTRRSize(E64MemoryRef memoryRef, UInt64 size);
 
-uint64_t E64MemoryGetSize(E64MemoryRef memoryRef);
-bool E64MemoryAccessIsWithinBounds(E64MemoryRef memoryRef, uint64_t address, uint64_t size);
+UInt64 E64MemoryGetSize(E64MemoryRef memoryRef);
+Boolean E64MemoryAccessIsWithinBounds(E64MemoryRef memoryRef, UInt64 address, UInt64 size);
 
-bool E64MemoryLoadImage(E64MemoryRef memoryRef, emex_file_t *file);
+Boolean E64MemoryLoadImage(E64MemoryRef memoryRef, emex_file_t *file);
 
-bool E64MemoryAction(E64MemoryRef memoryRef, uint64_t addr, size_t size, uint64_t *value, kE64MemoryAction action);
+Boolean E64MemoryAction(E64MemoryRef memoryRef, UInt64 addr, size_t size, UInt64 *value, kE64MemoryAction action);
 
 /* API that only the VM shall use */
-void E64MemoryCoreAction(E64MemoryRef memoryRef, emex64_core_t *core, uint64_t addr, size_t size, uint64_t *value, kE64MemoryAction action);
-bool E64MemoryCoreCopyIn(E64MemoryRef memoryRef, emex64_core_t *core, uint8_t *dst, uint64_t addr, size_t len, kE64MemoryAction read_action);
+void E64MemoryCoreAction(E64MemoryRef memoryRef, emex64_core_t *core, UInt64 addr, size_t size, UInt64 *value, kE64MemoryAction action);
+Boolean E64MemoryCoreCopyIn(E64MemoryRef memoryRef, emex64_core_t *core, UInt8 *dst, UInt64 addr, size_t len, kE64MemoryAction read_action);
 
 #endif /* E64MEMORY_H */

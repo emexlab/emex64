@@ -163,13 +163,13 @@ failure:
 
 void linker_driver_dealloc(linker_driver_t *driver)
 {
-    for(uint64_t i = 0; i < driver->input_file_cnt; i++)
+    for(UInt64 i = 0; i < driver->input_file_cnt; i++)
     {
         emex_file_dealloc(driver->input_file[i]);
     }
     free(driver->input_file);
 
-    for(uint64_t i = 0; i < driver->linker_script_file_cnt; i++)
+    for(UInt64 i = 0; i < driver->linker_script_file_cnt; i++)
     {
         emex_file_dealloc(driver->linker_script_file[i]);
     }
@@ -180,9 +180,9 @@ void linker_driver_dealloc(linker_driver_t *driver)
     free(driver);
 }
 
-bool linker_driver_drive_the_fucking_car(linker_driver_t *driver)
+Boolean linker_driver_drive_the_fucking_car(linker_driver_t *driver)
 {
-    bool success = linker_link(driver->options, driver->consumer, driver->input_file, driver->input_file_cnt, driver->linker_script_file, driver->linker_script_file_cnt, driver->output_file);
+    Boolean success = linker_link(driver->options, driver->consumer, driver->input_file, driver->input_file_cnt, driver->linker_script_file, driver->linker_script_file_cnt, driver->output_file);
     if(!success)
     {
         emex_file_unlink(driver->output_file);

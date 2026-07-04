@@ -119,7 +119,7 @@ size_t vpage_get_size(vpage_t *p)
     return len;
 }
 
-bool vpage_gib_page(vpage_t *p)
+Boolean vpage_gib_page(vpage_t *p)
 {
     vpage_t *page = vpage_get_last(p);
     vpage_t *new = vpage_alloc();
@@ -132,7 +132,7 @@ bool vpage_gib_page(vpage_t *p)
     return true;
 }
 
-bool vpage_bind_page(vpage_t *p)
+Boolean vpage_bind_page(vpage_t *p)
 {
     vpage_t *page = vpage_get_first(p);
     if(page->next == NULL)
@@ -142,7 +142,7 @@ bool vpage_bind_page(vpage_t *p)
 
     /* allocating new map */
     size_t total_len = vpage_get_size(page);
-    uint8_t *newmap = mmap(NULL, total_len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    UInt8 *newmap = mmap(NULL, total_len, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if(newmap == MAP_FAILED)
     {
         return false;
@@ -186,7 +186,7 @@ typedef enum {
 
 static size_t vpage_xfer(vpage_t *p,
                          size_t off,
-                         uint8_t *b,
+                         UInt8 *b,
                          size_t len,
                          kVPXfer xfer)
 {
@@ -237,12 +237,12 @@ static size_t vpage_xfer(vpage_t *p,
     return done;
 }
 
-size_t vpage_write(vpage_t *p, size_t off, const uint8_t *b, size_t len)
+size_t vpage_write(vpage_t *p, size_t off, const UInt8 *b, size_t len)
 {
-    return vpage_xfer(p, off, (uint8_t *)b, len, kVPXferWrite);
+    return vpage_xfer(p, off, (UInt8 *)b, len, kVPXferWrite);
 }
 
-size_t vpage_read(vpage_t *p, size_t off, uint8_t *b, size_t len)
+size_t vpage_read(vpage_t *p, size_t off, UInt8 *b, size_t len)
 {
     return vpage_xfer(p, off, b, len, kVPXferRead);
 }

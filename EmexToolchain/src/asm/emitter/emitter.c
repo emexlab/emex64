@@ -41,8 +41,8 @@ void assembler_emit_end(assembler_invocation_t *inv)
     vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingEnd, 3);
 }
 
-bool opcode_arg_is_branch_target(E64Opcode op,
-                                 uint64_t argno)
+Boolean opcode_arg_is_branch_target(E64Opcode op,
+                                 UInt64 argno)
 {
     switch(op)
     {
@@ -63,7 +63,7 @@ bool opcode_arg_is_branch_target(E64Opcode op,
     }
 }
 
-bool assembler_emit_instruction(assembler_line_t *al)
+Boolean assembler_emit_instruction(assembler_line_t *al)
 {
     if(al->token[0]->type != kAssemblerTokenTypeInstruction)
     {
@@ -74,12 +74,12 @@ bool assembler_emit_instruction(assembler_line_t *al)
     const E64Opcode opcode = al->token[0]->instruction_identifier.v;
     const emex64_opfunc_entry_t *entry = &kE64OpfuncTable[opcode];
 
-    uint64_t operand_total = 0;
+    UInt64 operand_total = 0;
     kAssemblerTokenType ptype;
     if(al->token_cnt > 1)
     {
         operand_total = 1;
-        for(uint64_t k = 1; k < al->token_cnt; k++)
+        for(UInt64 k = 1; k < al->token_cnt; k++)
         {
             if(k != 1 && ptype == kAssemblerTokenTypeComma && al->token[k]->type == kAssemblerTokenTypeComma)
             {
@@ -113,17 +113,17 @@ bool assembler_emit_instruction(assembler_line_t *al)
 
     assembler_emit_opcode(al->inv, opcode);
 
-    uint64_t i = 1;
-    uint64_t argno = 0;
+    UInt64 i = 1;
+    UInt64 argno = 0;
     while(i < al->token_cnt)
     {
-        uint64_t start = i;
+        UInt64 start = i;
         while(i < al->token_cnt && al->token[i]->type != kAssemblerTokenTypeComma)
         {
             i++;
         }
         assembler_token_t **operand = &al->token[start];
-        uint64_t operand_cnt = i - start;
+        UInt64 operand_cnt = i - start;
 
         if(i < al->token_cnt)
         {
@@ -151,7 +151,7 @@ bool assembler_emit_instruction(assembler_line_t *al)
 
         if(operand_cnt == 1 && operand[0]->type == kAssemblerTokenTypeIdentifier)
         {
-            bool local;
+            Boolean local;
             char *label = NULL;
             if(operand[0]->str[0] == '.')
             {
@@ -186,11 +186,11 @@ bool assembler_emit_instruction(assembler_line_t *al)
 
         if(opcode_arg_is_branch_target(opcode, argno))
         {
-            assembler_emit_addr64(al->inv, (uint64_t)value);
+            assembler_emit_addr64(al->inv, (UInt64)value);
         }
         else
         {
-            assembler_emit_imm(al->inv, (uint64_t)value);
+            assembler_emit_imm(al->inv, (UInt64)value);
         }
         argno++;
     }
@@ -204,13 +204,13 @@ bool assembler_emit_instruction(assembler_line_t *al)
     return true;
 }
 
-bool assembler_emit(assembler_invocation_t *inv)
+Boolean assembler_emit(assembler_invocation_t *inv)
 {
-    bool failed = false;
-    uint8_t errors = 0;
+    Boolean failed = false;
+    UInt8 errors = 0;
 
     /* iterate through each line */
-    for(uint64_t i = 0; i < inv->line_cnt; i++)
+    for(UInt64 i = 0; i < inv->line_cnt; i++)
     {
         switch(inv->line[i]->type)
         {

@@ -24,7 +24,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <stdbool.h>
 #include <sys/stat.h>
 #include <EmexFoundation/EmexFoundation.h>
@@ -40,11 +39,11 @@ VpageObjRef VpageObjCreateWithVpage(EFAllocatorRef allocatorRef, vpage_t *vpage)
 vpage_t *VpageObjGetVpage(VpageObjRef vpageObjRef);
 
 size_t VpageObjGetSize(VpageObjRef vpageObjRef);
-bool VpageObjExtendPage(VpageObjRef vpageObjRef);
-bool VpageObjMergePage(VpageObjRef vpageObjRef);
+Boolean VpageObjExtendPage(VpageObjRef vpageObjRef);
+Boolean VpageObjMergePage(VpageObjRef vpageObjRef);
 
-size_t VpageObjWrite(VpageObjRef vpageObjRef, size_t off, const uint8_t *b, size_t len);
-size_t VpageObjRead(VpageObjRef vpageObjRef, size_t off, uint8_t *b, size_t len);
+size_t VpageObjWrite(VpageObjRef vpageObjRef, size_t off, const UInt8 *b, size_t len);
+size_t VpageObjRead(VpageObjRef vpageObjRef, size_t off, UInt8 *b, size_t len);
 
 /* need to be replaced */
 size_t VpageObjGetEndMarker(VpageObjRef vpageObjRef);

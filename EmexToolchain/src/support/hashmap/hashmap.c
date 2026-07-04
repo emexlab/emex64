@@ -24,7 +24,7 @@
 #include <EmexToolchain/support/hashmap/hashmap.h>
 
 typedef struct hashmap_bucket {
-    uint64_t hash;
+    UInt64 hash;
     void *key;
     size_t klen;
     void *val;
@@ -38,11 +38,11 @@ typedef struct hashmap {
 
 #define HASHMAP_INIT_CAP    16
 
-static uint64_t hashmap_hash(const void *key,
+static UInt64 hashmap_hash(const void *key,
                              size_t len)
 {
-    const uint8_t *p = (const uint8_t *)key;
-    uint64_t h = 0xcbf29ce484222325ULL;
+    const UInt8 *p = (const UInt8 *)key;
+    UInt64 h = 0xcbf29ce484222325ULL;
     for(size_t i = 0; i < len; i++)
     {
         h ^= p[i];
@@ -94,20 +94,20 @@ void *hashmap_gets(hashmap_t *m,
     return hashmap_get(m, k, strlen(k));
 }
 
-bool hashmap_puts(hashmap_t *m,
+Boolean hashmap_puts(hashmap_t *m,
                   const char *k,
                   void *v)
 {
     return hashmap_put(m, k, strlen(k), v);
 }
 
-bool hashmap_dels(hashmap_t *m,
+Boolean hashmap_dels(hashmap_t *m,
                   const char *k)
 {
     return hashmap_del(m, k, strlen(k));
 }
 
-static bool hashmap_resize(hashmap_t *m,
+static Boolean hashmap_resize(hashmap_t *m,
                            size_t newcap)
 {
     hashmap_bucket_t *nb = (hashmap_bucket_t*)calloc(newcap, sizeof *nb);
@@ -140,7 +140,7 @@ void *hashmap_get(hashmap_t *m,
                   const void *key,
                   size_t klen)
 {
-    uint64_t h = hashmap_hash(key, klen);
+    UInt64 h = hashmap_hash(key, klen);
     size_t i = (size_t)h & m->mask;
     for(;;)
     {
@@ -157,7 +157,7 @@ void *hashmap_get(hashmap_t *m,
     }
 }
 
-bool hashmap_put(hashmap_t *m,
+Boolean hashmap_put(hashmap_t *m,
                  const void *key,
                  size_t klen,
                  void *val)
@@ -167,7 +167,7 @@ bool hashmap_put(hashmap_t *m,
         hashmap_resize(m, (m->mask + 1) * 2);
     }
  
-    uint64_t h = hashmap_hash(key, klen);
+    UInt64 h = hashmap_hash(key, klen);
     size_t i = (size_t)h & m->mask;
     for(;;)
     {
@@ -193,11 +193,11 @@ bool hashmap_put(hashmap_t *m,
     }
 }
 
-bool hashmap_del(hashmap_t *m,
+Boolean hashmap_del(hashmap_t *m,
                  const void *key,
                  size_t klen)
 {
-    uint64_t h = hashmap_hash(key, klen);
+    UInt64 h = hashmap_hash(key, klen);
     size_t i = (size_t)h & m->mask;
     for(;;)
     {
@@ -228,7 +228,7 @@ bool hashmap_del(hashmap_t *m,
                 return true;
             }
             size_t home = (size_t)m->buckets[j].hash & m->mask;
-            bool can_move = (hole < j) ? (home <= hole || home > j) : (home <= hole && home > j);
+            Boolean can_move = (hole < j) ? (home <= hole || home > j) : (home <= hole && home > j);
             if(can_move)
             {
                 break;
@@ -245,7 +245,7 @@ hashmap_iter_t hashmap_iter_create(hashmap_t *m)
     return it;
 }
 
-bool hashmap_next(hashmap_iter_t *it,
+Boolean hashmap_next(hashmap_iter_t *it,
                   const void **key,
                   size_t *klen,
                   void **val)

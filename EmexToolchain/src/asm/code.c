@@ -36,7 +36,7 @@ typedef struct expand_entry {
     size_t line_num;
 } expand_entry_t;
 
-static bool __assembler_code_fastline(emex_file_t *file,
+static Boolean __assembler_code_fastline(emex_file_t *file,
                                       expand_entry_t **entries,
                                       size_t *cnt,
                                       size_t *cap)
@@ -127,8 +127,8 @@ char *assembler_code_find_system_header(const char *name,
     return NULL;
 }
 
-static inline bool __assembler_splice_line(assembler_invocation_t *inv,
-                                           uint64_t idx,
+static inline Boolean __assembler_splice_line(assembler_invocation_t *inv,
+                                           UInt64 idx,
                                            size_t count)
 {
     /* bounds check */
@@ -151,7 +151,7 @@ static inline bool __assembler_splice_line(assembler_invocation_t *inv,
 
     /* deallocating the line at the idx */
     free(inv->line[idx]->str);
-    for(uint64_t i = 0; i < inv->line[idx]->token_cnt; i++)
+    for(UInt64 i = 0; i < inv->line[idx]->token_cnt; i++)
     {
         if(inv->line[idx]->token[i]->type == kAssemblerTokenTypeString)
         {
@@ -175,8 +175,8 @@ static inline bool __assembler_splice_line(assembler_invocation_t *inv,
     return true;
 }
 
-bool assembler_code_inject_file(assembler_invocation_t *inv,
-                                uint64_t at_line_index,
+Boolean assembler_code_inject_file(assembler_invocation_t *inv,
+                                UInt64 at_line_index,
                                 emex_file_t *inj_file)
 {
     /* getting code */
@@ -189,7 +189,7 @@ bool assembler_code_inject_file(assembler_invocation_t *inv,
     }
 
     /* injecting file into array */
-    uint64_t inj_file_idx;
+    UInt64 inj_file_idx;
     emex_file_t **newp = realloc(inv->file, (inv->file_cnt + 1) *  sizeof(emex_file_t*));
     if(newp == NULL)
     {
@@ -306,7 +306,7 @@ out_failure:
     return false;
 }
 
-bool assembler_code_preparse(assembler_invocation_t *inv,
+Boolean assembler_code_preparse(assembler_invocation_t *inv,
                              emex_file_t *input)
 {
     if(!assembler_code_inject_file(inv, 0, input))
@@ -318,10 +318,10 @@ bool assembler_code_preparse(assembler_invocation_t *inv,
     return true;
 }
 
-bool assembler_code_postparse(assembler_invocation_t *inv)
+Boolean assembler_code_postparse(assembler_invocation_t *inv)
 {
     /* token type emitter */
-    for(uint64_t li = 0; li < inv->line_cnt; li++)
+    for(UInt64 li = 0; li < inv->line_cnt; li++)
     {
         if(inv->line[li]->token_cnt == 0 ||
            inv->line[li]->type == kAssemblerLineTypeIgnore)
@@ -330,7 +330,7 @@ bool assembler_code_postparse(assembler_invocation_t *inv)
             continue;
         }
 
-        for(uint64_t ti = 0; ti < inv->line[li]->token_cnt; ti++)
+        for(UInt64 ti = 0; ti < inv->line[li]->token_cnt; ti++)
         {
             if(!assembler_lexer_classify(inv->line[li]->token[ti]))
             {
@@ -341,8 +341,8 @@ bool assembler_code_postparse(assembler_invocation_t *inv)
     }
 
     /* token type evaluation */
-    bool section_mode = false;
-    for(uint64_t i = 0; i < inv->line_cnt; i++)
+    Boolean section_mode = false;
+    for(UInt64 i = 0; i < inv->line_cnt; i++)
     {
         if(inv->line[i]->token_cnt == 0 ||
            inv->line[i]->type == kAssemblerLineTypeIgnore)
@@ -381,14 +381,14 @@ bool assembler_code_postparse(assembler_invocation_t *inv)
                 }
 
                 /* post validity check */
-                bool valid = true;
+                Boolean valid = true;
                 if(inv->line[i]->token[0]->type != kAssemblerTokenTypeIdentifier)
                 {
                     diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[0]), "expected identifier in label definition, but got %s '%s'", assembler_lexer_str_for_token_type(inv->line[i]->token[0]->type), inv->line[i]->token[0]->str);
                     valid = false;
                 }
 
-                for(uint64_t j = 2; j < inv->line[i]->token_cnt; j++)
+                for(UInt64 j = 2; j < inv->line[i]->token_cnt; j++)
                 {
                     diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[j]), "unexpected %s '%s' after label definition", assembler_lexer_str_for_token_type(inv->line[i]->token[j]->type), inv->line[i]->token[j]->str);
                     valid = false;
@@ -423,7 +423,7 @@ bool assembler_code_postparse(assembler_invocation_t *inv)
                     break;
             }
 
-            bool valid = true;
+            Boolean valid = true;
 
             if(inv->line[i]->token[1]->type != kAssemblerTokenTypeIdentifier)
             {
@@ -431,7 +431,7 @@ bool assembler_code_postparse(assembler_invocation_t *inv)
                 valid = false;
             }
 
-            for(uint64_t j = 2; j < inv->line[i]->token_cnt; j++)
+            for(UInt64 j = 2; j < inv->line[i]->token_cnt; j++)
             {
                 /* idk keyword construct, keyword definition ahhhhhh */
                 diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[j]), "unexpected %s '%s' after keyword construct", assembler_lexer_str_for_token_type(inv->line[i]->token[j]->type), inv->line[i]->token[j]->str);

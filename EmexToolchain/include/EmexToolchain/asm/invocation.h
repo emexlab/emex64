@@ -43,12 +43,12 @@ typedef struct assembler_invocation {
     size_t file_cnt;
 
     assembler_line_t **line;
-    uint64_t line_cnt;
+    UInt64 line_cnt;
 
     char *label_scope;
     hashmap_t *label_hashmap;
 
-    uint64_t definition_cnt;                    /* borrowed */
+    UInt64 definition_cnt;                    /* borrowed */
     assembler_macro_definition_t *definition;   /* borrowed */
 
     char **include_dirs;                        /* borrowed */
@@ -57,15 +57,15 @@ typedef struct assembler_invocation {
     reloc_table_entry_t *rtbe;
     vbitwalker_t *out_vbitwalker;
 
-    uint64_t data_section_start;
-    uint64_t data_section_end;
-    uint64_t bss_section_start;
-    uint64_t bss_section_size;
+    UInt64 data_section_start;
+    UInt64 data_section_end;
+    UInt64 bss_section_start;
+    UInt64 bss_section_size;
 } assembler_invocation_t;
 
 assembler_invocation_t *assembler_invocation_alloc(assembler_diagnostic_consumer_t *consumer);
 void assembler_invocation_dealloc(assembler_invocation_t *inv);
 
-bool assembler_invocation_emit(assembler_invocation_t *inv, emex_file_t *input, emex_file_t *output);
+Boolean assembler_invocation_emit(assembler_invocation_t *inv, emex_file_t *input, emex_file_t *output);
 
 #endif /* EMEX64ASM_INVOCATION_H */

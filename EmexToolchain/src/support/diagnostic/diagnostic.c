@@ -58,11 +58,11 @@ static inline int buf_puts(diag_buf_t *b, const char *s)
 }
  
 static inline int buf_putnbr_base_unsigned(diag_buf_t *b,
-                                           uint64_t n,
+                                           UInt64 n,
                                            const char *base)
 {
     int count = 0;
-    uint64_t radix = 0;
+    UInt64 radix = 0;
  
     while(base[radix])
     {
@@ -88,7 +88,7 @@ static inline int buf_putnbr_signed(diag_buf_t *b, long n)
         n = -n;
     }
  
-    count += buf_putnbr_base_unsigned(b, (uint64_t)n, "0123456789");
+    count += buf_putnbr_base_unsigned(b, (UInt64)n, "0123456789");
  
     return count;
 }
@@ -190,7 +190,7 @@ diagnostic_t *diagnostic_allocv(kDiagnosticSeverity severity,
                                     break;
                                 case 'u':
                                     i += 2;
-                                    buf_putnbr_base_unsigned(&buf, va_arg(args, uint64_t), "0123456789");
+                                    buf_putnbr_base_unsigned(&buf, va_arg(args, UInt64), "0123456789");
                                     break;
                                 default:
                                     break;

@@ -24,9 +24,9 @@
 #include <EmexToolchain/asm/label/relocate.h>
 #include <EmexToolchain/asm/invocation.h>
 
-bool assembler_label_relocate_append(assembler_invocation_t *inv,
+Boolean assembler_label_relocate_append(assembler_invocation_t *inv,
                                      char *label_str,
-                                     bool local,
+                                     Boolean local,
                                      assembler_token_t *at_link)
 {
     assert(inv != NULL && label_str != NULL && at_link != NULL);
