@@ -25,7 +25,7 @@
 #include <unistd.h>
 #include <EmexToolchain/vm/E64Machine.h>
 #include <EmexToolchain/vm/device/internal/timer.h>
-#include <EmexToolchain/vm/device/internal/controller/ic.h>
+#include <EmexToolchain/vm/device/internal/controller/E64IC.h>
 
 UInt64 emex64_get_host_cycles(void)
 {
@@ -180,7 +180,7 @@ void emex64_timer_tick(emex64_timer_t *timer,
         
         if(timer->ctrl & TIMER_CTRL_IRQ_EN)
         {
-            emex64_raise_interrupt(timer->machine, EMEX64_IRQ_TIMER);
+            E64ICRaiseInterrupt(timer->machine->intc, EMEX64_IRQ_TIMER);
         }
     }
 }

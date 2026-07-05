@@ -21,11 +21,11 @@
 
 #include <stdlib.h>
 #include <EmexToolchain/vm/E64Machine.h>
+#include <EmexToolchain/vm/device/internal/controller/E64IC.h>
 #include <EmexToolchain/vm/device/internal/controller/mem.h>
 #include <EmexToolchain/vm/device/board/controller/power.h>
 #include <EmexToolchain/vm/device/board/rtc.h>
 #include <EmexToolchain/vm/device/internal/timer.h>
-#include <EmexToolchain/vm/device/internal/controller/ic.h>
 #include <EmexToolchain/vm/device/board/uart.h>
 #include <EmexToolchain/vm/device/board/controller/8042.h>
 #include <EmexToolchain/vm/device/board/display.h>
@@ -47,7 +47,7 @@ static void __E64MachineDeinit(EFObjectRef machineRef)
     }
     if(machine->intc != NULL)
     {
-        emex64_intc_dealloc(machine->intc);
+        EFRelease(machine->intc);
     }
     if(machine->timer != NULL)
     {
@@ -106,56 +106,65 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
     if(machine->memory == NULL)
     {
         EFRelease(machine);
+        return NULL;
     }
 
     machine->mmio_bus = E64MMIOBusCreate(allocatorRef);
     if(machine->mmio_bus == NULL)
     {
         EFRelease(machine);
+        return NULL;
     }
 
     machine->core = E64CoreCreate(allocatorRef);
     if(machine->core == NULL)
     {
         EFRelease(machine);
+        return NULL;
     }
     /* machine->core->machine = EFRetain(machine); FIXME: retain cycle */
     machine->core->machine = machine;
 
-    machine->intc = emex64_intc_alloc(machine);
-    if(machine->intc == NULL)
+    machine->intc = E64ICCreate(allocatorRef);
+    if(machine->intc == NULL || !E64ICRegisterOnMMIOBus(machine->intc, machine->mmio_bus))
     {
         EFRelease(machine);
+        return NULL;
     }
 
     machine->timer = emex64_timer_alloc(machine);
     if(machine->timer == NULL)
     {
         EFRelease(machine);
+        return NULL;
     }
 
     machine->uart = emex64_uart_alloc(machine);
     if(machine->uart == NULL)
     {
         EFRelease(machine);
+        return NULL;
     }
 
     machine->emex8042 = emex64_8042_alloc(machine, options.keyboardPeripheralMode == kE64PeripheralMode8042, options.mousePeripheralMode == kE64PeripheralMode8042);
     if(machine->emex8042 == NULL)
     {
         EFRelease(machine);
+        return NULL;
     }
 
     machine->display = emex64_display_alloc(machine, options.displayOptions.enabled, options.displayOptions.width, options.displayOptions.height);
     if(machine->display == NULL)
     {
         EFRelease(machine);
+        return NULL;
     }
 
     E64MMIORegionRef RTCMMIORegion = E64MMIORegionCreate(NULL, EMEX64_RTC_BASE, EMEX64_RTC_SIZE, NULL, emex64_rtc_read, NULL);
     if(RTCMMIORegion == NULL)
     {
         EFRelease(machine);
+        return NULL;
     }
 
     Boolean success = E64MMIOBusRegisterRegion(machine->mmio_bus, RTCMMIORegion);
@@ -163,12 +172,14 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
     if(!success)
     {
         EFRelease(machine);
+        return NULL;
     }
 
     E64MMIORegionRef MCRegion = E64MMIORegionCreate(NULL, EMEX64_MC_BASE, EMEX64_MC_SIZE, NULL, emex64_mc_read, emex64_mc_write);
     if(MCRegion == NULL)
     {
         EFRelease(machine);
+        return NULL;
     }
     
     success = E64MMIOBusRegisterRegion(machine->mmio_bus, MCRegion);
@@ -176,12 +187,14 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
     if(!success)
     {
         EFRelease(machine);
+        return NULL;
     }
 
     E64MMIORegionRef PlatformRegion = E64MMIORegionCreate(NULL, EMEX64_PLATFORM_BASE, EMEX64_PLATFORM_SIZE, NULL, emex64_platform_read, emex64_platform_write);
     if(PlatformRegion == NULL)
     {
         EFRelease(machine);
+        return NULL;
     }
     
     success = E64MMIOBusRegisterRegion(machine->mmio_bus, PlatformRegion);
@@ -189,6 +202,7 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
     if(!success)
     {
         EFRelease(machine);
+        return NULL;
     }
 
     return machine;
@@ -227,7 +241,7 @@ E64MMIOBusRef E64MachineGetMMIOBus(E64MachineRef machineRef)
     return machine->mmio_bus;
 }
 
-emex64_intc_t *E64MachineGetIC(E64MachineRef machineRef)
+E64ICRef E64MachineGetIC(E64MachineRef machineRef)
 {
     __E64Machine machine = (__E64Machine)machineRef;
     if(machine == NULL)
@@ -236,48 +250,4 @@ emex64_intc_t *E64MachineGetIC(E64MachineRef machineRef)
     }
 
     return machine->intc;
-}
-
-emex64_timer_t *E64MachineGetTimer(E64MachineRef machineRef)
-{
-    __E64Machine machine = (__E64Machine)machineRef;
-    if(machine == NULL)
-    {
-        return NULL;
-    }
-
-    return machine->timer;
-}
-
-emex64_uart_t *E64MachineGetUART(E64MachineRef machineRef)
-{
-    __E64Machine machine = (__E64Machine)machineRef;
-    if(machine == NULL)
-    {
-        return NULL;
-    }
-
-    return machine->uart;
-}
-
-emex64_display_t *E64MachineGetDisplay(E64MachineRef machineRef)
-{
-    __E64Machine machine = (__E64Machine)machineRef;
-    if(machine == NULL)
-    {
-        return NULL;
-    }
-
-    return machine->display;
-}
-
-emex64_8042_t *E64MachineGet8042(E64MachineRef machineRef)
-{
-    __E64Machine machine = (__E64Machine)machineRef;
-    if(machine == NULL)
-    {
-        return NULL;
-    }
-
-    return machine->emex8042;
 }

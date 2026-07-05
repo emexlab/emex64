@@ -19,12 +19,15 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef EMEX64VM_DEVICE_IC_H
-#define EMEX64VM_DEVICE_IC_H
+#ifndef E64IC_H
+#define E64IC_H
 
-#include <stdint.h>
-#include <stdbool.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/vm/device/base.h>
+#include <EmexToolchain/vm/E64MMIO.h>
+#ifdef ET_PRIVATE
+#include <EmexToolchain/vm/device/internal/controller/__E64IC.h>
+#endif /* ET_PRIVATE */
 
 #define EMEX64_INTC_SIZE      0x30
 
@@ -53,23 +56,17 @@
 
 typedef struct __E64Core *E64CoreRef;
 typedef struct __E64Machine *E64MachineRef;
+typedef struct __E64IC *E64ICRef;
 
-typedef struct emex64_intc {
-    UInt64 pending;
-    UInt64 enabled;
-    UInt64 ctrl;
-    UInt64 vector_base;
-    int64_t current_irq;
-} emex64_intc_t;
+EFTypeID E64ICGetTypeID(void);
 
-emex64_intc_t *emex64_intc_alloc(E64MachineRef machineRef);
-void emex64_intc_dealloc(emex64_intc_t *intc);
+E64ICRef E64ICCreate(EFAllocatorRef allocatorRef);
 
-void emex64_raise_interrupt(E64MachineRef machineRef, int irq_line);
-void emex64_clear_interrupt(E64MachineRef machineRef, int irq_line);
-Boolean emex64_serve_interrupt_if_needed(E64CoreRef core);
+E64MMIORegionRef E64ICCopyMMIORegion(EFAllocatorRef allocatorRef, E64ICRef icRef);
 
-UInt64 emex64_intc_read(E64CoreRef core, void *device, UInt64 offset, int size);
-void emex64_intc_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, int size);
+Boolean E64ICRegisterOnMMIOBus(E64ICRef icRef, E64MMIOBusRef MMIOBusRef);
 
-#endif /* EMEX64VM_DEVICE_IC_H */
+void E64ICRaiseInterrupt(E64ICRef icRef, EFIndex irqLine);
+void E64ICClearInterrupt(E64ICRef icRef, EFIndex irqLine);
+
+#endif /* E64IC_H */

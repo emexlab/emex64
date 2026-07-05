@@ -27,7 +27,7 @@
 #include <unistd.h>
 #include <EmexToolchain/vm/E64Machine.h>
 #include <EmexToolchain/vm/device/board/uart.h>
-#include <EmexToolchain/vm/device/internal/controller/ic.h>
+#include <EmexToolchain/vm/device/internal/controller/E64IC.h>
 
 static struct termios uart_orig_termios;
 
@@ -52,11 +52,11 @@ static void uart_update_irq(emex64_uart_t *u)
     int level = ((u->control & UART_CTRL_RX_IRQ_EN) && (u->status & UART_STATUS_RX_READY)) || ((u->control & UART_CTRL_TX_IRQ_EN) && (u->status & UART_STATUS_TX_EMPTY));
     if(level)
     {
-        emex64_raise_interrupt(u->machine, EMEX64_IRQ_UART);
+        E64ICRaiseInterrupt(u->machine->intc, EMEX64_IRQ_UART);
     }
     else
     {
-        emex64_clear_interrupt(u->machine, EMEX64_IRQ_UART);
+        E64ICClearInterrupt(u->machine->intc, EMEX64_IRQ_UART);
     }
 }
 

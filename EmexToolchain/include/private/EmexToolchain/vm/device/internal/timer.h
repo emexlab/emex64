@@ -22,9 +22,9 @@
 #ifndef EMEX64VM_DEVICE_TIMER_H
 #define EMEX64VM_DEVICE_TIMER_H
 
-#include <stdint.h>
 #include <EmexToolchain/vm/E64Core.h>
 #include <EmexToolchain/vm/device/base.h>
+#include <EmexFoundation/EmexFoundation.h>
 
 #define EMEX64_TIMER_SIZE   0x28
 
@@ -42,6 +42,9 @@
 #define TIMER_VIRTUAL_FREQ  1000000ULL
 
 typedef struct __E64Machine *E64MachineRef;
+/*typedef struct __E64Timer *E64TimerRef;
+
+E64TimerRef E64TimerCreate(EFAllocatorRef allocatorRef);*/
 
 typedef struct emex64_timer {
     UInt64 ctrl;

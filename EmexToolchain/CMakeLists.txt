@@ -91,7 +91,7 @@ add_library(EmexToolchain ${LIB_TYPE}
         ## Devices
 
             ### SoC internal devices
-            src/vm/device/internal/controller/ic.c
+            src/vm/device/internal/controller/E64IC.c
             src/vm/device/internal/controller/mem.c
             src/vm/device/internal/timer.c
 

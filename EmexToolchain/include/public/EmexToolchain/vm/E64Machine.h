@@ -29,6 +29,7 @@
 #include <EmexToolchain/vm/E64Memory.h>
 #include <EmexToolchain/vm/E64MMIO.h>
 #include <EmexToolchain/vm/device/base.h>
+#include <EmexToolchain/vm/device/internal/controller/E64IC.h>
 #include <EmexFoundation/EmexFoundation.h>
 #ifdef ET_PRIVATE
 #include <EmexToolchain/vm/__E64Machine.h>
@@ -44,5 +45,7 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef, E64Machin
 E64CoreRef E64MachineGetCore(E64MachineRef machineRef);
 E64MemoryRef E64MachineGetMemory(E64MachineRef machineRef);
 E64MMIOBusRef E64MachineGetMMIOBus(E64MachineRef machineRef);
+
+E64ICRef E64MachineGetIC(E64MachineRef machineRef);
 
 #endif /* E64MACHINE_H */

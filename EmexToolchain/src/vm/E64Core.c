@@ -32,7 +32,7 @@
 #include <EmexToolchain/vm/E64Core.h>
 #include <EmexToolchain/vm/E64Memory.h>
 #include <EmexToolchain/vm/E64Machine.h>
-#include <EmexToolchain/vm/device/internal/controller/ic.h>
+#include <EmexToolchain/vm/device/internal/controller/E64IC.h>
 #include <EmexToolchain/vm/device/internal/timer.h>
 #include <EmexToolchain/vm/instruction/core.h>
 #include <EmexToolchain/vm/instruction/data.h>
@@ -251,7 +251,7 @@ static void *__E64CoreExecutionThread(void *arg)
     for(;;)
     {
         __E64CoreExecuteInstructionAtPC(core);
-        emex64_serve_interrupt_if_needed(core);
+        __E64ServeInterruptIfNeeded(core->machine->intc, core);
 
         /*
          * currently exceptions happening in a interrupt
@@ -264,7 +264,7 @@ static void *__E64CoreExecutionThread(void *arg)
             if(unlikely(core->cr_state.crexc.exception != kE64ExceptionNone))
             {
                 core->halted = true;
-                emex64_raise_interrupt(core->machine, EMEX64_IRQ_EXCEPTION);
+                E64ICRaiseInterrupt(core->machine->intc, EMEX64_IRQ_EXCEPTION);
             }
             else if(unlikely(core->halted))
             {

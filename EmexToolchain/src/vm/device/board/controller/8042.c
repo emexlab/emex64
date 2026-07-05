@@ -22,7 +22,7 @@
 #include <EmexToolchain/vm/E64Machine.h>
 #include <EmexToolchain/vm/E64Core.h>
 #include <EmexToolchain/vm/device/board/controller/8042.h>
-#include <EmexToolchain/vm/device/internal/controller/ic.h>
+#include <EmexToolchain/vm/device/internal/controller/E64IC.h>
 #include <string.h>
 #include <pthread.h>
 
@@ -203,7 +203,7 @@ static void update_8042_interrupt(emex64_8042_t *dev)
             dev->status &= ~STATUS_MOUSE_OBF;
         }
 
-        emex64_raise_interrupt(dev->machine, EMEX64_IRQ_8042);
+        E64ICRaiseInterrupt(dev->machine->intc, EMEX64_IRQ_8042);
     }
     else
     {
