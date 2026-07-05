@@ -71,7 +71,7 @@ _pmm_page_set:
 
 _pmm_alloc:
     ; preparing for loop
-    mov r0, 0
+    clr r0
     ldq r1, pmm_max_pages
 
     ; trying to find free page
@@ -136,3 +136,29 @@ _pmm_init:
     bnz r3, .loop
 .return:
     ret
+
+_pmm_get_count:
+    ldq rr, pmm_max_pages
+    wret
+
+_pmm_get_used_count:
+    ; preparing for loop
+    clr r0, r2
+    ldq r1, pmm_max_pages
+
+    ; trying to find free page
+.loop:
+    blw _pmm_page_get, r0
+    bz rr, .got_page
+.got_back:
+    cmp r0, r1
+    bgt .loop_end
+    inc r0
+    b .loop
+.got_page:
+    inc r2
+    b .got_back
+.loop_end:
+    mov rr, r2
+    wret
+
