@@ -29,8 +29,11 @@
 %define% FW_LOCK_KTRR 0
 %endif% ; FW_LOCK_KTRR
 
+%define% EARLY_STACK_SIZE       (EMEX64_PAGE_SIZE * 1)
+%define% EARLY_STACK_TOP_SUB    (EARLY_STACK_SIZE - 8)
+
 section .bss
-    early_stack db EMEX64_PAGE_SIZE
+    early_stack db EARLY_STACK_SIZE
 
 section .data
     fw_font_test_msg db "[fw] firmware font test\n     ABCDEFGHIJKLMNOPQRSTUVWXYZ\n     abcdefghijklmnopqrstuvwxyz\n     0123456789\n     @#%^&*()!<>?:;\n\0"
@@ -120,11 +123,39 @@ main:
     hlt
     b .hang
 
-; main setup routine
 _start:
+    ; will just shutdown for now
+    ; if it does and your reading this
+    ; the reason is that there is not
+    ; enough space for the bss section
+    ldq r0, EMEX64_MC_REG_SIZE
+    cmp r0, __bss_end
+    blt .poweroff   ; bss section does not fit, sowwy, no way to handle that 3: not enough memory is.. not enough memory
+
     ; early stack fixup (enough for firmware)
-    add sp, early_stack, 0x1FFE
-    
+    add sp, early_stack, EARLY_STACK_TOP_SUB
+
+    ; initilize bss before the early stack with zero
+    ; but doing math magic to avoid corrupting our
+    ; own early stack region (bruh I swere I wrote
+    ; that my self, idk why the hell I write so
+    ; detailed comments sometimes ;w; it's just fun
+    ; to do it the right way, this is not AI generated
+    ; buhuhuhuhuhu ;w;)
+    ;
+    ; step 1: zeroing __bss_start -> early_stack
+    sub r0, early_stack, __bss_start
+    blw _memset, __bss_start, 0, r0
+
+    ; step 2: zerong early_stack + the length of early_stack -> __bss_end
+    add r0, early_stack, EARLY_STACK_SIZE
+    cmp r0, __bss_end
+    bge .bss_done   ; nothing left to zero
+    sub r1, __bss_end, r0
+    blw _memset, r0, 0, r1
+.bss_done:
+
+    ; rest of the routine
     bl _put_init                                    ; checks for fb
     bl _pmm_init                                    ; initilizing page allocator
 
