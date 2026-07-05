@@ -93,9 +93,10 @@ main:
     blw _puts, fw_display_unavailable
 .dsp_installed:
 
-    blw _mc_get_mem_size
-    mov r1, rr
-    sub r0, r1, __emex64_exec_img_end
+    blw _pmm_get_count
+    mul r1, rr, EMEX64_PAGE_SIZE
+    blw _pmm_get_used_count
+    mul r0, rr, EMEX64_PAGE_SIZE
 
     blw _puts, fw_memory_msg
     blw _put_mem, r1, r1
@@ -104,7 +105,6 @@ main:
     blw _puts, fw_memory_available_msg
     blw _put_mem, r0, r1
     blw _putc, '\n'
-    
     blw _print_time
 
 %if% FW_LOCK_KTRR
