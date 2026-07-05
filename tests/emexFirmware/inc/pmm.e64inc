@@ -27,6 +27,7 @@ extern _pmm_free
 extern _pmm_alloc_zero
 extern _pmm_init
 extern _pmm_get_count
+extern _pmm_get_free_count
 extern _pmm_get_used_count
 
 %endif% ; PMM_E64INC

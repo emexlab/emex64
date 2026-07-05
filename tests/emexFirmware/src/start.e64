@@ -96,7 +96,7 @@ main:
 
     blw _pmm_get_count
     mul r1, rr, EMEX64_PAGE_SIZE
-    blw _pmm_get_used_count
+    blw _pmm_get_free_count
     mul r0, rr, EMEX64_PAGE_SIZE
 
     blw _puts, fw_memory_msg

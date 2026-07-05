@@ -22,17 +22,18 @@
 %include% <emex64.e64inc>
 
 section .bss
-    pmm_master_ptr dq 1                             ; address that points at the main page
-    pmm_max_pages dq 1                              ; count of pages
+    pmm_init db 1                   ; is page memory management initilized?
+    pmm_master_ptr dq 1             ; address that points at the main page
+    pmm_max_pages dq 1              ; count of usable pages
 
 _pmm_page_addr:
-    mul rr, r0, EMEX64_PAGE_SIZE                    ; page number by size equals address
+    mul rr, r0, EMEX64_PAGE_SIZE    ; page number by size equals address
     wret
 
 _pmm_addr_page:
-    clr r0                                          ; clearing return register to return NULL on failure
+    clr rr                          ; clearing return register to return NULL on failure
     bz r0, .end
-    div rr, r0, EMEX64_PAGE_SIZE                    ; page number by size equals address
+    div rr, r0, EMEX64_PAGE_SIZE    ; page number by size equals address
 .end:
     wret
 
@@ -40,8 +41,8 @@ _pmm_page_get:
     clr r1, r2
     bz r0, .do_get
 .page_not_null:
-    div r1, r0, 8                                   ; byte index
-    mod r2, r0, 8                                   ; bit index
+    div r1, r0, 8                   ; byte index
+    mod r2, r0, 8                   ; bit index
 .do_get:
     ldq r4, pmm_master_ptr
     add r1, r4
@@ -54,8 +55,8 @@ _pmm_page_set:
     clr r2, r3
     bz r0, .do_set
 .page_not_null:
-    div r2, r0, 8                                   ; byte index
-    mod r3, r0, 8                                   ; bit index
+    div r2, r0, 8                   ; byte index
+    mod r3, r0, 8                   ; bit index
 .do_set:
     ldq r6, pmm_master_ptr
     add r2, r6
@@ -92,7 +93,7 @@ _pmm_alloc:
 
 _pmm_free:
     ; getting page from address
-    blw _pmm_addr_page
+    blw _pmm_addr_page; , r0    (not needed cuz provided by the caller, declaring it tho would emit more bytes)
     ldq r0, pmm_max_pages
     cmp rr, r0
 
@@ -109,30 +110,30 @@ _pmm_alloc_zero:
 
 _pmm_init:
     ; getting memory size
-    blw _mc_get_mem_size                            ; asking memory controller nicely to say how large it is
-    mov r0, rr                                      ; moving result to safe location
+    blw _mc_get_mem_size            ; asking memory controller nicely to say how large it is
+    mov r0, rr                      ; moving result to safe location
 
     ; dividing through page size to get count of pages that fit into the memory space
     div r0, EMEX64_PAGE_SIZE
-    stq pmm_max_pages, r0                           ; store count of maximum pages
+    stq pmm_max_pages, r0           ; store count of maximum pages
 
     ; getting the count of pages in use by the kernel image
     mov r1, __emex64_exec_img_end
     add r1, (EMEX64_PAGE_SIZE - 1)
-    div r1, EMEX64_PAGE_SIZE                        ; get the number of pages the image is sized
+    div r1, EMEX64_PAGE_SIZE        ; get the number of pages the image is sized
 
     ; getting the end address of image but in the logic of our page math
-    blw _pmm_page_addr, r1                          ; get end address of image
-    stq pmm_master_ptr, rr                          ; store address 
+    blw _pmm_page_addr, r1          ; get end address of image
+    stq pmm_master_ptr, rr          ; store address 
 
     ; prepare for loop
-    div r3, r0, 8                                   ; calculating memory size but in pages
-    add r3, rr                                      ; adding master page pointer to offset
-    add r3, 0x1FFF                                  ; adding page size - 1 (FRIDA ADD MATH OPS FOR CONSTANTS AT ASSEMBLING TIME)
-    div r3, EMEX64_PAGE_SIZE                        ; do ceiling calculating
+    div r3, r0, 8                   ; calculating memory size but in pages
+    add r3, rr                      ; adding master page pointer to offset
+    add r3, 0x1FFF                  ; adding page size - 1 (FRIDA ADD MATH OPS FOR CONSTANTS AT ASSEMBLING TIME)
+    div r3, EMEX64_PAGE_SIZE        ; do ceiling calculating
 .loop:
     dec r3
-    blw _pmm_page_set, r3, 0x1                       ; mark page as used
+    blw _pmm_page_set, r3, 0x1      ; mark page as used
     bnz r3, .loop
 .return:
     ret
@@ -141,7 +142,7 @@ _pmm_get_count:
     ldq rr, pmm_max_pages
     wret
 
-_pmm_get_used_count:
+_pmm_get_free_count:
     ; preparing for loop
     clr r0, r2
     ldq r1, pmm_max_pages
@@ -160,5 +161,12 @@ _pmm_get_used_count:
     b .got_back
 .loop_end:
     mov rr, r2
+    wret
+
+_pmm_get_used_count:
+    blw _pmm_get_count
+    mov r0, rr
+    blw _pmm_get_free_count
+    sub rr, r0, rr
     wret
 
