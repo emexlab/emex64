@@ -75,21 +75,25 @@ section .data
     exception_array_reg_msg dq exception_pc_msg, exception_sp_msg, exception_fp_msg, exception_cf_msg, exception_fpc_msg, exception_r0_msg, exception_r1_msg, exception_r2_msg, exception_r3_msg, exception_r4_msg, exception_r5_msg, exception_r6_msg, exception_r7_msg, exception_r8_msg, exception_r9_msg, exception_r10_msg, exception_r11_msg, exception_r12_msg, exception_r13_msg, exception_r14_msg, exception_r15_msg, exception_r16_msg, exception_r17_msg, exception_r18_msg, exception_r19_msg, exception_r20_msg, exception_r21_msg, exception_r22_msg, exception_r23_msg, exception_r24_msg, exception_r25_msg, exception_rr_msg
 
 _exception_str_for_code:
+    cmp r0, 6
+    ble .skip_unknown_force
+    clr r0
+.skip_unknown_force:
     mul r0, 8
     add r0, exception_type_array_msg
     ldq rr, r0
     wret
 
+; switch table
+section .data
+    exception_putreg_switch dq _exception_putreg.pc, _exception_putreg.sp, _exception_putreg.fp, _exception_putreg.cf, _exception_putreg.fpc, _exception_putreg.r0, _exception_putreg.r1, _exception_putreg.r2, _exception_putreg.r3, _exception_putreg.r4, _exception_putreg.r5, _exception_putreg.r6, _exception_putreg.r7, _exception_putreg.r8, _exception_putreg.r9, _exception_putreg.r10, _exception_putreg.r11, _exception_putreg.r12, _exception_putreg.r13, _exception_putreg.r14, _exception_putreg.r15, _exception_putreg.r16, _exception_putreg.r17, _exception_putreg.r18, _exception_putreg.r19, _exception_putreg.r20, _exception_putreg.r21, _exception_putreg.r22, _exception_putreg.r23, _exception_putreg.r24, _exception_putreg.r25, _exception_putreg.rr
+
+;
 ; register printing
 ;
 ; r0: reg enumerationmacro value
 ; r1: fp value of final iret frame
 ;
-
-; switch table
-section .data
-    exception_putreg_switch dq _exception_putreg.pc, _exception_putreg.sp, _exception_putreg.fp, _exception_putreg.cf, _exception_putreg.fpc, _exception_putreg.r0, _exception_putreg.r1, _exception_putreg.r2, _exception_putreg.r3, _exception_putreg.r4, _exception_putreg.r5, _exception_putreg.r6, _exception_putreg.r7, _exception_putreg.r8, _exception_putreg.r9, _exception_putreg.r10, _exception_putreg.r11, _exception_putreg.r12, _exception_putreg.r13, _exception_putreg.r14, _exception_putreg.r15, _exception_putreg.r16, _exception_putreg.r17, _exception_putreg.r18, _exception_putreg.r19, _exception_putreg.r20, _exception_putreg.r21, _exception_putreg.r22, _exception_putreg.r23, _exception_putreg.r24, _exception_putreg.r25, _exception_putreg.rr
-
 _exception_putreg:
     ; get the reg string
     mov r6, r1
@@ -164,7 +168,7 @@ _exception_hang:
 _exception_handler:
     ;stq putc_sym, _uart_putc
 
-    ; return register is still from userspace here!
+    ; return register is still from the cause of the exception
     push rr
 
     ; printing the exception code which
@@ -174,7 +178,7 @@ _exception_handler:
     blw _putbase, r20, 16
     blw _putc, '\n'
 
-    ; decoding exception code into
+    ; decoding exception code into an nice string representing
     ; the exact exception
     blw _puts, exception2_msg
     blw _exception_str_for_code, r20
@@ -182,9 +186,7 @@ _exception_handler:
     blw _putc, '\n'
     blw _putc, '\n'
 
-    ; register dump
-    ; the hard part is getting the old values
-    ; from the stack frame IC created
+    ; register dump by reading the interrupt stack frame
     blw _puts, exception_reg_msg
 
     mov r0, REG_PC
@@ -195,26 +197,17 @@ _exception_handler:
     cmp r0, r1
     ble .loop
 
-    ;
-    ; no iret needed, platform is panicking
-    ; but we need to hang so the user sees what
-    ; happened.
-    ;
-    ; stb PLATFORM_PWR, 0
-    ;
-
-    ; on UART we don't have to keep the device alive
-    ;b _start.poweroff
-    ;b _fw_start.hang
+    ; unregistering all interrupt handlers so that it can't do any
+    ; logic after we handled the exception, as it is not safe anymore
+    ; for the current boot session to serve any further interrupt.
     blw _interrupt_unregister_all
 
-    ;mov 0x0, 0x0
+    ; resetting CREXC so it won't reloop into this exception handler
     cmov REG_CR2, 0x0
-    ;mov r2, 0x0
 
-    ;mul r7, 8, r8
-    add r0, fp, 248
+    ; manipulating interrupt stack frame
+    add r0, fp, 248 ; translates to the pc register inside the interrupt stack frame
     stq r0, _exception_hang
-    
-    ;b _fw_start.hang 
+
+    ; returns into our own hang loop
     iret
