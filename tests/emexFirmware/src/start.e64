@@ -49,9 +49,7 @@ section .data
     fw_testpanic_msg db "this is a test panic string\0"
 
 fw_8042_handler:
-    ;ldq r3, putc_sym
-    ;stq putc_sym, _uart_putc
-
+    push rr
     ldd r0, EMEX64_8042_REG_STATUS      ; STATUS port
     and r0, 0x01                        ; OBF (bit 0)?
     bz r0, .no_data
@@ -74,7 +72,7 @@ fw_8042_handler:
 
 .done:
 .no_data:
-    ;stq putc_sym, r3
+    pop rr
     iret
 
 main:
