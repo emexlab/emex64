@@ -164,10 +164,7 @@ _exception_hang:
     hlt
     b .hang
 
-; the handler it self
 _exception_handler:
-    ;stq putc_sym, _uart_putc
-
     ; return register is still from the cause of the exception
     push rr
 
