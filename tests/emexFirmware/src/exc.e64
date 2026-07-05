@@ -74,10 +74,12 @@ section .data
     exception_rr_msg db "rr\0"
     exception_array_reg_msg dq exception_pc_msg, exception_sp_msg, exception_fp_msg, exception_cf_msg, exception_fpc_msg, exception_r0_msg, exception_r1_msg, exception_r2_msg, exception_r3_msg, exception_r4_msg, exception_r5_msg, exception_r6_msg, exception_r7_msg, exception_r8_msg, exception_r9_msg, exception_r10_msg, exception_r11_msg, exception_r12_msg, exception_r13_msg, exception_r14_msg, exception_r15_msg, exception_r16_msg, exception_r17_msg, exception_r18_msg, exception_r19_msg, exception_r20_msg, exception_r21_msg, exception_r22_msg, exception_r23_msg, exception_r24_msg, exception_r25_msg, exception_rr_msg
 
-_exception_str_for_code:
+exception_str_for_code:
     cmp r0, 6
     ble .skip_unknown_force
-    clr r0
+    cmovb rr, REG_CR2
+    ;mov rr, exception_permission_msg
+    wret
 .skip_unknown_force:
     mul r0, 8
     add r0, exception_type_array_msg
@@ -86,7 +88,7 @@ _exception_str_for_code:
 
 ; switch table
 section .data
-    exception_putreg_switch dq _exception_putreg.pc, _exception_putreg.sp, _exception_putreg.fp, _exception_putreg.cf, _exception_putreg.fpc, _exception_putreg.r0, _exception_putreg.r1, _exception_putreg.r2, _exception_putreg.r3, _exception_putreg.r4, _exception_putreg.r5, _exception_putreg.r6, _exception_putreg.r7, _exception_putreg.r8, _exception_putreg.r9, _exception_putreg.r10, _exception_putreg.r11, _exception_putreg.r12, _exception_putreg.r13, _exception_putreg.r14, _exception_putreg.r15, _exception_putreg.r16, _exception_putreg.r17, _exception_putreg.r18, _exception_putreg.r19, _exception_putreg.r20, _exception_putreg.r21, _exception_putreg.r22, _exception_putreg.r23, _exception_putreg.r24, _exception_putreg.r25, _exception_putreg.rr
+    exception_putreg_switch dq exception_putreg.pc, exception_putreg.sp, exception_putreg.fp, exception_putreg.cf, exception_putreg.fpc, exception_putreg.r0, exception_putreg.r1, exception_putreg.r2, exception_putreg.r3, exception_putreg.r4, exception_putreg.r5, exception_putreg.r6, exception_putreg.r7, exception_putreg.r8, exception_putreg.r9, exception_putreg.r10, exception_putreg.r11, exception_putreg.r12, exception_putreg.r13, exception_putreg.r14, exception_putreg.r15, exception_putreg.r16, exception_putreg.r17, exception_putreg.r18, exception_putreg.r19, exception_putreg.r20, exception_putreg.r21, exception_putreg.r22, exception_putreg.r23, exception_putreg.r24, exception_putreg.r25, exception_putreg.rr
 
 ;
 ; register printing
@@ -94,7 +96,7 @@ section .data
 ; r0: reg enumerationmacro value
 ; r1: fp value of final iret frame
 ;
-_exception_putreg:
+exception_putreg:
     ; get the reg string
     mov r6, r1
     mul r1, r0, 8
@@ -159,12 +161,12 @@ _exception_putreg:
     blw _putc, '\n'
     wret
 
-_exception_hang:
+exception_hang:
 .hang:
     hlt
     b .hang
 
-_exception_handler:
+exception_handler:
     ; return register is still from the cause of the exception
     push rr
 
@@ -178,7 +180,7 @@ _exception_handler:
     ; decoding exception code into an nice string representing
     ; the exact exception
     blw _puts, exception2_msg
-    blw _exception_str_for_code, r20
+    blw exception_str_for_code, r20
     blw _puts, rr
     blw _putc, '\n'
     blw _putc, '\n'
@@ -189,7 +191,7 @@ _exception_handler:
     mov r0, REG_PC
     mov r1, REG_RR
 .loop:
-    blw _exception_putreg, r0, fp
+    blw exception_putreg, r0, fp
     inc r0
     cmp r0, r1
     ble .loop
@@ -204,7 +206,11 @@ _exception_handler:
 
     ; manipulating interrupt stack frame
     add r0, fp, 248 ; translates to the pc register inside the interrupt stack frame
-    stq r0, _exception_hang
+    stq r0, exception_hang
 
     ; returns into our own hang loop
     iret
+
+panic:
+    cmov REG_CR2, r0
+    ; no return symbol

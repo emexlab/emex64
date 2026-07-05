@@ -327,7 +327,7 @@ typedef enum: UInt8 {
     kE64CompareFlagG =   0x4
 } E64CompareFlag;
 
-typedef enum: UInt8 {
+typedef enum: UInt64 {
     /*
      * normal state, simply a marker to say nothing
      * to trigger a interrupt for.

@@ -38,8 +38,9 @@ section .data
     fw_scancode_msg  db "scancode=0x\0"
     fw_8042_mouse_msg db "[fw:IC:emex8042] mouse event: 0x\0"
     fw_ktrr_msg db "[fw] locked KTRR\n\0"
+    fw_testpanic_msg db "this is a test panic string\0"
 
-_fw_8042_handler:
+fw_8042_handler:
     ;ldq r3, putc_sym
     ;stq putc_sym, _uart_putc
 
@@ -68,9 +69,9 @@ _fw_8042_handler:
     ;stq putc_sym, r3
     iret
 
-_main:
-    blw _interrupt_register_handler, EMEX64_IC_IRQ_EXCEPTION, _exception_handler
-    blw _interrupt_register_handler, EMEX64_IC_IRQ_8042, _fw_8042_handler
+main:
+    blw _interrupt_register_handler, EMEX64_IC_IRQ_EXCEPTION, exception_handler
+    blw _interrupt_register_handler, EMEX64_IC_IRQ_8042, fw_8042_handler
 
     blw _mc_lock_ktrr
     blw _puts, fw_ktrr_msg
@@ -105,8 +106,7 @@ _main:
     blw _print_time
 
 %if% FW_TEST_EXCEPTION
-    cmov REG_CR0, 0x0
-    cmov REG_CR0, 0x2
+    blw panic, fw_testpanic_msg
 %endif%
     
 .hang:
@@ -128,7 +128,7 @@ _start:
     
     bl _slab_init                                   ; initilizing slab allocator
     bl _interrupt_init                              ; initilizing interrupt controller
-    bl _main                                        ; branching to main symbol
+    bl main                                         ; branching to main symbol
 .poweroff:
     stb EMEX64_PLATFORM_REG_PWR, 0                  ; telling platform device to turn off
     
