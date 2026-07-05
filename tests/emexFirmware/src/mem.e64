@@ -27,8 +27,8 @@ _memset:
     stb r0, r1          ; setting value at address
     inc r0
 .loop_continue:
-    sub r3, r2, r0      ; calculating remaining lenght
-    bnz r3, .loop       ; in-case r3 is still not zero we continue
+    cmp r0, r2
+    blt .loop
     wret
 
 _memcpy:
