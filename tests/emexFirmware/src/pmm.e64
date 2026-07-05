@@ -79,7 +79,7 @@ _pmm_alloc:
     blw _pmm_page_get, r0
     bz rr, .got_page
     cmp r0, r1
-    bgt .no_free_pages
+    bge .no_free_pages
     inc r0
     b .loop
 .got_page:
@@ -152,7 +152,7 @@ _pmm_get_used_count:
     bz rr, .got_page
 .got_back:
     cmp r0, r1
-    bgt .loop_end
+    bge .loop_end
     inc r0
     b .loop
 .got_page:
