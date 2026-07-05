@@ -25,7 +25,12 @@
 %define% FW_TEST_EXCEPTION 0
 %endif% ; FW_TEST_EXCEPTION
 
-%define% FW_TONE_RATE   48000
+%ifndef% FW_LOCK_KTRR
+%define% FW_LOCK_KTRR 0
+%endif% ; FW_LOCK_KTRR
+
+section .bss
+    early_stack db EMEX64_PAGE_SIZE
 
 section .data
     fw_font_test_msg db "[fw] firmware font test\n     ABCDEFGHIJKLMNOPQRSTUVWXYZ\n     abcdefghijklmnopqrstuvwxyz\n     0123456789\n     @#%^&*()!<>?:;\n\0"
@@ -73,9 +78,6 @@ main:
     blw _interrupt_register_handler, EMEX64_IC_IRQ_EXCEPTION, exception_handler
     blw _interrupt_register_handler, EMEX64_IC_IRQ_8042, fw_8042_handler
 
-    blw _mc_lock_ktrr
-    blw _puts, fw_ktrr_msg
-
     blw _puts, fw_font_test_msg
 
     blw _puts, fw_display_msg
@@ -105,6 +107,11 @@ main:
     
     blw _print_time
 
+%if% FW_LOCK_KTRR
+    blw _mc_lock_ktrr
+    blw _puts, fw_ktrr_msg
+%endif% ; FW_LOCK_KTRR
+
 %if% FW_TEST_EXCEPTION
     blw panic, fw_testpanic_msg
 %endif%
@@ -115,17 +122,12 @@ main:
 
 ; main setup routine
 _start:
-    ; early stack fixup
-    ldq r0, EMEX64_MC_REG_SIZE
-    sub sp, r0, 8
-
+    ; early stack fixup (enough for firmware)
+    add sp, early_stack, 0x1FFE
+    
     bl _put_init                                    ; checks for fb
     bl _pmm_init                                    ; initilizing page allocator
 
-    ; actual stack fixup
-    blw _pmm_alloc                                  ; a bit small lmfao
-    add sp, rr, 0x1FFE
-    
     bl _slab_init                                   ; initilizing slab allocator
     bl _interrupt_init                              ; initilizing interrupt controller
     bl main                                         ; branching to main symbol
