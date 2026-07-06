@@ -291,8 +291,8 @@ Boolean assembler_code_inject_file(assembler_invocation_t *inv,
         }
     }
 
-    free(entries);
-    return true;
+    Boolean result = true;
+    goto cleanup;
 
 out_failure_file_rm:
     /* preventing evObj issues */
@@ -302,8 +302,11 @@ out_failure:
     {
         free(entries[i].code);
     }
+    result = false;
+
+cleanup:
     free(entries);
-    return false;
+    return result;
 }
 
 Boolean assembler_code_preparse(assembler_invocation_t *inv,
