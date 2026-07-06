@@ -25,7 +25,8 @@ section .bss
     ivec dq 63
 
 section .data
-    ic_failed_msg db "[IC] out of memory: can't allocate memory for kernel stack pointer\n\0"
+    ic_failed_msg db "[ic] out of memory: can't allocate memory for kernel stack pointer\n\0"
+    ic_init_msg db "[ic] initialized\n\0"
 
 extern main.hang
 
@@ -40,6 +41,7 @@ _interrupt_init:
     stq EMEX64_IC_REG_VECTOR, ivec
     stb EMEX64_IC_REG_ENABLED, 0x0
     stq EMEX64_IC_REG_CTRL, 1
+    blw _puts, ic_init_msg
     ret
 .failed:
     blw _puts, ic_failed_msg

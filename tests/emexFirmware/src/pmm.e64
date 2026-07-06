@@ -21,6 +21,12 @@
 
 %include% <emex64.e64inc>
 
+extern main.hang
+
+section .data
+    pmm_failed_msg db "[pmm] not enough memory available to safely initilize page memory management\n\0"
+    pmm_init_msg db "[pmm] initialized\n\0"
+
 section .bss
     pmm_init db 1                   ; is page memory management initilized?
     pmm_master_ptr dq 1             ; address that points at the main page
@@ -140,13 +146,14 @@ _pmm_init:
     blw _pmm_page_set, r3, 0x1
     bnz r3, .loop
     stb pmm_init, 1
-    mov rr, 1
+    blw _puts, pmm_init_msg
     ret
 
 .no_memory:
     clr rr
     stq pmm_max_pages, rr
-    ret
+    blw _puts, pmm_failed_msg
+    b main.hang
 
 _pmm_get_count:
     ldq rr, pmm_max_pages
