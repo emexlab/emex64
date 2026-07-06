@@ -39,16 +39,24 @@ section .data
     fw_display_msg db "[fw] display resolution: \0"
     fw_display_x_msg db " x \0"
     fw_display_unavailable db "not installed\n\0"
-    fw_memory_msg db "[fw] total memory size: \0"
+    fw_memory_msg db "[fw] memory installed: \0"
     fw_memory_available_msg db "[fw] memory available: \0"
     fw_8042_msg db "[8042] key event: \0"
     fw_scancode_msg  db "scancode=0x\0"
     fw_8042_mouse_msg db "[8042] mouse event: 0x\0"
     fw_ktrr_msg db "[fw] locked KTRR\n\0"
     fw_testpanic_msg db "this is a test panic string\0"
+    fw_interrupted_msg db "\r[fw] interrupted: \0"
+    fw_interrupted_suffix_msg db " times\0"
+
+extern putc_sym
 
 fw_8042_handler:
     push rr
+    ldq rr, putc_sym
+    push rr
+    stq putc_sym, _uart_putc
+
     ldd r0, EMEX64_8042_REG_STATUS      ; STATUS port
     and r0, 0x01                        ; OBF (bit 0)?
     bz r0, .no_data
@@ -72,7 +80,12 @@ fw_8042_handler:
 .done:
 .no_data:
     pop rr
+    stq putc_sym, rr
+    pop rr
     iret
+
+section .bss
+    meow_cnt dq 1
 
 main:
     blw _interrupt_register_handler, EMEX64_IC_IRQ_EXCEPTION, exception_handler
@@ -116,6 +129,12 @@ main:
     
 .hang:
     hlt
+    ldq r0, meow_cnt
+    blw _puts, fw_interrupted_msg
+    inc r0
+    blw _putbase, r0, 10
+    blw _puts, fw_interrupted_suffix_msg
+    stq meow_cnt, r0
     b .hang
 
 _start:

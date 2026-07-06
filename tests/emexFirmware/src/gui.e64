@@ -44,6 +44,9 @@ _gui_putc:
     cmp r0, '\n'
     be .newline
 
+    cmp r0, '\r'
+    be .return
+
     stw gui_column, r4
     stw gui_line, r5
 
@@ -65,13 +68,10 @@ _gui_putc:
     mov r9, 7
     sub r9, r8
     shr r10, r6, r9
-
     and r10, 1
-    bz r10, .skip_pixel
 
     add r11, r2, r5
     cmp r11, 0
-
     blt .skip_pixel
 
     ldw r14, EMEX64_FB_REG_HEIGHT
@@ -81,8 +81,7 @@ _gui_putc:
     bge .skip_pixel
 
     add r12, r1, r8
-    cmp r12, 0
-    
+    cmp r12, 0    
     blt .skip_pixel
     cmp r12, r15
     bge .skip_pixel
@@ -90,7 +89,12 @@ _gui_putc:
     mul r13, r11, r15
     add r13, r12
     add r13, EMEX64_FB_FRAMEBUFFER
+    bz r10, .draw_background
+    
     stb r13, EMEX64_FB_TEXT_COLOR
+    b .skip_pixel
+.draw_background:
+    stb r13, 0
 .skip_pixel:
     inc r8
     cmp r8, 8
@@ -125,6 +129,10 @@ _gui_putc:
 .newline_scroll:
     mov r0, 10
     b _scroll_up
+
+.return:
+    stw gui_column, 0
+    wret
 
 _scroll_up:
     bz r0, .end
