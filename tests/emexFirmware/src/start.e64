@@ -36,7 +36,6 @@ section .bss
     early_stack db EARLY_STACK_SIZE
 
 section .data
-    fw_font_test_msg db "[fw] firmware font test\n     ABCDEFGHIJKLMNOPQRSTUVWXYZ\n     abcdefghijklmnopqrstuvwxyz\n     0123456789\n     @#%^&*()!<>?:;\n\0"
     fw_display_msg db "[fw] display resolution: \0"
     fw_display_x_msg db " x \0"
     fw_display_unavailable db "not installed\n\0"
@@ -78,8 +77,6 @@ fw_8042_handler:
 main:
     blw _interrupt_register_handler, EMEX64_IC_IRQ_EXCEPTION, exception_handler
     blw _interrupt_register_handler, EMEX64_IC_IRQ_8042, fw_8042_handler
-
-    blw _puts, fw_font_test_msg
 
     blw _puts, fw_display_msg
     ldw r0, EMEX64_FB_REG_HEIGHT
