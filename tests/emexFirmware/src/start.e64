@@ -126,15 +126,19 @@ main:
 %if% FW_TEST_EXCEPTION
     blw panic, fw_testpanic_msg
 %endif%
+
+    clr r0
+    dec r0
+    stq meow_cnt, r0
     
 .hang:
-    hlt
     ldq r0, meow_cnt
     blw _puts, fw_interrupted_msg
     inc r0
     blw _putbase, r0, 10
     blw _puts, fw_interrupted_suffix_msg
     stq meow_cnt, r0
+    hlt
     b .hang
 
 _start:
