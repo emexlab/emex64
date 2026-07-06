@@ -98,7 +98,7 @@ _pmm_free:
     cmp rr, r0
 
     ; making sure page is not bigger than max pages
-    bgt .end
+    bge .end
     blw _pmm_page_set, rr, 0
 .end:
     wret
