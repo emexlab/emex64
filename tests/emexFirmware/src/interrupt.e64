@@ -45,7 +45,7 @@ _interrupt_init:
     ret
 .failed:
     blw _puts, ic_failed_msg
-    b main.hang
+    DO_HANG
 
 _interrupt_register_handler:
     ; calculate interrupt vector handler slot address

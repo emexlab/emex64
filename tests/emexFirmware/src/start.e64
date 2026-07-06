@@ -84,8 +84,8 @@ fw_8042_handler:
     pop rr
     iret
 
-section .bss
-    meow_cnt dq 1
+section .data
+    meow_cnt dq (0 - 1) ; underflow so that the hang in main does null it
 
 main:
     blw _interrupt_register_handler, EMEX64_IC_IRQ_EXCEPTION, exception_handler
@@ -127,10 +127,6 @@ main:
     blw panic, fw_testpanic_msg
 %endif%
 
-    clr r0
-    dec r0
-    stq meow_cnt, r0
-    
 .hang:
     ldq r0, meow_cnt
     blw _puts, fw_interrupted_msg

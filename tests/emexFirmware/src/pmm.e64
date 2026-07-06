@@ -153,7 +153,7 @@ _pmm_init:
     clr rr
     stq pmm_max_pages, rr
     blw _puts, pmm_failed_msg
-    b main.hang
+    DO_HANG
 
 _pmm_get_count:
     ldq rr, pmm_max_pages

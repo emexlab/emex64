@@ -46,6 +46,7 @@
 %include% "gui.e64inc"
 %include% "slab.e64inc"
 %include% "rtc.e64inc"
+%include% "hang.e64inc"
 %endif% ; USES_FW_CODE
 
 %if% USES_FW_LDSCRIPT
