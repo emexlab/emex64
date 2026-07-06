@@ -27,9 +27,8 @@ section .bss
 _interrupt_init:
     ; allocate kernel stack for the interrupt handlers
     blw _pmm_alloc
-    add rr, 0x1FFE
+    add rr, (EMEX64_PAGE_SIZE - 8)
     cmov REG_CR1, rr
-    ;mov cr1, rr
 
     ; setting up vector table onto interrupt controller
     stq EMEX64_IC_REG_VECTOR, ivec
