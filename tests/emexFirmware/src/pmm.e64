@@ -77,10 +77,10 @@ _pmm_alloc:
 
     ; trying to find free page
 .loop:
-    blw _pmm_page_get, r0
-    bz rr, .got_page
     cmp r0, r1
     bge .no_free_pages
+    blw _pmm_page_get, r0
+    bz rr, .got_page
     inc r0
     b .loop
 .got_page:
@@ -149,16 +149,15 @@ _pmm_get_free_count:
 
     ; trying to find free page
 .loop:
-    blw _pmm_page_get, r0
-    bz rr, .got_page
-.got_back:
     cmp r0, r1
     bge .loop_end
+    blw _pmm_page_get, r0
     inc r0
-    b .loop
+    bnz rr, .loop_continue
 .got_page:
     inc r2
-    b .got_back
+.loop_continue:
+    b .loop
 .loop_end:
     mov rr, r2
     wret
