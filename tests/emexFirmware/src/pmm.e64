@@ -24,7 +24,7 @@
 extern main.hang
 
 section .data
-    pmm_failed_msg db "[pmm] not enough memory available to safely initilize page memory management\n\0"
+    pmm_failed_msg db "[pmm] not enough memory available to safely initialize page memory management\n\0"
     pmm_init_msg db "[pmm] initialized\n\0"
 
 section .bss
