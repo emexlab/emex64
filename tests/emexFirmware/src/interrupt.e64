@@ -24,9 +24,15 @@
 section .bss
     ivec dq 63
 
+section .data
+    ic_failed_msg db "[IC] out of memory: can't allocate memory for kernel stack pointer\n\0"
+
+extern main.hang
+
 _interrupt_init:
     ; allocate kernel stack for the interrupt handlers
     blw _pmm_alloc
+    bnz rr, .failed
     add rr, (EMEX64_PAGE_SIZE - 8)
     cmov REG_CR1, rr
 
@@ -35,6 +41,9 @@ _interrupt_init:
     stb EMEX64_IC_REG_ENABLED, 0x0
     stq EMEX64_IC_REG_CTRL, 1
     ret
+.failed:
+    blw _puts, ic_failed_msg
+    b main.hang
 
 _interrupt_register_handler:
     ; calculate interrupt vector handler slot address
