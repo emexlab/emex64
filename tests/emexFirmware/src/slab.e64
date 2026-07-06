@@ -39,6 +39,9 @@
 %define% NUM_SIZE_CLASSES       7
 %define% NUM_SIZE_CLASSES_START 32
 
+section .data
+    slab_init_msg db "[slab] initialized\n\0"
+
 section .bss
     size_caches db 320
 
@@ -83,6 +86,7 @@ _slab_init:
     add r1, CACHE_STRUCT_SIZE
     b .loop
 .done:
+    blw _puts, slab_init_msg
     ret
 
 _find_size_class:
