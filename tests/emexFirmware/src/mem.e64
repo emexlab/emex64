@@ -20,15 +20,39 @@
 ;
 
 _memset:
+    ; replicate the input as a quadword
     and r1, 0xFF        ; masking set value with byte mask so it doesnt exceed expectations
+    mov r3, r1
+    shl r3, 8
+    or  r1, r3
+    mov r3, r1
+    shl r3, 16
+    or  r1, r3
+    mov r3, r1
+    shl r3, 32
+    or  r1, r3
+
+    ; spin! :3
     add r2, r0          ; adding base address to lenght to have the end address
-    b .loop_continue
-.loop:
-    stb r0, r1          ; setting value at address
+    mov r3, r2
+    and r3, 7
+    mov r4, r2
+    sub r4, r3          ; r4 = Quadword End Boundary
+
+    b .qloop_continue
+.qloop:
+    stq r0, r1
+    add r0, 8
+.qloop_continue:
+    cmp r0, r4
+    blt .qloop
+    b .bloop_continue
+.bloop:
+    stb r0, r1
     inc r0
-.loop_continue:
+.bloop_continue:
     cmp r0, r2
-    blt .loop
+    blt .bloop
     wret
 
 _memcpy:
