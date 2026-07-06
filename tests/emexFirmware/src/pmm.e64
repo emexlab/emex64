@@ -110,32 +110,42 @@ _pmm_alloc_zero:
 
 _pmm_init:
     ; getting memory size
-    blw _mc_get_mem_size            ; asking memory controller nicely to say how large it is
+    blw _mc_get_mem_size
 
     ; dividing through page size to get count of pages that fit into the memory space
     div r0, rr, EMEX64_PAGE_SIZE
-    stq pmm_max_pages, r0           ; store count of maximum pages
+    stq pmm_max_pages, r0
 
     ; getting the count of pages in use by the kernel image
     mov r1, __emex64_exec_img_end
     add r1, (EMEX64_PAGE_SIZE - 1)
-    div r1, EMEX64_PAGE_SIZE        ; get the number of pages the image is sized
+    div r1, EMEX64_PAGE_SIZE
 
-    ; getting the end address of image but in the logic of our page math
-    blw _pmm_page_addr, r1          ; get end address of image
-    stq pmm_master_ptr, rr          ; store address
+    ; doing the bitmap math (im eepy)
+    blw _pmm_page_addr, r1
+    stq pmm_master_ptr, rr
+    add r2, r0, 7
+    div r2, 8
+    add r3, r2, (EMEX64_PAGE_SIZE - 1)
+    div r3, EMEX64_PAGE_SIZE
+    add r3, r1
+    cmp r3, r0
+    bgt .no_memory
+    ldq r4, pmm_master_ptr
+    blw _memset, r4, 0x0, r2
 
-    ; prepare for loop
-    div r3, r0, 8                   ; calculating memory size but in pages
-    add r3, rr                      ; adding master page pointer to offset
-    add r3, (EMEX64_PAGE_SIZE - 1)  ; adding page size - 1
-    div r3, EMEX64_PAGE_SIZE        ; do ceiling calculating
-    bz r3, .return
+    ; mark pages that are in use already
 .loop:
     dec r3
-    blw _pmm_page_set, r3, 0x1      ; mark page as used (breaks when the memory size is so small that there is only 1 page left to allocate ;w;)
+    blw _pmm_page_set, r3, 0x1
     bnz r3, .loop
-.return:
+    stb pmm_init, 1
+    mov rr, 1
+    ret
+
+.no_memory:
+    clr rr
+    stq pmm_max_pages, rr
     ret
 
 _pmm_get_count:

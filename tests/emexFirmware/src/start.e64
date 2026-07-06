@@ -156,7 +156,7 @@ _start:
     ; rest of the routine
     bl _put_init                                    ; checks for fb
     bl _pmm_init                                    ; initilizing page allocator
-
+    
     bl _slab_init                                   ; initilizing slab allocator
     bl _interrupt_init                              ; initilizing interrupt controller
     bl main                                         ; branching to main symbol
