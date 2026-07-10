@@ -32,7 +32,7 @@ section .data
     putc_copyright db "\nemexLabs(c) 2026\n\n\0"
     raw_logo df "./logo.raw"
 %endif%
-    putc_sym dq _gui_putc
+    putc_sym dq gui_putc
 
 ; memory units for _put_mem
 section .data

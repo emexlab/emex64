@@ -25,7 +25,7 @@ section .data
     gui_line dw 0
     gui_column dw 0
 
-_gui_putc:
+gui_putc:
     bz r0, .end
 
     ldw r1, gui_column
@@ -128,13 +128,13 @@ _gui_putc:
 
 .newline_scroll:
     mov r0, 10
-    b _scroll_up
+    b scroll_up
 
 .return:
     stw gui_column, 0
     wret
 
-_scroll_up:
+scroll_up:
     bz r0, .end
 
     ldw r1, EMEX64_FB_REG_HEIGHT

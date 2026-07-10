@@ -26,6 +26,6 @@
 extern gui_line     ; word
 extern gui_column   ; word
 
-extern _gui_putc
+extern gui_putc
 
 %endif% ; GUI_E64INC
