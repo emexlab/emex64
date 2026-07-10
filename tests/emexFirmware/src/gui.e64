@@ -27,11 +27,11 @@ section .data
 
 gui_putc:
     push er0, er1, er2, er3, er4, er5
-    bl gui_putc_real
+    bl _gui_putc
     pop er5, er4, er3, er2, er1, er0
     wret
 
-gui_putc_real:
+_gui_putc:
     bz r0, .end
 
     ldw r1, gui_column
