@@ -23,11 +23,11 @@
 
 extern __data_start
 
-_mc_get_mem_size:
+mc_get_size:
     ldq rr, EMEX64_MC_REG_SIZE  ; loading memory size
     wret
 
-_mc_lock_ktrr:
+mc_lock_ktrr:
     ; data start sits right after the text region ends
     sub r0, __data_start, 1
     stq EMEX64_MC_REG_KTRR_SIZE, r0

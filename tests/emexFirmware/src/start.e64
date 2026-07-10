@@ -119,7 +119,7 @@ main:
     blw _print_time
 
 %if% FW_LOCK_KTRR
-    blw _mc_lock_ktrr
+    blw mc_lock_ktrr
     blw _puts, fw_ktrr_msg
 %endif% ; FW_LOCK_KTRR
 

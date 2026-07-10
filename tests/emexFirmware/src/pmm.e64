@@ -116,7 +116,7 @@ _pmm_alloc_zero:
 
 _pmm_init:
     ; getting memory size
-    blw _mc_get_mem_size
+    blw mc_get_size
 
     ; dividing through page size to get count of pages that fit into the memory space
     div r0, rr, EMEX64_PAGE_SIZE
