@@ -27,7 +27,7 @@ section .data
 
 gui_putc:
     push er0, er1, er2, er3, er4, er5
-    blw gui_putc_real
+    bl gui_putc_real
     pop er5, er4, er3, er2, er1, er0
     wret
 
@@ -111,7 +111,7 @@ gui_putc_real:
     blt .row_loop
 
 .end:
-    wret
+    ret
 
 .newline:
     ; reset column
@@ -130,7 +130,7 @@ gui_putc_real:
 
     stw gui_line, r5
 
-    wret
+    ret
 
 .newline_scroll:
     mov r0, 10
@@ -138,7 +138,7 @@ gui_putc_real:
 
 .return:
     stw gui_column, 0
-    wret
+    ret
 
 scroll_up:
     bz r0, .end
@@ -239,4 +239,4 @@ scroll_up:
     b .clear_loop
 
 .end:
-    wret
+    ret
