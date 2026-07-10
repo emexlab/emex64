@@ -127,6 +127,8 @@ main:
     blw panic, fw_testpanic_msg
 %endif%
 
+    cmov REG_CR0, 1
+    
 .hang:
     ldq r0, meow_cnt
     blw puts, fw_interrupted_msg

@@ -158,7 +158,6 @@ find_free_bit:
     wret
 
 kmalloc:
-%if% 0
     bz r0, .fail
     blw find_size_class
     bz rr, .alloc_pages
@@ -232,12 +231,16 @@ kmalloc:
     blw pmm_alloc
     wret
 .fail:
-%endif% ; 0
     clr rr
     wret
 
 kfree:
-%if% 0
+    push er0, er1, er2, er3, er4
+    bl _kfree
+    pop er4, er3, er2, er1, er0
+    wret
+
+_kfree:
     bz r0, .done                                                ; null pointer checking r0
     mov r1, r0
     and r0, PAGE_MASK
@@ -265,50 +268,50 @@ kfree:
     ldq r8, r8
     add r9, r3, CACHE_OFF_OBJS
     ldq r9, r9
-    mov r10, r8
+    mov er0, r8
     sub r8, 1
-    add r11, r2, SLAB_OFF_INUSE
-    stq r11, r8
-    cmp r10, r9
+    add er1, r2, SLAB_OFF_INUSE
+    stq er1, r8
+    cmp er0, r9
     bne .check_empty
-    add r11, r3, CACHE_OFF_FULL
+    add er1, r3, CACHE_OFF_FULL
 .search_full:
-    ldq r12, r11
-    bz r12, .check_empty
-    cmp r12, r2
+    ldq er2, er1
+    bz er2, .check_empty
+    cmp er2, r2
     be .found_full
-    add r11, r12, SLAB_OFF_NEXT
+    add er1, er2, SLAB_OFF_NEXT
     b .search_full
 .found_full:
-    add r13, r2, SLAB_OFF_NEXT
-    ldq r12, r13
-    stq r11, r12
-    add r13, r3, CACHE_OFF_PARTIAL
-    ldq r12, r13
-    add r14, r2, SLAB_OFF_NEXT
-    stq r14, r12
-    stq r13, r2
+    add er3, r2, SLAB_OFF_NEXT
+    ldq er2, er3
+    stq er1, er2
+    add er3, r3, CACHE_OFF_PARTIAL
+    ldq er2, er3
+    add er4, r2, SLAB_OFF_NEXT
+    stq er4, er2
+    stq er3, r2
     b .done
 .check_empty:
     bnz r8, .done
-    add r11, r3, CACHE_OFF_PARTIAL
+    add er1, r3, CACHE_OFF_PARTIAL
 .search_partial:
-    ldq r12, r11
-    bz r12, .done
-    cmp r12, r2
+    ldq er2, er1
+    bz er2, .done
+    cmp er2, r2
     be .found_partial
-    add r11, r12, SLAB_OFF_NEXT
+    add er1, er2, SLAB_OFF_NEXT
     b .search_partial
 .found_partial:
-    add r13, r2, SLAB_OFF_NEXT
-    ldq r12, r13
-    stq r11, r12
-    add r12, r3, CACHE_OFF_EMPTY
-    ldq r13, r12
-    bnz r13, .destroy_slab
-    add r13, r2, SLAB_OFF_NEXT
-    stq r13, 0
-    stq r12, r2
+    add er3, r2, SLAB_OFF_NEXT
+    ldq er2, er3
+    stq er1, er2
+    add er2, r3, CACHE_OFF_EMPTY
+    ldq er3, er2
+    bnz er3, .destroy_slab
+    add er3, r2, SLAB_OFF_NEXT
+    stq er3, 0
+    stq er2, r2
     b .done
 .destroy_slab:
     ldq r0, r2
@@ -318,16 +321,13 @@ kfree:
     and r0, r1, PAGE_MASK
     blw pmm_free
 .done:
-%endif% ; 0
     wret
 
 kcalloc:
-%if% 0
     mul r0, r1                                                  ; calculating final memory allocation size
     blw kmalloc, r0                                             ; allocating size
     mov r1, rr                                                  ; keeping return value at a safe place
     bz rr, .null_exception                                      ; handling null pointer
     blw memset, r1, 0, r0                                       ; nullifying the memory
 .null_exception:
-%endif% ; 0
     wret

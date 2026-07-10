@@ -131,7 +131,7 @@ typedef enum: UInt8 {
     kE64ParameterCodingEnd =            0b0000,
 
     kE64ParameterCodingReg =            0b0001,
-    kE64ParameterCodingImm5 =           0b0010,
+    kE64ParameterCodingImm4 =           0b0010,
     kE64ParameterCodingImm8  =          0b0011,
     kE64ParameterCodingImm16 =          0b0100,
     kE64ParameterCodingImm32 =          0b0101,

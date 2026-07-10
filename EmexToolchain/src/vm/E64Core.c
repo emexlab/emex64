@@ -119,7 +119,7 @@ const emex64_opfunc_entry_t kE64OpfuncTable[] = {
 };
 
 static const UInt8 kImmBits[] = {
-    [kE64ParameterCodingImm5] = 5,
+    [kE64ParameterCodingImm4] = 4,
     [kE64ParameterCodingImm8] = 8,
     [kE64ParameterCodingImm16] = 16,
     [kE64ParameterCodingImm32] = 32,
@@ -224,7 +224,7 @@ static inline void __E64CoreExecuteInstructionAtPC(__E64Core core)
                  */
                 bb_align(&bb);
                 [[fallthrough]];
-            case kE64ParameterCodingImm5:
+            case kE64ParameterCodingImm4:
             case kE64ParameterCodingImm8:
             case kE64ParameterCodingImm16:
             case kE64ParameterCodingImm32:

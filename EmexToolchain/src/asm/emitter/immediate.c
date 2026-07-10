@@ -25,8 +25,8 @@
 void assembler_emit_imm5(assembler_invocation_t *inv,
                          UInt8 imm)
 {
-    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingImm5, 4);
-    vbitwalker_write(inv->out_vbitwalker, imm, 5);
+    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingImm4, 4);
+    vbitwalker_write(inv->out_vbitwalker, imm, 4);
 }
 
 void assembler_emit_imm8(assembler_invocation_t *inv,
@@ -68,7 +68,7 @@ void assembler_emit_addr64(assembler_invocation_t *inv,
 void assembler_emit_imm(assembler_invocation_t *inv,
                         UInt64 imm)
 {
-    if(imm <= 0x1F)
+    if(imm <= 0xF)
     {
         assembler_emit_imm5(inv, (UInt8)imm);
     }
