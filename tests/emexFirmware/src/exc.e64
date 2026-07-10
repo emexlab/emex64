@@ -203,7 +203,7 @@ exception_handler:
     ; unregistering all interrupt handlers so that it can't do any
     ; logic after we handled the exception, as it is not safe anymore
     ; for the current boot session to serve any further interrupt.
-    blw _interrupt_unregister_all
+    blw interrupt_unregister_all
 
     ; resetting CREXC so it won't reloop into this exception handler
     cmov REG_CR2, 0x0

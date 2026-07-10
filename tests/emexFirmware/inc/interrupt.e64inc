@@ -22,9 +22,9 @@
 %ifndef% INTERRUPT_E64INC
 %define% INTERRUPT_E64INC
 
-extern _interrupt_init
-extern _interrupt_register_handler
-extern _interrupt_unregister_handler
-extern _interrupt_unregister_all
+extern interrupt_init
+extern interrupt_register_handler
+extern interrupt_unregister_handler
+extern interrupt_unregister_all
 
 %endif% ; INTERRUPT_E64INC

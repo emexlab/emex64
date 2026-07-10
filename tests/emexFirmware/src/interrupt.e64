@@ -22,15 +22,13 @@
 %include% <emex64.e64inc>
 
 section .bss
-    ivec dq 63
+    ivec dq 64
 
 section .data
     ic_failed_msg db "[ic] out of memory: can't allocate memory for kernel stack pointer\n\0"
     ic_init_msg db "[ic] initialized\n\0"
 
-extern main.hang
-
-_interrupt_init:
+interrupt_init:
     ; allocate kernel stack for the interrupt handlers
     blw _pmm_alloc
     bz rr, .failed
@@ -47,7 +45,7 @@ _interrupt_init:
     blw _puts, ic_failed_msg
     DO_HANG
 
-_interrupt_register_handler:
+interrupt_register_handler:
     ; calculate interrupt vector handler slot address
     mul r2, r0, 8   ; vector table offset
     add r2, ivec    ; vector table base
@@ -62,7 +60,7 @@ _interrupt_register_handler:
     stq EMEX64_IC_REG_ENABLED, r2
     wret
 
-_interrupt_unregister_handler:
+interrupt_unregister_handler:
     ; calculate interupt vector handler slot address
     mul r1, r0, 8   ; vector table offset
     add r1, ivec    ; vector table base
@@ -78,10 +76,10 @@ _interrupt_unregister_handler:
     stq EMEX64_IC_REG_ENABLED, r2
     wret
 
-_interrupt_unregister_all:
+interrupt_unregister_all:
     mov r0, 63
 .loop:
     dec r0
-    blw _interrupt_unregister_handler, r0
+    blw interrupt_unregister_handler, r0
     bnz r0, .loop
     wret

@@ -88,8 +88,8 @@ section .data
     meow_cnt dq (0 - 1) ; underflow so that the hang in main does null it
 
 main:
-    blw _interrupt_register_handler, EMEX64_IC_IRQ_EXCEPTION, exception_handler
-    blw _interrupt_register_handler, EMEX64_IC_IRQ_8042, fw_8042_handler
+    blw interrupt_register_handler, EMEX64_IC_IRQ_EXCEPTION, exception_handler
+    blw interrupt_register_handler, EMEX64_IC_IRQ_8042, fw_8042_handler
 
     blw _puts, fw_display_msg
     ldw r0, EMEX64_FB_REG_HEIGHT
@@ -173,7 +173,7 @@ _start:
     bl _put_init                                    ; checks for fb
     bl _pmm_init                                    ; initilizing page allocator
     bl _slab_init                                   ; initilizing slab allocator
-    bl _interrupt_init                              ; initilizing interrupt controller
+    bl interrupt_init                               ; initilizing interrupt controller
     bl main                                         ; branching to main symbol
 .poweroff:
     stb EMEX64_PLATFORM_REG_PWR, 0                  ; telling platform device to turn off
