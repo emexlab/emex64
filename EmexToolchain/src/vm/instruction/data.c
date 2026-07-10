@@ -152,6 +152,16 @@ void emex64_op_cmov(E64CoreRef core)
     switch(cr_select)
     {
         case kE64ControlRegisterCR0: /* elevation level */
+            if(kE64ElevationLevelSecureMonitor < cr_value)
+            {
+                core->cr_state.crexc.exception = kE64ExceptionBadInstruction;
+                return;
+            }
+            if(core->cr_state.crel.level < cr_value)
+            {
+                core->cr_state.crexc.exception = kE64ExceptionPermission;
+                return;
+            }
             core->cr_state.crel.level = cr_value;
             break;
         case kE64ControlRegisterCR1: /* kernel stack pointer */
