@@ -110,7 +110,7 @@ _find_size_class:
 
 _create_slab:
     mov r5, r0
-    blw _pmm_alloc
+    blw pmm_alloc
     bz rr, .fail
     mov r6, rr
     add r7, r6, EMEX64_PAGE_SIZE
@@ -228,7 +228,7 @@ _kmalloc:
     add rr, r4, r3
     wret
 .alloc_pages:
-    blw _pmm_alloc
+    blw pmm_alloc
     wret
 .fail:
     clr rr
@@ -309,11 +309,11 @@ _kfree:
     b .done
 .destroy_slab:
     ldq r0, r2
-    blw _pmm_free
+    blw pmm_free
     b .done
 .free_page:
     and r0, r1, PAGE_MASK
-    blw _pmm_free
+    blw pmm_free
 .done:
     wret
 

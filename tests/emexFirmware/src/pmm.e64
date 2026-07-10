@@ -31,18 +31,18 @@ section .bss
     pmm_master_ptr dq 1             ; address that points at the main page
     pmm_max_pages dq 1              ; count of usable pages
 
-_pmm_page_addr:
+pmm_page_addr:
     mul rr, r0, EMEX64_PAGE_SIZE    ; page number by size equals address
     wret
 
-_pmm_addr_page:
+pmm_addr_page:
     clr rr                          ; clearing return register to return NULL on failure
     bz r0, .end
     div rr, r0, EMEX64_PAGE_SIZE    ; page number by size equals address
 .end:
     wret
 
-_pmm_page_get:
+pmm_page_get:
     clr r1, r2
     bz r0, .do_get
 .page_not_null:
@@ -56,7 +56,7 @@ _pmm_page_get:
     and rr, r3, 1
     wret
 
-_pmm_page_set:
+pmm_page_set:
     clr r2, r3
     bz r0, .do_set
 .page_not_null:
@@ -75,7 +75,7 @@ _pmm_page_set:
     stb r2, r4
     wret
 
-_pmm_alloc:
+pmm_alloc:
     ; preparing for loop
     clr r0
     ldq r1, pmm_max_pages
@@ -84,36 +84,36 @@ _pmm_alloc:
 .loop:
     cmp r0, r1
     bge .no_free_pages
-    blw _pmm_page_get, r0
+    blw pmm_page_get, r0
     bz rr, .got_page
     inc r0
     b .loop
 .got_page:
-    blw _pmm_page_set, r0, 0x1
-    blw _pmm_page_addr, r0
+    blw pmm_page_set, r0, 0x1
+    blw pmm_page_addr, r0
     wret
 .no_free_pages:
     mov rr, 0
     wret
 
-_pmm_free:
+pmm_free:
     ; getting page from address
-    blw _pmm_addr_page; , r0    (not needed cuz provided by the caller, declaring it tho would emit more bytes)
+    blw pmm_addr_page; , r0    (not needed cuz provided by the caller, declaring it tho would emit more bytes)
     ldq r0, pmm_max_pages
     cmp rr, r0
 
     ; making sure page is not bigger than max pages
     bge .end
-    blw _pmm_page_set, rr, 0
+    blw pmm_page_set, rr, 0
 .end:
     wret
 
-_pmm_alloc_zero:
-    blw _pmm_alloc
+pmm_alloc_zero:
+    blw pmm_alloc
     blw memset, rr, 0x0, EMEX64_PAGE_SIZE
     wret
 
-_pmm_init:
+pmm_init:
     ; getting memory size
     blw mc_get_size
 
@@ -127,7 +127,7 @@ _pmm_init:
     div r1, EMEX64_PAGE_SIZE
 
     ; doing the bitmap math (im eepy)
-    blw _pmm_page_addr, r1
+    blw pmm_page_addr, r1
     stq pmm_master_ptr, rr
     add r2, r0, 7
     div r2, 8
@@ -142,7 +142,7 @@ _pmm_init:
     ; mark pages that are in use already
 .loop:
     dec r3
-    blw _pmm_page_set, r3, 0x1
+    blw pmm_page_set, r3, 0x1
     bnz r3, .loop
     blw _puts, pmm_init_msg
     ret
@@ -153,11 +153,11 @@ _pmm_init:
     blw _puts, pmm_failed_msg
     DO_HANG
 
-_pmm_get_count:
+pmm_get_count:
     ldq rr, pmm_max_pages
     wret
 
-_pmm_get_free_count:
+pmm_get_free_count:
     ; preparing for loop
     clr r0, r2
     ldq r1, pmm_max_pages
@@ -166,7 +166,7 @@ _pmm_get_free_count:
 .loop:
     cmp r0, r1
     bge .loop_end
-    blw _pmm_page_get, r0
+    blw pmm_page_get, r0
     inc r0
     bnz rr, .loop_continue
 .got_page:
@@ -177,10 +177,10 @@ _pmm_get_free_count:
     mov rr, r2
     wret
 
-_pmm_get_used_count:
-    blw _pmm_get_count
+pmm_get_used_count:
+    blw pmm_get_count
     mov r0, rr
-    blw _pmm_get_free_count
+    blw pmm_get_free_count
     sub rr, r0, rr
     wret
 

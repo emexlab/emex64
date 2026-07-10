@@ -22,12 +22,12 @@
 %ifndef% PMM_E64INC
 %define% PMM_E64INC
 
-extern _pmm_alloc
-extern _pmm_free
-extern _pmm_alloc_zero
-extern _pmm_init
-extern _pmm_get_count
-extern _pmm_get_free_count
-extern _pmm_get_used_count
+extern pmm_alloc
+extern pmm_free
+extern pmm_alloc_zero
+extern pmm_init
+extern pmm_get_count
+extern pmm_get_free_count
+extern pmm_get_used_count
 
 %endif% ; PMM_E64INC

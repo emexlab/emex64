@@ -104,9 +104,9 @@ main:
     blw _puts, fw_display_unavailable
 .dsp_installed:
 
-    blw _pmm_get_count
+    blw pmm_get_count
     mul r1, rr, EMEX64_PAGE_SIZE
-    blw _pmm_get_free_count
+    blw pmm_get_free_count
     mul r0, rr, EMEX64_PAGE_SIZE
 
     blw _puts, fw_memory_msg
@@ -171,7 +171,7 @@ _start:
 
     ; rest of the routine
     bl _put_init                                    ; checks for fb
-    bl _pmm_init                                    ; initilizing page allocator
+    bl pmm_init                                     ; initilizing page allocator
     bl _slab_init                                   ; initilizing slab allocator
     bl interrupt_init                               ; initilizing interrupt controller
     bl main                                         ; branching to main symbol
