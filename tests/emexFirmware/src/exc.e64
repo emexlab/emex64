@@ -21,6 +21,10 @@
 
 %include% <emex64.e64inc>
 
+; placeholders for panic stuff
+section .bss
+    exception_str dq 1
+
 ; generic code shit
 section .data
     exception_msg db "\n-- panic --\nexception code: 0x\0"
@@ -75,15 +79,18 @@ section .data
     exception_array_reg_msg dq exception_pc_msg, exception_sp_msg, exception_fp_msg, exception_cf_msg, exception_fpc_msg, exception_r0_msg, exception_r1_msg, exception_r2_msg, exception_r3_msg, exception_r4_msg, exception_r5_msg, exception_r6_msg, exception_r7_msg, exception_r8_msg, exception_r9_msg, exception_r10_msg, exception_r11_msg, exception_r12_msg, exception_r13_msg, exception_r14_msg, exception_r15_msg, exception_r16_msg, exception_r17_msg, exception_r18_msg, exception_r19_msg, exception_r20_msg, exception_r21_msg, exception_r22_msg, exception_r23_msg, exception_r24_msg, exception_r25_msg, exception_rr_msg
 
 exception_str_for_code:
-    cmp r0, 6
-    ble .skip_unknown_force
-    cmovb rr, REG_CR2
-    ;mov rr, exception_permission_msg
+    ldq rr, exception_str       ; loading exception str
+    bz rr, .is_normal_exception ; checking if exception str contains a valid nonnull pointer
     wret
-.skip_unknown_force:
+.is_normal_exception:
+    cmp r0, 6                   ; checking weither r0 is bigger than the biggest possible exception
+    bgt .is_unknown             ; branching if so
     mul r0, 8
     add r0, exception_type_array_msg
     ldq rr, r0
+    wret
+.is_unknown:
+    mov rr, exception_unknown_msg
     wret
 
 ; switch table
@@ -212,5 +219,6 @@ exception_handler:
     iret
 
 panic:
-    cmov REG_CR2, r0
+    stq exception_str, r0   ; saving pointer to panic string
+    cmov REG_CR2, 0x1       ; writing decoy exception
     ; no return symbol

@@ -168,7 +168,7 @@ void emex64_op_cmov(E64CoreRef core)
             core->cr_state.crksp.address = cr_value;
             break;
         case kE64ControlRegisterCR2: /* exception  */
-            core->cr_state.crexc.exception = cr_value;
+            core->cr_state.crexc.exception = (UInt8)cr_value;
             break;
         case kE64ControlRegisterCR4: /* page table */
             core->cr_state.crptb.enabled = (cr_value & EMEX64_MEMORY_MMU_MASK_FLAGS) & kE64MMUPTPresent;
