@@ -153,8 +153,7 @@ exception_putreg:
     ldq r0, r6
     b .get_me_tf_out_of_here
 .rr:
-    pop rr
-    mov r0, rr
+    mov r0, r21
 .get_me_tf_out_of_here:
 
     ; here r1 becomes the reg str
@@ -165,12 +164,15 @@ exception_putreg:
     blw _putc, '0'
     blw _putc, 'x'
     blw _putbase, r0, 16
+    blw _putc, ' '
+    blw _putc, '('
+    blw _putbase, r0, 10
+    blw _putc, ')'
     blw _putc, '\n'
     wret
 
 exception_handler:
-    ; return register is still from the cause of the exception
-    push rr
+    mov r21, rr
 
     ; printing the exception code which
     ; is what declares the reason
@@ -211,9 +213,11 @@ exception_handler:
     stq r0, hang
 
     ; returns into our own hang loop
+    mov rr, r21
     iret
 
 panic:
     stq exception_str, r0   ; saving pointer to panic string
-    cmov REG_CR2, 0x1       ; writing decoy exception
+    ;cmov REG_CR2, 0x1       ; writing decoy exception (for some reason causes register frame to become useless)
+    div r0, 0, 0
     ; no return symbol
