@@ -146,6 +146,14 @@ typedef enum: UInt8 {
     kE64ParameterCodingAddr64 =         0b0111,
 
     kE64ParameterCodingRegExtended =    0b1000,
+
+    /* parameter codings that do things */
+    /*
+     * registers with the difference that they get loaded
+     * as intermediates and then incrementet.
+     */
+    kE64ParameterCodingRegImmInc =      0b1001,
+    kE64ParameterCodingRegImmDec =      0b1010,
 } E64ParameterCoding;
 
 typedef enum: UInt8 {

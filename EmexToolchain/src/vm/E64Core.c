@@ -232,6 +232,14 @@ static inline void __E64CoreExecuteInstructionAtPC(__E64Core core)
                 core->op.immcache[i] = bb_read(&bb, kImmBits[coding]);
                 core->op.param[i] = &(core->op.immcache[i]);
                 break;
+            case kE64ParameterCodingRegImmInc:
+                core->op.immcache[i] = core->rl[(UInt8)bb_read(&bb, 4)]++;
+                core->op.param[i] = &(core->op.immcache[i]);
+                break;
+            case kE64ParameterCodingRegImmDec:
+                core->op.immcache[i] = core->rl[(UInt8)bb_read(&bb, 4)]--;
+                core->op.param[i] = &(core->op.immcache[i]);
+                break;
         }
     }
 
