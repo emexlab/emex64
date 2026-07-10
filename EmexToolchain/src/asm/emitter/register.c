@@ -46,11 +46,43 @@ E64Register register_from_string(const char *name)
     }
 }
 
+E64RegisterExtended register_extended_from_string(const char *name)
+{
+    switch(pack_name(name))
+    {
+        case PACK('e','r','0'): return kE64RegisterExtendedER0;
+        case PACK('e','r','1'): return kE64RegisterExtendedER1;
+        case PACK('e','r','2'): return kE64RegisterExtendedER2;
+        case PACK('e','r','3'): return kE64RegisterExtendedER3;
+        case PACK('e','r','4'): return kE64RegisterExtendedER4;
+        case PACK('e','r','5'): return kE64RegisterExtendedER5;
+        case PACK('e','r','6'): return kE64RegisterExtendedER6;
+        case PACK('e','r','7'): return kE64RegisterExtendedER7;
+        case PACK('e','r','8'): return kE64RegisterExtendedER8;
+        case PACK('e','r','9'): return kE64RegisterExtendedER9;
+        case PACK('e','r','1','0'): return kE64RegisterExtendedER10;
+        case PACK('e','r','1','1'): return kE64RegisterExtendedER11;
+        case PACK('e','r','1','2'): return kE64RegisterExtendedER12;
+        case PACK('e','r','1','3'): return kE64RegisterExtendedER13;
+        case PACK('e','r','1','4'): return kE64RegisterExtendedER14;
+        default: return kE64RegisterExtendedInvalid;
+    }
+}
+
 void assembler_emit_register(assembler_invocation_t *inv,
                              E64Register reg)
 {
     assert(reg <= kE64RegisterMAX);
 
     vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingReg, 4);
+    vbitwalker_write(inv->out_vbitwalker, reg, 4);
+}
+
+void assembler_emit_register_extended(assembler_invocation_t *inv,
+                                      E64RegisterExtended reg)
+{
+    assert(reg <= kE64RegisterExtendedMAX);
+
+    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingRegExtended, 4);
     vbitwalker_write(inv->out_vbitwalker, reg, 4);
 }

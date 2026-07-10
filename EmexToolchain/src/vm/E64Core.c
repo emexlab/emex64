@@ -210,10 +210,11 @@ static inline void __E64CoreExecuteInstructionAtPC(__E64Core core)
                 /* a the weekend reference lol */
                 goto escape_from_la;
             case kE64ParameterCodingReg:
-            {
                 core->op.param[i] = &(core->rl[(UInt8)bb_read(&bb, 4)]);
                 break;
-            }
+            case kE64ParameterCodingRegExtended:
+                core->op.param[i] = &(core->erl[(UInt8)bb_read(&bb, 4)]);
+                break;
             case kE64ParameterCodingAddr64:
                 /*
                  * fallthrough, because kE64ParameterCodingAddr64

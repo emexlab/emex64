@@ -348,6 +348,14 @@ Boolean assembler_lexer_classify(assembler_token_t *at)
                 return true;
             }
 
+            E64RegisterExtended reg_ext = register_extended_from_string(at->str);
+            if(reg_ext != kE64RegisterExtendedInvalid)
+            {
+                at->register_identifier.v_extended = reg_ext;
+                at->type = kAssemblerTokenTypeRegisterExtended;
+                return true;
+            }
+
             /* checking if it is a opcode */
             E64Opcode op = opcode_from_string(at->str);
             if(op != kE64OpcodeInvalid)

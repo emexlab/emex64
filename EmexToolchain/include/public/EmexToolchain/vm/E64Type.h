@@ -128,14 +128,14 @@ typedef enum: UInt8 {
      * instruction can have such a end coding, like
      * dynamic instructions.
      */
-    kE64ParameterCodingEnd =     0b000,
+    kE64ParameterCodingEnd =            0b0000,
 
-    kE64ParameterCodingReg =     0b001,
-    kE64ParameterCodingImm5 =    0b010,
-    kE64ParameterCodingImm8  =   0b011,
-    kE64ParameterCodingImm16 =   0b100,
-    kE64ParameterCodingImm32 =   0b101,
-    kE64ParameterCodingImm64 =   0b110,
+    kE64ParameterCodingReg =            0b0001,
+    kE64ParameterCodingImm5 =           0b0010,
+    kE64ParameterCodingImm8  =          0b0011,
+    kE64ParameterCodingImm16 =          0b0100,
+    kE64ParameterCodingImm32 =          0b0101,
+    kE64ParameterCodingImm64 =          0b0110,
 
     /*
      * this means the decoder has to first skip until
@@ -143,7 +143,9 @@ typedef enum: UInt8 {
      * data, this coding has been added for compatibility
      * for dynamic symbol relocation.
      */
-    kE64ParameterCodingAddr64 =  0b111
+    kE64ParameterCodingAddr64 =         0b0111,
+
+    kE64ParameterCodingRegExtended =    0b1000,
 } E64ParameterCoding;
 
 typedef enum: UInt8 {
@@ -225,6 +227,29 @@ typedef enum: UInt8 {
 
     kE64RegisterInvalid =    0b11111111,
 } E64Register;
+
+typedef enum: UInt8 {
+    kE64RegisterExtendedER0 =    0b0000,
+    kE64RegisterExtendedER1 =    0b0001,
+    kE64RegisterExtendedER2 =    0b0010,
+    kE64RegisterExtendedER3 =    0b0011,
+    kE64RegisterExtendedER4 =    0b0100,
+    kE64RegisterExtendedER5 =    0b0101,
+    kE64RegisterExtendedER6 =    0b0110,
+    kE64RegisterExtendedER7 =    0b0111,
+    kE64RegisterExtendedER8 =    0b1000,
+    kE64RegisterExtendedER9 =    0b1001,
+    kE64RegisterExtendedER10 =   0b1010,
+    kE64RegisterExtendedER11 =   0b1011,
+    kE64RegisterExtendedER12 =   0b1100,
+    kE64RegisterExtendedER13 =   0b1101,
+    kE64RegisterExtendedER14 =   0b1110,
+    kE64RegisterExtendedER15 =   0b1111,
+
+    kE64RegisterExtendedMAX = kE64RegisterExtendedER15,
+
+    kE64RegisterExtendedInvalid =   0b11111111,
+} E64RegisterExtended;
 
 typedef enum: UInt8 {
     kE64ControlRegisterCR0 = 0b0000,    /* CREL:    elevation control register */

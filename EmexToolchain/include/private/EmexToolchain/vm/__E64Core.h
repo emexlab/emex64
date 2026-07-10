@@ -47,6 +47,7 @@ typedef struct __E64Core {
 
     /* a array of all (control) registers */
     UInt64 rl[kE64RegisterMAX + 1];
+    UInt64 erl[kE64RegisterExtendedMAX + 1];
     FPReg frl[kE64FloatingRegisterMAX + 1];
 
     /* data of currently decoding or decoded operation */

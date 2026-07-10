@@ -37,6 +37,7 @@ typedef enum: UInt8 {
     kAssemblerTokenTypeString,
     kAssemblerTokenTypeHeaderName,  /* shouldn't be classified after tokenization */
     kAssemblerTokenTypeRegister,
+    kAssemblerTokenTypeRegisterExtended,
     kAssemblerTokenTypeInstruction,
     kAssemblerTokenTypeKeyword,
     kAssemblerTokenTypeComma,
@@ -83,7 +84,10 @@ typedef struct assembler_token {
             size_t len;
         } string_literal;
         struct {
-            E64Register v;
+            union {
+                E64Register v;
+                E64RegisterExtended v_extended;
+            };
         } register_identifier;
         struct {
             E64Opcode v;

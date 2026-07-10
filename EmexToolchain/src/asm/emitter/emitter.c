@@ -143,6 +143,13 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
             continue;
         }
 
+        if(operand_cnt == 1 && operand[0]->type == kAssemblerTokenTypeRegisterExtended)
+        {
+            assembler_emit_register_extended(al->inv, operand[0]->register_identifier.v_extended);
+            argno++;
+            continue;
+        }
+
         if(opcode_arg_accepts_reg_only(entry, argno))
         {
             diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(operand[0]), "expected register identifier, but got %s '%s'", assembler_lexer_str_for_token_type(operand[0]->type), operand[0]->str);

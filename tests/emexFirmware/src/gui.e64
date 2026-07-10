@@ -26,7 +26,12 @@ section .data
     gui_column dw 0
 
 gui_putc:
-%if% 0
+    push er0, er1, er2, er3, er4, er5
+    blw gui_putc_real
+    pop er5, er4, er3, er2, er1, er0
+    wret
+
+gui_putc_real:
     bz r0, .end
 
     ldw r1, gui_column
@@ -68,34 +73,34 @@ gui_putc:
 .col_loop:
     mov r9, 7
     sub r9, r8
-    shr r10, r6, r9
-    and r10, 1
+    shr er0, r6, r9
+    and er0, 1
 
-    add r11, r2, r5
-    cmp r11, 0
+    add er1, r2, r5
+    cmp er1, 0
     blt .skip_pixel
 
-    ldw r14, EMEX64_FB_REG_HEIGHT
-    ldw r15, EMEX64_FB_REG_WIDTH
+    ldw er4, EMEX64_FB_REG_HEIGHT
+    ldw er5, EMEX64_FB_REG_WIDTH
     
-    cmp r11, r14
+    cmp er1, er4
     bge .skip_pixel
 
-    add r12, r1, r8
-    cmp r12, 0    
+    add er2, r1, r8
+    cmp er2, 0    
     blt .skip_pixel
-    cmp r12, r15
+    cmp er2, er5
     bge .skip_pixel
 
-    mul r13, r11, r15
-    add r13, r12
-    add r13, EMEX64_FB_FRAMEBUFFER
-    bz r10, .draw_background
+    mul er3, er1, er5
+    add er3, er2
+    add er3, EMEX64_FB_FRAMEBUFFER
+    bz er0, .draw_background
     
-    stb r13, EMEX64_FB_TEXT_COLOR
+    stb er3, EMEX64_FB_TEXT_COLOR
     b .skip_pixel
 .draw_background:
-    stb r13, 0
+    stb er3, 0
 .skip_pixel:
     inc r8
     cmp r8, 8
@@ -144,8 +149,8 @@ scroll_up:
 
     clr r4
 
-    mov r12, r0
-    mul r12, r12, r2
+    mov er2, r0
+    mul er2, r2
 
 .row_loop:
     mov r5, r1
@@ -153,40 +158,40 @@ scroll_up:
     cmp r4, r5
     bge .clear_bottom
     
-    mov r13, r4
-    mul r13, r13, r2
-    add r9, r3, r13
+    mov er3, r4
+    mul er3, r2
+    add r9, r3, er3
 
-    mov r14, r4
-    add r14, r14, r0
-    mul r14, r14, r2
-    add r10, r3, r14
+    mov er4, r4
+    add er4, r0
+    mul er4, r2
+    add er0, r3, er4
 
-    mov r11, r2
-    shr r6, r11, 3
+    mov er1, r2
+    shr r6, er1, 3
 
 .copy_qloop:
     bz r6, .copy_remainder
 
-    ldq r7, r10
+    ldq r7, er0
     stq r9, r7
     
-    add r10, r10, 8
-    add r9, r9, 8
+    add er0, 8
+    add r9, 8
 
     dec r6
     b .copy_qloop
 
 .copy_remainder:
-    and r11, r11, 7
+    and er1, 7
 
 .rem_loop:
-    bz r11, .next_row
-    ldb r7, r10
+    bz er1, .next_row
+    ldb r7, er0
     stb r9, r7
-    inc r10
+    inc er0
     inc r9
-    dec r11
+    dec er1
     b .rem_loop
 
 .next_row:
@@ -205,10 +210,10 @@ scroll_up:
     mul r7, r4, r2
     add r9, r3, r7
 
-    mov r11, r2
+    mov er1, r2
 
 .clear_qloop:
-    shr r6, r11, 3
+    shr r6, er1, 3
     bz r6, .clear_remainder
 
 .clear_q:
@@ -220,13 +225,13 @@ scroll_up:
     b .clear_q
 
 .clear_remainder:
-    and r11, r11, 7
+    and er1, er1, 7
 
 .clear_byte:
-    bz r11, .next_clear
+    bz er1, .next_clear
     stb r9, 0
     inc r9
-    dec r11
+    dec er1
     b .clear_byte
 
 .next_clear:
@@ -234,5 +239,4 @@ scroll_up:
     b .clear_loop
 
 .end:
-%endif% ; 0
     wret
