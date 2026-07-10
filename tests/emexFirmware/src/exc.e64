@@ -168,11 +168,6 @@ exception_putreg:
     blw _putc, '\n'
     wret
 
-exception_hang:
-.hang:
-    hlt
-    b .hang
-
 exception_handler:
     ; return register is still from the cause of the exception
     push rr
@@ -213,7 +208,7 @@ exception_handler:
 
     ; manipulating interrupt stack frame
     add r0, fp, 248 ; translates to the pc register inside the interrupt stack frame
-    stq r0, exception_hang
+    stq r0, hang
 
     ; returns into our own hang loop
     iret
