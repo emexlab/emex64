@@ -22,7 +22,7 @@
 %ifndef% MEM_E64INC
 %define% MEM_E64INC
 
-extern _memset
-extern _memcpy
+extern memset
+extern memcpy
 
 %endif% ; MEM_E64INC

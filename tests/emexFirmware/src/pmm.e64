@@ -28,7 +28,6 @@ section .data
     pmm_init_msg db "[pmm] initialized\n\0"
 
 section .bss
-    pmm_init db 1                   ; is page memory management initilized?
     pmm_master_ptr dq 1             ; address that points at the main page
     pmm_max_pages dq 1              ; count of usable pages
 
@@ -111,7 +110,7 @@ _pmm_free:
 
 _pmm_alloc_zero:
     blw _pmm_alloc
-    blw _memset, rr, 0x0, 0x2000
+    blw memset, rr, 0x0, EMEX64_PAGE_SIZE
     wret
 
 _pmm_init:
@@ -138,14 +137,13 @@ _pmm_init:
     cmp r3, r0
     bgt .no_memory
     ldq r4, pmm_master_ptr
-    blw _memset, r4, 0x0, r2
+    blw memset, r4, 0x0, r2
 
     ; mark pages that are in use already
 .loop:
     dec r3
     blw _pmm_page_set, r3, 0x1
     bnz r3, .loop
-    stb pmm_init, 1
     blw _puts, pmm_init_msg
     ret
 

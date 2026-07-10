@@ -319,9 +319,9 @@ _kfree:
 
 _kcalloc:
     mul r0, r1                                                  ; calculating final memory allocation size
-    blw _kmalloc, r0                                             ; allocating size
+    blw _kmalloc, r0                                            ; allocating size
     mov r1, rr                                                  ; keeping return value at a safe place
     bz rr, .null_exception                                      ; handling null pointer
-    blw _memset, r1, 0, r0                                       ; nullifying the memory
+    blw memset, r1, 0, r0                                       ; nullifying the memory
 .null_exception:
     wret

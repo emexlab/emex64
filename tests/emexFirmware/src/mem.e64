@@ -19,7 +19,7 @@
 ; along with emex64. If not, see <https://www.gnu.org/licenses/>.
 ;
 
-_memset:
+memset:
     and r1, 0xFF        ; masking set value with byte mask so it doesnt exceed expectations
     add r2, r0          ; adding base address to lenght to have the end address
     b .loop_continue
@@ -31,7 +31,7 @@ _memset:
     bnz r3, .loop       ; in-case r3 is still not zero we continue
     wret
 
-_memcpy:
+memcpy:
     add r3, r0, r2      ; calculating end address of destination
 .loop:
     ldb r4, r1
