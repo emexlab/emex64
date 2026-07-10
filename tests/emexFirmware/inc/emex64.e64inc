@@ -38,7 +38,7 @@
 %include% "put.e64inc"
 %include% "uart.e64inc"
 %include% "mc.e64inc"
-%include% "mem.e64inc"
+%include% "string.e64inc"
 %include% "interrupt.e64inc"
 %include% "pmm.e64inc"
 %include% "exc.e64inc"

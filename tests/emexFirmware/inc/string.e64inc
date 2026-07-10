@@ -19,25 +19,13 @@
 ; along with emex64. If not, see <https://www.gnu.org/licenses/>.
 ;
 
-memset:
-    and r1, 0xFF        ; masking set value with byte mask so it doesnt exceed expectations
-    add r2, r0          ; adding base address to lenght to have the end address
-    b .loop_continue
-.loop:
-    stb r0, r1          ; setting value at address
-    inc r0
-.loop_continue:
-    sub r3, r2, r0      ; calculating remaining lenght
-    bnz r3, .loop       ; in-case r3 is still not zero we continue
-    wret
+%ifndef% STRING_E64INC
+%define% STRING_E64INC
 
-memcpy:
-    add r3, r0, r2      ; calculating end address of destination
-.loop:
-    ldb r4, r1
-    stb r0, r4
-    inc r0, r1
-.loop_continue:
-    cmp r0, r3
-    blt .loop
-    wret
+extern memset
+extern memcpy
+
+extern strlen
+extern strdup
+
+%endif% ; STRING_E64INC

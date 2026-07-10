@@ -41,7 +41,7 @@ section .data
     fw_display_unavailable db "not installed\n\0"
     fw_memory_msg db "[fw] memory installed: \0"
     fw_memory_available_msg db "[fw] memory available: \0"
-    fw_8042_msg db "[8042] key event: \0"
+    fw_8042_msg db "[8042] unrecognized key event: \0"
     fw_scancode_msg  db "scancode=0x\0"
     fw_8042_mouse_msg db "[8042] mouse event: 0x\0"
     fw_ktrr_msg db "[fw] locked KTRR\n\0"
