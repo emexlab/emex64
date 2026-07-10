@@ -19,6 +19,12 @@
 ; along with emex64. If not, see <https://www.gnu.org/licenses/>.
 ;
 
+%include% <emex64.e64inc>
+
+section .data
+    meow db "[hang] the computer has likely died, you shall turn it off\n\0"
+
 hang:
+    blw _puts, meow
     hlt
     b hang
