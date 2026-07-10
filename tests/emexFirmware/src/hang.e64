@@ -22,9 +22,10 @@
 %include% <emex64.e64inc>
 
 section .data
-    meow db "[hang] the computer has likely died, you shall turn it off\n\0"
+    hang_msg db "[hang] the computer has likely died, you shall turn it off\n\0"
 
 hang:
-    blw _puts, meow
+    blw _puts, hang_msg
+.endless_loop:
     hlt
-    b hang
+    b .endless_loop
