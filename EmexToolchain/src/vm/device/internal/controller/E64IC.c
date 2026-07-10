@@ -253,31 +253,27 @@ Boolean __E64ServeInterruptIfNeeded(E64ICRef icRef,
      * would be a vulnerability to elevate to
      * SecureMonitor as that is only accessible at
      * boot time.
-     * 
-     * todo: overhaul the register access system to
-     *       distinct between read vs write access.
-     *       my beautiful decoder is doomed.
      */
-    core->cr_state.crel.level = kE64ElevationLevelKernel;
+    core->cr_state.crel.level = kE64ElevationLevelKernel;   /* set the elevation level to kernel to prevent kernel level escape */
     core->rl[kE64RegisterSP] = core->cr_state.crksp.address;
 
     /* creating interrupt stack frame */
-    emex64_push_il(core, oldel);
-    emex64_push_il(core, core->rl[kE64RegisterPC]);
-    emex64_push_il(core, oldsp);
-    emex64_push_il(core, core->rl[kE64RegisterFP]);
-    emex64_push_il(core, core->rl[kE64RegisterCF]);
-    emex64_push_il(core, core->rl[kE64RegisterFPC]);
-    emex64_push_il(core, core->rl[kE64RegisterR0]);
-    emex64_push_il(core, core->rl[kE64RegisterR1]);
-    emex64_push_il(core, core->rl[kE64RegisterR2]);
-    emex64_push_il(core, core->rl[kE64RegisterR3]);
-    emex64_push_il(core, core->rl[kE64RegisterR4]);
-    emex64_push_il(core, core->rl[kE64RegisterR5]);
-    emex64_push_il(core, core->rl[kE64RegisterR6]);
-    emex64_push_il(core, core->rl[kE64RegisterR7]);
-    emex64_push_il(core, core->rl[kE64RegisterR8]);
-    emex64_push_il(core, core->rl[kE64RegisterR9]);
+    emex64_push_il(core, oldel);    /* fp + 128 */
+    emex64_push_il(core, core->rl[kE64RegisterPC]); /* fp + 120 */
+    emex64_push_il(core, oldsp);    /* fp + 112 */
+    emex64_push_il(core, core->rl[kE64RegisterFP]); /* fp + 104 */
+    emex64_push_il(core, core->rl[kE64RegisterCF]); /* fp + 96 */
+    emex64_push_il(core, core->rl[kE64RegisterFPC]);    /* fp + 88 */
+    emex64_push_il(core, core->rl[kE64RegisterR0]); /* fp + 80 */
+    emex64_push_il(core, core->rl[kE64RegisterR1]); /* fp + 72 */
+    emex64_push_il(core, core->rl[kE64RegisterR2]); /* fp + 64 */
+    emex64_push_il(core, core->rl[kE64RegisterR3]); /* fp + 56 */
+    emex64_push_il(core, core->rl[kE64RegisterR4]); /* fp + 48 */
+    emex64_push_il(core, core->rl[kE64RegisterR5]); /* fp + 40 */
+    emex64_push_il(core, core->rl[kE64RegisterR6]); /* fp + 32 */
+    emex64_push_il(core, core->rl[kE64RegisterR7]); /* fp + 24 */
+    emex64_push_il(core, core->rl[kE64RegisterR8]); /* fp + 16 */
+    emex64_push_il(core, core->rl[kE64RegisterR9]); /* fp + 8 */
 
     /* storing it as frame pointer  */
     core->rl[kE64RegisterFP] = core->rl[kE64RegisterSP];

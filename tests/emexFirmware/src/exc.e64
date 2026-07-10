@@ -173,15 +173,16 @@ exception_handler:
     ; for the current boot session to serve any further interrupt.
     blw interrupt_unregister_all
 
-    ; resetting CREXC so it won't reloop into this exception handler
-    cmov REG_CR2, 0x0
-
     ; manipulating interrupt stack frame
-    add r0, fp, 248 ; translates to the pc register inside the interrupt stack frame
+    add r0, fp, 120 ; translates to the pc register inside the interrupt stack frame
     stq r0, hang
 
     ; returns into our own hang loop
     mov rr, r9
+
+    ; resetting CREXC so it won't reloop into this exception handler
+    cmov REG_CR2, 0x0
+
     iret
 
 panic:
