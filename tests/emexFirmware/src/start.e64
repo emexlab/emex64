@@ -55,7 +55,7 @@ fw_8042_handler:
     push rr
     ldq rr, putc_sym
     push rr
-    stq putc_sym, _uart_putc
+    stq putc_sym, uart_putc
 
     ldd r0, EMEX64_8042_REG_STATUS      ; STATUS port
     and r0, 0x01                        ; OBF (bit 0)?
@@ -65,17 +65,17 @@ fw_8042_handler:
     bnz r1, .mouse_event
     
     ldd r0, EMEX64_8042_REG_DATA
-    blw _puts, fw_8042_msg
-    blw _puts, fw_scancode_msg
-    blw _putbase, r0, 16
-    blw _putc, '\n'
+    blw puts, fw_8042_msg
+    blw puts, fw_scancode_msg
+    blw putbase, r0, 16
+    blw putc, '\n'
     b .done
     
 .mouse_event:
     ldd r0, EMEX64_8042_REG_DATA
-    blw _puts, fw_8042_mouse_msg
-    blw _putbase, r0, 16
-    blw _putc, '\n'
+    blw puts, fw_8042_mouse_msg
+    blw putbase, r0, 16
+    blw putc, '\n'
 
 .done:
 .no_data:
@@ -91,17 +91,17 @@ main:
     blw interrupt_register_handler, EMEX64_IC_IRQ_EXCEPTION, exception_handler
     blw interrupt_register_handler, EMEX64_IC_IRQ_8042, fw_8042_handler
 
-    blw _puts, fw_display_msg
+    blw puts, fw_display_msg
     ldw r0, EMEX64_FB_REG_HEIGHT
     ldw r1, EMEX64_FB_REG_WIDTH
     bz r0, .dsp_not_installed
-    blw _putbase, r1, 10
-    blw _puts, fw_display_x_msg
-    blw _putbase, r0, 10
-    blw _putc, '\n'
+    blw putbase, r1, 10
+    blw puts, fw_display_x_msg
+    blw putbase, r0, 10
+    blw putc, '\n'
     b .dsp_installed
 .dsp_not_installed:
-    blw _puts, fw_display_unavailable
+    blw puts, fw_display_unavailable
 .dsp_installed:
 
     blw pmm_get_count
@@ -109,18 +109,18 @@ main:
     blw pmm_get_free_count
     mul r0, rr, EMEX64_PAGE_SIZE
 
-    blw _puts, fw_memory_msg
-    blw _put_mem, r1, r1
-    blw _putc, '\n'
+    blw puts, fw_memory_msg
+    blw put_mem, r1, r1
+    blw putc, '\n'
 
-    blw _puts, fw_memory_available_msg
-    blw _put_mem, r0, r1
-    blw _putc, '\n'
-    blw _print_time
+    blw puts, fw_memory_available_msg
+    blw put_mem, r0, r1
+    blw putc, '\n'
+    blw print_time
 
 %if% FW_LOCK_KTRR
     blw mc_lock_ktrr
-    blw _puts, fw_ktrr_msg
+    blw puts, fw_ktrr_msg
 %endif% ; FW_LOCK_KTRR
 
 %if% FW_TEST_EXCEPTION
@@ -129,10 +129,10 @@ main:
 
 .hang:
     ldq r0, meow_cnt
-    blw _puts, fw_interrupted_msg
+    blw puts, fw_interrupted_msg
     inc r0
-    blw _putbase, r0, 10
-    blw _puts, fw_interrupted_suffix_msg
+    blw putbase, r0, 10
+    blw puts, fw_interrupted_suffix_msg
     stq meow_cnt, r0
     hlt
     b .hang
@@ -170,9 +170,9 @@ _start:
 .bss_done:
 
     ; rest of the routine
-    bl _put_init                                    ; checks for fb
+    bl put_init                                     ; checks for fb
     bl pmm_init                                     ; initilizing page allocator
-    bl _slab_init                                   ; initilizing slab allocator
+    bl slab_init                                    ; initilizing slab allocator
     bl interrupt_init                               ; initilizing interrupt controller
     bl main                                         ; branching to main symbol
 .poweroff:

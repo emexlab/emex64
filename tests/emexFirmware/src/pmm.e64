@@ -144,13 +144,13 @@ pmm_init:
     dec r3
     blw pmm_page_set, r3, 0x1
     bnz r3, .loop
-    blw _puts, pmm_init_msg
+    blw puts, pmm_init_msg
     ret
 
 .no_memory:
     clr rr
     stq pmm_max_pages, rr
-    blw _puts, pmm_failed_msg
+    blw puts, pmm_failed_msg
     DO_HANG
 
 pmm_get_count:

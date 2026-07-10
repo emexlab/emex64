@@ -31,7 +31,7 @@ section .data
     putc_uart_logo db "\n         +++++++++++++\n        ++++++++++++++\n       +++++++++++++++\n      ++++++++++++++++\n     +++++      ++++++\n    +++++      ++++++ \n   +++++      ++++++  \n  +++++      ++++++   \n +++++      ++++++    \n+++++      ++++++     \n+++++      +++++      \n +++++      +++       \n  +++++      +        \n   +++++              \n    +++++             \n     +++++            \n      ++++++++++++++++\n       +++++++++++++++\n        ++++++++++++++\n         +++++++++++++\n\0"
     putc_copyright db "\nemexLabs(c) 2026\n\n\0"
     raw_logo df "./logo.raw"
-%endif%
+%endif% ; PUT_DRAW_LOGO
     putc_sym dq gui_putc
 
 ; memory units for _put_mem
@@ -46,7 +46,7 @@ section .data
 %if% PUT_DRAW_LOGO
 
 ; i know this belongs into gui.e64
-_draw_scaled_logo:
+draw_scaled_logo:
     ldw r4, EMEX64_FB_REG_WIDTH
     ldw r5, EMEX64_FB_REG_HEIGHT
     mov r6, 0
@@ -102,42 +102,42 @@ _draw_scaled_logo:
 .done:
     wret
 
-%endif%
+%endif% ; PUT_DRAW_LOGO
 
-_putc:
+putc:
     ldq r1, putc_sym
     b r1
 
-_put_init:
+put_init:
     ldb r0, EMEX64_FB_REG_ENABLED
     bnz r0, .end_gui
 .end_uart:
-    stq putc_sym, _uart_putc
+    stq putc_sym, uart_putc
 %if% PUT_DRAW_LOGO
-    blw _puts, putc_uart_logo
-    blw _puts, putc_copyright
-%endif%
+    blw puts, putc_uart_logo
+    blw puts, putc_copyright
+%endif% ; PUT_DRAW_LOGO
     ret
 .end_gui:
 %if% PUT_DRAW_LOGO
-    blw _draw_scaled_logo, 6, 15, 15    
+    blw draw_scaled_logo, 6, 15, 15    
     stw gui_line, 14
-    blw _puts, putc_copyright
-%endif%
+    blw puts, putc_copyright
+%endif% ; PUT_DRAW_LOGO
     ret
 
-_puts:
+puts:
 .start:
     ldb r1, r0
     inc r0
-    blw _putc, r1
+    blw putc, r1
     bnz r1, .start
     wret
     
-_putbase:
+putbase:
     clr rr
     bnz r0, .start
-    blw _putc, '0'
+    blw putc, '0'
     wret
 .start:
     push 0
@@ -157,7 +157,7 @@ _putbase:
     bnz r0, .loop
 .print:
     pop r0
-    blw _putc
+    blw putc
     bnz r0, .print
     wret
 
@@ -165,7 +165,7 @@ _putbase:
 ; r0: main memory amount
 ; r1: amount to match the units to
 ;
-_put_mem:
+put_mem:
     push r0
     push r1
     clr r2
@@ -193,11 +193,11 @@ _put_mem:
     b .whole_loop
 
 .whole_done:
-    blw _putbase, r0, 10
+    blw putbase, r0, 10
 
     bz r2, .suffix
 
-    blw _putc, '.'
+    blw putc, '.'
     mov r3, r2
     mov r5, 1
 .unit_sz:
@@ -210,12 +210,12 @@ _put_mem:
     mod r4, r4, r5
     mul r6, r4, 10
     div r6, r5
-    blw _putbase, r6, 10
+    blw putbase, r6, 10
 
 .suffix:
     mul r2, 8
     add r2, mem_unit_ptrs
     ldq r0, r2
-    blw _puts, r0
-    blw _putc, ' '
+    blw puts, r0
+    blw putc, ' '
     wret

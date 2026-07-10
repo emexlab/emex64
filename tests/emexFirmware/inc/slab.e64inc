@@ -22,9 +22,9 @@
 %ifndef% SLAB_E64INC
 %define% SLAB_E64INC
 
-extern _slab_init
-extern _kmalloc
-extern _kfree
-extern _kcalloc
+extern slab_init
+extern kmalloc
+extern kfree
+extern kcalloc
 
 %endif% ; SLAB_E64INC

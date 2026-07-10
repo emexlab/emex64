@@ -22,7 +22,7 @@
 %ifndef% UART_E64INC
 %define% UART_E64INC
 
-extern _uart_putc
-extern _uart_getc
+extern uart_putc
+extern uart_getc
 
 %endif% ; UART_E64INC

@@ -158,17 +158,17 @@ exception_putreg:
 
     ; here r1 becomes the reg str
     ; here r2 becomes register value
-    blw _puts, r4
-    blw _putc, ':'
-    blw _putc, ' '
-    blw _putc, '0'
-    blw _putc, 'x'
-    blw _putbase, r0, 16
-    blw _putc, ' '
-    blw _putc, '('
-    blw _putbase, r0, 10
-    blw _putc, ')'
-    blw _putc, '\n'
+    blw puts, r4
+    blw putc, ':'
+    blw putc, ' '
+    blw putc, '0'
+    blw putc, 'x'
+    blw putbase, r0, 16
+    blw putc, ' '
+    blw putc, '('
+    blw putbase, r0, 10
+    blw putc, ')'
+    blw putc, '\n'
     wret
 
 exception_handler:
@@ -176,21 +176,21 @@ exception_handler:
 
     ; printing the exception code which
     ; is what declares the reason
-    blw _puts, exception_msg
+    blw puts, exception_msg
     cmovb r20, REG_CR2
-    blw _putbase, r20, 16
-    blw _putc, '\n'
+    blw putbase, r20, 16
+    blw putc, '\n'
 
     ; decoding exception code into an nice string representing
     ; the exact exception
-    blw _puts, exception2_msg
+    blw puts, exception2_msg
     blw exception_str_for_code, r20
-    blw _puts, rr
-    blw _putc, '\n'
-    blw _putc, '\n'
+    blw puts, rr
+    blw putc, '\n'
+    blw putc, '\n'
 
     ; register dump by reading the interrupt stack frame
-    blw _puts, exception_reg_msg
+    blw puts, exception_reg_msg
 
     mov r0, REG_PC
     mov r1, REG_RR

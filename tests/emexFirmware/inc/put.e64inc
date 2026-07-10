@@ -22,10 +22,10 @@
 %ifndef% PUT_E64INC
 %define% PUT_E64INC
 
-extern _put_init
-extern _putc
-extern _puts
-extern _put_mem
-extern _putbase
+extern put_init
+extern putc
+extern puts
+extern put_mem
+extern putbase
 
 %endif% ; PUT_E64INC

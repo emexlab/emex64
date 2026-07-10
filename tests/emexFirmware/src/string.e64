@@ -21,7 +21,7 @@
 
 %include% <emex64.e64inc>
 
-_strlen:
+strlen:
     clr rr                      ; clearing return register
 .loop:
     ldb r1, r0                  ; loading byte from address
@@ -29,12 +29,11 @@ _strlen:
     bnz r1, .loop               ; if not reached a null terminator yet continue till we reached one
     wret
 
-_strdup:
-    blw _strlen, r0             ; getting size of string
+strdup:
+    blw strlen, r0              ; getting size of string
     mov r1, rr
-    blw _kmalloc, r1            ; allocating memory for string
-    mov r2, rr
-    bz r2, .null_exception      ; null pointer checking allocation
-    blw memcpy, r2, r0, r1      ; copying string over
+    blw kmalloc, r1             ; allocating memory for string
+    bz rr, .null_exception      ; null pointer checking allocation
+    blw memcpy, rr, r0, r1      ; copying string over
 .null_exception:
     wret

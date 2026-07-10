@@ -39,10 +39,10 @@ interrupt_init:
     stq EMEX64_IC_REG_VECTOR, ivec
     stb EMEX64_IC_REG_ENABLED, 0x0
     stq EMEX64_IC_REG_CTRL, 1
-    blw _puts, ic_init_msg
+    blw puts, ic_init_msg
     ret
 .failed:
-    blw _puts, ic_failed_msg
+    blw puts, ic_failed_msg
     DO_HANG
 
 interrupt_register_handler:

@@ -25,7 +25,7 @@ section .data
     hang_msg db "[hang] the computer has likely died, you shall turn it off\n\0"
 
 hang:
-    blw _puts, hang_msg
+    blw puts, hang_msg
 .endless_loop:
     hlt
     b .endless_loop

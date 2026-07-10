@@ -24,36 +24,36 @@
 section .data
     time db "[fw] date: \0"
 
-_rtc_2putbase:
+rtc_2putbase:
     cmp r0, 10
     bge .end
-    blw _putc, '0'
+    blw putc, '0'
 .end:
-    blw _putbase, r0, 10
+    blw putbase, r0, 10
     wret
 
-_print_time:
+print_time:
     mov r1, EMEX64_RTC_REG_DAY
-    blw _puts, time
+    blw puts, time
 .loop:
     ldd r0, r1
-    blw _rtc_2putbase, r0
+    blw rtc_2putbase, r0
     add r1, 8
     cmp r1, EMEX64_RTC_REG_YEAR
     bgt .loop_2_entry
-    blw _putc, '.'
+    blw putc, '.'
     b .loop
 .loop_2_entry:
     sub r1, 32
-    blw _putc, ' '
+    blw putc, ' '
 .loop_2:
     ldd r0, r1
-    blw _rtc_2putbase, r0
+    blw rtc_2putbase, r0
     sub r1, 8
     cmp r1, EMEX64_RTC_REG_SECONDS
     blt .end
-    blw _putc, ':'
+    blw putc, ':'
     b .loop_2
 .end:
-    blw _putc, '\n'
+    blw putc, '\n'
     wret

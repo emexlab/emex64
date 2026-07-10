@@ -45,7 +45,7 @@ section .data
 section .bss
     size_caches db 320
 
-_get_size_class:
+get_size_class:
     mov rr, NUM_SIZE_CLASSES_START
     cmp r0, NUM_SIZE_CLASSES
     bge .done
@@ -58,21 +58,21 @@ _get_size_class:
 .done:
     wret
 
-_get_objs_per_class:
+get_objs_per_class:
     mov rr, 0b11111110
     shr rr, r0
     wret
 
-_slab_init:
+slab_init:
     clr r0
     mov r1, size_caches
 .loop:
     cmp r0, NUM_SIZE_CLASSES                                    ; checking if r0 is greater than the number of size classes which means all size classes have been initilized
     bge .done
-    blw _get_size_class, r0                                     ; getting size class from programatic symbol    
+    blw get_size_class, r0                                      ; getting size class from programatic symbol    
     mov r4, rr                                                  ; moving size result into the appropriate register
     stq r1, r4                                                  ; storing size class into size chache slot
-    blw _get_objs_per_class, r0                                 ; getting objects count for class
+    blw get_objs_per_class, r0                                  ; getting objects count for class
     mov r4, rr
     add r5, r1, CACHE_OFF_OBJS                                  ; get the address of the cache objects value in structure
     stq r5, r4                                                  ; storing objects count into objects
@@ -86,15 +86,15 @@ _slab_init:
     add r1, CACHE_STRUCT_SIZE
     b .loop
 .done:
-    blw _puts, slab_init_msg
+    blw puts, slab_init_msg
     ret
 
-_find_size_class:
+find_size_class:
     clr r1
 .loop:
     cmp r1, NUM_SIZE_CLASSES                                    ; same as above, the classes count comparison
     bge .too_large
-    blw _get_size_class, r1                                      ; getting size class
+    blw get_size_class, r1                                      ; getting size class
     cmp r0, rr                                                  ; checking if we found the appropriate size class
     ble .found
     inc r1                                                      ; incrementing return
@@ -108,7 +108,7 @@ _find_size_class:
     clr rr
     wret
 
-_create_slab:
+create_slab:
     mov r5, r0
     blw pmm_alloc
     bz rr, .fail
@@ -141,7 +141,7 @@ _create_slab:
     clr rr
     wret
 
-_find_free_bit:
+find_free_bit:
     bz r0, .none
     clr rr
 .loop:
@@ -157,9 +157,9 @@ _find_free_bit:
 .found:
     wret
 
-_kmalloc:
+kmalloc:
     bz r0, .fail
-    blw _find_size_class
+    blw find_size_class
     bz rr, .alloc_pages
     mov r1, rr
     add r4, r1, CACHE_OFF_PARTIAL
@@ -180,7 +180,7 @@ _kmalloc:
     b .have_slab
 .need_new_slab:
     mov r0, r1
-    blw _create_slab
+    blw create_slab
     bz rr, .fail
     mov r2, rr
     add r4, r1, CACHE_OFF_PARTIAL
@@ -192,7 +192,7 @@ _kmalloc:
 .have_slab:
     add r4, r2, SLAB_OFF_BITMAP
     ldq r0, r4
-    blw _find_free_bit
+    blw find_free_bit
     cmp rr, 64
     bge .fail
     mov r3, rr
@@ -234,7 +234,7 @@ _kmalloc:
     clr rr
     wret
 
-_kfree:
+kfree:
     bz r0, .done                                                ; null pointer checking r0
     mov r1, r0
     and r0, PAGE_MASK
@@ -317,9 +317,9 @@ _kfree:
 .done:
     wret
 
-_kcalloc:
+kcalloc:
     mul r0, r1                                                  ; calculating final memory allocation size
-    blw _kmalloc, r0                                            ; allocating size
+    blw kmalloc, r0                                             ; allocating size
     mov r1, rr                                                  ; keeping return value at a safe place
     bz rr, .null_exception                                      ; handling null pointer
     blw memset, r1, 0, r0                                       ; nullifying the memory

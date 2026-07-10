@@ -22,6 +22,6 @@
 %ifndef% RTC_E64INC
 %define% RTC_E64INC
 
-extern _print_time
+extern print_time
 
 %endif% ; RTC_E64INC

@@ -21,7 +21,7 @@
 
 %include% <emex64.e64inc>
 
-_uart_putc:
+uart_putc:
 .start:
     ldd r1, EMEX64_UART_REG_STATUS
     and r1, EMEX64_UART_STATUS_TX_EMPTY
@@ -29,7 +29,7 @@ _uart_putc:
     std EMEX64_UART_REG_DATA, r0
     wret
 
-_uart_getc:
+uart_getc:
 .start:
     ldd r1, EMEX64_UART_REG_STATUS
     and r1, EMEX64_UART_STATUS_RX_READY
