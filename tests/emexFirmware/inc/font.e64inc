@@ -23,6 +23,6 @@
 %define% FONT_E64INC
 
 ; data section
-extern _font_data ; start address of the font buffer
+extern font_data    ; start address of the font buffer
 
 %endif% ; FONT_E64INC

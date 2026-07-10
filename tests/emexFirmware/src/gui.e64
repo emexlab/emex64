@@ -53,7 +53,7 @@ _gui_putc:
     cmp r0, 127
     bgt .end
 
-    mov r4, _font_data
+    mov r4, font_data
     mul r5, r0, 8
     add r4, r5
 
