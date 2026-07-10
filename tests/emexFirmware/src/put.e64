@@ -21,8 +21,6 @@
 
 %include% <emex64.e64inc>
 
-%define% PUT_DRAW_LOGO 0
-
 %ifndef% PUT_DRAW_LOGO
 %define% PUT_DRAW_LOGO 0
 %endif% ; PUT_DRAW_LOGO
@@ -49,6 +47,12 @@ section .data
 
 ; i know this belongs into gui.e64
 draw_scaled_logo:
+    push er0, er1, er2, er3, er4
+    bl _draw_scaled_logo
+    pop er4, er3, er2, er1, er0
+    wret
+
+_draw_scaled_logo:
     ldw r4, EMEX64_FB_REG_WIDTH
     ldw r5, EMEX64_FB_REG_HEIGHT
     mov r6, 0
@@ -61,38 +65,38 @@ draw_scaled_logo:
 .x_loop:
     cmp r9, 22
     bge .x_done
-    ldb r11, r7
+    ldb er0, r7
     inc r7
-    bz r11, .skip_pixel
-    mov r12, 0
+    bz er0, .skip_pixel
+    mov er1, 0
 .sy_loop:
-    cmp r12, r0
+    cmp er1, r0
     bge .sy_done
-    mul r13, r6, r0
-    add r13, r12
-    add r13, r2
-    cmp r13, r5
+    mul er2, r6, r0
+    add er2, er1
+    add er2, r2
+    cmp er2, r5
     bge .sy_done
-    mov r14, 0
+    mov er3, 0
 .sx_loop:
-    cmp r14, r0
+    cmp er3, r0
     bge .sx_done
-    mul r15, r9, r0
-    add r15, r14
-    add r15, r1
-    cmp r15, r4
+    mul er4, r9, r0
+    add er4, er3
+    add er4, r1
+    cmp er4, r4
     bge .sx_next
-    push r14
-    mul r14, r13, r4
-    add r14, r15
-    add r14, EMEX64_FB_FRAMEBUFFER
-    stb r14, r11
-    pop r14
+    push er3
+    mul er3, er2, r4
+    add er3, er4
+    add er3, EMEX64_FB_FRAMEBUFFER
+    stb er3, er0
+    pop er3
 .sx_next:
-    inc r14
+    inc er3
     b .sx_loop
 .sx_done:
-    inc r12
+    inc er1
     b .sy_loop
 .sy_done:
 .skip_pixel:
@@ -102,7 +106,7 @@ draw_scaled_logo:
     inc r6
     b .y_loop
 .done:
-    wret
+    ret
 
 %endif% ; PUT_DRAW_LOGO
 
