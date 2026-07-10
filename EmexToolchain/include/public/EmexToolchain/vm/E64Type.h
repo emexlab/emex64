@@ -154,7 +154,7 @@ typedef enum: UInt8 {
      * executing the instruction at which PC points to at
      * that time.
      */
-    kE64RegisterPC =     0b00000,
+    kE64RegisterPC =     0b0000,
 
     /*
      * stack pointer: it points to the current address at
@@ -165,7 +165,7 @@ typedef enum: UInt8 {
      * things, as heap allocation is way more expensive,
      * than a simple register decrement.
      */
-    kE64RegisterSP =     0b00001,
+    kE64RegisterSP =     0b0001,
 
     /*
      * frame pointer: it points to the address at which the
@@ -180,19 +180,19 @@ typedef enum: UInt8 {
      * simplistic, for now that will be the soulution,
      * cannot be guranteed that this ABI choice wont change.
      */
-    kE64RegisterFP =     0b00010,
+    kE64RegisterFP =     0b0010,
 
     /*
      * control flag: used by control flow instructions like
      * cmp, je, jne.. basically used for if else statements.
      */
-    kE64RegisterCF =     0b00011,
+    kE64RegisterCF =     0b0011,
 
     /*
      * floating point control register: can be used in
      * userspace.
      */
-    kE64RegisterFPC =    0b00100,
+    kE64RegisterFPC =    0b0100,
 
     /*
      * general purpose registers: these registers arent used
@@ -201,32 +201,16 @@ typedef enum: UInt8 {
      * general purpose registers, because they got no fixed
      * purpose like pc, sp, fp, cf.
      */
-    kE64RegisterR0 =     0b00101,
-    kE64RegisterR1 =     0b00110,
-    kE64RegisterR2 =     0b00111,
-    kE64RegisterR3 =     0b01000,
-    kE64RegisterR4 =     0b01001,
-    kE64RegisterR5 =     0b01010,
-    kE64RegisterR6 =     0b01011,
-    kE64RegisterR7 =     0b01100,
-    kE64RegisterR8 =     0b01101,
-    kE64RegisterR9 =     0b01110,
-    kE64RegisterR10 =    0b01111,
-    kE64RegisterR11 =    0b10000,
-    kE64RegisterR12 =    0b10001,
-    kE64RegisterR13 =    0b10010,
-    kE64RegisterR14 =    0b10011,
-    kE64RegisterR15 =    0b10100,
-    kE64RegisterR16 =    0b10101,
-    kE64RegisterR17 =    0b10110,
-    kE64RegisterR18 =    0b10111,
-    kE64RegisterR19 =    0b11000,
-    kE64RegisterR20 =    0b11001,
-    kE64RegisterR21 =    0b11010,
-    kE64RegisterR22 =    0b11011,
-    kE64RegisterR23 =    0b11100,
-    kE64RegisterR24 =    0b11101,
-    kE64RegisterR25 =    0b11110,
+    kE64RegisterR0 =     0b0101,
+    kE64RegisterR1 =     0b0110,
+    kE64RegisterR2 =     0b0111,
+    kE64RegisterR3 =     0b1000,
+    kE64RegisterR4 =     0b1001,
+    kE64RegisterR5 =     0b1010,
+    kE64RegisterR6 =     0b1011,
+    kE64RegisterR7 =     0b1100,
+    kE64RegisterR8 =     0b1101,
+    kE64RegisterR9 =     0b1110,
 
     /*
      * return register: also a general purpose register but
@@ -235,7 +219,7 @@ typedef enum: UInt8 {
      * return without any crazy memory math a value for
      * example.
      */
-    kE64RegisterRR =     0b11111,
+    kE64RegisterRR =     0b1111,
 
     kE64RegisterMAX = kE64RegisterRR,
 
@@ -243,38 +227,23 @@ typedef enum: UInt8 {
 } E64Register;
 
 typedef enum: UInt8 {
-    kE64ControlRegisterCR0 = 0b00000,    /* CREL:    elevation control register */
-    kE64ControlRegisterCR1 = 0b00001,    /* CRKSP:   kernel stack pointer (the stack pointer the interrupt controller will use when receiving interrupt) */
-    kE64ControlRegisterCR2 = 0b00010,    /* CREXC:   exception register (first 3bits for the exception) */
-    kE64ControlRegisterCR3 = 0b00011,    /* CRVEC:   cpu vector table */
-    kE64ControlRegisterCR4 = 0b00100,    /* CRPTB:   page table pointer (first 8bits are the flags and the rest is the physical address where the page table is) */
-    kE64ControlRegisterCR5 = 0b00101,    /* CRFPC:   kernel only floating point control register */
-    kE64ControlRegisterCR6 = 0b00110,
-    kE64ControlRegisterCR7 = 0b00111,
-    kE64ControlRegisterCR8 = 0b01000,
-    kE64ControlRegisterCR9 = 0b01001,
-    kE64ControlRegisterCR10 = 0b01010,
-    kE64ControlRegisterCR11 = 0b01011,
-    kE64ControlRegisterCR12 = 0b01100,
-    kE64ControlRegisterCR13 = 0b01101,
-    kE64ControlRegisterCR14 = 0b01110,
-    kE64ControlRegisterCR15 = 0b01111,
-    kE64ControlRegisterCR16 = 0b10000,
-    kE64ControlRegisterCR17 = 0b10001,
-    kE64ControlRegisterCR18 = 0b10010,
-    kE64ControlRegisterCR19 = 0b10011,
-    kE64ControlRegisterCR20 = 0b10100,
-    kE64ControlRegisterCR21 = 0b10101,
-    kE64ControlRegisterCR22 = 0b10110,
-    kE64ControlRegisterCR23 = 0b10111,
-    kE64ControlRegisterCR24 = 0b11000,
-    kE64ControlRegisterCR25 = 0b11001,
-    kE64ControlRegisterCR26 = 0b11010,
-    kE64ControlRegisterCR27 = 0b11011,
-    kE64ControlRegisterCR28 = 0b11100,
-    kE64ControlRegisterCR29 = 0b11101,
-    kE64ControlRegisterCR30 = 0b11110,
-    kE64ControlRegisterCR31 = 0b11111,
+    kE64ControlRegisterCR0 = 0b0000,    /* CREL:    elevation control register */
+    kE64ControlRegisterCR1 = 0b0001,    /* CRKSP:   kernel stack pointer (the stack pointer the interrupt controller will use when receiving interrupt) */
+    kE64ControlRegisterCR2 = 0b0010,    /* CREXC:   exception register (first 3bits for the exception) */
+    kE64ControlRegisterCR3 = 0b0011,    /* CRVEC:   cpu vector table */
+    kE64ControlRegisterCR4 = 0b0100,    /* CRPTB:   page table pointer (first 8bits are the flags and the rest is the physical address where the page table is) */
+    kE64ControlRegisterCR5 = 0b0101,    /* CRFPC:   kernel only floating point control register */
+    kE64ControlRegisterCR6 = 0b0110,
+    kE64ControlRegisterCR7 = 0b0111,
+    kE64ControlRegisterCR8 = 0b1000,
+    kE64ControlRegisterCR9 = 0b1001,
+    kE64ControlRegisterCR10 = 0b1010,
+    kE64ControlRegisterCR11 = 0b1011,
+    kE64ControlRegisterCR12 = 0b1100,
+    kE64ControlRegisterCR13 = 0b1101,
+    kE64ControlRegisterCR14 = 0b1110,
+    kE64ControlRegisterCR15 = 0b1111,
+    kE64ControlRegisterMAX = kE64ControlRegisterCR15
 } E64ControlRegister;
 
 typedef enum: UInt8 {
@@ -294,23 +263,7 @@ typedef enum: UInt8 {
     kE64FloatingRegisterFR13 = 0b01101,
     kE64FloatingRegisterFR14 = 0b01110,
     kE64FloatingRegisterFR15 = 0b01111,
-    kE64FloatingRegisterFR16 = 0b10000,
-    kE64FloatingRegisterFR17 = 0b10001,
-    kE64FloatingRegisterFR18 = 0b10010,
-    kE64FloatingRegisterFR19 = 0b10011,
-    kE64FloatingRegisterFR20 = 0b10100,
-    kE64FloatingRegisterFR21 = 0b10101,
-    kE64FloatingRegisterFR22 = 0b10110,
-    kE64FloatingRegisterFR23 = 0b10111,
-    kE64FloatingRegisterFR24 = 0b11000,
-    kE64FloatingRegisterFR25 = 0b11001,
-    kE64FloatingRegisterFR26 = 0b11010,
-    kE64FloatingRegisterFR27 = 0b11011,
-    kE64FloatingRegisterFR28 = 0b11100,
-    kE64FloatingRegisterFR29 = 0b11101,
-    kE64FloatingRegisterFR30 = 0b11110,
-    kE64FloatingRegisterFR31 = 0b11111,
-    kE64FloatingRegisterMAX = kE64FloatingRegisterFR31
+    kE64FloatingRegisterMAX = kE64FloatingRegisterFR15
 } E64FloatingRegister;
 
 typedef enum: UInt8 {

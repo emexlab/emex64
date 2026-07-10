@@ -25,7 +25,7 @@
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/vm/E64Type.h>
 
-#define EMEX64_MAX_ARGS 26
+#define EMEX64_MAX_ARGS 16
 #define EMEX64_MAX_ILEN (1 + EMEX64_MAX_ARGS * 9)
 
 typedef struct __E64Machine *E64MachineRef;

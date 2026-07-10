@@ -158,6 +158,7 @@ find_free_bit:
     wret
 
 kmalloc:
+%if% 0
     bz r0, .fail
     blw find_size_class
     bz rr, .alloc_pages
@@ -231,10 +232,12 @@ kmalloc:
     blw pmm_alloc
     wret
 .fail:
+%endif% ; 0
     clr rr
     wret
 
 kfree:
+%if% 0
     bz r0, .done                                                ; null pointer checking r0
     mov r1, r0
     and r0, PAGE_MASK
@@ -315,13 +318,16 @@ kfree:
     and r0, r1, PAGE_MASK
     blw pmm_free
 .done:
+%endif% ; 0
     wret
 
 kcalloc:
+%if% 0
     mul r0, r1                                                  ; calculating final memory allocation size
     blw kmalloc, r0                                             ; allocating size
     mov r1, rr                                                  ; keeping return value at a safe place
     bz rr, .null_exception                                      ; handling null pointer
     blw memset, r1, 0, r0                                       ; nullifying the memory
 .null_exception:
+%endif% ; 0
     wret

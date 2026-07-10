@@ -59,24 +59,8 @@ section .data
     exception_r7_msg db "r7\0"
     exception_r8_msg db "r8\0"
     exception_r9_msg db "r9\0"
-    exception_r10_msg db "r10\0"
-    exception_r11_msg db "r11\0"
-    exception_r12_msg db "r12\0"
-    exception_r13_msg db "r13\0"
-    exception_r14_msg db "r14\0"
-    exception_r15_msg db "r15\0"
-    exception_r16_msg db "r16\0"
-    exception_r17_msg db "r17\0"
-    exception_r18_msg db "r18\0"
-    exception_r19_msg db "r19\0"
-    exception_r20_msg db "r20\0"
-    exception_r21_msg db "r21\0"
-    exception_r22_msg db "r22\0"
-    exception_r23_msg db "r23\0"
-    exception_r24_msg db "r24\0"
-    exception_r25_msg db "r25\0"
     exception_rr_msg db "rr\0"
-    exception_array_reg_msg dq exception_pc_msg, exception_sp_msg, exception_fp_msg, exception_cf_msg, exception_fpc_msg, exception_r0_msg, exception_r1_msg, exception_r2_msg, exception_r3_msg, exception_r4_msg, exception_r5_msg, exception_r6_msg, exception_r7_msg, exception_r8_msg, exception_r9_msg, exception_r10_msg, exception_r11_msg, exception_r12_msg, exception_r13_msg, exception_r14_msg, exception_r15_msg, exception_r16_msg, exception_r17_msg, exception_r18_msg, exception_r19_msg, exception_r20_msg, exception_r21_msg, exception_r22_msg, exception_r23_msg, exception_r24_msg, exception_r25_msg, exception_rr_msg
+    exception_array_reg_msg dq exception_pc_msg, exception_sp_msg, exception_fp_msg, exception_cf_msg, exception_fpc_msg, exception_r0_msg, exception_r1_msg, exception_r2_msg, exception_r3_msg, exception_r4_msg, exception_r5_msg, exception_r6_msg, exception_r7_msg, exception_r8_msg, exception_r9_msg, exception_rr_msg
 
 exception_str_for_code:
     ldq rr, exception_str       ; loading exception str
@@ -95,7 +79,7 @@ exception_str_for_code:
 
 ; switch table
 section .data
-    exception_putreg_switch dq exception_putreg.pc, exception_putreg.sp, exception_putreg.fp, exception_putreg.cf, exception_putreg.fpc, exception_putreg.r0, exception_putreg.r1, exception_putreg.r2, exception_putreg.r3, exception_putreg.r4, exception_putreg.r5, exception_putreg.r6, exception_putreg.r7, exception_putreg.r8, exception_putreg.r9, exception_putreg.r10, exception_putreg.r11, exception_putreg.r12, exception_putreg.r13, exception_putreg.r14, exception_putreg.r15, exception_putreg.r16, exception_putreg.r17, exception_putreg.r18, exception_putreg.r19, exception_putreg.r20, exception_putreg.r21, exception_putreg.r22, exception_putreg.r23, exception_putreg.r24, exception_putreg.r25, exception_putreg.rr
+    exception_putreg_switch dq exception_putreg.pc, exception_putreg.sp, exception_putreg.fp, exception_putreg.cf, exception_putreg.fpc, exception_putreg.r0, exception_putreg.r1, exception_putreg.r2, exception_putreg.r3, exception_putreg.r4, exception_putreg.r5, exception_putreg.r6, exception_putreg.r7, exception_putreg.r8, exception_putreg.r9, exception_putreg.rr
 
 ;
 ; register printing
@@ -131,29 +115,13 @@ exception_putreg:
 .r7:
 .r8:
 .r9:
-.r10:
-.r11:
-.r12:
-.r13:
-.r14:
-.r15:
-.r16:
-.r17:
-.r18:
-.r19:
-.r20:
-.r21:
-.r22:
-.r23:
-.r24:
-.r25:
     sub r8, REG_RR, r0
     mul r7, 8, r8
     add r6, r7
     ldq r0, r6
     b .get_me_tf_out_of_here
 .rr:
-    mov r0, r21
+    mov r0, r9
 .get_me_tf_out_of_here:
 
     ; here r1 becomes the reg str
@@ -172,19 +140,19 @@ exception_putreg:
     wret
 
 exception_handler:
-    mov r21, rr
+    mov r9, rr
 
     ; printing the exception code which
     ; is what declares the reason
     blw puts, exception_msg
-    cmovb r20, REG_CR2
-    blw putbase, r20, 16
+    cmovb r8, REG_CR2
+    blw putbase, r8, 16
     blw putc, '\n'
 
     ; decoding exception code into an nice string representing
     ; the exact exception
     blw puts, exception2_msg
-    blw exception_str_for_code, r20
+    blw exception_str_for_code, r8
     blw puts, rr
     blw putc, '\n'
     blw putc, '\n'
@@ -213,7 +181,7 @@ exception_handler:
     stq r0, hang
 
     ; returns into our own hang loop
-    mov rr, r21
+    mov rr, r9
     iret
 
 panic:

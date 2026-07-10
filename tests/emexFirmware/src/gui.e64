@@ -26,6 +26,7 @@ section .data
     gui_column dw 0
 
 gui_putc:
+%if% 0
     bz r0, .end
 
     ldw r1, gui_column
@@ -233,4 +234,5 @@ scroll_up:
     b .clear_loop
 
 .end:
+%endif% ; 0
     wret

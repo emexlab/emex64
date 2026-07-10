@@ -38,7 +38,7 @@
 
 void assembler_emit_end(assembler_invocation_t *inv)
 {
-    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingEnd, 3);
+    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingEnd, 4);
 }
 
 Boolean opcode_arg_is_branch_target(E64Opcode op,
@@ -164,7 +164,7 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
                 label = strdup(operand[0]->str);
             }
 
-            vbitwalker_write(al->inv->out_vbitwalker, kE64ParameterCodingAddr64, 3);
+            vbitwalker_write(al->inv->out_vbitwalker, kE64ParameterCodingAddr64, 4);
             vbitwalker_align_byte(al->inv->out_vbitwalker);
 
             if(!assembler_label_relocate_append(al->inv, label, local, operand[0]))

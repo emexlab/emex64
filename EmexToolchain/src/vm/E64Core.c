@@ -202,7 +202,7 @@ static inline void __E64CoreExecuteInstructionAtPC(__E64Core core)
     UInt8 i = 0;
     for(; i < maxarg; i++)
     {
-        E64ParameterCoding coding = (UInt8)bb_read(&bb, 3);
+        E64ParameterCoding coding = (UInt8)bb_read(&bb, 4);
         core->op.param_coding[i] = coding;
         switch(coding)
         {
@@ -211,7 +211,7 @@ static inline void __E64CoreExecuteInstructionAtPC(__E64Core core)
                 goto escape_from_la;
             case kE64ParameterCodingReg:
             {
-                core->op.param[i] = &(core->rl[(UInt8)bb_read(&bb, 5)]);
+                core->op.param[i] = &(core->rl[(UInt8)bb_read(&bb, 4)]);
                 break;
             }
             case kE64ParameterCodingAddr64:

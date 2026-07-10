@@ -21,6 +21,8 @@
 
 %include% <emex64.e64inc>
 
+%define% PUT_DRAW_LOGO 0
+
 %ifndef% PUT_DRAW_LOGO
 %define% PUT_DRAW_LOGO 0
 %endif% ; PUT_DRAW_LOGO

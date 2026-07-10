@@ -278,22 +278,6 @@ Boolean __E64ServeInterruptIfNeeded(E64ICRef icRef,
     emex64_push_il(core, core->rl[kE64RegisterR7]);
     emex64_push_il(core, core->rl[kE64RegisterR8]);
     emex64_push_il(core, core->rl[kE64RegisterR9]);
-    emex64_push_il(core, core->rl[kE64RegisterR10]);
-    emex64_push_il(core, core->rl[kE64RegisterR11]);
-    emex64_push_il(core, core->rl[kE64RegisterR12]);
-    emex64_push_il(core, core->rl[kE64RegisterR13]);
-    emex64_push_il(core, core->rl[kE64RegisterR14]);
-    emex64_push_il(core, core->rl[kE64RegisterR15]);
-    emex64_push_il(core, core->rl[kE64RegisterR16]);
-    emex64_push_il(core, core->rl[kE64RegisterR17]);
-    emex64_push_il(core, core->rl[kE64RegisterR18]);
-    emex64_push_il(core, core->rl[kE64RegisterR19]);
-    emex64_push_il(core, core->rl[kE64RegisterR20]);
-    emex64_push_il(core, core->rl[kE64RegisterR21]);
-    emex64_push_il(core, core->rl[kE64RegisterR22]);
-    emex64_push_il(core, core->rl[kE64RegisterR23]);
-    emex64_push_il(core, core->rl[kE64RegisterR24]);
-    emex64_push_il(core, core->rl[kE64RegisterR25]);
 
     /* storing it as frame pointer  */
     core->rl[kE64RegisterFP] = core->rl[kE64RegisterSP];

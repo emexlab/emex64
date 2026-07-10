@@ -41,23 +41,6 @@ E64Register register_from_string(const char *name)
         case PACK('r','7'): return kE64RegisterR7;
         case PACK('r','8'): return kE64RegisterR8;
         case PACK('r','9'): return kE64RegisterR9;
-        case PACK('r','1','0'): return kE64RegisterR10;
-        case PACK('r','1','1'): return kE64RegisterR11;
-        case PACK('r','1','2'): return kE64RegisterR12;
-        case PACK('r','1','3'): return kE64RegisterR13;
-        case PACK('r','1','4'): return kE64RegisterR14;
-        case PACK('r','1','5'): return kE64RegisterR15;
-        case PACK('r','1','6'): return kE64RegisterR16;
-        case PACK('r','1','7'): return kE64RegisterR17;
-        case PACK('r','1','8'): return kE64RegisterR18;
-        case PACK('r','1','9'): return kE64RegisterR19;
-        case PACK('r','2','0'): return kE64RegisterR20;
-        case PACK('r','2','1'): return kE64RegisterR21;
-        case PACK('r','2','2'): return kE64RegisterR22;
-        case PACK('r','2','3'): return kE64RegisterR23;
-        case PACK('r','2','4'): return kE64RegisterR24;
-        case PACK('r','2','5'): return kE64RegisterR25;
-        case PACK('r','2','6'): return kE64RegisterRR;
         case PACK('r','r'): return kE64RegisterRR;
         default: return kE64RegisterInvalid;
     }
@@ -68,6 +51,6 @@ void assembler_emit_register(assembler_invocation_t *inv,
 {
     assert(reg <= kE64RegisterMAX);
 
-    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingReg, 3);
-    vbitwalker_write(inv->out_vbitwalker, reg, 5);
+    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingReg, 4);
+    vbitwalker_write(inv->out_vbitwalker, reg, 4);
 }
