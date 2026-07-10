@@ -26,7 +26,7 @@
 
 void emex64_op_mov(__E64Core core);
 void emex64_op_swp(__E64Core core);
-void emex64_op_swpz(__E64Core core);
+void emex64_op_movz(__E64Core core);
 void emex64_op_push(__E64Core core);
 void emex64_op_pop(__E64Core core);
 void emex64_op_ldb(__E64Core core);
@@ -42,5 +42,14 @@ void emex64_op_clr(__E64Core core);
 
 void emex64_op_cmov(__E64Core core);
 void emex64_op_cmovb(__E64Core core);
+
+void emex64_op_ldbi(__E64Core core);
+void emex64_op_ldwi(__E64Core core);
+void emex64_op_lddi(__E64Core core);
+void emex64_op_ldqi(__E64Core core);
+void emex64_op_stbi(__E64Core core);
+void emex64_op_stwi(__E64Core core);
+void emex64_op_stdi(__E64Core core);
+void emex64_op_stqi(__E64Core core);
 
 #endif /* EMEX64VM_INSTRUCTION_DATA_H */

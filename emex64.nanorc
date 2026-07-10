@@ -1,7 +1,7 @@
 syntax "emex64" "\.(e64|e64inc)$"
 
 # Opcodes
-color brightgreen "\b(hlt|nop|mov|swp|swpz|push|pop|ldb|ldw|ldd|ldq|stb|stw|std|stq|add|sub|mul|div|idiv|mod|inc|dec|not|and|or|xor|shr|shl|ror|rol|pdep|pext|bswapw|bswapd|bswapq|b|cmp|be|bne|blt|bgt|ble|bge|bz|bnz|bl|ret|iret|clr|blw|wret|cmov|cmovb)\b"
+color brightgreen "\b(hlt|nop|mov|swp|swpz|push|pop|ldb|ldw|ldd|ldq|stb|stw|std|stq|ldbi|ldwi|lddi|ldqi|stbi|stwi|stdi|stqi|add|sub|mul|div|idiv|mod|inc|dec|not|and|or|xor|shr|shl|ror|rol|pdep|pext|bswapw|bswapd|bswapq|b|cmp|be|bne|blt|bgt|ble|bge|bz|bnz|bl|ret|iret|clr|blw|wret|cmov|cmovb)\b"
 
 # Directives
 color magenta "\b(db|dw|dd|dq|df|section|extern)\b"

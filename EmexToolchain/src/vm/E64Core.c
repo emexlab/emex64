@@ -50,7 +50,7 @@ const emex64_opfunc_entry_t kE64OpfuncTable[] = {
     /* data operations */
     [kE64OpcodeMOV] = { .func = emex64_op_mov, .minargs = 2, .maxargs = 2, .argmask = 0b10000000000000000000000000000000 },
     [kE64OpcodeSWP] = { .func = emex64_op_swp, .minargs = 2, .maxargs = 2, .argmask = 0b11000000000000000000000000000000 },
-    [kE64OpcodeSWPZ] = { .func = emex64_op_swpz, .minargs = 2, .maxargs = 2, .argmask = 0b11000000000000000000000000000000 },
+    [kE64OpcodeMOVZ] = { .func = emex64_op_movz, .minargs = 2, .maxargs = 2, .argmask = 0b11000000000000000000000000000000 },
     [kE64OpcodePUSH] = { .func = emex64_op_push, .minargs = 1, .maxargs = EMEX64_MAX_ARGS, .argmask = 0b00000000000000000000000000000000 },
     [kE64OpcodePOP] = { .func = emex64_op_pop, .minargs = 1, .maxargs = EMEX64_MAX_ARGS, .argmask = 0b11111111111111111111111111111111 },
     [kE64OpcodeLDB] = { .func = emex64_op_ldb, .minargs = 2, .maxargs = 2, .argmask = 0b10000000000000000000000000000000 },
@@ -108,6 +108,14 @@ const emex64_opfunc_entry_t kE64OpfuncTable[] = {
     [kE64OpcodeCLR] = { .func = emex64_op_clr, .minargs = 1, .maxargs = EMEX64_MAX_ARGS, .argmask = 0b11111111111111111111111111111111 },
     [kE64OpcodeCMOV] = { .func = emex64_op_cmov, .minargs = 2, .maxargs = 2, .argmask = 0b00000000000000000000000000000000 },
     [kE64OpcodeCMOVB] = { .func = emex64_op_cmovb, .minargs = 2, .maxargs = 2, .argmask = 0b10000000000000000000000000000000 },
+    [kE64OpcodeLDBI] = { .func = emex64_op_ldbi, .minargs = 2, .maxargs = 2, .argmask = 0b10000000000000000000000000000000 },
+    [kE64OpcodeLDWI] = { .func = emex64_op_ldwi, .minargs = 2, .maxargs = 2, .argmask = 0b10000000000000000000000000000000 },
+    [kE64OpcodeLDDI] = { .func = emex64_op_lddi, .minargs = 2, .maxargs = 2, .argmask = 0b10000000000000000000000000000000 },
+    [kE64OpcodeLDQI] = { .func = emex64_op_ldqi, .minargs = 2, .maxargs = 2, .argmask = 0b10000000000000000000000000000000 },
+    [kE64OpcodeSTBI] = { .func = emex64_op_stbi, .minargs = 2, .maxargs = 2, .argmask = 0b01000000000000000000000000000000 },
+    [kE64OpcodeSTWI] = { .func = emex64_op_stwi, .minargs = 2, .maxargs = 2, .argmask = 0b01000000000000000000000000000000 },
+    [kE64OpcodeSTDI] = { .func = emex64_op_stdi, .minargs = 2, .maxargs = 2, .argmask = 0b01000000000000000000000000000000 },
+    [kE64OpcodeSTQI] = { .func = emex64_op_stqi, .minargs = 2, .maxargs = 2, .argmask = 0b01000000000000000000000000000000 },
 };
 
 static const UInt8 kImmBits[] = {
