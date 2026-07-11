@@ -27,8 +27,10 @@ section .data
 
 hello:
     mov r0, msg
+    clr r3
 .loop:
-    ldbi r1, r0
+    ldb r1, [r0 + r3]
+    inc r3
 .retry:
     ldq r2, EMEX64_UART_REG_STATUS
     and r2, EMEX64_UART_STATUS_TX_EMPTY

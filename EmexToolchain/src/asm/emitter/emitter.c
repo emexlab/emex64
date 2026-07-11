@@ -107,7 +107,7 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
     }
     if(operand_total < entry->minargs)
     {
-        diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(al->token[al->token_cnt - 1]), "too few operands for a %s instruction, expected %d operands, but got %llu operands\n", al->token[0]->str, entry->minargs, (unsigned long long)operand_total);
+        diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(al->token[al->token_cnt - 1]), "too few operands for a %s instruction, expected %d operands, but got %llu operands", al->token[0]->str, entry->minargs, (unsigned long long)operand_total);
         return false;
     }
 
@@ -146,6 +146,108 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
         if(operand_cnt == 1 && operand[0]->type == kAssemblerTokenTypeRegisterExtended)
         {
             assembler_emit_register_extended(al->inv, operand[0]->register_identifier.v_extended);
+            argno++;
+            continue;
+        }
+
+        /* check if this is a LPack */
+        if(operand[0]->type == kAssemblerTokenTypeLPack)
+        {
+            if(operand_cnt > 5)
+            {
+                diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(operand[operand_cnt - 1]), "too many operands for a lpack statement thingy, expected 5 operands, but got %llu operands", operand_cnt);
+                return false;
+            }
+
+            if(operand_cnt < 5)
+            {
+                diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(operand[operand_cnt - 1]), "too few operands for a lpack statement thingy, expected 5 operands, but got %llu operands", operand_cnt);
+                return false;
+            }
+
+            /* the first operand has to be a register */
+            if(operand[1]->type != kAssemblerTokenTypeRegister && operand[1]->type != kAssemblerTokenTypeRegisterExtended)
+            {
+                diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(operand[1]), "expected register identifier, but got %s '%s'", assembler_lexer_str_for_token_type(operand[1]->type), operand[1]->str);
+                return false;
+            }
+
+            /* the second operand has to be a plus or a minus */
+            if(operand[2]->type == kAssemblerTokenTypePlus)
+            {
+                vbitwalker_write(al->inv->out_vbitwalker, kE64ParameterCodingOffsetAdd, 4);
+            }
+            else if(operand[2]->type == kAssemblerTokenTypeMinus)
+            {
+                vbitwalker_write(al->inv->out_vbitwalker, kE64ParameterCodingOffsetSub, 4);
+            }
+            else
+            {
+                diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(operand[2]), "expected plus or minus, but got %s '%s'", assembler_lexer_str_for_token_type(operand[2]->type), operand[2]->str);
+                return false;
+            }
+
+            if(operand[1]->type == kAssemblerTokenTypeRegister)
+            {
+                assembler_emit_register(al->inv, operand[1]->register_identifier.v);
+            }
+            else
+            {
+                assembler_emit_register_extended(al->inv, operand[1]->register_identifier.v_extended);
+            }
+
+            /* the 3rd operand must be one of the following */
+            if(operand[3]->type == kAssemblerTokenTypeRegister)
+            {
+                assembler_emit_register(al->inv, operand[3]->register_identifier.v);
+            }
+            else if(operand[3]->type == kAssemblerTokenTypeRegisterExtended)
+            {
+                assembler_emit_register_extended(al->inv, operand[3]->register_identifier.v_extended);
+            }
+            else if(operand[3]->type == kAssemblerTokenTypeInteger)
+            {
+                assembler_emit_imm(al->inv, (UInt64)operand[3]->integer_literal.v);
+            }
+            else if(operand[3]->type == kAssemblerTokenTypeIdentifier)
+            {
+                Boolean local;
+                char *label = NULL;
+                if(operand[3]->str[0] == '.')
+                {
+                    local = true;
+                    asprintf(&label, "%s%s", al->inv->label_scope, operand[3]->str);
+                }
+                else
+                {
+                    local = false;
+                    label = strdup(operand[3]->str);
+                }
+
+                vbitwalker_write(al->inv->out_vbitwalker, kE64ParameterCodingAddr64, 4);
+                vbitwalker_align_byte(al->inv->out_vbitwalker);
+
+                if(!assembler_label_relocate_append(al->inv, label, local, operand[3]))
+                {
+                    diagnostic_report(al->inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(operand[3]),  "out of memory, can't append relocation to relocation table");
+                    return false;
+                }
+
+                vbitwalker_skip(al->inv->out_vbitwalker, 64);
+            }
+            else
+            {
+                diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(operand[3]), "unexpected %s '%s'", assembler_lexer_str_for_token_type(operand[3]->type), operand[3]->str);
+                return false;
+            }
+
+            /* the last operand has to be a RPack */
+            if(operand[4]->type != kAssemblerTokenTypeRPack)
+            {
+                diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(operand[4]), "expected a right pack, but got %s '%s'", assembler_lexer_str_for_token_type(operand[4]->type), operand[4]->str);
+                return false;
+            }
+
             argno++;
             continue;
         }

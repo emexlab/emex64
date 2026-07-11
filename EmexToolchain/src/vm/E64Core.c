@@ -202,6 +202,7 @@ static inline void __E64CoreExecuteInstructionAtPC(__E64Core core)
     UInt8 i = 0;
     Boolean offsetMode = false;
     Boolean offsetAdd = false;
+    UInt8 offsetI = 0;
     for(; i < maxarg; i++)
     {
         E64ParameterCoding coding = (UInt8)bb_read(&bb, 4);
@@ -252,6 +253,8 @@ static inline void __E64CoreExecuteInstructionAtPC(__E64Core core)
                 }
                 offsetMode = true;
                 offsetAdd = (coding == kE64ParameterCodingOffsetAdd);
+                maxarg += 3;
+                offsetI = 2;
                 break;
             default:
                 /* illegal coding */
@@ -261,20 +264,25 @@ static inline void __E64CoreExecuteInstructionAtPC(__E64Core core)
 
         if(offsetMode && coding != kE64ParameterCodingOffsetAdd && coding != kE64ParameterCodingOffsetSub)
         {
-            /* forcing operand to be offsetted to be a intermediate and giving it the offset */
-            core->op.immcache[i - 1] = *core->op.param[i - 1];
-            if(offsetAdd)
+            if(--offsetI == 0)
             {
-                core->op.immcache[i - 1] += *core->op.param[i];
-            }
-            else
-            {
-                core->op.immcache[i - 1] -= *core->op.param[i];
-            }
-            core->op.param[i - 1] = &(core->op.immcache[i - 1]);    /* overriding the operand with the offsetted one */
+                /* forcing operand to be offsetted to be a intermediate and giving it the offset */
+                core->op.immcache[i - 1] = *core->op.param[i - 1];
+                if(offsetAdd)
+                {
+                    core->op.immcache[i - 1] += *core->op.param[i];
+                }
+                else
+                {
+                    core->op.immcache[i - 1] -= *core->op.param[i];
+                }
+                core->op.param[i - 2] = &(core->op.immcache[i - 1]);    /* overriding the operand with the offsetted one */
 
-            /* offsets aren't counted as operands */
-            i--;
+                /* offsets aren't counted as operands */
+                i -= 2;
+                maxarg -= 3;
+                offsetMode = false;
+            }
         }
     }
 
