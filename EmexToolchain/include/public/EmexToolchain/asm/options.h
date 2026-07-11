@@ -24,13 +24,13 @@
 
 #include <EmexFoundation/EmexFoundation.h>
 
-typedef struct assembler_driver_options {
+typedef struct {
     Boolean assemble_only;
     Boolean verbose;
     Boolean in_process;
-} assembler_driver_options_t;
+} ETAssemblerDriverOptions;
 
-typedef struct assembler_invocation_options {
+typedef struct {
     /* features */
     Boolean caret_diagnostics;         /* default: true */
     Boolean color_diagnostics;         /* default: true */
@@ -38,9 +38,9 @@ typedef struct assembler_invocation_options {
     /* warnings */
     Boolean warning_error;             /* default: false */
     Boolean warning_deprecated;        /* default: true */
-} assembler_diagnostic_options_t;
+} ETAssemblerDiagnosticOptions;
 
-extern assembler_driver_options_t assembler_driver_options_default;
-extern assembler_diagnostic_options_t assembler_diagnostic_options_default;
+extern ETAssemblerDriverOptions ETAssemblerDriverOptionsDefault;
+extern ETAssemblerDiagnosticOptions ETAssemblerDiagnosticOptionsDefault;
 
 #endif /* EMEX64ASM_OPTIONS_H */

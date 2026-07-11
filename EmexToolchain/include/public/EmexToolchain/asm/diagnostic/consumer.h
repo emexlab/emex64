@@ -41,13 +41,13 @@
 typedef diagnostic_consumer_t assembler_diagnostic_consumer_t;
 
 typedef struct assembler_diagnostic_consumer_context {
-    assembler_diagnostic_options_t options;
+    ETAssemblerDiagnosticOptions options;
     diagnostic_t **diagnostic;
     UInt64 diagnostic_cnt;
     vfd_t *d;
 } assembler_diagnostic_consumer_context_t;
 
-assembler_diagnostic_consumer_t *assembler_diagnostic_consumer_alloc(assembler_diagnostic_options_t options);
+assembler_diagnostic_consumer_t *assembler_diagnostic_consumer_alloc(ETAssemblerDiagnosticOptions options);
 void assembler_diagnostic_consumer_dealloc(assembler_diagnostic_consumer_t *consumer);
 
 void assembler_diagnostic_consumer_emit(assembler_diagnostic_consumer_t *consumer);

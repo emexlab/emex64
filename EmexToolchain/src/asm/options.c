@@ -21,13 +21,13 @@
 
 #include <EmexToolchain/asm/options.h>
 
-assembler_driver_options_t assembler_driver_options_default = {
+ETAssemblerDriverOptions ETAssemblerDriverOptionsDefault = {
     .assemble_only = false,
     .verbose = false,
     .in_process = false,
 };
 
-assembler_diagnostic_options_t assembler_diagnostic_options_default = {
+ETAssemblerDiagnosticOptions ETAssemblerDiagnosticOptionsDefault = {
     .warning_error = false,
     .warning_deprecated = true,
     .caret_diagnostics = true,

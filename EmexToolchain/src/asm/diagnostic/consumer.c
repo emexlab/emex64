@@ -115,7 +115,7 @@ static void __assembler_diagnostic_consumer_consume_diagnostic_handler(diagnosti
     diagnostic_dealloc(diagnostic);
 }
 
-assembler_diagnostic_consumer_t *assembler_diagnostic_consumer_alloc(assembler_diagnostic_options_t options)
+assembler_diagnostic_consumer_t *assembler_diagnostic_consumer_alloc(ETAssemblerDiagnosticOptions options)
 {
     assembler_diagnostic_consumer_t *consumer = malloc(sizeof(assembler_diagnostic_consumer_t));
     if(consumer == NULL)

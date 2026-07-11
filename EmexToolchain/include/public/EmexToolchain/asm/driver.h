@@ -45,8 +45,8 @@ typedef struct assembler_job {
 } assembler_job_t;
 
 typedef struct {
-    assembler_driver_options_t options;
-    assembler_diagnostic_options_t diagnostic_options;
+    ETAssemblerDriverOptions options;
+    ETAssemblerDiagnosticOptions diagnosticOptions;
     assembler_diagnostic_consumer_t *consumer;  /* owned */
     kEmitMode emit_mode;
 

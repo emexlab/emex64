@@ -91,7 +91,7 @@ int main(void)
     }
 
     /* we need the invocation to assemble */
-    assembler_diagnostic_consumer_t *consumer = assembler_diagnostic_consumer_alloc(assembler_diagnostic_options_default);
+    assembler_diagnostic_consumer_t *consumer = assembler_diagnostic_consumer_alloc(ETAssemblerDiagnosticOptionsDefault);
     if(consumer == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate consumer for assembler invocation");
