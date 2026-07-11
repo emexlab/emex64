@@ -158,6 +158,8 @@ lextok_token_t assembler_lexer_tok(const char *token)
                     case ':':
                     case '(':
                     case ')':
+                    case '[':
+                    case ']':
                     case '+':
                     case '-':
                     case '*':
@@ -322,6 +324,12 @@ Boolean assembler_lexer_classify(assembler_token_t *at)
                     case ')':
                         at->type = kAssemblerTokenTypeRParen;
                         return true;
+                    case '[':
+                        at->type = kAssemblerTokenTypeLPack;
+                        return true;
+                    case ']':
+                        at->type = kAssemblerTokenTypeRPack;
+                        return true;
                     case '+':
                         at->type = kAssemblerTokenTypePlus;
                         return true;
@@ -409,6 +417,8 @@ const char *assembler_lexer_str_for_token_type(kAssemblerTokenType type)
         case kAssemblerTokenTypeColon:
         case kAssemblerTokenTypeLParen:
         case kAssemblerTokenTypeRParen:
+        case kAssemblerTokenTypeLPack:
+        case kAssemblerTokenTypeRPack:
             return "punctuation";
         case kAssemblerTokenTypePlus:
         case kAssemblerTokenTypeMinus:

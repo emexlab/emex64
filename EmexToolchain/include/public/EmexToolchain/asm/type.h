@@ -48,6 +48,8 @@ typedef enum: UInt8 {
     kAssemblerTokenTypeMinus,
     kAssemblerTokenTypeMultiply,
     kAssemblerTokenTypeDivide,
+    kAssemblerTokenTypeLPack,
+    kAssemblerTokenTypeRPack,
 } kAssemblerTokenType;
 
 typedef enum: UInt8 {
