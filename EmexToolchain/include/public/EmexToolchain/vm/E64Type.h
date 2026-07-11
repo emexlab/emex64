@@ -91,16 +91,6 @@ typedef enum: UInt8 {
     kE64OpcodeCMOV =    0b00110110,
     kE64OpcodeCMOVB =   0b00110111,
 
-    /* data operations v3 */
-    kE64OpcodeLDBI =    0b00111000,
-    kE64OpcodeLDWI =    0b00111001,
-    kE64OpcodeLDDI =    0b00111010,
-    kE64OpcodeLDQI =    0b00111011,
-    kE64OpcodeSTBI =    0b00111100,
-    kE64OpcodeSTWI =    0b00111101,
-    kE64OpcodeSTDI =    0b00111110,
-    kE64OpcodeSTQI =    0b00111111,
-
     /*
      * for floating point later (ideas atleast):
      *
@@ -117,7 +107,7 @@ typedef enum: UInt8 {
      * ... (what not)
      */
 
-    kE64OpcodeMAX = kE64OpcodeSTQI,
+    kE64OpcodeMAX = kE64OpcodeCMOVB,
 
     kE64OpcodeInvalid =  0b11111111,
 } E64Opcode;
