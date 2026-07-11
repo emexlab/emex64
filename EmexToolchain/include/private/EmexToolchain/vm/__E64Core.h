@@ -33,8 +33,8 @@ typedef struct __E64Machine *E64MachineRef;
 typedef union {
     UInt64 u64;
     UInt32 u32;
-    int64_t i64;
-    int32_t i32;
+    SInt64 i64;
+    SInt32 i32;
     double f64;
     float f32;
 } FPReg;

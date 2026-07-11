@@ -39,13 +39,13 @@ typedef struct linker_object {
     ELF64_Shdr *shdrs;
     char *shstrtab;
 
-    int32_t idx_text;
-    int32_t idx_data;
-    int32_t idx_bss;
-    int32_t idx_rela_text;
-    int32_t idx_rela_data;
-    int32_t idx_symtab;
-    int32_t idx_strtab;
+    SInt32 idx_text;
+    SInt32 idx_data;
+    SInt32 idx_bss;
+    SInt32 idx_rela_text;
+    SInt32 idx_rela_data;
+    SInt32 idx_symtab;
+    SInt32 idx_strtab;
 
     UInt64 base_text; /* text base inside final object */
     UInt64 base_data; /* data base inside final object */

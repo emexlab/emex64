@@ -80,15 +80,15 @@ static Boolean obj_register_symbols(linker_invocation_t *inv,
         {
             addr = sym->st_value;
         }
-        else if((int32_t)sym->st_shndx == o->idx_text)
+        else if((SInt32)sym->st_shndx == o->idx_text)
         {
             addr = o->base_text + sym->st_value;
         }
-        else if((int32_t)sym->st_shndx == o->idx_data)
+        else if((SInt32)sym->st_shndx == o->idx_data)
         {
             addr = o->base_data + sym->st_value;
         }
-        else if((int32_t)sym->st_shndx == o->idx_bss)
+        else if((SInt32)sym->st_shndx == o->idx_bss)
         {
             addr = o->base_bss  + sym->st_value;
         }
@@ -132,15 +132,15 @@ static UInt64 sym_resolve(linker_invocation_t *inv,
 
     if((sym->st_info & 0xf) == kELFSymbolTableTypeSection)
     {
-        if((int32_t)sym->st_shndx == o->idx_text)
+        if((SInt32)sym->st_shndx == o->idx_text)
         {
             return o->base_text;
         }
-        if((int32_t)sym->st_shndx == o->idx_data)
+        if((SInt32)sym->st_shndx == o->idx_data)
         {
             return o->base_data;
         }
-        if((int32_t)sym->st_shndx == o->idx_bss)
+        if((SInt32)sym->st_shndx == o->idx_bss)
         {
             return o->base_bss;
         }
@@ -158,15 +158,15 @@ static UInt64 sym_resolve(linker_invocation_t *inv,
 
         if(sym->st_shndx != kELFSectionHeaderNumberUndefined)
         {
-            if((int32_t)sym->st_shndx == o->idx_text)
+            if((SInt32)sym->st_shndx == o->idx_text)
             {
                 return o->base_text + sym->st_value;
             }
-            if((int32_t)sym->st_shndx == o->idx_data)
+            if((SInt32)sym->st_shndx == o->idx_data)
             {
                 return o->base_data + sym->st_value;
             }
-            if((int32_t)sym->st_shndx == o->idx_bss)
+            if((SInt32)sym->st_shndx == o->idx_bss)
             {
                 return o->base_bss + sym->st_value;
             }
@@ -194,7 +194,7 @@ static Boolean obj_apply_relocs(linker_invocation_t *inv,
             UInt32 type = (UInt32)ELF32_R_TYPE(rela[i].r_info);
             UInt32 sym_idx = (UInt32)ELF32_R_SYM(rela[i].r_info);
             UInt64 offset = rela[i].r_offset;
-            int64_t  addend = rela[i].r_addend;
+            SInt64  addend = rela[i].r_addend;
 
             if(type != R_EMEX64_ABS64)
             {
@@ -227,7 +227,7 @@ static Boolean obj_apply_relocs(linker_invocation_t *inv,
             UInt32 type = (UInt32)ELF32_R_TYPE(rela[i].r_info);
             UInt32 sym_idx = (UInt32)ELF32_R_SYM(rela[i].r_info);
             UInt64 offset = rela[i].r_offset;
-            int64_t addend = rela[i].r_addend;
+            SInt64 addend = rela[i].r_addend;
 
             if(type != R_EMEX64_ABS64)
             {
@@ -434,17 +434,17 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
             UInt64 value = 0;
             UInt16 shndx = kELFSectionHeaderNumberAbsolute;
 
-            if((int32_t)sym->st_shndx == o->idx_text)
+            if((SInt32)sym->st_shndx == o->idx_text)
             {
                 value = (o->base_text + sym->st_value) - text_region_base;
                 shndx = kELFSectionHeaderIndexText;
             }
-            else if((int32_t)sym->st_shndx == o->idx_data)
+            else if((SInt32)sym->st_shndx == o->idx_data)
             {
                 value = (o->base_data + sym->st_value) - data_region_base;
                 shndx = kELFSectionHeaderIndexData;
             }
-            else if((int32_t)sym->st_shndx == o->idx_bss)
+            else if((SInt32)sym->st_shndx == o->idx_bss)
             {
                 value = (o->base_bss + sym->st_value) - bss_region_base;
                 shndx = kELFSectionHeaderIndexBSS;
@@ -480,7 +480,7 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
                 { \
                     UInt32 type = ELF32_R_TYPE(rela[i].r_info); \
                     UInt32 in_sym = ELF32_R_SYM(rela[i].r_info); \
-                    int64_t addend = rela[i].r_addend; \
+                    SInt64 addend = rela[i].r_addend; \
                     if(type != R_EMEX64_ABS64) \
                     { \
                         diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "unsupported relocation type %u", type); \

@@ -528,7 +528,7 @@ void vfdprintf(vfd_t *d, char *fmt, ...)
                             {
                                 case 'd':
                                     i += 2;
-                                    vfd_putnbr_signed(d, va_arg(args, int64_t));
+                                    vfd_putnbr_signed(d, va_arg(args, SInt64));
                                     break;
                                 case 'u':
                                     i += 2;

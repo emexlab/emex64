@@ -472,8 +472,8 @@ static NSString *backuped_windowname;
     CGFloat dx = event.deltaX;
     CGFloat dy = event.deltaY;
 
-    int32_t dx32 = (int32_t)lround(dx);
-    int32_t dy32 = (int32_t)lround(dy);
+    SInt32 dx32 = (SInt32)lround(dx);
+    SInt32 dy32 = (SInt32)lround(dy);
 
     if(dx32 > 127)
     {
@@ -492,8 +492,8 @@ static NSString *backuped_windowname;
         dy32 = -128;
     }
 
-    int8_t dx8 = (int8_t)dx32;
-    int8_t dy8 = (int8_t)dy32;
+    SInt8 dx8 = (SInt8)dx32;
+    SInt8 dy8 = (SInt8)dy32;
 
     if(dx8 < 0)
     {

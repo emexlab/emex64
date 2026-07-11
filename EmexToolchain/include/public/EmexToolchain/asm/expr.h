@@ -36,9 +36,9 @@ typedef struct {
 } assembler_expr_t;
 
 assembler_token_t *expr_peek(assembler_expr_t *e);
-int64_t expr_primary(assembler_expr_t *e);
-int64_t expr_term(assembler_expr_t *e);
-int64_t expr_addsub(assembler_expr_t *e);
-Boolean assembler_eval_const(assembler_token_t **tok, UInt64 count, int64_t *out);
+SInt64 expr_primary(assembler_expr_t *e);
+SInt64 expr_term(assembler_expr_t *e);
+SInt64 expr_addsub(assembler_expr_t *e);
+Boolean assembler_eval_const(assembler_token_t **tok, UInt64 count, SInt64 *out);
 
 #endif /* EMEX64ASM_EXPR_H */

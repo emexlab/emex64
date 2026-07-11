@@ -186,7 +186,7 @@ diagnostic_t *diagnostic_allocv(kDiagnosticSeverity severity,
                             {
                                 case 'd':
                                     i += 2;
-                                    buf_putnbr_signed(&buf, va_arg(args, int64_t));
+                                    buf_putnbr_signed(&buf, va_arg(args, SInt64));
                                     break;
                                 case 'u':
                                     i += 2;

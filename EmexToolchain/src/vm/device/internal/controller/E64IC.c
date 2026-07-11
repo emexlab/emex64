@@ -72,7 +72,7 @@ static void __E64ICMMIOWrite(E64CoreRef core,
             ic->vector_base = value;
             break;
         case EMEX64_INTC_REG_ACK:
-            if((int64_t)value == ic->current_irq)
+            if((SInt64)value == ic->current_irq)
             {
                 ic->current_irq = -1;
             }

@@ -31,13 +31,13 @@ static inline UInt64 emex64_branch_pc(UInt64 pc,
     switch(coding)
     {
         case kE64ParameterCodingImm4:
-            return pc + ((int8_t)(v << 4) >> 4);
+            return pc + ((SInt8)(v << 4) >> 4);
         case kE64ParameterCodingImm8:
-            return pc + (int8_t)v;
+            return pc + (SInt8)v;
         case kE64ParameterCodingImm16:
-            return pc + (int16_t)v;
+            return pc + (SInt16)v;
         case kE64ParameterCodingImm32:
-            return pc + (int32_t)v;
+            return pc + (SInt32)v;
         default:
             return v;
     }
@@ -54,8 +54,8 @@ void emex64_op_cmp(__E64Core core)
 {
     emex64_instr_termcond(core->op.param_cnt != 2);
 
-    int64_t a = (int64_t)*(core->op.param[0]);
-    int64_t b = (int64_t)*(core->op.param[1]);
+    SInt64 a = (SInt64)*(core->op.param[0]);
+    SInt64 b = (SInt64)*(core->op.param[1]);
     
     core->rl[kE64RegisterCF] = (a == b) * kE64CompareFlagZ | (a <  b) * kE64CompareFlagL | (a >  b) * kE64CompareFlagG;
 }

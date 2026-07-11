@@ -63,7 +63,7 @@ static Boolean __assembler_section_emit_value(assembler_invocation_t *inv,
         return true;
     }
 
-    int64_t value;
+    SInt64 value;
     if(!assembler_eval_const(entry, entry_cnt, &value))
     {
         return false;
@@ -72,7 +72,7 @@ static Boolean __assembler_section_emit_value(assembler_invocation_t *inv,
     if(dbs < 64)
     {
         UInt64 umax = (UINT64_C(1) << dbs) - 1;
-        int64_t smin = -(INT64_C(1) << (dbs - 1));
+        SInt64 smin = -(INT64_C(1) << (dbs - 1));
         if(value < smin || (UInt64)value > umax)
         {
             diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(entry[0]), "value %ld doesn't fit in a %d bits data entry", (long long)value, dbs);
@@ -288,7 +288,7 @@ Boolean assembler_section_parse(assembler_invocation_t *inv)
                 return false;
             }
 
-            int64_t count;
+            SInt64 count;
             if(!assembler_eval_const(&inv->line[i]->token[2], inv->line[i]->token_cnt - 2, &count))
             {
                 return false;

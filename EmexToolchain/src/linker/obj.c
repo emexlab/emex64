@@ -27,7 +27,7 @@
 #include <EmexToolchain/linker/obj.h>
 #include <EmexToolchain/vm/E64Memory.h>
 
-static unsigned long obj_sec_align(linker_object_t *o, int32_t idx)
+static unsigned long obj_sec_align(linker_object_t *o, SInt32 idx)
 {
     if(idx < 0)
     {
@@ -147,7 +147,7 @@ linker_object_t *linker_object_alloc(emex_file_t *object_file)
 
     if(obj->idx_symtab >= 0)
     {
-        obj->idx_strtab = (int32_t)obj->shdrs[obj->idx_symtab].sh_link;
+        obj->idx_strtab = (SInt32)obj->shdrs[obj->idx_symtab].sh_link;
     }
 
     return obj;

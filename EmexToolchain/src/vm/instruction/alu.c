@@ -30,7 +30,7 @@
     *(core->op.param[0]) = *(core->op.param[core->op.param_cnt - 2]) act *(core->op.param[core->op.param_cnt - 1]);                     \
 
 #define DEFINE_EMEX64_SIGNED_ARITHMETIC_OP(act)                                                                                         \
-    *(core->op.param[0]) = (int64_t)*(core->op.param[core->op.param_cnt - 2]) act (int64_t)*(core->op.param[core->op.param_cnt - 1]);   \
+    *(core->op.param[0]) = (SInt64)*(core->op.param[core->op.param_cnt - 2]) act (SInt64)*(core->op.param[core->op.param_cnt - 1]);   \
 
 #define DEFINE_EMEX64_ARITHMETIC_OP_ZERO_BAD(act)                                                                                       \
     UInt64 *operand[2] = { core->op.param[core->op.param_cnt - 2], core->op.param[core->op.param_cnt - 1] };                          \
@@ -48,7 +48,7 @@
         core->cr_state.crexc.exception = kE64ExceptionBadArithmetic;                                                                 \
         return;                                                                                                                         \
     }                                                                                                                                   \
-    *(core->op.param[0]) = (int64_t)*operand[0] act (int64_t)*operand[1];
+    *(core->op.param[0]) = (SInt64)*operand[0] act (SInt64)*operand[1];
 
 void emex64_op_add(__E64Core core)
 {
@@ -167,7 +167,7 @@ void emex64_op_rol(__E64Core core)
 {
     emex64_instr_termcond(core->op.param_cnt != 1);
 
-    int64_t v = *core->op.param[0];
+    SInt64 v = *core->op.param[0];
     UInt64 n = (core->op.param_cnt == 2) ? (*core->op.param[1] & 63) : 1;
     *core->op.param[0] = (v << n) | (v >> (64 - n));
 }

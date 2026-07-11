@@ -271,7 +271,7 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
             continue;
         }
 
-        int64_t value;
+        SInt64 value;
         if(!assembler_eval_const(operand, operand_cnt, &value))
         {
             return false;

@@ -36,7 +36,7 @@ typedef struct {
 typedef struct {
     UInt64 r_offset;
     UInt64 r_info;
-    int64_t r_addend;
+    SInt64 r_addend;
 } __attribute__((packed)) ELF64_Rela;
 
 typedef struct linker_symbol {

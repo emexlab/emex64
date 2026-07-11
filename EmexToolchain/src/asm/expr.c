@@ -28,7 +28,7 @@ assembler_token_t *expr_peek(assembler_expr_t *e)
     return (e->pos < e->count) ? e->tok[e->pos] : NULL;
 }
 
-int64_t expr_primary(assembler_expr_t *e)
+SInt64 expr_primary(assembler_expr_t *e)
 {
     assembler_token_t *t = expr_peek(e);
     if(t == NULL)
@@ -49,11 +49,11 @@ int64_t expr_primary(assembler_expr_t *e)
             return -expr_primary(e);
         case kAssemblerTokenTypeInteger:
             e->pos++;
-            return (int64_t)t->integer_literal.v;
+            return (SInt64)t->integer_literal.v;
         case kAssemblerTokenTypeLParen:
         {
             e->pos++;
-            int64_t v = expr_addsub(e);
+            SInt64 v = expr_addsub(e);
             assembler_token_t *close = expr_peek(e);
             if(close == NULL || close->type != kAssemblerTokenTypeRParen)
             {
@@ -78,9 +78,9 @@ int64_t expr_primary(assembler_expr_t *e)
     }
 }
 
-int64_t expr_term(assembler_expr_t *e)
+SInt64 expr_term(assembler_expr_t *e)
 {
-    int64_t v = expr_primary(e);
+    SInt64 v = expr_primary(e);
     while(!e->error)
     {
         assembler_token_t *t = expr_peek(e);
@@ -96,7 +96,7 @@ int64_t expr_term(assembler_expr_t *e)
         else if(t->type == kAssemblerTokenTypeDivide)
         {
             e->pos++;
-            int64_t d = expr_primary(e);
+            SInt64 d = expr_primary(e);
             if(d == 0)
             {
                 e->error = true;
@@ -114,9 +114,9 @@ int64_t expr_term(assembler_expr_t *e)
     return v;
 }
 
-int64_t expr_addsub(assembler_expr_t *e)
+SInt64 expr_addsub(assembler_expr_t *e)
 {
-    int64_t v = expr_term(e);
+    SInt64 v = expr_term(e);
     while(!e->error)
     {
         assembler_token_t *t = expr_peek(e);
@@ -142,14 +142,14 @@ int64_t expr_addsub(assembler_expr_t *e)
     return v;
 }
 
-Boolean assembler_eval_const(assembler_token_t **tok, UInt64 count, int64_t *out)
+Boolean assembler_eval_const(assembler_token_t **tok, UInt64 count, SInt64 *out)
 {
     assembler_expr_t e = {
         .tok = tok, .count = count, .pos = 0,
         .error = false, .blame = NULL, .why = NULL
     };
     
-    int64_t v = expr_addsub(&e);
+    SInt64 v = expr_addsub(&e);
 
     if(e.error)
     {
