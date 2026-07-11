@@ -58,7 +58,7 @@ _start:
 %endif% ; MINIMAL
 
 %ifdef% BENCHMARK
-    bl _put_init
+    bl put_init
     stw gui_line, 0
 
     stq EMEX64_TIMER_REG_COMPARE, 0xFFFFFFFFFFFFFFFF
@@ -66,16 +66,16 @@ _start:
 %endif%
 
 %ifdef% FULL
-    bl _pmm_init
-    bl _interrupt_init
+    bl pmm_init
+    bl interrupt_init
 %endif%
 %ifdef% BENCHMARK
-    bl _pmm_init
-    bl _interrupt_init
+    bl pmm_init
+    bl interrupt_init
 %endif%
 
 %ifdef% FULL
-    blw _interrupt_register_handler, EMEX64_IC_IRQ_TIMER, _timer_handler
+    blw interrupt_register_handler, EMEX64_IC_IRQ_TIMER, _timer_handler
 
     ldq r0, EMEX64_TIMER_REG_FREQ
     div r0, 30
@@ -87,7 +87,7 @@ _start:
     ldb r0, EMEX64_FB_REG_ENABLED
     bz r0, .end
 
-    ldw r10, EMEX64_FB_REG_WIDTH
+    ldw er0, EMEX64_FB_REG_WIDTH
 
 .video_entry:
     add r1, EMEX64_FB_FRAMEBUFFER, VFB_SIZE
@@ -115,13 +115,13 @@ _start:
     bswapq r4
 
 %if% VFB_ENABLED
-    sub r11, r0, EMEX64_FB_FRAMEBUFFER
-    shr r12, r11, 8
-    and r14, r11, 0xFF
-    mul r15, r12, r10
-    add r15, r14
-    add r15, EMEX64_FB_FRAMEBUFFER
-    stq r15, r4
+    sub er1, r0, EMEX64_FB_FRAMEBUFFER
+    shr er2, er1, 8
+    and er4, er1, 0xFF
+    mul er5, er2, er0
+    add er5, er4
+    add er5, EMEX64_FB_FRAMEBUFFER
+    stq er5, r4
 %else%
     stq r0, r4
 %endif%
@@ -137,16 +137,16 @@ _start:
 .end:
 %ifdef% BENCHMARK
     ldq r0, EMEX64_TIMER_REG_COUNT
-    blw _puts, result_msg
-    blw _putbase, r0, 10
-    blw _putc, ' '
-    blw _putc, '('
+    blw puts, result_msg
+    blw putbase, r0, 10
+    blw putc, ' '
+    blw putc, '('
     ldq r0, EMEX64_TIMER_REG_FREQ
-    blw _putbase, r0, 10
-    blw _putc, 'H'
-    blw _putc, 'Z'
-    blw _putc, ')'
-    blw _putc, '\n'
+    blw putbase, r0, 10
+    blw putc, 'H'
+    blw putc, 'Z'
+    blw putc, ')'
+    blw putc, '\n'
 
 .no_end:
     hlt
