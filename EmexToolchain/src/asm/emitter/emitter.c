@@ -63,6 +63,54 @@ Boolean opcode_arg_is_branch_target(E64Opcode op,
     }
 }
 
+Boolean assembler_emit_operand(assembler_token_t *operand)
+{
+    if(operand->type == kAssemblerTokenTypeRegister)
+    {
+        assembler_emit_register(operand->al->inv, operand->register_identifier.v, operand->register_identifier.increment, operand->register_identifier.actuallyDecrement);
+    }
+    else if(operand->type == kAssemblerTokenTypeRegisterExtended)
+    {
+        assembler_emit_register_extended(operand->al->inv, operand->register_identifier.v_extended);
+    }
+    else if(operand->type == kAssemblerTokenTypeInteger)
+    {
+        assembler_emit_imm(operand->al->inv, (UInt64)operand->integer_literal.v);
+    }
+    else if(operand->type == kAssemblerTokenTypeIdentifier)
+    {
+        Boolean local;
+        char *label = NULL;
+        if(operand->str[0] == '.')
+        {
+            local = true;
+            asprintf(&label, "%s%s", operand->al->inv->label_scope, operand->str);
+        }
+        else
+        {
+            local = false;
+            label = strdup(operand->str);
+        }
+
+        vbitwalker_write(operand->al->inv->out_vbitwalker, kE64ParameterCodingAddr64, 4);
+        vbitwalker_align_byte(operand->al->inv->out_vbitwalker);
+
+        if(!assembler_label_relocate_append(operand->al->inv, label, local, operand))
+        {
+            diagnostic_report(operand->al->inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(operand),  "out of memory, can't append relocation to relocation table");
+            return false;
+        }
+
+        vbitwalker_skip(operand->al->inv->out_vbitwalker, 64);
+    }
+    else
+    {
+        diagnostic_report(operand->al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(operand), "unexpected %s '%s'", assembler_lexer_str_for_token_type(operand->type), operand->str);
+        return false;
+    }
+    return true;
+}
+
 Boolean assembler_emit_instruction(assembler_line_t *al)
 {
     if(al->token[0]->type != kAssemblerTokenTypeInstruction)
@@ -164,13 +212,6 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
                 return false;
             }
 
-            /* the first operand has to be a register */
-            if(operand[1]->type != kAssemblerTokenTypeRegister && operand[1]->type != kAssemblerTokenTypeRegisterExtended)
-            {
-                diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(operand[1]), "expected register identifier, but got %s '%s'", assembler_lexer_str_for_token_type(operand[1]->type), operand[1]->str);
-                return false;
-            }
-
             /* the second operand has to be a plus or a minus */
             if(operand[2]->type == kAssemblerTokenTypePlus)
             {
@@ -186,64 +227,8 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
                 return false;
             }
 
-            if(operand[1]->type == kAssemblerTokenTypeRegister)
+            if(!assembler_emit_operand(operand[1]) || !assembler_emit_operand(operand[3]))
             {
-                assembler_emit_register(al->inv, operand[1]->register_identifier.v, operand[1]->register_identifier.increment, operand[1]->register_identifier.actuallyDecrement);
-            }
-            else
-            {
-                assembler_emit_register_extended(al->inv, operand[1]->register_identifier.v_extended);
-            }
-
-            /* the 3rd operand must be one of the following */
-            if(operand[3]->type == kAssemblerTokenTypeRegister)
-            {
-                assembler_emit_register(al->inv, operand[3]->register_identifier.v, operand[3]->register_identifier.increment, operand[3]->register_identifier.actuallyDecrement);
-            }
-            else if(operand[3]->type == kAssemblerTokenTypeRegisterExtended)
-            {
-                assembler_emit_register_extended(al->inv, operand[3]->register_identifier.v_extended);
-            }
-            else if(operand[3]->type == kAssemblerTokenTypeInteger)
-            {
-                assembler_emit_imm(al->inv, (UInt64)operand[3]->integer_literal.v);
-            }
-            else if(operand[3]->type == kAssemblerTokenTypeIdentifier)
-            {
-                Boolean local;
-                char *label = NULL;
-                if(operand[3]->str[0] == '.')
-                {
-                    local = true;
-                    asprintf(&label, "%s%s", al->inv->label_scope, operand[3]->str);
-                }
-                else
-                {
-                    local = false;
-                    label = strdup(operand[3]->str);
-                }
-
-                vbitwalker_write(al->inv->out_vbitwalker, kE64ParameterCodingAddr64, 4);
-                vbitwalker_align_byte(al->inv->out_vbitwalker);
-
-                if(!assembler_label_relocate_append(al->inv, label, local, operand[3]))
-                {
-                    diagnostic_report(al->inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(operand[3]),  "out of memory, can't append relocation to relocation table");
-                    return false;
-                }
-
-                vbitwalker_skip(al->inv->out_vbitwalker, 64);
-            }
-            else
-            {
-                diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(operand[3]), "unexpected %s '%s'", assembler_lexer_str_for_token_type(operand[3]->type), operand[3]->str);
-                return false;
-            }
-
-            /* the last operand has to be a RPack */
-            if(operand[4]->type != kAssemblerTokenTypeRPack)
-            {
-                diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(operand[4]), "expected a right pack, but got %s '%s'", assembler_lexer_str_for_token_type(operand[4]->type), operand[4]->str);
                 return false;
             }
 
