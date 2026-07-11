@@ -200,6 +200,7 @@ static inline void __E64CoreExecuteInstructionAtPC(__E64Core core)
      */
     UInt8 maxarg = core->op.opce->maxargs;
     UInt8 i = 0;
+    Boolean offsetMode = false;
     for(; i < maxarg; i++)
     {
         E64ParameterCoding coding = (UInt8)bb_read(&bb, 4);
@@ -240,21 +241,55 @@ static inline void __E64CoreExecuteInstructionAtPC(__E64Core core)
                 core->op.immcache[i] = core->rl[(UInt8)bb_read(&bb, 4)]--;
                 core->op.param[i] = &(core->op.immcache[i]);
                 break;
+            case kE64ParameterCodingOffset:
+                if(unlikely(offsetMode || i == 0))
+                {
+                    /* shouldn't be in offsetting mode nor the first argument */
+                    core->cr_state.crexc.exception = kE64ExceptionBadInstruction;
+                    return;
+                }
+                offsetMode = true;
+                break;
+            default:
+                /* illegal coding */
+                core->cr_state.crexc.exception = kE64ExceptionBadInstruction;
+                return;
+        }
+
+        if(offsetMode && coding != kE64ParameterCodingOffset)
+        {
+            /* forcing operand to be offsetted to be a intermediate and giving it the offset */
+            core->op.immcache[i - 1] = *core->op.param[i - 1];
+            core->op.immcache[i - 1] += *core->op.param[i];
+            core->op.param[i - 1] = &(core->op.immcache[i - 1]);    /* overriding the operand with the offsetted one */
+
+            /* offsets aren't counted as operands */
+            i--;
         }
     }
 
+    /* offsetting mode shall not be enabled now */
+    if(unlikely(offsetMode))
+    {
+        core->cr_state.crexc.exception = kE64ExceptionBadInstruction;
+        return;
+    }
+
 escape_from_la:
+
     /*
      * now we know all about this instruction, the
      * lenght and the amount of parameters, this is
      * very very very good.
+     *
+     * we had sex in the studio~~ nobody's watching~~   (the weekend escale from la reference xD)
      */
     core->op.param_cnt = i;
     core->op.ilen = (UInt32)((bb.pos + 7u) >> 3);
 
     /* the part of executing the instruction */
     core->op.opce->func(core);
-    core->rl[kE64RegisterPC] += core->op.ilen;   /* FIXME: IDK if it should increment or not due to interrupts */
+    core->rl[kE64RegisterPC] += core->op.ilen;
 
     return;
 }

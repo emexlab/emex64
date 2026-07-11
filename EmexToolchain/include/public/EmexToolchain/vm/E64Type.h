@@ -154,6 +154,9 @@ typedef enum: UInt8 {
      */
     kE64ParameterCodingRegImmInc =      0b1001,
     kE64ParameterCodingRegImmDec =      0b1010,
+
+    /* offsetting */
+    kE64ParameterCodingOffset =         0b1011,
 } E64ParameterCoding;
 
 typedef enum: UInt8 {
