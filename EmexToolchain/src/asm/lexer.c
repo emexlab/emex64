@@ -160,11 +160,27 @@ lextok_token_t assembler_lexer_tok(const char *token)
                     case ')':
                     case '[':
                     case ']':
-                    case '+':
-                    case '-':
                     case '*':
                     case '/':           
                     case ',':
+                        __lextok_handle_punctuation(&a, &retval);
+                        goto break_out;
+
+                    case '+':
+                        if(ltokptr[1] == '+')
+                        {
+                            __lextok_append(&a);
+                            break;
+                        }
+                        __lextok_handle_punctuation(&a, &retval);
+                        goto break_out;
+
+                    case '-':
+                        if(ltokptr[1] == '-')
+                        {
+                            __lextok_append(&a);
+                            break;
+                        }
                         __lextok_handle_punctuation(&a, &retval);
                         goto break_out;
                     
@@ -348,19 +364,23 @@ Boolean assembler_lexer_classify(assembler_token_t *at)
             }
 
             /* checking if it is a register */
-            E64Register reg = register_from_string(at->str);
-            if(reg != kE64RegisterInvalid)
+            E64RegisterIdentifier regIdent = register_from_string(at->str);
+            if(regIdent.valid)
             {
-                at->register_identifier.v = reg;
-                at->type = kAssemblerTokenTypeRegister;
-                return true;
-            }
+                if(regIdent.isExtended)
+                {
+                    at->type = kAssemblerTokenTypeRegisterExtended;
+                    at->register_identifier.v_extended = regIdent.value.extended;
+                }
+                else
+                {
+                    at->type = kAssemblerTokenTypeRegister;
+                    at->register_identifier.v = regIdent.value.base;
+                }
 
-            E64RegisterExtended reg_ext = register_extended_from_string(at->str);
-            if(reg_ext != kE64RegisterExtendedInvalid)
-            {
-                at->register_identifier.v_extended = reg_ext;
-                at->type = kAssemblerTokenTypeRegisterExtended;
+                at->register_identifier.increment = regIdent.increment;
+                at->register_identifier.actuallyDecrement = regIdent.decrement;
+
                 return true;
             }
 
@@ -408,6 +428,7 @@ const char *assembler_lexer_str_for_token_type(kAssemblerTokenType type)
         case kAssemblerTokenTypeString:
             return "string literal";
         case kAssemblerTokenTypeRegister:
+        case kAssemblerTokenTypeRegisterExtended:
             return "register identifier";
         case kAssemblerTokenTypeInstruction:
             return "instruction identifier";

@@ -23,9 +23,28 @@
 #include <EmexToolchain/support/pack.h>
 #include <EmexToolchain/asm/emitter/register.h>
 
-E64Register register_from_string(const char *name)
+static inline E64Register __register_from_string(const char *name)
 {
-    switch(pack_name(name))
+    switch(pack_name_until(name, '+'))
+    {
+        case PACK('p','c'): return kE64RegisterPC;
+        case PACK('s','p'): return kE64RegisterSP;
+        case PACK('f','p'): return kE64RegisterFP;
+        case PACK('f','p','c'): return kE64RegisterFPC;
+        case PACK('r','0'): return kE64RegisterR0;
+        case PACK('r','1'): return kE64RegisterR1;
+        case PACK('r','2'): return kE64RegisterR2;
+        case PACK('r','3'): return kE64RegisterR3;
+        case PACK('r','4'): return kE64RegisterR4;
+        case PACK('r','5'): return kE64RegisterR5;
+        case PACK('r','6'): return kE64RegisterR6;
+        case PACK('r','7'): return kE64RegisterR7;
+        case PACK('r','8'): return kE64RegisterR8;
+        case PACK('r','9'): return kE64RegisterR9;
+        case PACK('r','r'): return kE64RegisterRR;
+    }
+
+    switch(pack_name_until(name, '-'))
     {
         case PACK('p','c'): return kE64RegisterPC;
         case PACK('s','p'): return kE64RegisterSP;
@@ -46,7 +65,7 @@ E64Register register_from_string(const char *name)
     }
 }
 
-E64RegisterExtended register_extended_from_string(const char *name)
+static inline E64RegisterExtended __register_extended_from_string(const char *name)
 {
     switch(pack_name(name))
     {
@@ -65,16 +84,62 @@ E64RegisterExtended register_extended_from_string(const char *name)
         case PACK('e','r','1','2'): return kE64RegisterExtendedER12;
         case PACK('e','r','1','3'): return kE64RegisterExtendedER13;
         case PACK('e','r','1','4'): return kE64RegisterExtendedER14;
+        case PACK('e','r','1','5'): return kE64RegisterExtendedER15;
         default: return kE64RegisterExtendedInvalid;
     }
 }
 
+E64RegisterIdentifier register_from_string(const char *name)
+{
+    E64RegisterIdentifier identifier;
+
+    E64Register reg = __register_from_string(name);
+    E64RegisterExtended ereg = __register_extended_from_string(name);
+
+    identifier.valid = true;
+    if(reg != kE64RegisterInvalid)
+    {
+        identifier.isExtended = false;
+        identifier.value.base = reg;
+        UInt64 packed = pack_name(name);
+        identifier.decrement = has_packed_suffix(packed, PACK('-','-'));
+        identifier.increment = identifier.decrement || has_packed_suffix(packed, PACK('+','+'));
+        return identifier;
+    }
+    else if(ereg != kE64RegisterExtendedInvalid)
+    {
+        identifier.isExtended = true;
+        identifier.value.extended = ereg;
+        identifier.decrement = false;
+        identifier.increment = false;
+        return identifier;
+    }
+    else
+    {
+        identifier.valid = false;
+        return identifier;
+    }
+}
+
 void assembler_emit_register(assembler_invocation_t *inv,
-                             E64Register reg)
+                             E64Register reg,
+                             Boolean increment,
+                             Boolean actuallyDecrement)
 {
     assert(reg <= kE64RegisterMAX);
 
-    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingReg, 4);
+    if(increment && actuallyDecrement)
+    {
+        vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingRegImmDec, 4);
+    }
+    else if(increment)
+    {
+        vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingRegImmInc, 4);
+    }
+    else
+    {
+        vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingReg, 4);
+    }
     vbitwalker_write(inv->out_vbitwalker, reg, 4);
 }
 

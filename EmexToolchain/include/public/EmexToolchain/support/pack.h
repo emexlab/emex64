@@ -59,4 +59,83 @@ static inline UInt64 pack_name(const char *s)
     return s[i] ? UINT64_MAX : v;
 }
 
+static inline UInt64 pack_name_until(const char *s,
+                                     char delimiter)
+{
+    if(s == NULL)
+    {
+        return UINT64_MAX;
+    }
+
+    UInt64 v = 0;
+    int i = 0;
+    for(; i < 9 && s[i] && s[i] != delimiter; i++)
+    {
+        v |= (UInt64)(s[i] & 0x7F) << (i * 7);
+    }
+    return (i == 9 && s[i] && s[i] != delimiter) ? UINT64_MAX : v;
+}
+
+static inline int get_packed_len(UInt64 packed)
+{
+    if(packed == UINT64_MAX)
+    {
+        return 0;
+    }
+    
+    int len = 0;
+    for(int i = 0; i < 9; i++)
+    {
+        if((packed >> (i * 7)) & 0x7F)
+        {
+            len = i + 1;
+        }
+    }
+    return len;
+}
+
+static inline Boolean has_packed_prefix(UInt64 packed_name,
+                                        UInt64 search_for)
+{
+    if(packed_name == UINT64_MAX || search_for == UINT64_MAX)
+    {
+        return false;
+    }
+    if(search_for == 0)
+    {
+        return true;
+    }
+
+    int search_len = get_packed_len(search_for);
+    int bits = search_len * 7;
+    UInt64 mask = ((UInt64)1 << bits) - 1;
+    return (packed_name & mask) == search_for;
+}
+
+static inline Boolean has_packed_suffix(UInt64 packed_name,
+                                        UInt64 search_for)
+{
+    if(packed_name == UINT64_MAX || search_for == UINT64_MAX)
+    {
+        return false;
+    }
+    if(search_for == 0)
+    {
+        return true;
+    }
+
+    int name_len = get_packed_len(packed_name);
+    int search_len = get_packed_len(search_for);
+
+    if(search_len > name_len)
+    {
+        return false;
+    }
+
+    int shift_bits = (name_len - search_len) * 7;
+    UInt64 shifted_name = packed_name >> shift_bits;
+
+    return shifted_name == search_for;
+}
+
 #endif /* EMEX64_PACK_H */

@@ -138,7 +138,7 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
 
         if(operand_cnt == 1 && operand[0]->type == kAssemblerTokenTypeRegister)
         {
-            assembler_emit_register(al->inv, operand[0]->register_identifier.v);
+            assembler_emit_register(al->inv, operand[0]->register_identifier.v, operand[0]->register_identifier.increment, operand[0]->register_identifier.actuallyDecrement);
             argno++;
             continue;
         }
@@ -158,8 +158,7 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
                 diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(operand[operand_cnt - 1]), "too many operands for a lpack statement thingy, expected 5 operands, but got %llu operands", operand_cnt);
                 return false;
             }
-
-            if(operand_cnt < 5)
+            else if(operand_cnt < 5)
             {
                 diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(operand[operand_cnt - 1]), "too few operands for a lpack statement thingy, expected 5 operands, but got %llu operands", operand_cnt);
                 return false;
@@ -189,7 +188,7 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
 
             if(operand[1]->type == kAssemblerTokenTypeRegister)
             {
-                assembler_emit_register(al->inv, operand[1]->register_identifier.v);
+                assembler_emit_register(al->inv, operand[1]->register_identifier.v, operand[1]->register_identifier.increment, operand[1]->register_identifier.actuallyDecrement);
             }
             else
             {
@@ -199,7 +198,7 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
             /* the 3rd operand must be one of the following */
             if(operand[3]->type == kAssemblerTokenTypeRegister)
             {
-                assembler_emit_register(al->inv, operand[3]->register_identifier.v);
+                assembler_emit_register(al->inv, operand[3]->register_identifier.v, operand[3]->register_identifier.increment, operand[3]->register_identifier.actuallyDecrement);
             }
             else if(operand[3]->type == kAssemblerTokenTypeRegisterExtended)
             {

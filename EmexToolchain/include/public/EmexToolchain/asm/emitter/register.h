@@ -25,10 +25,22 @@
 #include <EmexToolchain/vm/E64Core.h>
 #include <EmexToolchain/asm/invocation.h>
 
-E64Register register_from_string(const char *name);
-E64RegisterExtended register_extended_from_string(const char *name);
+typedef struct {
+    Boolean valid;
+    Boolean isExtended;
+    Boolean increment;
+    Boolean decrement;
+    struct {
+        union {
+            E64Register base;
+            E64RegisterExtended extended;
+        };
+    } value;
+} E64RegisterIdentifier;
 
-void assembler_emit_register(assembler_invocation_t *inv, E64Register reg);
+E64RegisterIdentifier register_from_string(const char *name);
+
+void assembler_emit_register(assembler_invocation_t *inv, E64Register reg, Boolean increment, Boolean actuallyDecrement);
 void assembler_emit_register_extended(assembler_invocation_t *inv, E64RegisterExtended reg);
 
 #endif /* EMEX64ASM_EMITTER_REGISTER_H */

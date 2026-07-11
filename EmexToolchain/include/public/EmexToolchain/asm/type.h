@@ -86,6 +86,8 @@ typedef struct assembler_token {
             size_t len;
         } string_literal;
         struct {
+            Boolean increment;
+            Boolean actuallyDecrement;
             union {
                 E64Register v;
                 E64RegisterExtended v_extended;
