@@ -201,6 +201,7 @@ static inline void __E64CoreExecuteInstructionAtPC(__E64Core core)
     UInt8 maxarg = core->op.opce->maxargs;
     UInt8 i = 0;
     Boolean offsetMode = false;
+    Boolean offsetAdd = false;
     for(; i < maxarg; i++)
     {
         E64ParameterCoding coding = (UInt8)bb_read(&bb, 4);
@@ -241,7 +242,8 @@ static inline void __E64CoreExecuteInstructionAtPC(__E64Core core)
                 core->op.immcache[i] = core->rl[(UInt8)bb_read(&bb, 4)]--;
                 core->op.param[i] = &(core->op.immcache[i]);
                 break;
-            case kE64ParameterCodingOffset:
+            case kE64ParameterCodingOffsetAdd:
+            case kE64ParameterCodingOffsetSub:
                 if(unlikely(offsetMode || i == 0))
                 {
                     /* shouldn't be in offsetting mode nor the first argument */
@@ -249,6 +251,7 @@ static inline void __E64CoreExecuteInstructionAtPC(__E64Core core)
                     return;
                 }
                 offsetMode = true;
+                offsetAdd = (coding == kE64ParameterCodingOffsetAdd);
                 break;
             default:
                 /* illegal coding */
@@ -256,11 +259,18 @@ static inline void __E64CoreExecuteInstructionAtPC(__E64Core core)
                 return;
         }
 
-        if(offsetMode && coding != kE64ParameterCodingOffset)
+        if(offsetMode && coding != kE64ParameterCodingOffsetAdd && coding != kE64ParameterCodingOffsetSub)
         {
             /* forcing operand to be offsetted to be a intermediate and giving it the offset */
             core->op.immcache[i - 1] = *core->op.param[i - 1];
-            core->op.immcache[i - 1] += *core->op.param[i];
+            if(offsetAdd)
+            {
+                core->op.immcache[i - 1] += *core->op.param[i];
+            }
+            else
+            {
+                core->op.immcache[i - 1] -= *core->op.param[i];
+            }
             core->op.param[i - 1] = &(core->op.immcache[i - 1]);    /* overriding the operand with the offsetted one */
 
             /* offsets aren't counted as operands */
