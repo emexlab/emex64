@@ -30,19 +30,13 @@
 #include <EmexToolchain/linker/type.h>
 
 typedef enum: UInt8 {
-    kAssemblerJobTypeAssembler,
-    kAssemblerJobTypeDriver,
-    kAssemblerJobTypeLinker
-} kAssemblerJobType;
+    kETAssemblerJobTypeUnknown,
+    kETAssemblerJobTypeAssembler,
+    kETAssemblerJobTypeDriver,
+    kETAssemblerJobTypeLinker
+} ETAssemblerJobType;
 
-typedef struct assembler_job {
-    kAssemblerJobType type;
-    const char *command;        /* borrowed */
-    char **argv;
-    int argc;
-    struct assembler_job *prev;
-    struct assembler_job *next;
-} assembler_job_t;
+typedef struct __ETAssemblerJob *ETAssemblerJobRef;
 
 typedef struct {
     ETAssemblerDriverOptions options;
@@ -67,11 +61,16 @@ typedef struct {
     int linker_flags_cnt;
     char **linker_flags;
 
-    assembler_job_t *job;
+    EFArrayRef jobArrayRef;
 } assembler_driver_t;
 
-assembler_job_t *assembler_job_alloc(assembler_job_t *prev, kAssemblerJobType type, const char *command, int argc, const char **argv);
-void assembler_job_dealloc(assembler_job_t *job);
+EFTypeID ETAssemblerJobGetTypeID(void);
+
+ETAssemblerJobRef ETAssemblerJobCreate(EFAllocatorRef allocatorRef, ETAssemblerJobType type, EFStringRef command, EFArrayRef arguments);
+
+ETAssemblerJobType ETAssemblerJobGetType(ETAssemblerJobRef jobRef);
+EFStringRef ETAssemblerJobGetCommand(ETAssemblerJobRef jobRef);
+EFArrayRef ETAssemblerJobGetArguments(ETAssemblerJobRef jobRef);
 
 assembler_driver_t *assembler_driver_alloc(int argc, const char **argv);
 void assembler_driver_dealloc(assembler_driver_t *driver);

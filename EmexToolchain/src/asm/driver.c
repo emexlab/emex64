@@ -34,94 +34,108 @@
 
 extern char **environ;
 
-assembler_job_t *assembler_job_alloc(assembler_job_t *prev,
-                                     kAssemblerJobType type,
-                                     const char *command,
-                                     int argc,
-                                     const char **argv)
+typedef struct __ETAssemblerJob {
+    EFObject header;
+    ETAssemblerJobType type;
+    EFStringRef command;
+    EFArrayRef arguments;
+} *__ETAssemblerJob;
+
+static void __ETAssemblerJobDeinit(EFObjectRef jobRef)
 {
-    /* whitelisting job types */
-    switch(type)
+    __ETAssemblerJob job = (__ETAssemblerJob)jobRef;
+    EFRelease(job->command);
+    EFRelease(job->arguments);
+}
+
+static EFClass ETAssemblerJobClass = {
+    .name = "ETAssemblerJob",
+    .typeID = kEFNotATypeID,
+    .init = NULL,
+    .deinit = __ETAssemblerJobDeinit,
+    .equal = NULL,
+    .copyDescription = NULL,
+};
+
+static void ETAssemblerJobRegisterClass(void)
+{
+    EFClassRegister(&ETAssemblerJobClass);
+}
+
+EFTypeID ETAssemblerJobGetTypeID(void)
+{
+    static pthread_once_t once = PTHREAD_ONCE_INIT;
+    pthread_once(&once, ETAssemblerJobRegisterClass);
+    return ETAssemblerJobClass.typeID;
+}
+
+ETAssemblerJobRef ETAssemblerJobCreate(EFAllocatorRef allocatorRef,
+                                       ETAssemblerJobType type,
+                                       EFStringRef command,
+                                       EFArrayRef arguments)
+{
+    if(command == NULL || arguments == NULL)
     {
-        case kAssemblerJobTypeAssembler:
-        case kAssemblerJobTypeLinker:
-        case kAssemblerJobTypeDriver:
-            break;
-        default:
-            /* illegal job type */
-            return NULL;
+        return NULL;
     }
 
-    /* allocating job (definetly AI generated btw xD I definetly didn't wrote this comments, cuz it is wayyyyy to generic right??? /s) */
-    assembler_job_t *job = malloc(sizeof(assembler_job_t));
+    EFStringRef ownedCommand = EFRetain(command);
+    if(ownedCommand == NULL)
+    {
+        return NULL;
+    }
+
+    EFArrayRef ownedArguments = EFArrayCreateCopy(allocatorRef, arguments);
+    if(ownedArguments == NULL)
+    {
+        EFRelease(ownedCommand);
+        return NULL;
+    }
+
+    __ETAssemblerJob job = (__ETAssemblerJob)EFObjectAlloc(allocatorRef, ETAssemblerJobGetTypeID(), sizeof(struct __ETAssemblerJob));
+    if(job == NULL)
+    {
+        EFRelease(ownedArguments);
+        EFRelease(ownedCommand);
+        return NULL;
+    }
+
+    job->command = ownedCommand;
+    job->arguments = ownedArguments;
+
+    return (ETAssemblerJobRef)job;
+}
+
+ETAssemblerJobType ETAssemblerJobGetType(ETAssemblerJobRef jobRef)
+{
+    __ETAssemblerJob job = (__ETAssemblerJob)jobRef;
+    if(job == NULL)
+    {
+        return kETAssemblerJobTypeUnknown;
+    }
+
+    return job->type;
+}
+
+EFStringRef ETAssemblerJobGetCommand(ETAssemblerJobRef jobRef)
+{
+    __ETAssemblerJob job = (__ETAssemblerJob)jobRef;
     if(job == NULL)
     {
         return NULL;
     }
 
-    job->type = type;
-
-    /* set command */
-    job->command = command;
-
-    /* copy arguments */
-    job->argc = argc;
-    job->argv = calloc(argc + 1, sizeof(char*));
-    if(job->argv == NULL)
+    return job->command;
+}
+EFArrayRef ETAssemblerJobGetArguments(ETAssemblerJobRef jobRef)
+{
+    __ETAssemblerJob job = (__ETAssemblerJob)jobRef;
+    if(job == NULL)
     {
-        free(job);
         return NULL;
     }
 
-    for(int i = 0; i < argc; i++)
-    {
-        job->argv[i] = strdup(argv[i]);
-        if(job->argv[i] == NULL)
-        {
-            for(int j = 0; j < i; j++)
-            {
-                free(job->argv[j]);
-            }
-            free(job->argv);
-
-            free(job);
-            return NULL;
-        }
-    }
-
-    job->argv[argc] = NULL;
-
-    job->prev = NULL;
-    job->next = NULL;
-
-    if(prev != NULL)
-    {
-        prev->next = job;
-        job->prev = prev;
-    }
-
-    return job;
-}
-
-void assembler_job_dealloc(assembler_job_t *job)
-{
-    for(int i = 0; i < job->argc; i++)
-    {
-        free(job->argv[i]);
-    }
-    free(job->argv);
-
-    if(job->prev != NULL)
-    {
-        job->prev->next = job->next;
-    }
-
-    if(job->next != NULL)
-    {
-        job->next->prev = job->prev;
-    }
-
-    free(job);
+    return job->arguments;
 }
 
 Boolean assembler_driver_predrive(assembler_driver_t *driver,
@@ -552,14 +566,52 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
                     return false;
                 }
 
-                assembler_job_t *new_tail = assembler_job_alloc(driver->job, (driver->options.assemble_only) ? kAssemblerJobTypeAssembler : kAssemblerJobTypeDriver, "emex64asm", ra.argc, (const char**)ra.args);
+                EFMutableArrayRef array = EFArrayCreateMutable(kEFAllocatorDefault, kEFArrayCallbacksObjectCallbacks, ra.argc);
+                if(array == NULL)
+                {
+                    diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate assembler job");
+                    ratchet_args_deinit(&ra);
+                    return false;
+                }
+
+                for(EFIndex index = 0; index < (EFIndex)ra.argc; index++)
+                {
+                    EFStringRef argument = EFStringCreateWithCString(kEFAllocatorDefault, ra.args[index], kEFStringEncodingASCII);
+                    if(argument == NULL)
+                    {
+                        diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate assembler job");
+                        EFRelease(array);
+                        ratchet_args_deinit(&ra);
+                        return false;
+                    }
+
+                    Boolean success = EFArrayAppendValue(array, argument);
+                    EFRelease(argument);
+                    if(!success)
+                    {
+                        diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate assembler job");
+                        EFRelease(array);
+                        ratchet_args_deinit(&ra);
+                        return false;
+                    }
+                }
+
+                ETAssemblerJobRef job = ETAssemblerJobCreate(kEFAllocatorDefault, (driver->options.assemble_only) ? kETAssemblerJobTypeAssembler : kETAssemblerJobTypeDriver, EF_STR("emex64asm"), array);
+                EFRelease(array);
                 ratchet_args_deinit(&ra);
-                if(new_tail == NULL)
+                if(job == NULL)
                 {
                     diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate assembler job");
                     return false;
                 }
-                driver->job = new_tail;
+
+                Boolean success = EFArrayAppendValue(driver->jobArrayRef, job);
+                EFRelease(job);
+                if(!success)
+                {
+                    diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate assembler job");
+                    return false;
+                }
                 break;
             }
             case kEmexFileTypeObject:
@@ -603,35 +655,68 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
             return false;
         }
 
-        assembler_job_t *new_tail = assembler_job_alloc(driver->job, kAssemblerJobTypeLinker, "emex64ld", ra.argc, (const char**)ra.args);
-        ratchet_args_deinit(&ra);
-        if(new_tail == NULL)
+        EFMutableArrayRef array = EFArrayCreateMutable(kEFAllocatorDefault, kEFArrayCallbacksObjectCallbacks, ra.argc);
+        if(array == NULL)
         {
-            diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate linker job");
+            diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate assembler job");
+            ratchet_args_deinit(&ra);
             return false;
         }
-        driver->job = new_tail;
-    }
 
-    assembler_job_t *job = driver->job;
-    while(job != NULL)
-    {
-        driver->job = job;
-        job = job->prev;
+        for(EFIndex index = 0; index < (EFIndex)ra.argc; index++)
+        {
+            EFStringRef argument = EFStringCreateWithCString(kEFAllocatorDefault, ra.args[index], kEFStringEncodingASCII);
+            if(argument == NULL)
+            {
+                diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate assembler job");
+                EFRelease(array);
+                ratchet_args_deinit(&ra);
+                return false;
+            }
+
+            Boolean success = EFArrayAppendValue(array, argument);
+            EFRelease(argument);
+            if(!success)
+            {
+                diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate assembler job");
+                EFRelease(array);
+                ratchet_args_deinit(&ra);
+                return false;
+            }
+        }
+
+        ETAssemblerJobRef job = ETAssemblerJobCreate(kEFAllocatorDefault, kETAssemblerJobTypeLinker, EF_STR("emex64ld"), array);
+        EFRelease(array);
+        ratchet_args_deinit(&ra);
+        if(job == NULL)
+        {
+            diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate assembler job");
+            return false;
+        }
+        
+        ratchet_args_deinit(&ra);
+
+        Boolean success = EFArrayAppendValue(driver->jobArrayRef, job);
+        EFRelease(job);
+        if(!success)
+        {
+            diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate assembler job");
+            return false;
+        }
     }
 
     return true;
 }
 
-const char *assembler_job_string_for_type(kAssemblerJobType type)
+const char *assembler_job_string_for_type(ETAssemblerJobType type)
 {
     switch(type)
     {
-        case kAssemblerJobTypeAssembler:
+        case kETAssemblerJobTypeAssembler:
             return "assembler";
-        case kAssemblerJobTypeLinker:
+        case kETAssemblerJobTypeLinker:
             return "linker";
-        case kAssemblerJobTypeDriver:
+        case kETAssemblerJobTypeDriver:
             return "driver";
         default:
             return "unknown";
@@ -644,6 +729,13 @@ assembler_driver_t *assembler_driver_alloc(int argc,
     assembler_driver_t *driver = calloc(1, sizeof(assembler_driver_t));
     if(driver == NULL)
     {
+        return NULL;
+    }
+
+    driver->jobArrayRef = EFArrayCreateMutable(kEFAllocatorDefault, kEFArrayCallbacksObjectCallbacks, 0);
+    if(driver->jobArrayRef == NULL)
+    {
+        free(driver);
         return NULL;
     }
 
@@ -729,7 +821,7 @@ assembler_driver_t *assembler_driver_alloc(int argc,
             fprintf(stderr, " }\n");
         }
 
-        fprintf(stderr, "jobs: {");
+        /*fprintf(stderr, "jobs: {");
         assembler_job_t *job = driver->job;
         if(job != NULL)
         {
@@ -750,14 +842,12 @@ assembler_driver_t *assembler_driver_alloc(int argc,
                 fprintf(stderr, "%s", job->argv[i]);
             }
             fprintf(stderr, " }\n");
-            fprintf(stderr, "\t\tprev: %p\n", (void*)job->prev);
-            fprintf(stderr, "\t\tnext: %p\n", (void*)job->next);
             fprintf(stderr, "\t}");
             fprintf(stderr, "\n");
 
             job = job->next;
         }
-        fprintf(stderr, "}\n");
+        fprintf(stderr, "}\n");*/
     }
 
     return driver;
@@ -797,13 +887,7 @@ void assembler_driver_dealloc(assembler_driver_t *driver)
     }
     free(driver->linker_flags);
 
-    assembler_job_t *job = driver->job;
-    while(job != NULL)
-    {
-        assembler_job_t *next = job->next;
-        assembler_job_dealloc(job);
-        job = next;
-    }
+    EFRelease(driver->jobArrayRef);
 
     assembler_diagnostic_consumer_emit(driver->consumer);
     assembler_diagnostic_consumer_dealloc(driver->consumer);
@@ -842,12 +926,38 @@ Boolean assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
     }
     else
     {
-        assembler_job_t *job = driver->job;
-        while(job != NULL)
+        EFIndex count = EFArrayGetCount(driver->jobArrayRef);
+        for(EFIndex index = 0; index < count; index++)
         {
-            if(job->type == kAssemblerJobTypeDriver && driver->options.in_process)
+            ETAssemblerJobRef job = EFArrayGetValueAtIndex(driver->jobArrayRef, index);
+            ETAssemblerJobType jobType = ETAssemblerJobGetType(job);
+            EFArrayRef jobArguments = ETAssemblerJobGetArguments(job);
+            EFStringRef jobCommand = ETAssemblerJobGetCommand(job);
+
+            const char *commandPtr = EFStringGetCStringPtr(jobCommand, kEFStringEncodingASCII);
+            if(commandPtr == NULL)
             {
-                assembler_driver_t *subdriver = assembler_driver_alloc(job->argc, (const char**)job->argv);
+                return false;
+            }
+
+            EFIndex argumentsCount = EFArrayGetCount(jobArguments);
+            const char *argv[argumentsCount + 1];
+            for(EFIndex argumentsIndex = 0; argumentsIndex < argumentsCount; argumentsIndex++)
+            {
+                EFStringRef argument = EFArrayGetValueAtIndex(jobArguments, argumentsIndex);
+                const char *cptr = EFStringGetCStringPtr(argument, kEFStringEncodingASCII);
+                if(cptr == NULL)
+                {
+                    return false;
+                }
+
+                argv[argumentsIndex] = cptr;
+            }
+            argv[argumentsCount] = NULL;
+
+            if(jobType == kETAssemblerJobTypeDriver && driver->options.in_process)
+            {
+                assembler_driver_t *subdriver = assembler_driver_alloc(argumentsCount, (const char**)argv);
                 if(subdriver == NULL)
                 {
                     return false;
@@ -860,9 +970,9 @@ Boolean assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
                     return false;
                 }
             }
-            else if(job->type == kAssemblerJobTypeLinker && driver->options.in_process)
+            else if(jobType == kETAssemblerJobTypeLinker && driver->options.in_process)
             {
-                linker_driver_t *subdriver = linker_driver_alloc(job->argc, (const char**)job->argv);
+                linker_driver_t *subdriver = linker_driver_alloc(argumentsCount, (const char**)argv);
                 if(subdriver == NULL)
                 {
                     return false;
@@ -878,7 +988,7 @@ Boolean assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
             else
             {
                 pid_t pid = 0;
-                if(posix_spawnp(&pid, job->command, NULL, NULL, job->argv, environ) != 0)
+                if(posix_spawnp(&pid, commandPtr, NULL, NULL, (char *const *)argv, environ) != 0)
                 {
                     diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL,  "failed to spawn it!");
                     return false;
@@ -899,16 +1009,10 @@ Boolean assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
                 }
                 else if(WIFSIGNALED(rstatus))
                 {
-                    diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "job (command='%s' | pid=%d) terminated by signal %d", job->command, pid, WTERMSIG(rstatus));
+                    diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "job (command='%s' | pid=%d) terminated by signal %d", commandPtr, pid, WTERMSIG(rstatus));
                     return false;
                 }
             }
-
-            if(job->next != NULL && driver->options.verbose)
-            {
-                fprintf(stderr, "\n");
-            }
-            job = job->next;
         }
 
         return true;
