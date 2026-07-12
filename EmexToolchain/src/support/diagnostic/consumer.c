@@ -65,7 +65,7 @@ static diagnostic_consumer_t fallback_consumer = {
 void diagnostic_report(diagnostic_consumer_t *consumer,
                        kDiagnosticSeverity severity,
                        diagnostic_location_t *location,
-                       char *str,
+                       const char *str,
                        ...)
 {
     va_list args;

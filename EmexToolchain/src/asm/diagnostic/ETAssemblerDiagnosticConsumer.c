@@ -19,6 +19,7 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <stdarg.h>
 #include <EmexToolchain/asm/diagnostic/ETAssemblerDiagnosticConsumer.h>
 
 typedef struct __ETAssemblerDiagnosticConsumer {
@@ -83,4 +84,47 @@ assembler_diagnostic_consumer_t *ETAssemblerDiagnosticConsumerGetPtr(ETAssembler
     }
 
     return consumer->consumer;
+}
+
+void ETAssemblerDiagnosticConsumerReport(ETAssemblerDiagnosticConsumerRef consumerRef,
+                                         kDiagnosticSeverity severity,
+                                         diagnostic_location_t *location,
+                                         EFStringRef format,
+                                         ...)
+{
+    __ETAssemblerDiagnosticConsumer consumer = (__ETAssemblerDiagnosticConsumer)consumerRef;
+    if(consumer == NULL || format == NULL)
+    {
+        return;
+    }
+
+    va_list arguments;
+    va_start(arguments, format);
+    EFStringRef result = EFStringCreateWithFormatAndArguments(kEFAllocatorDefault, format, arguments);
+    va_end(arguments);
+    if(result == NULL)
+    {
+        return;
+    }
+
+    const char *cptr = EFStringGetCStringPtr(result, kEFStringEncodingASCII);
+    if(cptr == NULL)
+    {
+        EFRelease(result);
+        return;
+    }
+
+    diagnostic_report(consumer->consumer, severity, location, cptr);
+    EFRelease(result);
+}
+
+void ETAssemblerDiagnosticConsumerEmit(ETAssemblerDiagnosticConsumerRef consumerRef)
+{
+    __ETAssemblerDiagnosticConsumer consumer = (__ETAssemblerDiagnosticConsumer)consumerRef;
+    if(consumer == NULL)
+    {
+        return;
+    }
+
+    assembler_diagnostic_consumer_emit(consumer->consumer);
 }

@@ -33,4 +33,7 @@ ETAssemblerDiagnosticConsumerRef ETAssemblerDiagnosticConsumerCreate(EFAllocator
 
 assembler_diagnostic_consumer_t *ETAssemblerDiagnosticConsumerGetPtr(ETAssemblerDiagnosticConsumerRef consumerRef);
 
+void ETAssemblerDiagnosticConsumerReport(ETAssemblerDiagnosticConsumerRef consumerRef, kDiagnosticSeverity severity, diagnostic_location_t *location, EFStringRef format, ...);
+void ETAssemblerDiagnosticConsumerEmit(ETAssemblerDiagnosticConsumerRef consumerRef);
+
 #endif /* ETASSEMBLERDIAGNOSTICCONSUMER_H */

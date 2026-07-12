@@ -135,7 +135,7 @@ static inline int buf_put_float(diag_buf_t *b, double n)
 
 diagnostic_t *diagnostic_allocv(kDiagnosticSeverity severity,
                                 diagnostic_location_t *location,
-                                char *str,
+                                const char *str,
                                 va_list args)
 {
     assert(str != NULL);
@@ -217,10 +217,7 @@ diagnostic_t *diagnostic_allocv(kDiagnosticSeverity severity,
         }
         else
         {
-            if(str[i] != '\n')
-            {
-                buf_putc(&buf, str[i]);
-            }
+            buf_putc(&buf, str[i]);
         }
         i++;
     }
@@ -284,7 +281,7 @@ diagnostic_t *diagnostic_allocv(kDiagnosticSeverity severity,
 
 diagnostic_t *diagnostic_alloc(kDiagnosticSeverity severity,
                                diagnostic_location_t *location,
-                               char *str,
+                               const char *str,
                                ...)
 {
     va_list args;
