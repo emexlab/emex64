@@ -22,32 +22,54 @@ The VM can be invoked to run firmware with `emex64vm -f <image path>`. Test prog
 These examples will be compiled and directly run with `make`. 
 
 ## Instruction Set Architecture (ISA)
-The instruction coding is variable, it is not a fixed lenght instruction set, which is a CISC concept. Instructions are coded by the first 8 bit serving as the opcode, followed by operands that are not aligned to a byte boundary. Operands are coded by the first 3 bit serving as the type of operand followed by the operand it self. A table of the operand types here:
+The instruction coding is variable, it is not a fixed lenght instruction set, which is a CISC concept. Instructions are coded by the first 8 bit serving as the opcode, followed by operands that are not aligned to a byte boundary. Operands are coded by the first 4 bit serving as the type of operand followed by the operand it self, except it is a offset coding, that means that 2 more operands will follow where the first one is the main operand and the 2nd one is the operand responsible for the offset. A table of the operand types here:
 
 | Type               | Binary       | Description                |
 |--------------------|--------------|----------------------------|
-| End                | `0b000`      | Terminates the instruction, parser stops parsing |
-| Register           | `0b001`      | 5 bit register identifier  |
-| Immediate (5bit)   | `0b010`      | 5 bit immediate            |
-| Immediate (8bit)   | `0b011`      | 8 bit immediate            |
-| Immediate (16bit)  | `0b100`      | 16 bit immediate           |
-| Immediate (32bit)  | `0b101`      | 32 bit immediate           |
-| Immediate (64bit)  | `0b110`      | 64 bit immediate           |
-| Address (64bit)    | `0b111`      | 64 bit immediate, with the difference that the decoder aligns to the next byte boundary, this was done with the intention for easy address relocation in the linker, it payed off >:3. |
+| End                | `0b0000`     | Terminates the instruction, parser stops parsing |
+| Register           | `0b0001`     | 4 bit register identifier  |
+| Immediate (4bit)   | `0b0010`     | 4 bit immediate            |
+| Immediate (8bit)   | `0b0011`     | 8 bit immediate            |
+| Immediate (16bit)  | `0b0100`     | 16 bit immediate           |
+| Immediate (32bit)  | `0b0101`     | 32 bit immediate           |
+| Immediate (64bit)  | `0b0110`     | 64 bit immediate           |
+| Address (64bit)    | `0b0111`     | 64 bit immediate, with the difference that the decoder aligns to the next byte boundary, this was done with the intention for easy address relocation in the linker, it payed off >:3. |
+| Register Extended  | `0b1000`     | 4 bit register identifier to the 2nd register file |
+| Register Increment | `0b1001`     | 4 bit register identifier, but decoder increments register after parse |
+| Register Decrement | `0b1010`     | 4 bit register identifier, but decoder decrements register after parse |
+| Offset Add         | `0b1011`     | Offset Addition |
+| Offset Subtract    | `0b1100`     | Offset Subtraction |
 
-In case it is a immediate it stores the immediate into a immediate cache of the core which then gets used as a operand inside of the operation logic.
+In case it is a immediate it stores the immediate into a immediate cache of the core which then gets used as a operand inside of the operation logic. Offsetted operands are always in the immediate cache.
 
 ### Register Set (RS)
-#### Userspace Accessible Registers
+#### Main Register File
+Each of these registers are accessible in userspace aswell as in kernelspace. These registers also support the operand codings like "Register Increment" and "Register Decrement."
 | Register  | Name                                  | Binary       | Description |
 |-----------|---------------------------------------|--------------|-------------|
-| `pc`      | **P**rogram **C**ounter               | `0b00000`    | Points to the current address at which the CPU currently is, it increments by the lenght of the instruction when the CPU is done executing the instruction at which PC points to at that time. |
-| `sp`      | **S**tack **P**ointer                 | `0b00001`    | Points to the current address at which the stack lives, the stack grows downwards on allocation and upwards on deallocation. |
-| `fp`      | **F**rame **P**ointer                 | `0b00010`    | Points to the address at which the stack frame of the last function call lives, basically empowering you to branch and link and return back without destroying values stored in registers previously. |
-| `cf`      | **C**ontrol **F**lag                  | `0b00011`    | Used by control flow operations like `cmp`, `be` and `bne`. Basically used for if else kind of statements. |
-| `fpc`     | **F**loating **Point** **C**ontrol    | `0b00100`    | Controls the behaviour of the implementation pending floating point registers. |
-| `r0` - `r25`      | General Purpose Registers             | `0b00101` - `0b11111`   | Use it for what ever. |
-| `rr`      | Return Register                       | `0b11111`    | Unaffected by operations like `blw` and `wret`. Intended to be used as a return value register. |
+| `pc`      | **P**rogram **C**ounter               | `0b0000`     | Points to the current address at which the CPU currently is, it increments by the lenght of the instruction when the CPU is done executing the instruction at which PC points to at that time. |
+| `sp`      | **S**tack **P**ointer                 | `0b0001`     | Points to the current address at which the stack lives, the stack grows downwards on allocation and upwards on deallocation. |
+| `fp`      | **F**rame **P**ointer                 | `0b0010`     | Points to the address at which the stack frame of the last function call lives, basically empowering you to branch and link and return back without destroying values stored in registers previously. |
+| `cf`      | **C**ontrol **F**lag                  | `0b0011`     | Used by control flow operations like `cmp`, `be` and `bne`. Basically used for if else kind of statements. |
+| `fpc`     | **F**loating **Point** **C**ontrol    | `0b0100`     | Controls the behaviour of the **implementation pending** floating point registers. |
+| `r0` - `r9`      | General Purpose Registers      | `0b0101` - `0b1110`   | Use it for what ever. |
+| `rr`      | **R**eturn **R**egister               | `0b1111`    | Unaffected by operations like `blw` and `wret`. Intended to be used as a return value register. |
+
+#### Extended Register File
+As only 10 general purpose registers is not much we created a extended register file, but the cavet is that it doesn't support direct decode level manipulation like increment and decrementing in place.
+| Register  | Name                                  | Binary       | Description |
+|-----------|---------------------------------------|--------------|-------------|
+| `er0` - `er15` | Extended General Purpose Registers | `0b0000` - `0b1111`   | Use it for what ever. |
+
+#### Control Register File
+| Register  | Name                                                        | Binary       | Description |
+|-----------|-------------------------------------------------------------|--------------|-------------|
+| `crel`    | **C**ontrol **R**egister **E**leveation **L**evel           | `0b0000`     | Controls the elevation of the core, the higher the value the more priveleged the core is. |
+| `crksp`   | **C**ontrol **R**egister **K**ernel **S**tack **P**ointer   | `0b0001`     | Stores the address of the stack base used when the interrupt controller interrupts the core. |
+| `crexc`   | **C**ontrol **R**egister **E**xception                      | `0b0010`     | Stores exception information. |
+| `crvec`   | **C**ontrol **R**egister **V**ector                         | `0b0011`     | No-Op |
+| `crptb`   | **C**ontrol **P**egister **P**age **T**able **B**ase        | `0b0100`     | Is treated by the MMU as the 5th level page table entry. |
+| `crfpc`   | **C**ontrol **R**egister **F**loating **P**oint **C**ontrol | `0b0101`     | No-Op |
 
 ### Opcode Set
 (1) Applies mathematical operation either on two or one operand together and stores the result into the source, the source must always be a register and can also be a operand.
@@ -65,7 +87,7 @@ In case it is a immediate it stores the immediate into a immediate cache of the 
 |-------------|--------------|-------------|
 | `mov`       | `0b00000010` | Moves a immediate or a value of a register into a register. |
 | `swp`       | `0b00000011` | Swaps the values of two registers. |
-| `swpz`      | `0b00000100` | Swaps the values of two registers, while zeroing out the source. |
+| `movz`      | `0b00000100` | Moves the values of two registers, while zeroing out the source. |
 | `push`      | `0b00000101` | Pushes a immediate or a value of a register onto the stack. *(2) |
 | `pop`       | `0b00000110` | Pops a immediate from the stack into a register. *(2) |
 | `ldb`       | `0b00000111` | Loads a byte from a memory address into a register. |
