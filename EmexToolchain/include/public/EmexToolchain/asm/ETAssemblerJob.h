@@ -19,8 +19,8 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef EMEX64ASM_DRIVER_H
-#define EMEX64ASM_DRIVER_H
+#ifndef ETASSEMBLERJOB_H
+#define ETASSEMBLERJOB_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -28,39 +28,22 @@
 #include <EmexToolchain/support/file.h>
 #include <EmexToolchain/asm/invocation.h>
 #include <EmexToolchain/linker/type.h>
-#include <EmexToolchain/asm/ETAssemblerJob.h>
+
+typedef enum: UInt8 {
+    kETAssemblerJobTypeUnknown,
+    kETAssemblerJobTypeAssembler,
+    kETAssemblerJobTypeDriver,
+    kETAssemblerJobTypeLinker
+} ETAssemblerJobType;
 
 typedef struct __ETAssemblerJob *ETAssemblerJobRef;
 
-typedef struct {
-    ETAssemblerDriverOptions options;
-    ETAssemblerDiagnosticOptions diagnosticOptions;
-    assembler_diagnostic_consumer_t *consumer;  /* owned */
-    kEmitMode emit_mode;
+EFTypeID ETAssemblerJobGetTypeID(void);
 
-    const char *output_path;    /* borrowed */
+ETAssemblerJobRef ETAssemblerJobCreate(EFAllocatorRef allocatorRef, ETAssemblerJobType type, EFStringRef command, EFArrayRef arguments);
 
-    int input_file_count;
-    emex_file_t **input_file;
+ETAssemblerJobType ETAssemblerJobGetType(ETAssemblerJobRef jobRef);
+EFStringRef ETAssemblerJobGetCommand(ETAssemblerJobRef jobRef);
+EFArrayRef ETAssemblerJobGetArguments(ETAssemblerJobRef jobRef);
 
-    size_t inc_dir_cnt;
-    char **inc_dirs;
-
-    size_t tmp_path_cnt;
-    char **tmp_paths;
-
-    UInt64 macro_cnt;
-    assembler_macro_definition_t *macro;
-
-    int linker_flags_cnt;
-    char **linker_flags;
-
-    EFArrayRef jobs;
-} assembler_driver_t;
-
-assembler_driver_t *assembler_driver_alloc(int argc, const char **argv);
-void assembler_driver_dealloc(assembler_driver_t *driver);
-
-Boolean assembler_driver_drive_the_fucking_car(assembler_driver_t *driver);
-
-#endif /* EMEX64ASM_DRIVER_H */
+#endif /* ETASSEMBLERJOB_H */

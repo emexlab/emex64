@@ -34,110 +34,6 @@
 
 extern char **environ;
 
-typedef struct __ETAssemblerJob {
-    EFObject header;
-    ETAssemblerJobType type;
-    EFStringRef command;
-    EFArrayRef arguments;
-} *__ETAssemblerJob;
-
-static void __ETAssemblerJobDeinit(EFObjectRef jobRef)
-{
-    __ETAssemblerJob job = (__ETAssemblerJob)jobRef;
-    EFRelease(job->command);
-    EFRelease(job->arguments);
-}
-
-static EFClass ETAssemblerJobClass = {
-    .name = "ETAssemblerJob",
-    .typeID = kEFNotATypeID,
-    .init = NULL,
-    .deinit = __ETAssemblerJobDeinit,
-    .equal = NULL,
-    .copyDescription = NULL,
-};
-
-static void ETAssemblerJobRegisterClass(void)
-{
-    EFClassRegister(&ETAssemblerJobClass);
-}
-
-EFTypeID ETAssemblerJobGetTypeID(void)
-{
-    static pthread_once_t once = PTHREAD_ONCE_INIT;
-    pthread_once(&once, ETAssemblerJobRegisterClass);
-    return ETAssemblerJobClass.typeID;
-}
-
-ETAssemblerJobRef ETAssemblerJobCreate(EFAllocatorRef allocatorRef,
-                                       ETAssemblerJobType type,
-                                       EFStringRef command,
-                                       EFArrayRef arguments)
-{
-    if(command == NULL || arguments == NULL)
-    {
-        return NULL;
-    }
-
-    EFStringRef ownedCommand = EFRetain(command);
-    if(ownedCommand == NULL)
-    {
-        return NULL;
-    }
-
-    EFArrayRef ownedArguments = EFArrayCreateCopy(allocatorRef, arguments);
-    if(ownedArguments == NULL)
-    {
-        EFRelease(ownedCommand);
-        return NULL;
-    }
-
-    __ETAssemblerJob job = (__ETAssemblerJob)EFObjectAlloc(allocatorRef, ETAssemblerJobGetTypeID(), sizeof(struct __ETAssemblerJob));
-    if(job == NULL)
-    {
-        EFRelease(ownedArguments);
-        EFRelease(ownedCommand);
-        return NULL;
-    }
-
-    job->command = ownedCommand;
-    job->arguments = ownedArguments;
-
-    return (ETAssemblerJobRef)job;
-}
-
-ETAssemblerJobType ETAssemblerJobGetType(ETAssemblerJobRef jobRef)
-{
-    __ETAssemblerJob job = (__ETAssemblerJob)jobRef;
-    if(job == NULL)
-    {
-        return kETAssemblerJobTypeUnknown;
-    }
-
-    return job->type;
-}
-
-EFStringRef ETAssemblerJobGetCommand(ETAssemblerJobRef jobRef)
-{
-    __ETAssemblerJob job = (__ETAssemblerJob)jobRef;
-    if(job == NULL)
-    {
-        return NULL;
-    }
-
-    return job->command;
-}
-EFArrayRef ETAssemblerJobGetArguments(ETAssemblerJobRef jobRef)
-{
-    __ETAssemblerJob job = (__ETAssemblerJob)jobRef;
-    if(job == NULL)
-    {
-        return NULL;
-    }
-
-    return job->arguments;
-}
-
 Boolean assembler_driver_predrive(assembler_driver_t *driver,
                                int argc,
                                const char **argv)
@@ -605,7 +501,7 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
                     return false;
                 }
 
-                Boolean success = EFArrayAppendValue(driver->jobArrayRef, job);
+                Boolean success = EFArrayAppendValue(driver->jobs, job);
                 EFRelease(job);
                 if(!success)
                 {
@@ -696,7 +592,7 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
         
         ratchet_args_deinit(&ra);
 
-        Boolean success = EFArrayAppendValue(driver->jobArrayRef, job);
+        Boolean success = EFArrayAppendValue(driver->jobs, job);
         EFRelease(job);
         if(!success)
         {
@@ -732,8 +628,8 @@ assembler_driver_t *assembler_driver_alloc(int argc,
         return NULL;
     }
 
-    driver->jobArrayRef = EFArrayCreateMutable(kEFAllocatorDefault, kEFArrayCallbacksObjectCallbacks, 0);
-    if(driver->jobArrayRef == NULL)
+    driver->jobs = EFArrayCreateMutable(kEFAllocatorDefault, kEFArrayCallbacksObjectCallbacks, 0);
+    if(driver->jobs == NULL)
     {
         free(driver);
         return NULL;
@@ -887,7 +783,7 @@ void assembler_driver_dealloc(assembler_driver_t *driver)
     }
     free(driver->linker_flags);
 
-    EFRelease(driver->jobArrayRef);
+    EFRelease(driver->jobs);
 
     assembler_diagnostic_consumer_emit(driver->consumer);
     assembler_diagnostic_consumer_dealloc(driver->consumer);
@@ -926,10 +822,10 @@ Boolean assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
     }
     else
     {
-        EFIndex count = EFArrayGetCount(driver->jobArrayRef);
+        EFIndex count = EFArrayGetCount(driver->jobs);
         for(EFIndex index = 0; index < count; index++)
         {
-            ETAssemblerJobRef job = EFArrayGetValueAtIndex(driver->jobArrayRef, index);
+            ETAssemblerJobRef job = EFArrayGetValueAtIndex(driver->jobs, index);
             ETAssemblerJobType jobType = ETAssemblerJobGetType(job);
             EFArrayRef jobArguments = ETAssemblerJobGetArguments(job);
             EFStringRef jobCommand = ETAssemblerJobGetCommand(job);

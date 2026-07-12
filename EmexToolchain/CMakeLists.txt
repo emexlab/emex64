@@ -105,6 +105,7 @@ add_library(EmexToolchain ${LIB_TYPE}
             src/vm/device/board/rtc.c
 
     # Assembler API
+    src/asm/ETAssemblerJob.c
     src/asm/driver.c
     src/asm/lexer.c
     src/asm/expr.c
