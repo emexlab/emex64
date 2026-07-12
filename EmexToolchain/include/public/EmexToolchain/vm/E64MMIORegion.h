@@ -19,19 +19,20 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef E64MMIO_H
-#define E64MMIO_H
+#ifndef E64MMIOREGION_H
+#define E64MMIOREGION_H
 
-#include <stdint.h>
-#include <stdbool.h>
 #include <EmexFoundation/EmexFoundation.h>
+#if ET_PRIVATE
+#include <EmexToolchain/vm/__E64MMIORegion.h>
+#endif /* ET_PRIVATE */
 
 typedef struct __E64Core *E64CoreRef;
 
 typedef UInt64 (*mmio_read_fn)(E64CoreRef core, void *device, UInt64 offset, int size);
 typedef void (*mmio_write_fn)(E64CoreRef core, void *device, UInt64 offset, UInt64 value, int size);
 
-typedef EFObjectRef E64MMIORegionRef;
+typedef struct __E64MMIORegion *E64MMIORegionRef;
 
 EFTypeID E64MMIORegionGetTypeID(void);
 
@@ -43,13 +44,4 @@ void *E64MMIORegionGetDevice(E64MMIORegionRef MMIORegionRef);
 mmio_read_fn E64MMIORegionGetReadSymbol(E64MMIORegionRef MMIORegionRef);
 mmio_write_fn E64MMIORegionGetWriteSymbol(E64MMIORegionRef MMIORegionRef);
 
-typedef EFObjectRef E64MMIOBusRef;
-
-EFTypeID E64MMIOBusGetTypeID(void);
-
-E64MMIOBusRef E64MMIOBusCreate(EFAllocatorRef allocatorRef);
-
-Boolean E64MMIOBusRegisterRegion(E64MMIOBusRef MMIOBusRef, E64MMIORegionRef MMIORegionRef);
-E64MMIORegionRef E64MMIOBusGetRegionForAddress(E64MMIOBusRef MMIOBusRef, UInt64 addr);
-
-#endif /* E64MMIO_H */
+#endif /* E64MMIOREGION_H */
