@@ -59,7 +59,7 @@ typedef enum: UInt8 {
 
 _Thread_local static const char *stokptr;
 _Thread_local static const char *ltokptr;
-_Thread_local static char otoken[LEXTOK_LENGHT_MAX + 1];
+_Thread_local static char otoken[LEXTOK_LENGHT_MAX + 2];
 
 static inline void __lextok_skip_ignore_spaces(void)
 {
@@ -161,7 +161,7 @@ lextok_token_t assembler_lexer_tok(const char *token)
                     case '[':
                     case ']':
                     case '*':
-                    case '/':           
+                    case '/':
                     case ',':
                         __lextok_handle_punctuation(&a, &retval);
                         goto break_out;
@@ -183,13 +183,13 @@ lextok_token_t assembler_lexer_tok(const char *token)
                         }
                         __lextok_handle_punctuation(&a, &retval);
                         goto break_out;
-                    
+
                     /* handling string beginnings */
                     case '"':
                         token_mode = kLextokTokenModeString;
                         retval.type = kAssemblerTokenTypeInvalid;
                         break;
-                    
+
                     /* handling character beginnings */
                     case '\'':
                         token_mode = kLextokTokenModeCharacter;
@@ -201,7 +201,7 @@ lextok_token_t assembler_lexer_tok(const char *token)
                         token_mode = kLextokTokenModeHeaderName;
                         retval.type = kAssemblerTokenTypeInvalid;
                         break;
-                    
+
                     default:
                         break;
                 }
