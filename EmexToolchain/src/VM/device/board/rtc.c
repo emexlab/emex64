@@ -19,17 +19,34 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/ETLinker/linker.h>
+#include <EmexToolchain/VM/device/board/rtc.h>
+#include <time.h>
 
-int main(int argc, const char *argv[])
+UInt64 emex64_rtc_read(E64CoreRef core,
+                       void *device,
+                       UInt64 offset,
+                       int size)
 {
-    linker_driver_t *driver = linker_driver_alloc(argc, argv);
-    if(driver == NULL)
-    {
-        return 1;
-    }
+    time_t now = time(NULL);
+    struct tm *t = localtime(&now);
 
-    Boolean success = linker_driver_drive_the_fucking_car(driver);
-    linker_driver_dealloc(driver);
-    return success ? 0 : 1;
+    switch(offset)
+    {
+        case RTC_REG_SECONDS:
+            return t->tm_sec;
+        case RTC_REG_MINUTES:
+            return t->tm_min;
+        case RTC_REG_HOURS:
+            return t->tm_hour;
+        case RTC_REG_DAY:
+            return t->tm_mday;
+        case RTC_REG_MONTH:
+            return t->tm_mon + 1;
+        case RTC_REG_YEAR:
+            return (UInt64)((t->tm_year + 1900) % 100);
+        case RTC_REG_WEEKDAY:
+            return t->tm_wday;
+        default:
+            return 0;
+    }
 }

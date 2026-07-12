@@ -19,17 +19,21 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/ETLinker/linker.h>
+#ifndef EMEX64LD_SCRIPT_H
+#define EMEX64LD_SCRIPT_H
 
-int main(int argc, const char *argv[])
-{
-    linker_driver_t *driver = linker_driver_alloc(argc, argv);
-    if(driver == NULL)
-    {
-        return 1;
-    }
+#include <EmexToolchain/Support/file.h>
+#include <EmexToolchain/ETLinker/type.h>
 
-    Boolean success = linker_driver_drive_the_fucking_car(driver);
-    linker_driver_dealloc(driver);
-    return success ? 0 : 1;
-}
+typedef struct linker_invocation linker_invocation_t;
+
+typedef struct {
+    const char *script_path;    /* borrowed */
+    char *name;
+    char *expr;
+} script_sym_t;
+
+Boolean linker_script_parse(linker_invocation_t *inv, emex_file_t *script_file);
+Boolean linker_script_apply(linker_invocation_t *inv, UInt64 image_end, UInt64 text_start, UInt64 data_start, UInt64 bss_start);
+
+#endif /* EMEX64LD_SCRIPT_H */

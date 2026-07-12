@@ -19,17 +19,28 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/ETLinker/linker.h>
+#ifndef EMEX64VM_CORE_H
+#define EMEX64VM_CORE_H
 
-int main(int argc, const char *argv[])
-{
-    linker_driver_t *driver = linker_driver_alloc(argc, argv);
-    if(driver == NULL)
-    {
-        return 1;
-    }
+#include <stdbool.h>
+#include <pthread.h>
+#include <EmexFoundation/EmexFoundation.h>
+#include <EmexToolchain/VM/E64Type.h>
+#ifdef ET_PRIVATE
+#include <EmexToolchain/VM/__E64Core.h>
+#endif /* ET_PRIVATE */
 
-    Boolean success = linker_driver_drive_the_fucking_car(driver);
-    linker_driver_dealloc(driver);
-    return success ? 0 : 1;
-}
+typedef struct __E64Core *E64CoreRef;
+
+EFTypeID E64CoreGetTypeID(void);
+
+E64CoreRef E64CoreCreate(EFAllocatorRef allocatorRef);
+E64Exception E64CoreExecute(E64CoreRef coreRef);
+void E64CoreTerminate(E64CoreRef coreRef);
+
+UInt64 E64CoreGetValueFromRegister(E64CoreRef coreRef, E64Register reg);
+void E64CoreSetRegisterWithValue(E64CoreRef coreRef, E64Register reg, UInt64 value);
+
+E64Exception E64CoreGetException(E64CoreRef coreRef);
+
+#endif /* EMEX64VM_CORE_H */

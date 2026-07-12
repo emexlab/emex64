@@ -19,17 +19,12 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/ETLinker/linker.h>
+#ifndef EMEX64VM_INSTRUCTION_CORE_H
+#define EMEX64VM_INSTRUCTION_CORE_H
 
-int main(int argc, const char *argv[])
-{
-    linker_driver_t *driver = linker_driver_alloc(argc, argv);
-    if(driver == NULL)
-    {
-        return 1;
-    }
+#include <EmexToolchain/VM/E64Core.h>
 
-    Boolean success = linker_driver_drive_the_fucking_car(driver);
-    linker_driver_dealloc(driver);
-    return success ? 0 : 1;
-}
+void emex64_op_hlt(__E64Core core);
+void emex64_op_nop(__E64Core core);
+
+#endif /* EMEX64VM_INSTRUCTION_CORE_H */

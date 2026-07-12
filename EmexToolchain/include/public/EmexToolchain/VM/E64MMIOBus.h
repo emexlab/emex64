@@ -19,17 +19,22 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/ETLinker/linker.h>
+#ifndef E64MMIOBUS_H
+#define E64MMIOBUS_H
 
-int main(int argc, const char *argv[])
-{
-    linker_driver_t *driver = linker_driver_alloc(argc, argv);
-    if(driver == NULL)
-    {
-        return 1;
-    }
+#include <EmexFoundation/EmexFoundation.h>
+#include <EmexToolchain/VM/E64MMIORegion.h>
+#if ET_PRIVATE
+#include <EmexToolchain/VM/__E64MMIOBus.h>
+#endif /* ET_PRIVATE */
 
-    Boolean success = linker_driver_drive_the_fucking_car(driver);
-    linker_driver_dealloc(driver);
-    return success ? 0 : 1;
-}
+typedef EFObjectRef E64MMIOBusRef;
+
+EFTypeID E64MMIOBusGetTypeID(void);
+
+E64MMIOBusRef E64MMIOBusCreate(EFAllocatorRef allocatorRef);
+
+Boolean E64MMIOBusRegisterRegion(E64MMIOBusRef MMIOBusRef, E64MMIORegionRef MMIORegionRef);
+E64MMIORegionRef E64MMIOBusGetRegionForAddress(E64MMIOBusRef MMIOBusRef, UInt64 addr);
+
+#endif /* E64MMIOBUS_H */

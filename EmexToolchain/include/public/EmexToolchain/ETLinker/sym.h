@@ -19,17 +19,35 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/ETLinker/linker.h>
+#ifndef EMEX64LD_SYM_H
+#define EMEX64LD_SYM_H
 
-int main(int argc, const char *argv[])
-{
-    linker_driver_t *driver = linker_driver_alloc(argc, argv);
-    if(driver == NULL)
-    {
-        return 1;
-    }
+#include <EmexToolchain/ETLinker/type.h>
 
-    Boolean success = linker_driver_drive_the_fucking_car(driver);
-    linker_driver_dealloc(driver);
-    return success ? 0 : 1;
-}
+typedef struct {
+    UInt32 st_name;
+    UInt8 st_info;
+    UInt8 st_other;
+    UInt16 st_shndx;
+    UInt64 st_value;
+    UInt64 st_size;
+} __attribute__((packed)) ELF64_Sym;
+
+typedef struct {
+    UInt64 r_offset;
+    UInt64 r_info;
+    SInt64 r_addend;
+} __attribute__((packed)) ELF64_Rela;
+
+typedef struct linker_symbol {
+    char *name;
+    char *object_path;
+    UInt64 addr;
+    Boolean defined;
+    struct linker_symbol *next;
+} linker_symbol_t;
+
+linker_symbol_t *linker_symbol_alloc(const char *name, const char *object_path, UInt64 addr, Boolean defined);
+void linker_symbol_dealloc(linker_symbol_t *sym);
+
+#endif /* EMEX64LD_SYM_H */

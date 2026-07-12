@@ -19,7 +19,7 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/asm/driver.h>
+#include <EmexToolchain/ETAssembler/driver.h>
 
 int main(int argc, const char *argv[])
 {

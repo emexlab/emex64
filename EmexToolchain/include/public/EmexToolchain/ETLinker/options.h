@@ -19,17 +19,17 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/ETLinker/linker.h>
+#ifndef EMEX64LD_OPTIONS_H
+#define EMEX64LD_OPTIONS_H
 
-int main(int argc, const char *argv[])
-{
-    linker_driver_t *driver = linker_driver_alloc(argc, argv);
-    if(driver == NULL)
-    {
-        return 1;
-    }
+#include <EmexToolchain/ETLinker/type.h>
 
-    Boolean success = linker_driver_drive_the_fucking_car(driver);
-    linker_driver_dealloc(driver);
-    return success ? 0 : 1;
-}
+typedef struct linker_options {
+    Boolean verbose;
+    kEmitMode emit_mode;
+    const char *entry_name; /* borrowed */
+} linker_options_t;
+
+extern linker_options_t linker_options_default;
+
+#endif /* EMEX64LD_OPTIONS_H */

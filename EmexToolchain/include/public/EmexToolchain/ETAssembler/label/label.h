@@ -19,17 +19,22 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/ETLinker/linker.h>
+#ifndef EMEX64ASM_LABEL_LABEL_H
+#define EMEX64ASM_LABEL_LABEL_H
 
-int main(int argc, const char *argv[])
-{
-    linker_driver_t *driver = linker_driver_alloc(argc, argv);
-    if(driver == NULL)
-    {
-        return 1;
-    }
+#include <EmexToolchain/ETAssembler/type.h>
 
-    Boolean success = linker_driver_drive_the_fucking_car(driver);
-    linker_driver_dealloc(driver);
-    return success ? 0 : 1;
-}
+typedef struct assembler_invocation assembler_invocation_t;
+
+typedef struct {
+    char *name;                             /* name of resolved label */
+    Boolean defined;                           /* label definitions are defined */
+    UInt64 addr;                          /* address of resolved label */
+    assembler_token_t *at_link;             /* link to the originator of the label */
+} assembler_label_t;
+
+Boolean assembler_label_append(assembler_token_t *at);
+
+assembler_label_t *assembler_label_lookup(assembler_invocation_t *inv, const char *name);
+
+#endif /* EMEX64ASM_LABEL_LABEL_H */

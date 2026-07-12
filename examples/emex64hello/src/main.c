@@ -21,10 +21,10 @@
 
 #include <stdio.h>
 #include <fcntl.h>
-#include <EmexToolchain/support/diagnostic/log.h>
-#include <EmexToolchain/asm/invocation.h>
-#include <EmexToolchain/linker/linker.h>
-#include <EmexToolchain/vm/E64Machine.h>
+#include <EmexToolchain/Support/diagnostic/log.h>
+#include <EmexToolchain/ETAssembler/invocation.h>
+#include <EmexToolchain/ETLinker/linker.h>
+#include <EmexToolchain/VM/E64Machine.h>
 
 static inline emex_file_t *emex_file_alloc_vopen(const char *path,
                                                  emex_file_policy_t policy)

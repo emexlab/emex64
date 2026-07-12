@@ -19,17 +19,17 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/ETLinker/linker.h>
+#ifndef EMEX64ASM_EMITTER_IMMEDIATE_H
+#define EMEX64ASM_EMITTER_IMMEDIATE_H
 
-int main(int argc, const char *argv[])
-{
-    linker_driver_t *driver = linker_driver_alloc(argc, argv);
-    if(driver == NULL)
-    {
-        return 1;
-    }
+#include <EmexToolchain/ETAssembler/invocation.h>
 
-    Boolean success = linker_driver_drive_the_fucking_car(driver);
-    linker_driver_dealloc(driver);
-    return success ? 0 : 1;
-}
+void assembler_emit_imm5(assembler_invocation_t *inv, UInt8 imm);
+void assembler_emit_imm8(assembler_invocation_t *inv, UInt8 imm);
+void assembler_emit_imm16(assembler_invocation_t *inv, UInt16 imm);
+void assembler_emit_imm32(assembler_invocation_t *inv, UInt32 imm);
+void assembler_emit_imm64(assembler_invocation_t *inv, UInt64 imm);
+void assembler_emit_addr64(assembler_invocation_t *inv, UInt64 addr);
+void assembler_emit_imm(assembler_invocation_t *inv, UInt64 imm);
+
+#endif /* EMEX64ASM_EMITTER_IMMEDIATE_H */

@@ -19,17 +19,17 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/ETLinker/linker.h>
+#include <EmexToolchain/ETAssembler/options.h>
 
-int main(int argc, const char *argv[])
-{
-    linker_driver_t *driver = linker_driver_alloc(argc, argv);
-    if(driver == NULL)
-    {
-        return 1;
-    }
+ETAssemblerDriverOptions ETAssemblerDriverOptionsDefault = {
+    .assemble_only = false,
+    .verbose = false,
+    .in_process = false,
+};
 
-    Boolean success = linker_driver_drive_the_fucking_car(driver);
-    linker_driver_dealloc(driver);
-    return success ? 0 : 1;
-}
+ETAssemblerDiagnosticOptions ETAssemblerDiagnosticOptionsDefault = {
+    .warning_error = false,
+    .warning_deprecated = true,
+    .caret_diagnostics = true,
+    .color_diagnostics = true,
+};

@@ -19,17 +19,19 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/ETLinker/linker.h>
+#ifndef EMEX64VM_DEVICE_PLATFORM_H
+#define EMEX64VM_DEVICE_PLATFORM_H
 
-int main(int argc, const char *argv[])
-{
-    linker_driver_t *driver = linker_driver_alloc(argc, argv);
-    if(driver == NULL)
-    {
-        return 1;
-    }
+#include <stdint.h>
+#include <EmexToolchain/VM/device/base.h>
 
-    Boolean success = linker_driver_drive_the_fucking_car(driver);
-    linker_driver_dealloc(driver);
-    return success ? 0 : 1;
-}
+#define EMEX64_PLATFORM_SIZE    0x08
+
+#define PLATFORM_REG_PWR        0x00
+
+typedef struct __E64Core *E64CoreRef;
+
+UInt64 emex64_platform_read(E64CoreRef core, void *device, UInt64 offset, int size);
+void emex64_platform_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, int size);
+
+#endif /* EMEX64VM_DEVICE_PLATFORM_H */

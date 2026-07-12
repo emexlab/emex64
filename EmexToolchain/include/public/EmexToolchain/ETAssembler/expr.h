@@ -19,17 +19,24 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/ETLinker/linker.h>
+#ifndef EMEX64ASM_EXPR_H
+#define EMEX64ASM_EXPR_H
 
-int main(int argc, const char *argv[])
-{
-    linker_driver_t *driver = linker_driver_alloc(argc, argv);
-    if(driver == NULL)
-    {
-        return 1;
-    }
+#include <EmexToolchain/ETAssembler/type.h>
 
-    Boolean success = linker_driver_drive_the_fucking_car(driver);
-    linker_driver_dealloc(driver);
-    return success ? 0 : 1;
-}
+typedef struct {
+    assembler_token_t **tok;
+    UInt64 count;
+    UInt64 pos;
+    Boolean error;
+    assembler_token_t *blame;
+    const char *why;
+} assembler_expr_t;
+
+assembler_token_t *expr_peek(assembler_expr_t *e);
+SInt64 expr_primary(assembler_expr_t *e);
+SInt64 expr_term(assembler_expr_t *e);
+SInt64 expr_addsub(assembler_expr_t *e);
+Boolean assembler_eval_const(assembler_token_t **tok, UInt64 count, SInt64 *out);
+
+#endif /* EMEX64ASM_EXPR_H */

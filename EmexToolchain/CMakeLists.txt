@@ -55,98 +55,98 @@ endif()
 
 add_library(EmexToolchain ${LIB_TYPE}
     # Support API
-    src/support/parser.c
-    src/support/file.c
-    src/support/bitbolt.c
+    src/Support/parser.c
+    src/Support/file.c
+    src/Support/bitbolt.c
 
         ## Diagnostic API (Errors, Warnings, Notes, etc ^^)
-        src/support/diagnostic/diagnostic.c
-        src/support/diagnostic/consumer.c
+        src/Support/diagnostic/diagnostic.c
+        src/Support/diagnostic/consumer.c
 
         ## Virtual API (Virtualized UNIX Primitives)
-        src/support/virtual/vpage.c
-        src/support/virtual/vpageobj.c
-        src/support/virtual/vfd.c
-        src/support/virtual/vbitwalker.c
+        src/Support/virtual/vpage.c
+        src/Support/virtual/vpageobj.c
+        src/Support/virtual/vfd.c
+        src/Support/virtual/vbitwalker.c
 
         ## Ratchet API (Safe argument array construction, etc)
-        src/support/ratchet/args.c
+        src/Support/ratchet/args.c
 
         ## Hashmap API
-        src/support/hashmap/hashmap.c
+        src/Support/hashmap/hashmap.c
 
     # Virtual Machine API
-    src/vm/E64MachineOptions.c
-    src/vm/E64Machine.c
-    src/vm/E64Memory.c
-    src/vm/E64MMIORegion.c
-    src/vm/E64MMIOBus.c
-    src/vm/E64Core.c
+    src/VM/E64MachineOptions.c
+    src/VM/E64Machine.c
+    src/VM/E64Memory.c
+    src/VM/E64MMIORegion.c
+    src/VM/E64MMIOBus.c
+    src/VM/E64Core.c
 
         ## Instruction Handlers
-        src/vm/instruction/core.c
-        src/vm/instruction/data.c
-        src/vm/instruction/alu.c
-        src/vm/instruction/ctrl.c
+        src/VM/instruction/core.c
+        src/VM/instruction/data.c
+        src/VM/instruction/alu.c
+        src/VM/instruction/ctrl.c
 
         ## Devices
 
             ### SoC internal devices
-            src/vm/device/internal/controller/E64IC.c
-            src/vm/device/internal/controller/mem.c
-            src/vm/device/internal/timer.c
+            src/VM/device/internal/controller/E64IC.c
+            src/VM/device/internal/controller/mem.c
+            src/VM/device/internal/timer.c
 
             ### Board devices
-            src/vm/device/board/controller/power.c
-            src/vm/device/board/controller/8042.c
+            src/VM/device/board/controller/power.c
+            src/VM/device/board/controller/8042.c
             #src/vm/device/board/controller/gfx.c
             #src/vm/device/board/gfx/vimmio.c
-            src/vm/device/board/display.c
-            src/vm/device/board/uart.c
-            src/vm/device/board/rtc.c
+            src/VM/device/board/display.c
+            src/VM/device/board/uart.c
+            src/VM/device/board/rtc.c
 
     # Assembler API
-    src/asm/ETAssemblerJob.c
-    src/asm/driver.c
-    src/asm/lexer.c
-    src/asm/expr.c
-    src/asm/code.c
-    src/asm/options.c
-    src/asm/invocation.c
-    src/asm/section.c
+    src/ETAssembler/ETAssemblerJob.c
+    src/ETAssembler/driver.c
+    src/ETAssembler/lexer.c
+    src/ETAssembler/expr.c
+    src/ETAssembler/code.c
+    src/ETAssembler/options.c
+    src/ETAssembler/invocation.c
+    src/ETAssembler/section.c
 
         ## Diagnostic API (Errors, Warnings, Notes, etc ^^)
-        src/asm/diagnostic/consumer.c
-        src/asm/diagnostic/ETAssemblerDiagnosticConsumer.c
+        src/ETAssembler/diagnostic/consumer.c
+        src/ETAssembler/diagnostic/ETAssemblerDiagnosticConsumer.c
 
         ## Preprocessor API
-        src/asm/preprocessor/directive.c
-        src/asm/preprocessor/macro.c
-        src/asm/preprocessor/condition.c
-        src/asm/preprocessor/preprocessor.c
+        src/ETAssembler/preprocessor/directive.c
+        src/ETAssembler/preprocessor/macro.c
+        src/ETAssembler/preprocessor/condition.c
+        src/ETAssembler/preprocessor/preprocessor.c
 
         ## Label API
-        src/asm/label/label.c
-        src/asm/label/relocate.c
+        src/ETAssembler/label/label.c
+        src/ETAssembler/label/relocate.c
 
         ## Emitter API
-        src/asm/emitter/emitter.c
-        src/asm/emitter/immediate.c
-        src/asm/emitter/opcode.c
-        src/asm/emitter/register.c
-        src/asm/emitter/elf.c
+        src/ETAssembler/emitter/emitter.c
+        src/ETAssembler/emitter/immediate.c
+        src/ETAssembler/emitter/opcode.c
+        src/ETAssembler/emitter/register.c
+        src/ETAssembler/emitter/elf.c
 
     # Linker API
-    src/linker/driver.c
-    src/linker/linker.c
-    src/linker/sym.c
-    src/linker/obj.c
-    src/linker/options.c
-    src/linker/script.c
-    src/linker/emit.c
+    src/ETLinker/driver.c
+    src/ETLinker/linker.c
+    src/ETLinker/sym.c
+    src/ETLinker/obj.c
+    src/ETLinker/options.c
+    src/ETLinker/script.c
+    src/ETLinker/emit.c
 
         ## Diagnostic API (Errors, Warnings, Notes, etc ^^)
-        src/linker/diagnostic/consumer.c
+        src/ETLinker/diagnostic/consumer.c
 )
 
 target_compile_definitions(EmexToolchain PRIVATE
@@ -156,7 +156,7 @@ target_compile_definitions(EmexToolchain PRIVATE
 )
 
 set(EMEX64_VERSION_TAG "INDEV")
-set(EMEX64_VERSION_HEADER ${CMAKE_CURRENT_BINARY_DIR}/include/EmexToolchain/support/version.h)
+set(EMEX64_VERSION_HEADER ${CMAKE_CURRENT_BINARY_DIR}/include/EmexToolchain/Support/version.h)
 add_custom_target(emex64_header_gen
     BYPRODUCTS ${EMEX64_VERSION_HEADER}
     COMMAND ${CMAKE_COMMAND}
@@ -166,7 +166,7 @@ add_custom_target(emex64_header_gen
         -DPROJECT_VERSION_MINOR=${PROJECT_VERSION_MINOR}
         -DPROJECT_VERSION_PATCH=${PROJECT_VERSION_PATCH}
         -DSRC=${CMAKE_CURRENT_SOURCE_DIR}/cmake/version.h.in
-        -DDST=${CMAKE_CURRENT_BINARY_DIR}/include/EmexToolchain/support/version.h
+        -DDST=${CMAKE_CURRENT_BINARY_DIR}/include/EmexToolchain/Support/version.h
         -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/gen_hdr.cmake
     COMMENT "generating headers")
 
@@ -187,7 +187,7 @@ target_include_directories(EmexToolchain
         $<INSTALL_INTERFACE:include>
 )
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/EmexToolchain/support/version.h
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/EmexToolchain/Support/version.h
     DESTINATION include/EmexToolchain/support)
 
 target_link_libraries(EmexToolchain

@@ -19,17 +19,24 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/ETLinker/linker.h>
+#ifndef EMEX64VM_DEVICE_RTC_H
+#define EMEX64VM_DEVICE_RTC_H
 
-int main(int argc, const char *argv[])
-{
-    linker_driver_t *driver = linker_driver_alloc(argc, argv);
-    if(driver == NULL)
-    {
-        return 1;
-    }
+#include <stdint.h>
+#include <EmexToolchain/VM/device/base.h>
 
-    Boolean success = linker_driver_drive_the_fucking_car(driver);
-    linker_driver_dealloc(driver);
-    return success ? 0 : 1;
-}
+#define EMEX64_RTC_SIZE 0x38
+
+#define RTC_REG_SECONDS 0x00
+#define RTC_REG_MINUTES 0x08
+#define RTC_REG_HOURS   0x10
+#define RTC_REG_DAY     0x18
+#define RTC_REG_MONTH   0x20
+#define RTC_REG_YEAR    0x28
+#define RTC_REG_WEEKDAY 0x30
+
+typedef struct __E64Core *E64CoreRef;
+
+UInt64 emex64_rtc_read(E64CoreRef core, void *device, UInt64 offset, int size);
+
+#endif /* EMEX64VM_DEVICE_RTC_H */

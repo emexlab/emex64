@@ -19,17 +19,20 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/ETLinker/linker.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <EmexToolchain/VM/device/board/controller/power.h>
+#include <EmexToolchain/VM/E64Machine.h>
 
-int main(int argc, const char *argv[])
+UInt64 emex64_platform_read(E64CoreRef core, void *device, UInt64 offset, int size)
 {
-    linker_driver_t *driver = linker_driver_alloc(argc, argv);
-    if(driver == NULL)
-    {
-        return 1;
-    }
+    return 1;
+}
 
-    Boolean success = linker_driver_drive_the_fucking_car(driver);
-    linker_driver_dealloc(driver);
-    return success ? 0 : 1;
+void emex64_platform_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, int size)
+{
+    if(value == 0)
+    {
+        E64CoreTerminate(core);
+    }
 }

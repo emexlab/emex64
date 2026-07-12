@@ -19,17 +19,15 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/ETLinker/linker.h>
+#ifndef EMEX64ASM_EMITTER_OPCODE_H
+#define EMEX64ASM_EMITTER_OPCODE_H
 
-int main(int argc, const char *argv[])
-{
-    linker_driver_t *driver = linker_driver_alloc(argc, argv);
-    if(driver == NULL)
-    {
-        return 1;
-    }
+#include <EmexToolchain/VM/E64Core.h>
+#include <EmexToolchain/ETAssembler/invocation.h>
 
-    Boolean success = linker_driver_drive_the_fucking_car(driver);
-    linker_driver_dealloc(driver);
-    return success ? 0 : 1;
-}
+E64Opcode opcode_from_string(const char *name);
+Boolean opcode_arg_accepts_reg_only(const emex64_opfunc_entry_t *opce, UInt8 arg);
+
+void assembler_emit_opcode(assembler_invocation_t *inv, E64Opcode op);
+
+#endif /* EMEX64ASM_EMITTER_OPCODE_H */

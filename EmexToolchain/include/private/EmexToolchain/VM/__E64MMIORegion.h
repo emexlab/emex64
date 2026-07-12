@@ -19,17 +19,22 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/ETLinker/linker.h>
+#ifndef __E64MMIOREGION_H
+#define __E64MMIOREGION_H
 
-int main(int argc, const char *argv[])
-{
-    linker_driver_t *driver = linker_driver_alloc(argc, argv);
-    if(driver == NULL)
-    {
-        return 1;
-    }
+#include <EmexFoundation/EmexFoundation.h>
+#include <EmexToolchain/VM/__E64Core.h>
 
-    Boolean success = linker_driver_drive_the_fucking_car(driver);
-    linker_driver_dealloc(driver);
-    return success ? 0 : 1;
-}
+typedef UInt64 (*mmio_read_fn)(__E64Core core, void *device, UInt64 offset, int size);
+typedef void (*mmio_write_fn)(__E64Core core, void *device, UInt64 offset, UInt64 value, int size);
+
+typedef struct __E64MMIORegion {
+    EFObject header;
+    UInt64 base_addr;
+    UInt64 size;
+    void *device;
+    mmio_read_fn read;
+    mmio_write_fn write;
+} *__E64MMIORegion;
+
+#endif /* __E64MMIOREGION_H */

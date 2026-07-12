@@ -19,17 +19,28 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/ETLinker/linker.h>
+#ifndef EMEX64ASM_EMITTER_REGISTER_H
+#define EMEX64ASM_EMITTER_REGISTER_H
 
-int main(int argc, const char *argv[])
-{
-    linker_driver_t *driver = linker_driver_alloc(argc, argv);
-    if(driver == NULL)
-    {
-        return 1;
-    }
+#include <EmexToolchain/VM/E64Core.h>
+#include <EmexToolchain/ETAssembler/invocation.h>
 
-    Boolean success = linker_driver_drive_the_fucking_car(driver);
-    linker_driver_dealloc(driver);
-    return success ? 0 : 1;
-}
+typedef struct {
+    Boolean valid;
+    Boolean isExtended;
+    Boolean increment;
+    Boolean decrement;
+    struct {
+        union {
+            E64Register base;
+            E64RegisterExtended extended;
+        };
+    } value;
+} E64RegisterIdentifier;
+
+E64RegisterIdentifier register_from_string(const char *name);
+
+void assembler_emit_register(assembler_invocation_t *inv, E64Register reg, Boolean increment, Boolean actuallyDecrement);
+void assembler_emit_register_extended(assembler_invocation_t *inv, E64RegisterExtended reg);
+
+#endif /* EMEX64ASM_EMITTER_REGISTER_H */

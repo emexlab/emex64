@@ -19,17 +19,25 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/ETLinker/linker.h>
+#ifndef EMEX64LD_DIAGNOSTIC_CONSUMER_H
+#define EMEX64LD_DIAGNOSTIC_CONSUMER_H
 
-int main(int argc, const char *argv[])
-{
-    linker_driver_t *driver = linker_driver_alloc(argc, argv);
-    if(driver == NULL)
-    {
-        return 1;
-    }
+#include <stdio.h>
+#include <stdlib.h>
+#include <EmexToolchain/Support/virtual/vfd.h>
+#include <EmexToolchain/Support/diagnostic/consumer.h>
 
-    Boolean success = linker_driver_drive_the_fucking_car(driver);
-    linker_driver_dealloc(driver);
-    return success ? 0 : 1;
-}
+typedef diagnostic_consumer_t linker_diagnostic_consumer_t;
+
+typedef struct linker_diagnostic_consumer_context {
+    diagnostic_t **diagnostic;
+    UInt64 diagnostic_cnt;
+    vfd_t *d;
+} linker_diagnostic_consumer_context_t;
+
+linker_diagnostic_consumer_t *linker_diagnostic_consumer_alloc();
+void linker_diagnostic_consumer_dealloc(linker_diagnostic_consumer_t *consumer);
+
+void linker_diagnostic_consumer_emit(linker_diagnostic_consumer_t *consumer);
+
+#endif /* EMEX64LD_DIAGNOSTIC_CONSUMER_H */

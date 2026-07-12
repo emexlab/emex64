@@ -19,17 +19,22 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/ETLinker/linker.h>
+#ifndef EMEX64ASM_LEXER_H
+#define EMEX64ASM_LEXER_H
 
-int main(int argc, const char *argv[])
-{
-    linker_driver_t *driver = linker_driver_alloc(argc, argv);
-    if(driver == NULL)
-    {
-        return 1;
-    }
+#include <stddef.h>
+#include <EmexToolchain/ETAssembler/type.h>
 
-    Boolean success = linker_driver_drive_the_fucking_car(driver);
-    linker_driver_dealloc(driver);
-    return success ? 0 : 1;
-}
+#define LEXTOK_LENGHT_MAX   2048    /* if anyone comes close to that size, bro pls fix your variable naming style O.O */
+
+typedef struct {
+    const char *token;
+    size_t column;
+    kAssemblerTokenType type;
+} lextok_token_t;
+
+lextok_token_t assembler_lexer_tok(const char *token);
+Boolean assembler_lexer_classify(assembler_token_t *at);
+const char *assembler_lexer_str_for_token_type(kAssemblerTokenType type);
+
+#endif /* EMEX64ASM_LEXER_H */

@@ -19,17 +19,17 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/ETLinker/linker.h>
+#include <EmexToolchain/Support/bitbolt.h>
 
-int main(int argc, const char *argv[])
+UInt64 kMask[65];
+
+__attribute__((constructor))
+void bitbolt_init(void)
 {
-    linker_driver_t *driver = linker_driver_alloc(argc, argv);
-    if(driver == NULL)
+    /* preprocess a lot of math lol */
+    for(unsigned n = 0; n < 64; n++)
     {
-        return 1;
+        kMask[n] = (1ULL << n) - 1ULL;
     }
-
-    Boolean success = linker_driver_drive_the_fucking_car(driver);
-    linker_driver_dealloc(driver);
-    return success ? 0 : 1;
+    kMask[64] = ~0ULL;
 }

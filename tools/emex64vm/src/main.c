@@ -21,15 +21,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
 
-#include <EmexToolchain/support/diagnostic/log.h>
-#include <EmexToolchain/support/parser.h>
+#include <EmexToolchain/Support/diagnostic/log.h>
+#include <EmexToolchain/Support/parser.h>
 
-#include <EmexToolchain/vm/E64Machine.h>
+#include <EmexToolchain/VM/E64Machine.h>
 
 int main(int argc, char *argv[])
 {
@@ -189,7 +188,7 @@ int main(int argc, char *argv[])
                 continue;
             }
 
-            if(pr_width.type == emexParserValueTypeNumber && 
+            if(pr_width.type == emexParserValueTypeNumber &&
                pr_height.type == emexParserValueTypeNumber)
             {
                 machineOptions.displayOptions.width = pr_width.value;
@@ -242,7 +241,7 @@ int main(int argc, char *argv[])
             goto fail;
         }
     }
-    
+
     /* executing virtual machines 1st core TODO: Implement multicore */
     E64CoreRef core = E64MachineGetCore(machine);
     if(core == NULL)
