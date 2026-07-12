@@ -179,6 +179,7 @@ void assembler_diagnostic_consumer_emit(assembler_diagnostic_consumer_t *consume
         }
 
         /* fallback when no consumer was specified */
+        Boolean isNotRaw = true;
         switch(diagnostic->severity)
         {
             case kDiagnosticSeverityNote:
@@ -191,13 +192,22 @@ void assembler_diagnostic_consumer_emit(assembler_diagnostic_consumer_t *consume
                 vfdprintf(ctx->d, "%serror:", __assembler_diagnostic_color(ctx, C_ERROR));
                 break;
             case kDiagnosticSeverityFatal:
-            default:
                 vfdprintf(ctx->d, "%sfatal:", __assembler_diagnostic_color(ctx, C_ERROR));
                 break;
+            default:
+                isNotRaw = false;
+                break;
         }
-        vfdprintf(ctx->d, "%s ", __assembler_diagnostic_color(ctx, C_RESET));
 
-        vfdprintf(ctx->d, "%s\n", diagnostic->str);
+        if(isNotRaw)
+        {
+            vfdprintf(ctx->d, "%s ", __assembler_diagnostic_color(ctx, C_RESET));
+            vfdprintf(ctx->d, "%s\n", diagnostic->str);
+        }
+        else
+        {
+            vfdprintf(ctx->d, "%s", diagnostic->str);
+        }
 
         if(ctx->options.caret_diagnostics &&
            diagnostic->location != NULL)

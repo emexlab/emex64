@@ -45,6 +45,6 @@ typedef struct diagnostic_consumer {
     void *ctx;
 } diagnostic_consumer_t;
 
-void diagnostic_report(diagnostic_consumer_t *consumer, kDiagnosticSeverity severity, diagnostic_location_t *location, char *str, ...);
+void diagnostic_report(diagnostic_consumer_t *consumer, kDiagnosticSeverity severity, diagnostic_location_t *location, const char *str, ...);
 
 #endif /* EMEX64_DIAGNOSTIC_CONSUMER_H */

@@ -27,6 +27,7 @@
 #include <stdarg.h>
 
 typedef enum: UInt8 {
+    kDiagnosticSeverityRaw,
     kDiagnosticSeverityNote,
     kDiagnosticSeverityWarning,
     kDiagnosticSeverityError,
@@ -52,8 +53,8 @@ typedef struct diagnostic {
     diagnostic_location_t *location;
 } diagnostic_t;
 
-diagnostic_t *diagnostic_allocv(kDiagnosticSeverity severity, diagnostic_location_t *location, char *str, va_list args);
-diagnostic_t *diagnostic_alloc(kDiagnosticSeverity severity, diagnostic_location_t *location, char *str, ...);
+diagnostic_t *diagnostic_allocv(kDiagnosticSeverity severity, diagnostic_location_t *location, const char *str, va_list args);
+diagnostic_t *diagnostic_alloc(kDiagnosticSeverity severity, diagnostic_location_t *location, const char *str, ...);
 void diagnostic_dealloc(diagnostic_t *diagnostic);
 
 #endif /* EMEX64_DIAGNOSTIC_DIAGNOSTIC_H */
