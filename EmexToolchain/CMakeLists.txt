@@ -117,6 +117,7 @@ add_library(EmexToolchain ${LIB_TYPE}
 
         ## Diagnostic API (Errors, Warnings, Notes, etc ^^)
         src/asm/diagnostic/consumer.c
+        src/asm/diagnostic/ETAssemblerDiagnosticConsumer.c
 
         ## Preprocessor API
         src/asm/preprocessor/directive.c
