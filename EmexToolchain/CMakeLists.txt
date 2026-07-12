@@ -147,9 +147,6 @@ add_library(EmexToolchain ${LIB_TYPE}
 
         ## Diagnostic API (Errors, Warnings, Notes, etc ^^)
         src/linker/diagnostic/consumer.c
-
-    # C Compiler
-    src/c/ASTUnit.c
 )
 
 target_compile_definitions(EmexToolchain PRIVATE
