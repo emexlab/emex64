@@ -479,7 +479,7 @@ void E64MemoryCoreAction(E64MemoryRef memoryRef,
          * the decoder later in actual emex64 hardware would explode
          * in size otherwise. MMIO busses are complex!
          */
-        if(unlikely((core->cr_state.crptb.enabled && !core->in_interrupt) || (!EMEX64_IS_ALIGNED_64(addr) && addr < EMEX64_FB_BASE)))
+        if(unlikely((core->cr_state.crptb.enabled && !core->in_interrupt) || (addr < EMEX64_FB_BASE && (!EMEX64_IS_ALIGNED_64(addr) || size != 8))))
         {
             core->cr_state.crexc.exception = kE64ExceptionBadAccess;
             return;

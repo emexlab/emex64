@@ -37,7 +37,7 @@ interrupt_init:
 
     ; setting up vector table onto interrupt controller
     stq EMEX64_IC_REG_VECTOR, ivec
-    stb EMEX64_IC_REG_ENABLED, 0x0
+    stq EMEX64_IC_REG_ENABLED, 0x0
     stq EMEX64_IC_REG_CTRL, 1
     blw puts, ic_init_msg
     ret

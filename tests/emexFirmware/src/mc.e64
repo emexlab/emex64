@@ -31,5 +31,5 @@ mc_lock_ktrr:
     ; data start sits right after the text region ends
     sub r0, __data_start, 1
     stq EMEX64_MC_REG_KTRR_SIZE, r0
-    stb EMEX64_MC_REG_KTRR_LOCKED, 1
+    stq EMEX64_MC_REG_KTRR_LOCKED, 1
     wret

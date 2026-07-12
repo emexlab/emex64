@@ -36,4 +36,4 @@ hello:
     stq EMEX64_UART_REG_DATA, r1
     bnz r1, .loop
 .end:
-    stb EMEX64_PLATFORM_REG_PWR, 0
+    stq EMEX64_PLATFORM_REG_PWR, 0

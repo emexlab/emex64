@@ -152,4 +152,4 @@ _start:
     hlt
     b .no_end
 %endif%
-    stb EMEX64_PLATFORM_REG_PWR, 0
+    stq EMEX64_PLATFORM_REG_PWR, 0

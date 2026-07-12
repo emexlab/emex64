@@ -36,7 +36,7 @@ print_time:
     mov r1, EMEX64_RTC_REG_DAY
     blw puts, time
 .loop:
-    ldd r0, r1
+    ldq r0, r1
     blw rtc_2putbase, r0
     add r1, 8
     cmp r1, EMEX64_RTC_REG_YEAR
@@ -47,7 +47,7 @@ print_time:
     sub r1, 32
     blw putc, ' '
 .loop_2:
-    ldd r0, r1
+    ldq r0, r1
     blw rtc_2putbase, r0
     sub r1, 8
     cmp r1, EMEX64_RTC_REG_SECONDS

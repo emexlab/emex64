@@ -57,14 +57,14 @@ fw_8042_handler:
     push rr
     stq putc_sym, uart_putc
 
-    ldd r0, EMEX64_8042_REG_STATUS      ; STATUS port
+    ldq r0, EMEX64_8042_REG_STATUS      ; STATUS port
     and r0, 0x01                        ; OBF (bit 0)?
     bz r0, .no_data
-    ldd r1, EMEX64_8042_REG_STATUS
+    ldq r1, EMEX64_8042_REG_STATUS
     and r1, 0x20
     bnz r1, .mouse_event
     
-    ldd r0, EMEX64_8042_REG_DATA
+    ldq r0, EMEX64_8042_REG_DATA
     blw puts, fw_8042_msg
     blw puts, fw_scancode_msg
     blw putbase, r0, 16
@@ -72,7 +72,7 @@ fw_8042_handler:
     b .done
     
 .mouse_event:
-    ldd r0, EMEX64_8042_REG_DATA
+    ldq r0, EMEX64_8042_REG_DATA
     blw puts, fw_8042_mouse_msg
     blw putbase, r0, 16
     blw putc, '\n'
@@ -178,5 +178,5 @@ _start:
     bl interrupt_init                               ; initilizing interrupt controller
     bl main                                         ; branching to main symbol
 .poweroff:
-    stb EMEX64_PLATFORM_REG_PWR, 0                  ; telling platform device to turn off
+    stq EMEX64_PLATFORM_REG_PWR, 0                  ; telling platform device to turn off
     
