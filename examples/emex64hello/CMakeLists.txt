@@ -14,4 +14,5 @@ target_compile_features(emex64hello PRIVATE c_std_23)
 
 install(TARGETS emex64hello
     RUNTIME DESTINATION bin
+    COMPONENT Tools
 )

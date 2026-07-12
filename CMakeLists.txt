@@ -114,9 +114,27 @@ set(CPACK_PACKAGE_NAME "EmexToolchain")
 set(CPACK_PACKAGE_VENDOR "emexLabs")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "EmexToolchain compilation suite")
 set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
 
 if(APPLE)
-    set(CPACK_GENERATOR "productbuild;TGZ")
+    set(CPACK_GENERATOR "productbuild")
+
+    set(CPACK_SET_DESTDIR ON)
+    set(CPACK_PACKAGING_INSTALL_PREFIX "/")
+
+    set(CPACK_PRODUCTBUILD_DOMAINS ON)
+
+    set(CPACK_COMPONENTS_ALL EmexToolchain emex64asm emex64ld emex64vm Headers)
+
+    set(CPACK_COMPONENT_EMEXTOOLCHAIN_DESCRIPTION "Installs EmexToolchain library.")
+    set(CPACK_COMPONENT_EMEXTOOLCHAIN_REQUIRED TRUE)
+
+    set(CPACK_COMPONENT_EMEX64ASM_DESCRIPTION "Installs emex64 assembler.")
+    set(CPACK_COMPONENT_EMEX64LD_DESCRIPTION "Installs emex64 linker.")
+    set(CPACK_COMPONENT_EMEX64VM_DESCRIPTION "Installs emex64 virtual machine.")
+    set(CPACK_COMPONENT_HEADERS_DESCRIPTION "Installs headers which can be used to develop tooling for emex64 development.")
+
+    set(CPACK_PRODUCTBUILD_IDENTIFIER "org.emexlabs.emextoolchain")
 elseif(WIN32)
     set(CPACK_GENERATOR "NSIS;ZIP")
 else()

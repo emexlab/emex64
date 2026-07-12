@@ -14,4 +14,5 @@ target_compile_features(emex64asm PRIVATE c_std_23)
 
 install(TARGETS emex64asm
     RUNTIME DESTINATION bin
+    COMPONENT emex64asm
 )

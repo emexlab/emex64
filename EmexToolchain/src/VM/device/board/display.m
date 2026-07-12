@@ -30,8 +30,8 @@
 #include <pthread.h>
 #include <stdatomic.h>
 #include <CoreGraphics/CoreGraphics.h>
-#include <EmexToolchain/vm/device/board/display.h>
-#include <EmexToolchain/vm/E64Core.h>
+#include <EmexToolchain/VM/device/board/display.h>
+#include <EmexToolchain/VM/E64Core.h>
 
 typedef struct {
     UInt8 sc;

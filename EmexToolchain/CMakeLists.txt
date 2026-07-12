@@ -239,10 +239,12 @@ endif()
 install(TARGETS EmexToolchain
     LIBRARY DESTINATION lib
     RUNTIME DESTINATION bin
+    COMPONENT EmexToolchain
 )
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/public/
     DESTINATION include
+    COMPONENT Headers
     FILES_MATCHING
         PATTERN "*.h"
 )

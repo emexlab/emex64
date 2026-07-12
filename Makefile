@@ -31,3 +31,8 @@ xcode_debug:
 	cd build; \
 	    cmake $(CMAKE_FLAGS) .. -G Xcode
 	open build/emex64Toolchain.xcodeproj
+
+
+package: compile
+	cd build; \
+		cpack -G productbuild --verbose

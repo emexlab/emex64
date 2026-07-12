@@ -20,4 +20,5 @@ target_link_libraries(emex64ld
 
 install(TARGETS emex64ld
     RUNTIME DESTINATION bin
+    COMPONENT emex64ld
 )
