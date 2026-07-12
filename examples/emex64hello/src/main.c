@@ -65,16 +65,15 @@ int main(void)
         "_start:\n"
         "    mov r0, msg\n"
         ".loop:\n"
-        "    ldb r1, r0\n"
+        "    ldb r1, r0++\n"
         ".retry:\n"
-        "    ldd r2, 0x0020000000008008\n"
+        "    ldq r2, 0x0020000000008008\n"
         "    and r2, 0x02\n"
         "    bz r2, .retry\n"
-        "    std 0x0020000000008000, r1\n"
-        "    inc r0\n"
+        "    stq 0x0020000000008000, r1\n"
         "    bnz r1, .loop\n"
         ".end:\n"
-        "    stb 0x002000000000C000, 0\n"
+        "    stq 0x002000000000C000, 0\n"
     );
     if(unsaved_file == NULL)
     {
