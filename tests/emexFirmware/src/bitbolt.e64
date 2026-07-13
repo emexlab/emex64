@@ -44,6 +44,13 @@ bitbolt_init:
     cmp r2, 64
     ble .loop
 .loop_end:
+    mul r4, 64, 8
+
+    ; fixme: bad access when doing this =<
+    ; this: stq [r4 + bitbolt_mask], 0xFFFFFFFFFFFFFFFF    
+    add r4, bitbolt_mask
+    stq r4, 0xFFFFFFFFFFFFFFFF
+    
     stb bitbolt_has_initialized, 1
 .has_initialized:
     stq bitbolt_buf, r0

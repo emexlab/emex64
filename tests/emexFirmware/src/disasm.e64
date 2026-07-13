@@ -156,8 +156,11 @@ disasm_put_opcode:
     blw putc, ' '
     wret
 
-disasm_put_register:
-    
+disasm_put_hex:
+    blw putc, '0'
+    blw putc, 'x'
+    blw putbase, r0, 16
+    wret
 
 disasm_put_operand:
     blw bitbolt_read, 4
@@ -183,25 +186,25 @@ disasm_put_operand:
     b .get_me_tf_out_of_here
 .imm4:
     blw bitbolt_read, 4
-    blw putbase, rr, 10
+    blw disasm_put_hex, rr
     b .get_me_tf_out_of_here
 .imm8:
     blw bitbolt_read, 8
-    blw putbase, rr, 10
+    blw disasm_put_hex, rr
     b .get_me_tf_out_of_here
 .imm16:
     blw bitbolt_read, 16
-    blw putbase, rr, 10
+    blw disasm_put_hex, rr
     b .get_me_tf_out_of_here
 .imm32:
     blw bitbolt_read, 32
-    blw putbase, rr, 10
+    blw disasm_put_hex, rr
     b .get_me_tf_out_of_here
 .addr64:
     blw bitbolt_align
 .imm64:
     blw bitbolt_read, 64
-    blw putbase, rr, 10
+    blw disasm_put_hex, rr
     b .get_me_tf_out_of_here
 .regext:
 .reginc:

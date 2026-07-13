@@ -127,8 +127,10 @@ main:
     blw panic, fw_testpanic_msg
 %endif%
 
+    blw putc, '\n'
     sub r0, _start.poweroff, _start
     blw disasm_sym, _start, r0
+    blw putc, '\n'
 
     cmov REG_CR0, 1
     
