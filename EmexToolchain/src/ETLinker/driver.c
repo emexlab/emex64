@@ -71,6 +71,9 @@ linker_driver_t *linker_driver_alloc(int argc,
             fprintf(stderr, "  -T <script path>       Adds a linker script.\n");
             fprintf(stderr, "  -v                     Prints verbose linker log.\n");
             fprintf(stderr, "  -r                     Emits relocatable ELF object.\n");
+            fprintf(stderr, "  -omagic                Uses old magic (merges .text and .data into one read-write\n");
+            fprintf(stderr, "                         block, note that this could be a security risk).\n");
+            fprintf(stderr, "  -nmagic                Uses new magic (separates .text and .data.)\n");
             goto failure;
         }
         else if(strcmp(argv[i], "--version") == 0)
@@ -119,6 +122,14 @@ linker_driver_t *linker_driver_alloc(int argc,
         else if(strcmp(argv[i], "-r") == 0)
         {
             driver->options.emit_mode = kEmitModeRelocatableObject;
+        }
+        else if(strcmp(argv[i], "--nmagic") == 0)
+        {
+            driver->options.use_old_magic = false;
+        }
+        else if(strcmp(argv[i], "--omagic") == 0)
+        {
+            driver->options.use_old_magic = true;
         }
         else if (argv[i][0] != '-')
         {

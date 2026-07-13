@@ -604,7 +604,7 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
         [kELFSectionHeaderIndexText] = (ELF64_Shdr){
             .sh_name = shname_text,
             .sh_type = kELFSectionHeaderTypeProgbits,
-            .sh_flags = kELFSectionFlagAlloc | kELFSectionFlagExec,
+            .sh_flags = kELFSectionFlagAlloc | kELFSectionFlagExec | inv->options.use_old_magic ? kELFSectionFlagWrite : 0,
             .sh_offset = text_off,
             .sh_size = text.len,
             .sh_addralign = 1,

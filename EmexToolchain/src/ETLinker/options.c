@@ -23,6 +23,7 @@
 
 linker_options_t linker_options_default = {
     .verbose = false,
+    .use_old_magic = false,
     .emit_mode = kEmitModeFirmware,
     .entry_name = "_start",
 };

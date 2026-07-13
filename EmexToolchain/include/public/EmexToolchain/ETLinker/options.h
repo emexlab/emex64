@@ -25,9 +25,10 @@
 #include <EmexToolchain/ETLinker/type.h>
 
 typedef struct linker_options {
-    Boolean verbose;
-    kEmitMode emit_mode;
-    const char *entry_name; /* borrowed */
+    Boolean verbose;        /* default: false */
+    Boolean use_old_magic;  /* default: false */
+    kEmitMode emit_mode;    /* default: kEmitModeFirmware */
+    const char *entry_name; /* borrowed, default: _start */
 } linker_options_t;
 
 extern linker_options_t linker_options_default;
