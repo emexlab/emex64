@@ -217,4 +217,12 @@ void assembler_diagnostic_consumer_emit(assembler_diagnostic_consumer_t *consume
         /* dont forget to flush the toilet otherwise things get stinky */
         vfd_sync(ctx->d);
     }
+
+    for(UInt64 i = 0; i < ctx->diagnostic_cnt; i++)
+    {
+        diagnostic_dealloc(ctx->diagnostic[i]);
+    }
+    free(ctx->diagnostic);
+    ctx->diagnostic = NULL;
+    ctx->diagnostic_cnt = 0;
 }
