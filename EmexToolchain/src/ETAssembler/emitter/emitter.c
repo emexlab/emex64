@@ -40,8 +40,8 @@ void assembler_emit_end(assembler_invocation_t *inv)
     vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingEnd, 4);
 }
 
-Boolean opcode_arg_is_branch_target(E64Opcode op,
-                                    UInt64 argno)
+static inline Boolean opcode_arg_is_branch_target(E64Opcode op,
+                                                  UInt64 argno)
 {
     switch(op)
     {
@@ -62,7 +62,7 @@ Boolean opcode_arg_is_branch_target(E64Opcode op,
     }
 }
 
-Boolean assembler_emit_operand(assembler_token_t *operand)
+static inline Boolean assembler_emit_operand(assembler_token_t *operand)
 {
     if(operand->type == kAssemblerTokenTypeRegister)
     {
@@ -122,7 +122,7 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
     const emex64_opfunc_entry_t *entry = &kE64OpfuncTable[opcode];
 
     UInt64 operand_total = 0;
-    kAssemblerTokenType ptype;
+    kAssemblerTokenType ptype = kAssemblerTokenTypeInvalid;
     if(al->token_cnt > 1)
     {
         operand_total = 1;
