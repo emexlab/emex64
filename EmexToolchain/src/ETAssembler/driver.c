@@ -605,13 +605,13 @@ assembler_driver_t *assembler_driver_alloc(int argc,
 
     if(driver->options.verbose)
     {
-        fprintf(stderr, "%s version %d.%d.%d (%s)\n", argv[0], EMEX64_VERSION_MAJOR, EMEX64_VERSION_MINOR, EMEX64_VERSION_PATCH, EMEX64_VERSION_STRING);
+        fprintf(stderr, "%s driver version %d.%d.%d (%s)\n", argv[0], EMEX64_VERSION_MAJOR, EMEX64_VERSION_MINOR, EMEX64_VERSION_PATCH, EMEX64_VERSION_STRING);
         fprintf(stderr, "pid: %d\n", getpid());
         fprintf(stderr, "uid: %d\n", getuid());
         fprintf(stderr, "options: {\n");
         fprintf(stderr, "    assemble_only: %d,\n", driver->options.assemble_only);
         fprintf(stderr, "    verbose: %d,\n", driver->options.verbose);
-        fprintf(stderr, "    in_process: %d,\n", driver->options.in_process);
+        fprintf(stderr, "    in_process: %d,\n", driver->options.in_process || driver->options.assemble_only);
         fprintf(stderr, "}\n");;
         fprintf(stderr, "diagnosticOptions: {\n");
         fprintf(stderr, "    caret_diagnostics: %d,\n", driver->diagnosticOptions.caret_diagnostics);
@@ -667,34 +667,7 @@ assembler_driver_t *assembler_driver_alloc(int argc,
             }
             fprintf(stderr, " }\n");
         }
-
-        /*fprintf(stderr, "jobs: {");
-        assembler_job_t *job = driver->job;
-        if(job != NULL)
-        {
-            fprintf(stderr, "\n");
-        }
-        while(job != NULL)
-        {
-            fprintf(stderr, "\t{\n");
-            fprintf(stderr, "\t\ttype: %s\n", assembler_job_string_for_type(job->type));
-            fprintf(stderr, "\t\tcommand: %s\n", job->command);
-            fprintf(stderr, "\t\targv[%d]: {", job->argc);
-            for(int i = 0; i < job->argc; i++)
-            {
-                if(i != 0)
-                {
-                    fprintf(stderr, ", ");
-                }
-                fprintf(stderr, "%s", job->argv[i]);
-            }
-            fprintf(stderr, " }\n");
-            fprintf(stderr, "\t}");
-            fprintf(stderr, "\n");
-
-            job = job->next;
-        }
-        fprintf(stderr, "}\n");*/
+        fprintf(stderr, "\n");
     }
 
     return driver;
