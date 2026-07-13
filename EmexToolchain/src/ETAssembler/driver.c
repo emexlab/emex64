@@ -404,7 +404,12 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
             case kEmexFileTypeAssemblyIncludation:
             {
                 ratchet_args_t ra;
-                ratchet_args_init(&ra);
+                if(!ratchet_args_init(&ra))
+                {
+                    diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate arguments array for assembler job");
+                    ratchet_args_deinit(&ra);
+                    return false;
+                }
 
                 ratchet_args_append(&ra, "emex64asm");
                 if(driver->options.verbose)
@@ -423,7 +428,6 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
                 /* warning flags */
                 ratchet_args_append(&ra, driver->diagnosticOptions.warning_error ? "-Werror" : "-Wno-error");
                 ratchet_args_append(&ra, driver->diagnosticOptions.warning_deprecated ? "-Wdeprecated" : "-Wno-deprecated");
-
 
                 for(size_t j = 0; j < driver->inc_dir_cnt; j++)
                 {
@@ -462,39 +466,11 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
                     return false;
                 }
 
-                EFMutableArrayRef array = EFArrayCreateMutable(kEFAllocatorDefault, kEFArrayCallbacksObjectCallbacks, ra.argc);
-                if(array == NULL)
-                {
-                    diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate assembler job");
-                    ratchet_args_deinit(&ra);
-                    return false;
-                }
-
-                for(EFIndex index = 0; index < (EFIndex)ra.argc; index++)
-                {
-                    EFStringRef argument = EFStringCreateWithCString(kEFAllocatorDefault, ra.args[index], kEFStringEncodingASCII);
-                    if(argument == NULL)
-                    {
-                        diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate assembler job");
-                        EFRelease(array);
-                        ratchet_args_deinit(&ra);
-                        return false;
-                    }
-
-                    Boolean success = EFArrayAppendValue(array, argument);
-                    EFRelease(argument);
-                    if(!success)
-                    {
-                        diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate assembler job");
-                        EFRelease(array);
-                        ratchet_args_deinit(&ra);
-                        return false;
-                    }
-                }
-
-                ETAssemblerJobRef job = ETAssemblerJobCreate(kEFAllocatorDefault, (driver->options.assemble_only) ? kETAssemblerJobTypeAssembler : kETAssemblerJobTypeDriver, EF_STR("emex64asm"), array);
-                EFRelease(array);
+                EFMutableArrayRef arguments = EFRetain(ra.array);
                 ratchet_args_deinit(&ra);
+
+                ETAssemblerJobRef job = ETAssemblerJobCreate(kEFAllocatorDefault, (driver->options.assemble_only) ? kETAssemblerJobTypeAssembler : kETAssemblerJobTypeDriver, EF_STR("emex64asm"), arguments);
+                EFRelease(arguments);
                 if(job == NULL)
                 {
                     diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate assembler job");
@@ -522,7 +498,12 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
     if(!driver->options.assemble_only && driver->tmp_path_cnt > 0)
     {
         ratchet_args_t ra;
-        ratchet_args_init(&ra);
+        if(!ratchet_args_init(&ra))
+        {
+            diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate arguments array for linker job");
+            ratchet_args_deinit(&ra);
+            return false;
+        }
 
         ratchet_args_append(&ra, "emex64ld");
         if(driver->options.verbose)
@@ -551,46 +532,16 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
             return false;
         }
 
-        EFMutableArrayRef array = EFArrayCreateMutable(kEFAllocatorDefault, kEFArrayCallbacksObjectCallbacks, ra.argc);
-        if(array == NULL)
-        {
-            diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate assembler job");
-            ratchet_args_deinit(&ra);
-            return false;
-        }
-
-        for(EFIndex index = 0; index < (EFIndex)ra.argc; index++)
-        {
-            EFStringRef argument = EFStringCreateWithCString(kEFAllocatorDefault, ra.args[index], kEFStringEncodingASCII);
-            if(argument == NULL)
-            {
-                diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate assembler job");
-                EFRelease(array);
-                ratchet_args_deinit(&ra);
-                return false;
-            }
-
-            Boolean success = EFArrayAppendValue(array, argument);
-            EFRelease(argument);
-            if(!success)
-            {
-                diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate assembler job");
-                EFRelease(array);
-                ratchet_args_deinit(&ra);
-                return false;
-            }
-        }
-
-        ETAssemblerJobRef job = ETAssemblerJobCreate(kEFAllocatorDefault, kETAssemblerJobTypeLinker, EF_STR("emex64ld"), array);
-        EFRelease(array);
+        EFMutableArrayRef arguments = EFRetain(ra.array);
         ratchet_args_deinit(&ra);
+
+        ETAssemblerJobRef job = ETAssemblerJobCreate(kEFAllocatorDefault, kETAssemblerJobTypeLinker, EF_STR("emex64ld"), arguments);
+        EFRelease(arguments);
         if(job == NULL)
         {
             diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't allocate assembler job");
             return false;
         }
-
-        ratchet_args_deinit(&ra);
 
         Boolean success = EFArrayAppendValue(driver->jobs, job);
         EFRelease(job);

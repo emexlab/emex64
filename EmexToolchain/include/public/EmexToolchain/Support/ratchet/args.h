@@ -22,18 +22,14 @@
 #ifndef EMEX_RATCHET_ARGS_H
 #define EMEX_RATCHET_ARGS_H
 
-#include <stdint.h>
-#include <stddef.h>
 #include <EmexFoundation/EmexFoundation.h>
 
 typedef struct ratchet_args {
-    Boolean failed;    /* the rachet */
-    size_t argc;
-    size_t csize;
-    char **args;
+    Boolean failed;     /* the latch */
+    EFMutableArrayRef array;
 } ratchet_args_t;
 
-void ratchet_args_init(ratchet_args_t *ra);
+Boolean ratchet_args_init(ratchet_args_t *ra);
 void ratchet_args_deinit(ratchet_args_t *ra);
 void ratchet_args_append(ratchet_args_t *ra, const char *arg);
 

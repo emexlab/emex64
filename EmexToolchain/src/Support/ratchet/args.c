@@ -19,81 +19,43 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <stdlib.h>
 #include <strings.h>
-#include <string.h>
 #include <EmexToolchain/Support/ratchet/args.h>
 
-void ratchet_args_init(ratchet_args_t *ra)
+Boolean ratchet_args_init(ratchet_args_t *ra)
 {
     bzero(ra, sizeof(ratchet_args_t));
+    ra->array = EFArrayCreateMutable(kEFAllocatorDefault, kEFArrayCallbacksObjectCallbacks, 0);
+    return ra->array != NULL;
 }
 
 void ratchet_args_deinit(ratchet_args_t *ra)
 {
-    for(size_t i = 0; i < ra->argc; i++)
-    {
-        /* free usually accepts null pointers */
-        free(ra->args[i]);
-    }
-    free(ra->args);
-
-    /* making sure it is entirely blank */
+    EFRelease(ra->array);
     bzero(ra, sizeof(ratchet_args_t));
-}
-
-static inline Boolean __ratchet_args_gib(ratchet_args_t *ra)
-{
-    if(ra->argc < ra->csize)
-    {
-        /* still enough size */
-        return true;
-    }
-
-    size_t old_csize = ra->csize;
-    size_t new_csize = old_csize + 100;
-    if(ra->args == NULL)
-    {
-        ra->args = calloc(new_csize, sizeof(char*));
-        if(ra->args == NULL)
-        {
-            return false;
-        }
-    }
-    else
-    {
-        void *newp = realloc(ra->args, new_csize * sizeof(char*));
-        if(newp == NULL)
-        {
-            return false;
-        }
-        ra->args = newp;
-    }
-    ra->csize = new_csize;
-
-    return true;
 }
 
 void ratchet_args_append(ratchet_args_t *ra,
                          const char *arg)
 {
-    if(ra->failed || arg == NULL)
+    if(ra->failed || arg == NULL || ra->array == NULL)
     {
+        ra->failed = true;  /* when arg is NULL then it is automatically failed */
         return;
     }
 
-    if(!__ratchet_args_gib(ra))
-    {
-        ra->failed = true;
-        return;
-    }
-
-    char *newp = strdup(arg);
-    if(newp == NULL)
+    EFStringRef argument = EFStringCreateWithCString(kEFAllocatorDefault, arg, kEFStringEncodingASCII);
+    if(argument == NULL)
     {
         ra->failed = true;
         return;
     }
 
-    ra->args[ra->argc++] = newp;
+    Boolean success = EFArrayAppendValue(ra->array, argument);
+    EFRelease(argument);
+    if(!success)
+    {
+        ra->failed = true;
+        return;
+    }
 }
