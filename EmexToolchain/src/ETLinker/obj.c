@@ -210,6 +210,10 @@ void linker_layout(linker_invocation_t *inv)
     }
     cur = align_up(cur, EMEX64_PAGE_SIZE);
     inv->out_data_off = cur;
+    if(inv->options.use_old_magic)
+    {
+        inv->out_text_off = cur;
+    }
 
     for(linker_object_t *o = inv->obj; o; o = o->next)
     {
