@@ -127,6 +127,9 @@ main:
     blw panic, fw_testpanic_msg
 %endif%
 
+    sub r0, _start.poweroff, _start
+    blw disasm_sym, _start, r0
+
     cmov REG_CR0, 1
     
 .hang:
@@ -140,6 +143,7 @@ main:
     b .hang
 
 _start:
+    mov r0, 10
     ; will just shutdown for now
     ; if it does and your reading this
     ; the reason is that there is not

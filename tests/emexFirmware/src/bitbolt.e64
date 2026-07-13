@@ -1,0 +1,93 @@
+;
+; SPDX-License-Identifier: AGPL-3.0-or-later
+;
+; Copyright (C) 2026 emexlab
+;
+; This file is part of emex64.
+;
+; emex64 is free software: you can redistribute it and/or modify
+; it under the terms of the GNU Affero General Public License as published by
+; the Free Software Foundation, either version 3 of the License, or
+; (at your option) any later version.
+;
+; emex64 is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY; without even the implied warranty of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+; GNU Affero General Public License for more details.
+;
+; You should have received a copy of the GNU Affero General Public License
+; along with emex64. If not, see <https://www.gnu.org/licenses/>.
+;
+
+%include% <emex64.e64inc>
+
+section .bss
+    bitbolt_has_initialized db 1
+    bitbolt_mask dq 65
+    bitbolt_buf dq 1
+    bitbolt_pos dd 1
+
+bitbolt_init:
+    ; check bit
+    ldb r2, bitbolt_has_initialized
+    bnz r2, .has_initialized
+
+    ; preprocess a lot of math
+    clr r2
+.loop:
+    shl r3, 1, r2
+    dec r3
+    
+    mul r4, r2++, 8
+    stq [r4 + bitbolt_mask], r3
+    
+    cmp r2, 64
+    ble .loop
+.loop_end:
+    stb bitbolt_has_initialized, 1
+.has_initialized:
+    stq bitbolt_buf, r0
+    std bitbolt_pos, r1
+    wret
+
+bitbolt_read:
+    ldq r1, bitbolt_buf ; r1: buf
+    ldd r2, bitbolt_pos ; r2: pos
+    shr r3, r2, 3
+    add r1, r3  ; the pointer to the bit position
+
+    ldq r3, r1          ; r3: lo
+    ldq r4, [r1 + 8]    ; r4: hi
+
+    and r5, r2, 0x7     ; r5: shift
+
+    bnz r5, .is_not_zero
+    ; rr: v
+.is_zero:
+    mov rr, r3
+    b .if_end
+.is_not_zero:
+    shr rr, r3, r5
+    shl r7, r4, [64 - r5]
+    or rr, r7
+.if_end:
+
+    mul r8, r0, 8
+    ldq r7, [bitbolt_mask + r8]
+    and rr, r7
+    std bitbolt_pos, [r2 + r0]
+
+    wret
+
+bitbolt_align:
+    ldd r0, bitbolt_pos
+    add r0, 7
+    and r0, 0xFFFFFFFFFFFFFFF8
+    std bitbolt_pos, r0
+    wret
+
+bitbolt_bytes_used:
+    ldd rr, bitbolt_pos
+    add rr, 7
+    shr rr, 3
+    wret

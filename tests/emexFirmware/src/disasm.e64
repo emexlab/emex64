@@ -1,0 +1,261 @@
+;
+; SPDX-License-Identifier: AGPL-3.0-or-later
+;
+; Copyright (C) 2026 emexlab
+;
+; This file is part of emex64.
+;
+; emex64 is free software: you can redistribute it and/or modify
+; it under the terms of the GNU Affero General Public License as published by
+; the Free Software Foundation, either version 3 of the License, or
+; (at your option) any later version.
+;
+; emex64 is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY; without even the implied warranty of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+; GNU Affero General Public License for more details.
+;
+; You should have received a copy of the GNU Affero General Public License
+; along with emex64. If not, see <https://www.gnu.org/licenses/>.
+;
+
+%include% <emex64.e64inc>
+
+%define% EMEX64_OPCODE_MAX  0b00110111
+
+%define% EMEX64_CODING_END          0b0000
+%define% EMEX64_CODING_REG          0b0001
+%define% EMEX64_CODING_IMM4         0b0010
+%define% EMEX64_CODING_IMM8         0b0011
+%define% EMEX64_CODING_IMM16        0b0100
+%define% EMEX64_CODING_IMM32        0b0101
+%define% EMEX64_CODING_IMM64        0b0110
+%define% EMEX64_CODING_ADDR64       0b0111
+%define% EMEX64_CODING_REGEXT       0b1000
+%define% EMEX64_CODING_REGINC       0b1001
+%define% EMEX64_CODING_REGDEC       0b1010
+%define% EMEX64_CODING_OFFSETADD    0b1011
+%define% EMEX64_CODING_OFFSETSUB    0b1100
+%define% EMEX64_CODING_MAX          EMEX64_CODING_OFFSETSUB
+
+section .data
+    disasm_symbol_msg db "[disasm] symbol: 0x\0"
+    disasm_size_msg db "[disasm] size: 0x\0"
+    disasm_opcode_msg db "illegal opcode: 0x\0"
+    disasm_coding_msg db "illegal coding: 0x\0"
+
+; opcode string table
+section .data
+    disasm_opcode_hlt_msg db "hlt\0\0\0\0", 0
+    disasm_opcode_nop_msg db "nop\0\0\0\0", 0
+    disasm_opcode_mov_msg db "mov\0\0\0\0", 2
+    disasm_opcode_swp_msg db "swp\0\0\0\0", 2
+    disasm_opcode_swpz_msg db "movz\0\0\0", 2
+    disasm_opcode_push_msg db "push\0\0\0", 16
+    disasm_opcode_pop_msg db "pop\0\0\0\0", 16
+    disasm_opcode_ldb_msg db "ldb\0\0\0\0", 2
+    disasm_opcode_ldw_msg db "ldw\0\0\0\0", 2
+    disasm_opcode_ldd_msg db "ldd\0\0\0\0", 2
+    disasm_opcode_ldq_msg db "ldq\0\0\0\0", 2
+    disasm_opcode_stb_msg db "stb\0\0\0\0", 2
+    disasm_opcode_stw_msg db "stw\0\0\0\0", 2
+    disasm_opcode_std_msg db "std\0\0\0\0", 2
+    disasm_opcode_stq_msg db "stq\0\0\0\0", 2
+    disasm_opcode_add_msg db "add\0\0\0\0", 3
+    disasm_opcode_sub_msg db "sub\0\0\0\0", 3
+    disasm_opcode_mul_msg db "mul\0\0\0\0", 3
+    disasm_opcode_div_msg db "div\0\0\0\0", 3
+    disasm_opcode_idiv_msg db "idiv\0\0\0", 3
+    disasm_opcode_mod_msg db "mod\0\0\0\0", 3
+    disasm_opcode_not_msg db "not\0\0\0\0", 16
+    disasm_opcode_neg_msg db "neg\0\0\0\0", 16
+    disasm_opcode_and_msg db "and\0\0\0\0", 3
+    disasm_opcode_or_msg db "or\0\0\0\0\0", 3
+    disasm_opcode_xor_msg db "xor\0\0\0\0", 3
+    disasm_opcode_shr_msg db "shr\0\0\0\0", 3
+    disasm_opcode_shl_msg db "shl\0\0\0\0", 3
+    disasm_opcode_sar_msg db "sar\0\0\0\0", 3
+    disasm_opcode_ror_msg db "ror\0\0\0\0", 3
+    disasm_opcode_rol_msg db "rol\0\0\0\0", 3
+    disasm_opcode_pdep_msg db "pdep\0\0\0", 3
+    disasm_opcode_pext_msg db "pext\0\0\0", 3
+    disasm_opcode_bswapw_msg db "bswapw\0", 1
+    disasm_opcode_bswapd_msg db "bswapd\0", 1
+    disasm_opcode_bswapq_msg db "bswapq\0", 1
+    disasm_opcode_inc_msg db "inc\0\0\0\0", 16
+    disasm_opcode_dec_msg db "dec\0\0\0\0", 16
+    disasm_opcode_b_msg db "b\0\0\0\0\0\0", 1
+    disasm_opcode_cmp_msg db "cmp\0\0\0\0", 2
+    disasm_opcode_be_msg db "be\0\0\0\0\0", 1
+    disasm_opcode_bne_msg db "bne\0\0\0\0", 1
+    disasm_opcode_blt_msg db "blt\0\0\0\0", 1
+    disasm_opcode_bgt_msg db "bgt\0\0\0\0", 1
+    disasm_opcode_ble_msg db "ble\0\0\0\0", 1
+    disasm_opcode_bge_msg db "bge\0\0\0\0", 1
+    disasm_opcode_bz_msg db "bz\0\0\0\0\0", 2
+    disasm_opcode_bnz_msg db "bnz\0\0\0\0", 2
+    disasm_opcode_blw_msg db "blw\0\0\0\0", 16
+    disasm_opcode_wret_msg db "wret\0\0\0", 0
+    disasm_opcode_iret_msg db "iret\0\0\0", 0
+    disasm_opcode_bl_msg db "bl\0\0\0\0\0", 1
+    disasm_opcode_ret_msg db "ret\0\0\0\0", 0
+    disasm_opcode_clr_msg db "clr\0\0\0\0", 16
+    disasm_opcode_cmov_msg db "cmov\0\0\0", 2
+    disasm_opcode_cmovb_msg db "cmovb\0\0", 2
+
+; register string table
+section .data
+    disasm_reg_pc_msg db "pc\0\0"
+    disasm_reg_sp_msg db "sp\0\0"
+    disasm_reg_fp_msg db "fp\0\0"
+    disasm_reg_cf_msg db "cf\0\0"
+    disasm_reg_fpc_msg db "fpc\0"
+    disasm_reg_r0_msg db "r0\0\0"
+    disasm_reg_r1_msg db "r1\0\0"
+    disasm_reg_r2_msg db "r2\0\0"
+    disasm_reg_r3_msg db "r3\0\0"
+    disasm_reg_r4_msg db "r4\0\0"
+    disasm_reg_r5_msg db "r5\0\0"
+    disasm_reg_r6_msg db "r6\0\0"
+    disasm_reg_r7_msg db "r7\0\0"
+    disasm_reg_r8_msg db "r8\0\0"
+    disasm_reg_r9_msg db "r9\0\0"
+    disasm_reg_rr_msg db "rr\0\0"
+
+%define% disasm_opcode_table disasm_opcode_hlt_msg
+%define% disasm_reg_table disasm_reg_pc_msg
+
+; jump table for the operand logic
+; idea for later: %push% BODY disasm_put_operand and later %pop% BODY
+; fixme: dot is not seen as punctuation??
+;%define% BODY disasm_put_operand
+section .data
+    disasm_put_operand_jtable dq disasm_put_operand.end, disasm_put_operand.reg, disasm_put_operand.imm4, disasm_put_operand.imm8, disasm_put_operand.imm16, disasm_put_operand.imm32, disasm_put_operand.imm64, disasm_put_operand.addr64, disasm_put_operand.regext, disasm_put_operand.reginc, disasm_put_operand.regdec, disasm_put_operand.offsetadd, disasm_put_operand.offsetsub
+;%undef% BODY
+
+extern bitbolt_init
+extern bitbolt_read
+extern bitbolt_align
+extern bitbolt_bytes_used
+
+disasm_put_opcode:
+    blw bitbolt_read, 8
+    mov r0, rr
+    cmp r0, EMEX64_OPCODE_MAX
+    ble .is_legal
+    blw puts, disasm_opcode_msg
+    blw putbase, r0, 16
+    clr rr
+    b .end
+.is_legal:
+    mul r0, 8
+    add r0, disasm_opcode_table
+    blw puts, r0
+    ldb rr, [r0 + 7]
+.end:
+    blw putc, ' '
+    wret
+
+disasm_put_register:
+    
+
+disasm_put_operand:
+    blw bitbolt_read, 4
+    mov r0, rr
+    cmp r0, EMEX64_CODING_MAX
+    ble .is_legal
+.is_not_legal:
+    blw puts, disasm_coding_msg
+    blw putbase, r0, 16
+.is_legal:
+
+    mul r1, r0, 8
+    ldq r1, [r1 + disasm_put_operand_jtable]
+    b r1
+
+.end:
+    clr rr
+    wret
+.reg:
+    blw bitbolt_read, 4
+    mul r0, rr, 4
+    blw puts, [r0 + disasm_reg_table]
+    b .get_me_tf_out_of_here
+.imm4:
+    blw bitbolt_read, 4
+    blw putbase, rr, 10
+    b .get_me_tf_out_of_here
+.imm8:
+    blw bitbolt_read, 8
+    blw putbase, rr, 10
+    b .get_me_tf_out_of_here
+.imm16:
+    blw bitbolt_read, 16
+    blw putbase, rr, 10
+    b .get_me_tf_out_of_here
+.imm32:
+    blw bitbolt_read, 32
+    blw putbase, rr, 10
+    b .get_me_tf_out_of_here
+.addr64:
+    blw bitbolt_align
+.imm64:
+    blw bitbolt_read, 64
+    blw putbase, rr, 10
+    b .get_me_tf_out_of_here
+.regext:
+.reginc:
+.regdec:
+.offsetadd:
+.offsetsub:
+.get_me_tf_out_of_here:
+
+    mov rr, 1
+    wret
+
+disasm_instruction:
+    ; need to find out opcode
+    blw disasm_put_opcode
+
+    mov r0, rr ; caries the number of operands returned by disasm_put_opcode
+    clr r1
+.loop:
+    bz r1++, .loop_put_operand
+    blw putc, ','
+    blw putc, ' '
+.loop_put_operand:
+    blw disasm_put_operand
+    ;bz rr, (assembles, without a token comming after, pls fix)
+    bz rr, .loop_end
+    cmp r1, r0
+    blt .loop
+    
+.loop_end:
+    blw putc, '\n'
+
+    blw bitbolt_align
+    clr rr
+    wret
+
+disasm_sym:
+    ; print a bit out of info
+    blw puts, disasm_symbol_msg
+    blw putbase, r0, 16
+    blw putc, '\n'
+    blw puts, disasm_size_msg
+    blw putbase, r1, 16
+    blw putc, '\n'
+
+    blw bitbolt_init, r0, 0
+
+    ; find out what the first opcode is
+    clr r2  ; the pointer counter
+.loop:
+    blw disasm_instruction
+    blw bitbolt_bytes_used
+    add r2, rr
+    bz r2, .failure ; if disasm_instruction returns zero it means that the disassembling failed
+    cmp r2, r1
+    blt .loop
+.failure:
+    wret
