@@ -237,7 +237,7 @@ static inline void __E64CoreExecuteInstructionAtPC(__E64Core core)
                 break;
             case kE64ParameterCodingOffsetAdd:
             case kE64ParameterCodingOffsetSub:
-                if(unlikely(offsetMode || i == 0))
+                if(unlikely(offsetMode))
                 {
                     /* shouldn't be in offsetting mode nor the first argument */
                     core->cr_state.crexc.exception = kE64ExceptionBadInstruction;
