@@ -2,7 +2,7 @@
 all: compile execute clean
 
 compile:
-	emex64asm -o hello.img src/start.e64 -I../emexFirmware/inc -Wl,-e,hello
+	emex64asm -o hello.img src/start.e64 -I../emexFirmware/inc
 
 execute:
 	emex64vm -f hello.img -m:kb 16 --display off

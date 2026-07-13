@@ -19,29 +19,15 @@
 ; along with emex64. If not, see <https://www.gnu.org/licenses/>.
 ;
 
-%ifdef% MINIMAL
-%include% <arch/display.e64inc>
-%include% <arch/platform.e64inc>
-%else%
 %include% <emex64.e64inc>
-%endif% ; MINIMAL
 
 %define% VFB_HEIGHT      256
 %define% VFB_WIDTH       256
 %define% VFB_SIZE        0x10000
 %define% VIDEO_FRAMES    6520
 
-%define% AUDIO_RATE           22050
-%define% AUDIO_CHUNK_SAMPLES  1470        ; 2 video frames worth
-%define% AUDIO_CHUNK_BYTES    5880        ; 1470 * 4
-%define% AUDIO_BDL_ENTRIES    32
-%define% AUDIO_BDL_FILL       31          ; slots to fill per refill (32-1 gap)
-%define% AUDIO_BDL_MASK       0x1F
-%define% AUDIO_TOTAL_CHUNKS   3260        ; ceil(6520 frames / 2)
-
 section .data
     badapple_bitmap df "../vid.bitmask"
-    badapple_audio  df "../audio.raw"
 %ifdef% BENCHMARK
     result_msg db "Timer Ticks: \0"
 %endif%
