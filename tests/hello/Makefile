@@ -2,10 +2,10 @@
 all: compile execute clean
 
 compile:
-	emex64asm -o hello.img src/start.e64 -I../emexFirmware/inc
+	emex64asm -o hello.img src/start.e64 -I../emexFirmware/inc -Wl,--omagic
 
 execute:
-	emex64vm -f hello.img -m:kb 16 --display off
+	emex64vm -f hello.img -m:kb 8 --display off
 
 clean:
 	rm hello.img
