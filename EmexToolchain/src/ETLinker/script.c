@@ -194,7 +194,7 @@ Boolean linker_script_apply(linker_invocation_t *inv,
             value = (UInt64)strtoull(expr, &endptr, 0);
             if(!endptr || *endptr != '\0')
             {
-                diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "unknown expression '%s' in linker script\n", expr);
+                diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "unknown expression '%s' in linker script", expr);
                 return false;
             }
         }

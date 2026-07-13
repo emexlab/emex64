@@ -319,7 +319,7 @@ Boolean E64MemoryLoadImage(E64MemoryRef memoryRef,
     vfd_close(d);
     if(image_size > memory->memory_size)
     {
-        diag_error(NULL, "firmware image is too large\n");
+        diag_error(NULL, "firmware image is too large");
         return false;
     }
 
@@ -332,7 +332,7 @@ Boolean E64MemoryLoadImage(E64MemoryRef memoryRef,
      */
     if(!emex_file_map(file))
     {
-        diag_error(NULL, "mapping firmware image failed\n");
+        diag_error(NULL, "mapping firmware image failed");
         return false;
     }
 
@@ -340,7 +340,7 @@ Boolean E64MemoryLoadImage(E64MemoryRef memoryRef,
 
     if((size_t)s < image_size)
     {
-        diag_error(NULL, "mapping boot image failed\n");
+        diag_error(NULL, "mapping boot image failed");
         return false;
     }
 

@@ -413,12 +413,12 @@ emex64_display_t *emex64_display_alloc(E64MachineRef machine,
 {
     if(width > 1920 || height > 1920)
     {
-        diag_error(NULL, "display dimensions are too big\n");
+        diag_error(NULL, "display dimensions are too big");
         return NULL;
     }
     else if(width < 256 || height < 256)
     {
-        diag_error(NULL, "display dimensions are too small\n");
+        diag_error(NULL, "display dimensions are too small");
         return NULL;
     }
 

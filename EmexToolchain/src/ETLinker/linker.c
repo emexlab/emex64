@@ -97,8 +97,8 @@ Boolean linker_symbol_append_definition(linker_invocation_t *inv,
     }
     if(sym->defined && sym->addr != addr)
     {
-        diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "duplicate symbol '%s' in '%s'\n", name, object_path);
-        diagnostic_report(inv->consumer, kDiagnosticSeverityNote, NULL, "symbol '%s' also exists in '%s'\n", name, sym->object_path);
+        diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "duplicate symbol '%s' in '%s'", name, object_path);
+        diagnostic_report(inv->consumer, kDiagnosticSeverityNote, NULL, "symbol '%s' also exists in '%s'", name, sym->object_path);
         return false;
     }
 

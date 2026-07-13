@@ -24,114 +24,9 @@
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/diagnostic/diagnostic.h>
 #include <EmexToolchain/Support/diagnostic/consumer.h>
-
-#define DIAG_BUF_SIZE 4096
-
-typedef struct {
-    char data[DIAG_BUF_SIZE];
-    size_t len;
-} diag_buf_t;
-
-static inline int buf_putc(diag_buf_t *b, char c)
-{
-    b->data[b->len++] = c;
-    return 1;
-}
-
-static inline int buf_puts(diag_buf_t *b, const char *s)
-{
-    int count = 0;
-
-    if(!s)
-    {
-        s = "(null)";
-    }
-
-    while(*s)
-    {
-        count += buf_putc(b, *s++);
-    }
-
-    return count;
-}
-
-static inline int buf_putnbr_base_unsigned(diag_buf_t *b,
-                                           UInt64 n,
-                                           const char *base)
-{
-    int count = 0;
-    UInt64 radix = 0;
-
-    while(base[radix])
-    {
-        radix++;
-    }
-
-    if(n >= radix)
-    {
-        count += buf_putnbr_base_unsigned(b, n / radix, base);
-    }
-
-    count += buf_putc(b, base[n % radix]);
-    return count;
-}
-
-static inline int buf_putnbr_signed(diag_buf_t *b, long n)
-{
-    int count = 0;
-
-    if(n < 0)
-    {
-        count += buf_putc(b, '-');
-        n = -n;
-    }
-
-    count += buf_putnbr_base_unsigned(b, (UInt64)n, "0123456789");
-
-    return count;
-}
-
-static inline int buf_put_binary(diag_buf_t *b, unsigned int n)
-{
-    return buf_putnbr_base_unsigned(b, n, "01");
-}
-
-static inline int buf_put_pointer(diag_buf_t *b, void *p)
-{
-    int count = 0;
-    count += buf_puts(b, "0x");
-    count += buf_putnbr_base_unsigned(b, (uintptr_t)p, "0123456789abcdef");
-    return count;
-}
-
-static inline int buf_put_float(diag_buf_t *b, double n)
-{
-    int count = 0;
-    long ipart = (long)n;
-    double fpart = n - ipart;
-
-    if(n < 0)
-    {
-        count += buf_putc(b, '-');
-        n = -n;
-        ipart = -ipart;
-        fpart = -fpart;
-    }
-
-    count += buf_putnbr_signed(b, ipart);
-    count += buf_putc(b, '.');
-
-    for(int i = 0; i < 6; i++)
-    {
-        fpart *= 10;
-        count += buf_putc(b, (int)fpart + '0');
-        fpart -= (int)fpart;
-    }
-
-    return count;
-}
 
 diagnostic_t *diagnostic_allocv(kDiagnosticSeverity severity,
                                 diagnostic_location_t *location,
@@ -140,101 +35,37 @@ diagnostic_t *diagnostic_allocv(kDiagnosticSeverity severity,
 {
     assert(str != NULL);
 
-    diag_buf_t buf;
-    buf.len = 0;
-
-    int i = 0;
-    while(str[i])
+    EFStringRef formatString = EFStringCreateWithCString(kEFAllocatorDefault, str, kEFStringEncodingASCII);
+    if(formatString == NULL)
     {
-        if(str[i] == '%' && str[i + 1])
-        {
-            i++;
-            switch(str[i])
-            {
-                case 'c':
-                    buf_putc(&buf, (char)va_arg(args, int));
-                    break;
-                case 's':
-                    buf_puts(&buf, va_arg(args, char *));
-                    break;
-                case 'd':
-                    buf_putnbr_signed(&buf, va_arg(args, int));
-                    break;
-                case 'u':
-                    buf_putnbr_base_unsigned(&buf, va_arg(args, unsigned int), "0123456789");
-                    break;
-                case 'b':
-                    buf_put_binary(&buf, va_arg(args, unsigned int));
-                    break;
-                case 'x':
-                    buf_putnbr_base_unsigned(&buf, va_arg(args, unsigned int), "0123456789abcdef");
-                    break;
-                case 'X':
-                    buf_putnbr_base_unsigned(&buf, va_arg(args, unsigned int), "0123456789ABCDEF");
-                    break;
-                case 'p':
-                    buf_put_pointer(&buf, va_arg(args, void *));
-                    break;
-                case 'f':
-                    buf_put_float(&buf, va_arg(args, double));
-                    break;
-                case 'l':
-                    switch(str[i + 1])
-                    {
-                        case 'l':
-                            switch(str[i + 2])
-                            {
-                                case 'd':
-                                    i += 2;
-                                    buf_putnbr_signed(&buf, va_arg(args, SInt64));
-                                    break;
-                                case 'u':
-                                    i += 2;
-                                    buf_putnbr_base_unsigned(&buf, va_arg(args, UInt64), "0123456789");
-                                    break;
-                                default:
-                                    break;
-                            }
-                            break;
-                        case 'd':
-                            i++;
-                            buf_putnbr_signed(&buf, va_arg(args, long));
-                            break;
-                        case 'u':
-                            i++;
-                            buf_putnbr_base_unsigned(&buf, va_arg(args, unsigned long), "0123456789");
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
-                case '%':
-                    buf_putc(&buf, '%');
-                    break;
-                default:
-                    break;
-            }
-        }
-        else
-        {
-            buf_putc(&buf, str[i]);
-        }
-        i++;
+        return NULL;
     }
-    buf_putc(&buf, '\0');
+
+    EFStringRef string = EFStringCreateWithFormatAndArguments(kEFAllocatorDefault, formatString, args);
+    EFRelease(formatString);
+    if(string == NULL)
+    {
+        return NULL;
+    }
+
+    EFIndex length = EFStringGetLength(string);
+    char *newStringBuffer = malloc((size_t)(length + 1));
+    Boolean success = EFStringGetCString(string, newStringBuffer, length + 1, kEFStringEncodingASCII);
+    EFRelease(string);
+    if(!success)
+    {
+        free(newStringBuffer);
+        return NULL;
+    }
 
     diagnostic_t *diagnostic = malloc(sizeof(diagnostic_t));
     if(diagnostic == NULL)
     {
+        free(newStringBuffer);
         return NULL;
     }
 
-    diagnostic->str = strdup(buf.data);
-    if(diagnostic->str == NULL)
-    {
-        free(diagnostic);
-        return NULL;
-    }
+    diagnostic->str = newStringBuffer;
 
     if(location != NULL)
     {

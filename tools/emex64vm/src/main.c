@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
             }
             else
             {
-                diag_error(NULL, "illegal value type used\n", argv[i]);
+                diag_error(NULL, "illegal value type used", argv[i]);
                 return 1;
             }
         }
@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
             }
             else
             {
-                diag_error(NULL, "illegal value type used\n", argv[i]);
+                diag_error(NULL, "illegal value type used", argv[i]);
                 return 1;
             }
         }
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
             {
                 if(!machineSupport.display)
                 {
-                    diag_warn(NULL, "--display flag is not supported in this distribution of the emex64 toolchain\n");
+                    diag_warn(NULL, "--display flag is not supported in this distribution of the emex64 toolchain");
                 }
                 else
                 {
@@ -131,14 +131,14 @@ int main(int argc, char *argv[])
             {
                 if(!machineOptions.displayOptions.enabled)
                 {
-                    diag_error(NULL, "-display flag is not supported in this distribution of the emex64 toolchain\n");
+                    diag_error(NULL, "-display flag is not supported in this distribution of the emex64 toolchain");
                     return 1;
                 }
                 machineOptions.displayOptions.enabled = true;
             }
             else
             {
-                diag_error(NULL, "unknown argument supplied to '--display': '%s'\n", argv[i + 1]);
+                diag_error(NULL, "unknown argument supplied to '--display': '%s'", argv[i + 1]);
                 return 1;
             }
             i++;
@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
             }
             else
             {
-                diag_error(NULL, "unknown argument supplied to '--keyboard': '%s'\n", argv[i + 1]);
+                diag_error(NULL, "unknown argument supplied to '--keyboard': '%s'", argv[i + 1]);
                 return 1;
             }
             i++;
@@ -172,7 +172,7 @@ int main(int argc, char *argv[])
             }
             else
             {
-                diag_error(NULL, "unknown argument supplied to '--mouse': '%s'\n", argv[i + 1]);
+                diag_error(NULL, "unknown argument supplied to '--mouse': '%s'", argv[i + 1]);
                 return 1;
             }
             i++;
@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
 
             if(!machineSupport.display)
             {
-                diag_warn(NULL, "--display:resolution flag is not supported in this distribution of the emex64 toolchain\n");
+                diag_warn(NULL, "--display:resolution flag is not supported in this distribution of the emex64 toolchain");
                 continue;
             }
 
@@ -196,13 +196,13 @@ int main(int argc, char *argv[])
             }
             else
             {
-                diag_error(NULL, "illegal arguments supplied to '--display:resolution': '%s' and '%s'\n", argv[i - 1], argv[i - 2]);
+                diag_error(NULL, "illegal arguments supplied to '--display:resolution': '%s' and '%s'", argv[i - 1], argv[i - 2]);
                 return 1;
             }
         }
         else
         {
-            diag_error(NULL, "unknown option '%s'\n", argv[i]);
+            diag_error(NULL, "unknown option '%s'", argv[i]);
             return 1;
         }
     }
@@ -211,14 +211,14 @@ int main(int argc, char *argv[])
     E64MachineRef machine = E64MachineCreateWithOptions(kEFAllocatorDefault, machineOptions);
     if(machine == NULL)
     {
-        diag_error(NULL, "failed to allocated machine\n");
+        diag_error(NULL, "failed to allocated machine");
         return 1;
     }
 
     E64MemoryRef memory = E64MachineGetMemory(machine);
     if(memory == NULL)
     {
-        diag_error(NULL, "failed to aquire memory from machine\n");
+        diag_error(NULL, "failed to aquire memory from machine");
         EFRelease(machine);
         return 1;
     }
@@ -229,7 +229,7 @@ int main(int argc, char *argv[])
         if(file == NULL)
     fail:
         {
-            diag_error(NULL, "failed to load firmware image\n");
+            diag_error(NULL, "failed to load firmware image");
             EFRelease(machine);
             return 1;
         }
@@ -246,7 +246,7 @@ int main(int argc, char *argv[])
     E64CoreRef core = E64MachineGetCore(machine);
     if(core == NULL)
     {
-        diag_error(NULL, "failed to aquire core from machine\n");
+        diag_error(NULL, "failed to aquire core from machine");
         EFRelease(machine);
         return 1;
     }
