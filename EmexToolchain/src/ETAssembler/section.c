@@ -40,13 +40,13 @@ static Boolean __assembler_section_emit_value(assembler_invocation_t *inv,
                                            UInt64 entry_cnt,
                                            int dbs)
 {
-    if(entry_cnt == 1 && entry[0]->type == kAssemblerTokenTypeString)
+    if(entry_cnt == 1 && entry[0]->type == kETAssemblerTokenTypeString)
     {
         vbitwalker_write_buf(inv->out_vbitwalker, entry[0]->string_literal.buf, entry[0]->string_literal.len);
         return true;
     }
 
-    if(entry_cnt == 1 && entry[0]->type == kAssemblerTokenTypeIdentifier)
+    if(entry_cnt == 1 && entry[0]->type == kETAssemblerTokenTypeIdentifier)
     {
         if(dbs != 64)
         {
@@ -107,7 +107,7 @@ Boolean assembler_section_parse(assembler_invocation_t *inv)
     /* only emitting data section into out virtual file descriptor */
     for(UInt64 i = 0; i < inv->line_cnt; i++)
     {
-        if(inv->line[i]->type != kAssemblerLineTypeSection ||
+        if(inv->line[i]->type != kETAssemblerLineTypeSection ||
            strcmp(inv->line[i]->token[1]->str, ".data") != 0)
         {
             continue;
@@ -120,9 +120,9 @@ Boolean assembler_section_parse(assembler_invocation_t *inv)
         }
 
         i++;
-        for(; i < inv->line_cnt && (inv->line[i]->type == kAssemblerLineTypeSectionData || inv->line[i]->type == kAssemblerLineTypeIgnore); i++)
+        for(; i < inv->line_cnt && (inv->line[i]->type == kETAssemblerLineTypeSectionData || inv->line[i]->type == kETAssemblerLineTypeIgnore); i++)
         {
-            if(inv->line[i]->type == kAssemblerLineTypeIgnore)
+            if(inv->line[i]->type == kETAssemblerLineTypeIgnore)
             {
                 continue;
             }
@@ -164,11 +164,11 @@ Boolean assembler_section_parse(assembler_invocation_t *inv)
 
                 for(unsigned long a = 2; a < inv->line[i]->token_cnt; a++)
                 {
-                    if(inv->line[i]->token[a]->type == kAssemblerTokenTypeComma)
+                    if(inv->line[i]->token[a]->type == kETAssemblerTokenTypeComma)
                     {
                         continue;
                     }
-                    if(inv->line[i]->token[a]->type != kAssemblerTokenTypeString)
+                    if(inv->line[i]->token[a]->type != kETAssemblerTokenTypeString)
                     {
                         diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[a]), "not a file path '%s'", inv->line[i]->token[a]->str);
                         return false;
@@ -213,7 +213,7 @@ Boolean assembler_section_parse(assembler_invocation_t *inv)
             while(a < inv->line[i]->token_cnt)
             {
                 UInt64 start = a;
-                while(a < inv->line[i]->token_cnt && inv->line[i]->token[a]->type != kAssemblerTokenTypeComma)
+                while(a < inv->line[i]->token_cnt && inv->line[i]->token[a]->type != kETAssemblerTokenTypeComma)
                 {
                     a++;
                 }
@@ -249,7 +249,7 @@ Boolean assembler_section_parse(assembler_invocation_t *inv)
     /* only emitting bss section into out virtual file descriptor */
     for(UInt64 i = 0; i < inv->line_cnt; i++)
     {
-        if(inv->line[i]->type != kAssemblerLineTypeSection ||
+        if(inv->line[i]->type != kETAssemblerLineTypeSection ||
            strcmp(inv->line[i]->token[1]->str, ".bss") != 0)
         {
             continue;
@@ -262,9 +262,9 @@ Boolean assembler_section_parse(assembler_invocation_t *inv)
         }
 
         i++;
-        for(; i < inv->line_cnt && (inv->line[i]->type == kAssemblerLineTypeSectionData || inv->line[i]->type == kAssemblerLineTypeIgnore); i++)
+        for(; i < inv->line_cnt && (inv->line[i]->type == kETAssemblerLineTypeSectionData || inv->line[i]->type == kETAssemblerLineTypeIgnore); i++)
         {
-            if(inv->line[i]->type == kAssemblerLineTypeIgnore)
+            if(inv->line[i]->type == kETAssemblerLineTypeIgnore)
             {
                 continue;
             }

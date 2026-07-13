@@ -41,21 +41,21 @@ SInt64 expr_primary(assembler_expr_t *e)
 
     switch(t->type)
     {
-        case kAssemblerTokenTypePlus:
+        case kETAssemblerTokenTypePlus:
             e->pos++;
             return +expr_primary(e);
-        case kAssemblerTokenTypeMinus:
+        case kETAssemblerTokenTypeMinus:
             e->pos++;
             return -expr_primary(e);
-        case kAssemblerTokenTypeInteger:
+        case kETAssemblerTokenTypeInteger:
             e->pos++;
             return (SInt64)t->integer_literal.v;
-        case kAssemblerTokenTypeLParen:
+        case kETAssemblerTokenTypeLParen:
         {
             e->pos++;
             SInt64 v = expr_addsub(e);
             assembler_token_t *close = expr_peek(e);
-            if(close == NULL || close->type != kAssemblerTokenTypeRParen)
+            if(close == NULL || close->type != kETAssemblerTokenTypeRParen)
             {
                 e->error = true;
                 e->blame = (close != NULL) ? close : t;
@@ -65,7 +65,7 @@ SInt64 expr_primary(assembler_expr_t *e)
             e->pos++;
             return v;
         }
-        case kAssemblerTokenTypeIdentifier:
+        case kETAssemblerTokenTypeIdentifier:
             e->error = true;
             e->blame = t;
             e->why = "labels can't be used inside constant expressions yet";
@@ -88,12 +88,12 @@ SInt64 expr_term(assembler_expr_t *e)
         {
             break;
         }
-        if(t->type == kAssemblerTokenTypeMultiply)
+        if(t->type == kETAssemblerTokenTypeMultiply)
         {
             e->pos++;
             v *= expr_primary(e);
         }
-        else if(t->type == kAssemblerTokenTypeDivide)
+        else if(t->type == kETAssemblerTokenTypeDivide)
         {
             e->pos++;
             SInt64 d = expr_primary(e);
@@ -124,12 +124,12 @@ SInt64 expr_addsub(assembler_expr_t *e)
         {
             break;
         }
-        if(t->type == kAssemblerTokenTypePlus)
+        if(t->type == kETAssemblerTokenTypePlus)
         {
             e->pos++;
             v += expr_term(e);
         }
-        else if(t->type == kAssemblerTokenTypeMinus)
+        else if(t->type == kETAssemblerTokenTypeMinus)
         {
             e->pos++;
             v -= expr_term(e);
@@ -142,7 +142,9 @@ SInt64 expr_addsub(assembler_expr_t *e)
     return v;
 }
 
-Boolean assembler_eval_const(assembler_token_t **tok, UInt64 count, SInt64 *out)
+Boolean assembler_eval_const(assembler_token_t **tok,
+                             UInt64 count,
+                             SInt64 *out)
 {
     assembler_expr_t e = {
         .tok = tok, .count = count, .pos = 0,

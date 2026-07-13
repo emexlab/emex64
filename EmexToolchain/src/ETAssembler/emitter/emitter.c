@@ -64,19 +64,19 @@ static inline Boolean opcode_arg_is_branch_target(E64Opcode op,
 
 static inline Boolean assembler_emit_operand(assembler_token_t *operand)
 {
-    if(operand->type == kAssemblerTokenTypeRegister)
+    if(operand->type == kETAssemblerTokenTypeRegister)
     {
         assembler_emit_register(operand->al->inv, operand->register_identifier.v, operand->register_identifier.increment, operand->register_identifier.actuallyDecrement);
     }
-    else if(operand->type == kAssemblerTokenTypeRegisterExtended)
+    else if(operand->type == kETAssemblerTokenTypeRegisterExtended)
     {
         assembler_emit_register_extended(operand->al->inv, operand->register_identifier.v_extended);
     }
-    else if(operand->type == kAssemblerTokenTypeInteger)
+    else if(operand->type == kETAssemblerTokenTypeInteger)
     {
         assembler_emit_imm(operand->al->inv, (UInt64)operand->integer_literal.v);
     }
-    else if(operand->type == kAssemblerTokenTypeIdentifier)
+    else if(operand->type == kETAssemblerTokenTypeIdentifier)
     {
         Boolean local;
         char *label = NULL;
@@ -112,7 +112,7 @@ static inline Boolean assembler_emit_operand(assembler_token_t *operand)
 
 Boolean assembler_emit_instruction(assembler_line_t *al)
 {
-    if(al->token[0]->type != kAssemblerTokenTypeInstruction)
+    if(al->token[0]->type != kETAssemblerTokenTypeInstruction)
     {
         diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(al->token[0]), "expected instruction identifier, but got %s '%s'", assembler_lexer_str_for_token_type(al->token[0]->type), al->token[0]->str);
         return false;
@@ -122,26 +122,26 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
     const emex64_opfunc_entry_t *entry = &kE64OpfuncTable[opcode];
 
     UInt64 operand_total = 0;
-    kAssemblerTokenType ptype = kAssemblerTokenTypeInvalid;
+    ETAssemblerTokenType ptype = kETAssemblerTokenTypeInvalid;
     if(al->token_cnt > 1)
     {
         operand_total = 1;
         for(UInt64 k = 1; k < al->token_cnt; k++)
         {
-            if(k != 1 && ptype == kAssemblerTokenTypeComma && al->token[k]->type == kAssemblerTokenTypeComma)
+            if(k != 1 && ptype == kETAssemblerTokenTypeComma && al->token[k]->type == kETAssemblerTokenTypeComma)
             {
                 diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(al->token[k - 1]), "expected operand after %s '%s'", assembler_lexer_str_for_token_type(al->token[k - 1]->type), al->token[k - 1]->str);
                 return false;
             }
 
             ptype = al->token[k]->type;
-            if(al->token[k]->type == kAssemblerTokenTypeComma)
+            if(al->token[k]->type == kETAssemblerTokenTypeComma)
             {
                 operand_total++;
             }
         }
 
-        if(ptype == kAssemblerTokenTypeComma)
+        if(ptype == kETAssemblerTokenTypeComma)
         {
             diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(al->token[al->token_cnt - 1]), "expected operand after %s '%s'", assembler_lexer_str_for_token_type(al->token[al->token_cnt - 1]->type), al->token[al->token_cnt - 1]->str);
             return false;
@@ -171,7 +171,7 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
     while(i < al->token_cnt)
     {
         UInt64 start = i;
-        while(i < al->token_cnt && al->token[i]->type != kAssemblerTokenTypeComma)
+        while(i < al->token_cnt && al->token[i]->type != kETAssemblerTokenTypeComma)
         {
             i++;
         }
@@ -189,14 +189,14 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
             return false;
         }
 
-        if(operand_cnt == 1 && operand[0]->type == kAssemblerTokenTypeRegister)
+        if(operand_cnt == 1 && operand[0]->type == kETAssemblerTokenTypeRegister)
         {
             assembler_emit_register(al->inv, operand[0]->register_identifier.v, operand[0]->register_identifier.increment, operand[0]->register_identifier.actuallyDecrement);
             argno++;
             continue;
         }
 
-        if(operand_cnt == 1 && operand[0]->type == kAssemblerTokenTypeRegisterExtended)
+        if(operand_cnt == 1 && operand[0]->type == kETAssemblerTokenTypeRegisterExtended)
         {
             assembler_emit_register_extended(al->inv, operand[0]->register_identifier.v_extended);
             argno++;
@@ -204,7 +204,7 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
         }
 
         /* check if this is a LPack */
-        if(operand[0]->type == kAssemblerTokenTypeLPack)
+        if(operand[0]->type == kETAssemblerTokenTypeLPack)
         {
             if(operand_cnt > 5)
             {
@@ -218,11 +218,11 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
             }
 
             /* the second operand has to be a plus or a minus */
-            if(operand[2]->type == kAssemblerTokenTypePlus)
+            if(operand[2]->type == kETAssemblerTokenTypePlus)
             {
                 vbitwalker_write(al->inv->out_vbitwalker, kE64ParameterCodingOffsetAdd, 4);
             }
-            else if(operand[2]->type == kAssemblerTokenTypeMinus)
+            else if(operand[2]->type == kETAssemblerTokenTypeMinus)
             {
                 vbitwalker_write(al->inv->out_vbitwalker, kE64ParameterCodingOffsetSub, 4);
             }
@@ -247,7 +247,7 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
             return false;
         }
 
-        if(operand_cnt == 1 && operand[0]->type == kAssemblerTokenTypeIdentifier)
+        if(operand_cnt == 1 && operand[0]->type == kETAssemblerTokenTypeIdentifier)
         {
             Boolean local;
             char *label = NULL;
@@ -312,9 +312,9 @@ Boolean assembler_emit(assembler_invocation_t *inv)
     {
         switch(inv->line[i]->type)
         {
-            case kAssemblerLineTypeGlobalLabel:
-            case kAssemblerLineTypeLocalLabel:
-            case kAssemblerLineTypeExternLabel:
+            case kETAssemblerLineTypeGlobalLabel:
+            case kETAssemblerLineTypeLocalLabel:
+            case kETAssemblerLineTypeExternLabel:
                 if(!assembler_label_append(inv->line[i]->token[0]))
                 {
                     failed = true;
@@ -325,7 +325,7 @@ Boolean assembler_emit(assembler_invocation_t *inv)
                     }
                 }
                 break;
-            case kAssemblerLineTypeAssembly:
+            case kETAssemblerLineTypeAssembly:
                 if(!assembler_emit_instruction(inv->line[i]))
                 {
                     failed = true;

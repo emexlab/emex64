@@ -153,7 +153,7 @@ static inline Boolean __assembler_splice_line(assembler_invocation_t *inv,
     free(inv->line[idx]->str);
     for(UInt64 i = 0; i < inv->line[idx]->token_cnt; i++)
     {
-        if(inv->line[idx]->token[i]->type == kAssemblerTokenTypeString)
+        if(inv->line[idx]->token[i]->type == kETAssemblerTokenTypeString)
         {
             free(inv->line[idx]->token[i]->string_literal.buf);
         }
@@ -259,13 +259,13 @@ Boolean assembler_code_inject_file(assembler_invocation_t *inv,
             at->column_num = token.column + 1;
             at->real_len = strlen(at->str);
             at->al = inv->line[at_line_index + i];
-            if(token.type == kAssemblerTokenTypeInvalid)
+            if(token.type == kETAssemblerTokenTypeInvalid)
             {
                 diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "token '%s' is not valid", at->str);
                 inv->file[inj_file_idx] = NULL;
                 return false;
             }
-            else if(token.type == kAssemblerTokenTypeTooLong)
+            else if(token.type == kETAssemblerTokenTypeTooLong)
             {
                 diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "token is too long, token lenght limit is %d characters", LEXTOK_LENGHT_MAX);
                 inv->file[inj_file_idx] = NULL;
@@ -287,7 +287,7 @@ Boolean assembler_code_inject_file(assembler_invocation_t *inv,
         /* if it has a valid preprocessor directive type then it is a preprocessor directive */
         if(assembler_directive_type_for_str(inv->line[at_line_index + i]->token[0]->str) != kAssemblerPreprocessorDirectiveTypeUnknown)
         {
-            inv->line[at_line_index + i]->type = kAssemblerLineTypePreprocessorDirective;
+            inv->line[at_line_index + i]->type = kETAssemblerLineTypePreprocessorDirective;
         }
     }
 
@@ -324,7 +324,7 @@ Boolean assembler_code_postparse(assembler_invocation_t *inv)
     for(UInt64 li = 0; li < inv->line_cnt; li++)
     {
         if(inv->line[li]->token_cnt == 0 ||
-           inv->line[li]->type == kAssemblerLineTypeIgnore)
+           inv->line[li]->type == kETAssemblerLineTypeIgnore)
         {
             /* probably a whitespace or excluded by a macro */
             continue;
@@ -345,7 +345,7 @@ Boolean assembler_code_postparse(assembler_invocation_t *inv)
     for(UInt64 i = 0; i < inv->line_cnt; i++)
     {
         if(inv->line[i]->token_cnt == 0 ||
-           inv->line[i]->type == kAssemblerLineTypeIgnore)
+           inv->line[i]->type == kETAssemblerLineTypeIgnore)
         {
             /* probably a whitespace or excluded by a macro */
             continue;
@@ -357,7 +357,7 @@ Boolean assembler_code_postparse(assembler_invocation_t *inv)
              * checking if last character of token is a ':',
              * because that means that its a label.
              */
-            if(inv->line[i]->token[1]->type == kAssemblerTokenTypeColon)
+            if(inv->line[i]->token[1]->type == kETAssemblerTokenTypeColon)
             {
                 section_mode = false;
 
@@ -373,16 +373,16 @@ Boolean assembler_code_postparse(assembler_invocation_t *inv)
                 switch(inv->line[i]->token[0]->str[0])
                 {
                     case '.':
-                        inv->line[i]->type = kAssemblerLineTypeLocalLabel;
+                        inv->line[i]->type = kETAssemblerLineTypeLocalLabel;
                         break;
                     default:
-                        inv->line[i]->type = kAssemblerLineTypeGlobalLabel;
+                        inv->line[i]->type = kETAssemblerLineTypeGlobalLabel;
                         break;
                 }
 
                 /* post validity check */
                 Boolean valid = true;
-                if(inv->line[i]->token[0]->type != kAssemblerTokenTypeIdentifier)
+                if(inv->line[i]->token[0]->type != kETAssemblerTokenTypeIdentifier)
                 {
                     diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[0]), "expected identifier in label definition, but got %s '%s'", assembler_lexer_str_for_token_type(inv->line[i]->token[0]->type), inv->line[i]->token[0]->str);
                     valid = false;
@@ -402,7 +402,7 @@ Boolean assembler_code_postparse(assembler_invocation_t *inv)
             }
         }
 
-        if(inv->line[i]->token_cnt >= 1 && inv->line[i]->token[0]->type == kAssemblerTokenTypeKeyword)
+        if(inv->line[i]->token_cnt >= 1 && inv->line[i]->token[0]->type == kETAssemblerTokenTypeKeyword)
         {
             if(inv->line[i]->token_cnt == 1)
             {
@@ -412,12 +412,12 @@ Boolean assembler_code_postparse(assembler_invocation_t *inv)
 
             switch(inv->line[i]->token[0]->keyword.v)
             {
-                case kAssemblerKeywordSection:
+                case kETAssemblerKeywordSection:
                     section_mode = true;
-                    inv->line[i]->type = kAssemblerLineTypeSection;
+                    inv->line[i]->type = kETAssemblerLineTypeSection;
                     break;
-                case kAssemblerKeywordExtern:
-                    inv->line[i]->type = kAssemblerLineTypeExternLabel;
+                case kETAssemblerKeywordExtern:
+                    inv->line[i]->type = kETAssemblerLineTypeExternLabel;
                     break;
                 default:
                     break;
@@ -425,7 +425,7 @@ Boolean assembler_code_postparse(assembler_invocation_t *inv)
 
             Boolean valid = true;
 
-            if(inv->line[i]->token[1]->type != kAssemblerTokenTypeIdentifier)
+            if(inv->line[i]->token[1]->type != kETAssemblerTokenTypeIdentifier)
             {
                 diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[1]), "expected identifier in keyword construct, but got %s '%s'", assembler_lexer_str_for_token_type(inv->line[i]->token[1]->type), inv->line[i]->token[1]->str);
                 valid = false;
@@ -451,7 +451,7 @@ Boolean assembler_code_postparse(assembler_invocation_t *inv)
          * assembly, this is a very important
          * differentiation. 
          */
-        inv->line[i]->type = section_mode ? kAssemblerLineTypeSectionData : kAssemblerLineTypeAssembly;
+        inv->line[i]->type = section_mode ? kETAssemblerLineTypeSectionData : kETAssemblerLineTypeAssembly;
     }
 
     return true;

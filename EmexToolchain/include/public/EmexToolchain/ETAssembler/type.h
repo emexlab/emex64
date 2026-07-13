@@ -27,53 +27,53 @@
 #include <EmexToolchain/VM/E64Core.h>
 
 typedef enum: UInt8 {
-    kAssemblerTokenTypeInvalid,
-    kAssemblerTokenTypeTooLong,
+    kETAssemblerTokenTypeInvalid,
+    kETAssemblerTokenTypeTooLong,
 
-    kAssemblerTokenTypeIdentifier,  /* in the lextok step everything becomes a identifier at first */
-    kAssemblerTokenTypeInteger,
-    kAssemblerTokenTypeString,
-    kAssemblerTokenTypeHeaderName,  /* shouldn't be classified after tokenization */
-    kAssemblerTokenTypeRegister,
-    kAssemblerTokenTypeRegisterExtended,
-    kAssemblerTokenTypeInstruction,
-    kAssemblerTokenTypeKeyword,
-    kAssemblerTokenTypeComma,
-    kAssemblerTokenTypeColon,
-    kAssemblerTokenTypeLParen,
-    kAssemblerTokenTypeRParen,
-    kAssemblerTokenTypePlus,
-    kAssemblerTokenTypeMinus,
-    kAssemblerTokenTypeMultiply,
-    kAssemblerTokenTypeDivide,
-    kAssemblerTokenTypeLPack,
-    kAssemblerTokenTypeRPack,
-} kAssemblerTokenType;
-
-typedef enum: UInt8 {
-    kAssemblerKeywordSection,
-    kAssemblerKeywordExtern,
-    kAssemblerKeywordInvalid,
-} kAssemblerKeyword;
+    kETAssemblerTokenTypeIdentifier,    /* in the lextok step everything becomes a identifier at first */
+    kETAssemblerTokenTypeInteger,
+    kETAssemblerTokenTypeString,
+    kETAssemblerTokenTypeHeaderName,    /* shouldn't be classified after tokenization */
+    kETAssemblerTokenTypeRegister,
+    kETAssemblerTokenTypeRegisterExtended,
+    kETAssemblerTokenTypeInstruction,
+    kETAssemblerTokenTypeKeyword,
+    kETAssemblerTokenTypeComma,
+    kETAssemblerTokenTypeColon,
+    kETAssemblerTokenTypeLParen,
+    kETAssemblerTokenTypeRParen,
+    kETAssemblerTokenTypePlus,
+    kETAssemblerTokenTypeMinus,
+    kETAssemblerTokenTypeMultiply,
+    kETAssemblerTokenTypeDivide,
+    kETAssemblerTokenTypeLPack,
+    kETAssemblerTokenTypeRPack,
+} ETAssemblerTokenType;
 
 typedef enum: UInt8 {
-    kAssemblerLineTypeNone,
-    kAssemblerLineTypeIgnore,
-    kAssemblerLineTypeAssembly,
-    kAssemblerLineTypeExternLabel,
-    kAssemblerLineTypeGlobalLabel,
-    kAssemblerLineTypeLocalLabel,
-    kAssemblerLineTypeSection,
-    kAssemblerLineTypeSectionData,
-    kAssemblerLineTypePreprocessorDirective,
-} kAssemblerLineType;
+    kETAssemblerKeywordSection,
+    kETAssemblerKeywordExtern,
+    kETAssemblerKeywordInvalid,
+} ETAssemblerKeyword;
+
+typedef enum: UInt8 {
+    kETAssemblerLineTypeNone,
+    kETAssemblerLineTypeIgnore,
+    kETAssemblerLineTypeAssembly,
+    kETAssemblerLineTypeExternLabel,
+    kETAssemblerLineTypeGlobalLabel,
+    kETAssemblerLineTypeLocalLabel,
+    kETAssemblerLineTypeSection,
+    kETAssemblerLineTypeSectionData,
+    kETAssemblerLineTypePreprocessorDirective,
+} ETAssemblerLineType;
 
 typedef struct assembler_token {
     char *str;
     size_t column_num;                      /* start offset of the token in the text file */
     size_t real_len;                        /* real lenght in text file */
     struct assembler_line *al;              /* pointer back to compiler line */
-    kAssemblerTokenType type;               /* OMG THAT IS AI?!?! the token type, WOAHHH AM I A AI, DID A AI GENERATE THIS TOKEN?!??!*/
+    ETAssemblerTokenType type;              /* OMG THAT IS AI?!?! the token type, WOAHHH AM I A AI, DID A AI GENERATE THIS TOKEN?!??!*/
 
     union {
         struct {
@@ -95,16 +95,16 @@ typedef struct assembler_token {
             E64Opcode v;
         } instruction_identifier;
         struct {
-            kAssemblerKeyword v;
+            ETAssemblerKeyword v;
         } keyword;
     };
 } assembler_token_t;
 
 typedef struct assembler_line {
     char *str;
-    kAssemblerLineType type;                /* type of line */
+    ETAssemblerLineType type;               /* type of line */
     struct assembler_token **token;         /* subtokens */
-    UInt64 token_cnt;                     /* count of subtokens */
+    UInt64 token_cnt;                       /* count of subtokens */
     size_t line_num;                        /* line number in file */   
     size_t file_idx;                        /* index of file in compiler invocation */
     struct assembler_invocation *inv;       /* pointer back to compiler invocation */

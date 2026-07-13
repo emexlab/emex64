@@ -105,7 +105,7 @@ Boolean assembler_preprocessor_run(assembler_invocation_t *inv)
     for(UInt64 li = 0; li < inv->line_cnt; li++)
     {
         if(inv->line[li]->token_cnt <= 0 || /* whitespaces stay this type if im not wrong UwU */
-           inv->line[li]->type == kAssemblerLineTypeIgnore)
+           inv->line[li]->type == kETAssemblerLineTypeIgnore)
         {
             /* whitespaces don't matter in emex64asm lol >:3 */
             continue;
@@ -220,13 +220,13 @@ Boolean assembler_preprocessor_run(assembler_invocation_t *inv)
         }
         else
         {
-            inv->line[li]->type = kAssemblerLineTypeIgnore;
+            inv->line[li]->type = kETAssemblerLineTypeIgnore;
         }
 
     handle_preprocessor_directive:
         switch(inv->line[li]->type)
         {
-            case kAssemblerLineTypePreprocessorDirective:
+            case kETAssemblerLineTypePreprocessorDirective:
                 switch(type)
                 {
                     case kAssemblerPreprocessorDirectiveTypeInclude:
@@ -234,7 +234,7 @@ Boolean assembler_preprocessor_run(assembler_invocation_t *inv)
                         if(!(!state.in_a_condition || state.condition_met))
                         {
                             /* ignore includation */
-                            inv->line[li]->type = kAssemblerLineTypeIgnore;
+                            inv->line[li]->type = kETAssemblerLineTypeIgnore;
                             break;
                         }
 
@@ -437,7 +437,7 @@ Boolean assembler_preprocessor_run(assembler_invocation_t *inv)
                 /* include doesn't exist anymore at that offset */
                 if(type != kAssemblerPreprocessorDirectiveTypeInclude)
                 {
-                    inv->line[li]->type = kAssemblerLineTypeIgnore;
+                    inv->line[li]->type = kETAssemblerLineTypeIgnore;
                 }
                 break;
             default:

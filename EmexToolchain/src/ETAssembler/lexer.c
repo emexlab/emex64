@@ -91,7 +91,7 @@ static inline void __lextok_handle_punctuation(unsigned short *otoken_pos,
     {
         return;
     }
-    token->type = kAssemblerTokenTypeIdentifier;
+    token->type = kETAssemblerTokenTypeIdentifier;
     __lextok_append(otoken_pos);
 }
 
@@ -127,7 +127,7 @@ lextok_token_t assembler_lexer_tok(const char *token)
     }
 
     lextok_token_t retval;
-    retval.type = kAssemblerTokenTypeIdentifier;
+    retval.type = kETAssemblerTokenTypeIdentifier;
     retval.column = ltokptr - stokptr;
 
     /* perform copy */
@@ -137,7 +137,7 @@ lextok_token_t assembler_lexer_tok(const char *token)
     {
         if(a == LEXTOK_LENGHT_MAX)
         {
-            retval.type = kAssemblerTokenTypeTooLong;
+            retval.type = kETAssemblerTokenTypeTooLong;
             break;
         }
 
@@ -186,19 +186,19 @@ lextok_token_t assembler_lexer_tok(const char *token)
                     /* handling string beginnings */
                     case '"':
                         token_mode = kLextokTokenModeString;
-                        retval.type = kAssemblerTokenTypeInvalid;
+                        retval.type = kETAssemblerTokenTypeInvalid;
                         break;
 
                     /* handling character beginnings */
                     case '\'':
                         token_mode = kLextokTokenModeCharacter;
-                        retval.type = kAssemblerTokenTypeInvalid;
+                        retval.type = kETAssemblerTokenTypeInvalid;
                         break;
 
                     /* handling header name beginnings */
                     case '<':
                         token_mode = kLextokTokenModeHeaderName;
-                        retval.type = kAssemblerTokenTypeInvalid;
+                        retval.type = kETAssemblerTokenTypeInvalid;
                         break;
 
                     default:
@@ -217,7 +217,7 @@ lextok_token_t assembler_lexer_tok(const char *token)
                     }
 
                     __lextok_append(&a);
-                    retval.type = kAssemblerTokenTypeIdentifier;
+                    retval.type = kETAssemblerTokenTypeIdentifier;
                     goto break_out;
                 }
                 break;
@@ -284,13 +284,13 @@ static Boolean __assembly_lexer_validate_identifier(const char *s)
     return true;
 }
 
-static kAssemblerKeyword __assembler_lexer_keyword(const char *s)
+static ETAssemblerKeyword __assembler_lexer_keyword(const char *s)
 {
     switch(pack_name(s))
     {
-        case PACK('s','e','c','t','i','o','n'): return kAssemblerKeywordSection;
-        case PACK('e','x','t','e','r','n'): return kAssemblerKeywordExtern;
-        default: return kAssemblerKeywordInvalid;
+        case PACK('s','e','c','t','i','o','n'): return kETAssemblerKeywordSection;
+        case PACK('e','x','t','e','r','n'): return kETAssemblerKeywordExtern;
+        default: return kETAssemblerKeywordInvalid;
     }
 }
 
@@ -302,7 +302,7 @@ Boolean assembler_lexer_classify(assembler_token_t *at)
     {
         case emexParserValueTypeNumber:
             at->integer_literal.v = pret.value;
-            at->type = kAssemblerTokenTypeInteger;
+            at->type = kETAssemblerTokenTypeInteger;
             return true;
         case emexParserValueTypeBuffer:
             at->string_literal.buf = calloc(pret.len + 1, sizeof(char));
@@ -314,7 +314,7 @@ Boolean assembler_lexer_classify(assembler_token_t *at)
             memcpy(at->string_literal.buf, (const char*)pret.value, pret.len);
             at->string_literal.buf[pret.len] = '\0';
             at->string_literal.len = pret.len;
-            at->type = kAssemblerTokenTypeString;
+            at->type = kETAssemblerTokenTypeString;
             return true;
         case emexParserValueTypeOverflow:
             diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "integer literal '%s' overflows 64bit length", at->str);
@@ -328,34 +328,34 @@ Boolean assembler_lexer_classify(assembler_token_t *at)
                 switch(at->str[0])
                 {
                     case ',':
-                        at->type = kAssemblerTokenTypeComma;
+                        at->type = kETAssemblerTokenTypeComma;
                         return true;
                     case ':':
-                        at->type = kAssemblerTokenTypeColon;
+                        at->type = kETAssemblerTokenTypeColon;
                         return true;
                     case '(':
-                        at->type = kAssemblerTokenTypeLParen;
+                        at->type = kETAssemblerTokenTypeLParen;
                         return true;
                     case ')':
-                        at->type = kAssemblerTokenTypeRParen;
+                        at->type = kETAssemblerTokenTypeRParen;
                         return true;
                     case '[':
-                        at->type = kAssemblerTokenTypeLPack;
+                        at->type = kETAssemblerTokenTypeLPack;
                         return true;
                     case ']':
-                        at->type = kAssemblerTokenTypeRPack;
+                        at->type = kETAssemblerTokenTypeRPack;
                         return true;
                     case '+':
-                        at->type = kAssemblerTokenTypePlus;
+                        at->type = kETAssemblerTokenTypePlus;
                         return true;
                     case '-':
-                        at->type = kAssemblerTokenTypeMinus;
+                        at->type = kETAssemblerTokenTypeMinus;
                         return true;
                     case '*':
-                        at->type = kAssemblerTokenTypeMultiply;
+                        at->type = kETAssemblerTokenTypeMultiply;
                         return true;
                     case '/':
-                        at->type = kAssemblerTokenTypeDivide;
+                        at->type = kETAssemblerTokenTypeDivide;
                         return true;
                     default:
                         break;
@@ -368,12 +368,12 @@ Boolean assembler_lexer_classify(assembler_token_t *at)
             {
                 if(regIdent.isExtended)
                 {
-                    at->type = kAssemblerTokenTypeRegisterExtended;
+                    at->type = kETAssemblerTokenTypeRegisterExtended;
                     at->register_identifier.v_extended = regIdent.value.extended;
                 }
                 else
                 {
-                    at->type = kAssemblerTokenTypeRegister;
+                    at->type = kETAssemblerTokenTypeRegister;
                     at->register_identifier.v = regIdent.value.base;
                 }
 
@@ -388,16 +388,16 @@ Boolean assembler_lexer_classify(assembler_token_t *at)
             if(op != kE64OpcodeInvalid)
             {
                 at->instruction_identifier.v = op;
-                at->type = kAssemblerTokenTypeInstruction;
+                at->type = kETAssemblerTokenTypeInstruction;
                 return true;
             }
 
             /* checking if it is a keyword */
-            kAssemblerKeyword keyword = __assembler_lexer_keyword(at->str);
-            if(keyword != kAssemblerKeywordInvalid)
+            ETAssemblerKeyword keyword = __assembler_lexer_keyword(at->str);
+            if(keyword != kETAssemblerKeywordInvalid)
             {
                 at->keyword.v = keyword;
-                at->type = kAssemblerTokenTypeKeyword;
+                at->type = kETAssemblerTokenTypeKeyword;
                 return true;
             }
 
@@ -408,7 +408,7 @@ Boolean assembler_lexer_classify(assembler_token_t *at)
                 return false;
             }
 
-            at->type = kAssemblerTokenTypeIdentifier;
+            at->type = kETAssemblerTokenTypeIdentifier;
             return true;
         default:
             diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "unknown token '%s'", at->str);
@@ -416,34 +416,34 @@ Boolean assembler_lexer_classify(assembler_token_t *at)
     }
 }
 
-const char *assembler_lexer_str_for_token_type(kAssemblerTokenType type)
+const char *assembler_lexer_str_for_token_type(ETAssemblerTokenType type)
 {
     switch(type)
     {
-        case kAssemblerTokenTypeIdentifier:
+        case kETAssemblerTokenTypeIdentifier:
             return "identifier";
-        case kAssemblerTokenTypeInteger:
+        case kETAssemblerTokenTypeInteger:
             return "integer literal";
-        case kAssemblerTokenTypeString:
+        case kETAssemblerTokenTypeString:
             return "string literal";
-        case kAssemblerTokenTypeRegister:
-        case kAssemblerTokenTypeRegisterExtended:
+        case kETAssemblerTokenTypeRegister:
+        case kETAssemblerTokenTypeRegisterExtended:
             return "register identifier";
-        case kAssemblerTokenTypeInstruction:
+        case kETAssemblerTokenTypeInstruction:
             return "instruction identifier";
-        case kAssemblerTokenTypeKeyword:
+        case kETAssemblerTokenTypeKeyword:
             return "keyword";
-        case kAssemblerTokenTypeComma:
-        case kAssemblerTokenTypeColon:
-        case kAssemblerTokenTypeLParen:
-        case kAssemblerTokenTypeRParen:
-        case kAssemblerTokenTypeLPack:
-        case kAssemblerTokenTypeRPack:
+        case kETAssemblerTokenTypeComma:
+        case kETAssemblerTokenTypeColon:
+        case kETAssemblerTokenTypeLParen:
+        case kETAssemblerTokenTypeRParen:
+        case kETAssemblerTokenTypeLPack:
+        case kETAssemblerTokenTypeRPack:
             return "punctuation";
-        case kAssemblerTokenTypePlus:
-        case kAssemblerTokenTypeMinus:
-        case kAssemblerTokenTypeMultiply:
-        case kAssemblerTokenTypeDivide:
+        case kETAssemblerTokenTypePlus:
+        case kETAssemblerTokenTypeMinus:
+        case kETAssemblerTokenTypeMultiply:
+        case kETAssemblerTokenTypeDivide:
             return "binary operation";
         default:
             return "unknown token";

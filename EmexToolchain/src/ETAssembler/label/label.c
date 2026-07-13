@@ -43,7 +43,7 @@ Boolean assembler_label_append(assembler_token_t *at)
     char *name = NULL;
     switch(at->al->type)
     {
-        case kAssemblerLineTypeLocalLabel:
+        case kETAssemblerLineTypeLocalLabel:
         {
             if(inv->label_scope == NULL)
             {
@@ -67,7 +67,7 @@ Boolean assembler_label_append(assembler_token_t *at)
             name[size - 1] = '\0';
             break;
         }
-        case kAssemblerLineTypeGlobalLabel:
+        case kETAssemblerLineTypeGlobalLabel:
         {
             /* constructing global label */
             size_t size = strlen(at->str) + 1;
@@ -81,7 +81,7 @@ Boolean assembler_label_append(assembler_token_t *at)
             name[size - 1] = '\0';
             break;
         }
-        case kAssemblerLineTypeSectionData:
+        case kETAssemblerLineTypeSectionData:
         {
             /* constructing global label */
             size_t size = strlen(at->str) + 1;
@@ -95,7 +95,7 @@ Boolean assembler_label_append(assembler_token_t *at)
             name[size - 1] = '\0';
             break;
         }
-        case kAssemblerLineTypeExternLabel:
+        case kETAssemblerLineTypeExternLabel:
         {
             /* constructing extern label */
             /* first we need the 2nd token, not the 1st */
@@ -122,7 +122,7 @@ Boolean assembler_label_append(assembler_token_t *at)
     if(label != NULL)
     {
         /* can be redeclared using 'extern' safely */
-        if(at->al->type == kAssemblerLineTypeExternLabel)
+        if(at->al->type == kETAssemblerLineTypeExternLabel)
         {
             free(name);
             return true;
@@ -131,7 +131,7 @@ Boolean assembler_label_append(assembler_token_t *at)
         /* label can be defined after using 'extern' too */
         if(!label->defined)
         {
-            if(at->al->type == kAssemblerLineTypeGlobalLabel)
+            if(at->al->type == kETAssemblerLineTypeGlobalLabel)
             {
                 /* set it as scope */
                 inv->label_scope = label->name;
@@ -150,7 +150,7 @@ Boolean assembler_label_append(assembler_token_t *at)
         return false;
     }
 
-    if(at->al->type == kAssemblerLineTypeGlobalLabel)
+    if(at->al->type == kETAssemblerLineTypeGlobalLabel)
     {
         /* set it as scope */
         inv->label_scope = name;
@@ -166,7 +166,7 @@ Boolean assembler_label_append(assembler_token_t *at)
 
     label->addr = vbitwalker_bytes_used(inv->out_vbitwalker);
     label->at_link = at;
-    label->defined = at->al->type != kAssemblerLineTypeExternLabel;
+    label->defined = at->al->type != kETAssemblerLineTypeExternLabel;
     label->name = name;
     if(!hashmap_puts(inv->label_hashmap, name, label))
     {
