@@ -28,157 +28,6 @@
 #include <setjmp.h>
 #include <EmexToolchain/Support/parser.h>
 
-static _Thread_local jmp_buf overflow_jmp;
-
-static Boolean parse_base(const char *digits,
-                          int base,
-                          UInt64 *num)
-{
-    errno = 0;
-    UInt64 v = strtoull(digits, NULL, base);
-    if(errno == ERANGE)
-    {
-        return false;
-    }
-    if(num != NULL)
-    {
-        *num = v;
-    }
-    return true;
-}
-
-static Boolean parse_type_is_hex(const char *line,
-                                 UInt64 *num)
-{
-    /* checking if user specified it as type hexadecimal  */
-    if(line[0] != '0' || (line[1] != 'x' && line[1] != 'X')) return false;
-
-    /* next check is to make sure if the string really is a hexadecimal  */
-    for(UInt64 i = 2;; i++)
-    {
-        if(line[i] == '\0')
-        {
-            if(!parse_base(line + 2, 16, num))
-            {
-                longjmp(overflow_jmp, 1);
-            }
-            return true;
-        }
-
-        if((line[i] < '0' || line[i] > '9') &&
-           (line[i] < 'a' || line[i] > 'f') &&
-           (line[i] < 'A' || line[i] > 'F'))
-        {
-            return false;
-        }
-    }
-
-    return false;
-}
-
-static Boolean parse_type_is_bin(const char *line,
-                                 UInt64 *num)
-{
-    /* checking if used specified it as a type binary */
-    if(line[0] != '0' || (line[1] != 'b' && line[1] != 'B')) return false;
-
-    /* checking if rest of the string complies to a binary */
-    for(UInt64 i = 2;; i++)
-    {
-        if(line[i] == '\0')
-        {
-            if(!parse_base(line + 2, 2, num))
-            {
-                longjmp(overflow_jmp, 1);
-            }
-            return true;
-        }
-
-        if(line[i] < '0' || line[i] > '1')
-        {
-            return false;
-        }
-    }
-
-    return false;
-}
-
-static Boolean parse_type_is_dec(const char *line,
-                                 UInt64 *num)
-{
-    /* checking if string complies to a decimal */
-    for(UInt64 i = 0;; i++)
-    {
-        if(line[i] == '\0')
-        {
-            if(!parse_base(line, 10, num))
-            {
-                longjmp(overflow_jmp, 1);
-            }
-            return true;
-        }
-
-        if(line[i] < '0' || line[i] > '9')
-        {
-            return false;
-        }
-    }
-
-    // If it passed all its a hexadecimal string
-    return false;
-}
-
-static Boolean parse_type_is_char(const char *line,
-                                  UInt64 *num)
-{
-    /* checking if this is a string */
-    if(line[0] != '\'' || line[2] == '\0')
-    {
-        return false;
-    }
-
-    /* finding closed quote */
-    size_t len = strlen(line);
-    if(len < 3 || line[len - 1] != '\'')
-    {
-        return false;
-    }
-
-    char c;
-
-    /* checking if user specified it as normal or special character */
-    if(line[1] == '\\')
-    {
-        switch(line[2])
-        {
-            case 'n': c = '\n'; break;
-            case 't': c = '\t'; break;
-            case 'r': c = '\r'; break;
-            case 'b': c = '\b'; break;
-            case '0': c = '\0'; break;
-            case '\\': c = '\\'; break;
-            case '\'': c = '\''; break;
-            default: return false;
-        }
-    }
-    else
-    {
-        if(len != 3)
-        {
-            /* uhm whats up?! */
-            return false;
-        }
-        c = line[1];
-    }
-
-    if(num != NULL)
-    {
-        *num = (UInt64)c;
-    }
-
-    return true;
-}
-
 static Boolean parse_type_is_buffer(const char *line,
                                     UInt64 *num,
                                     UInt64 *blen)
@@ -256,23 +105,40 @@ static Boolean parse_type_is_buffer(const char *line,
 
 parser_return_t parse_value_from_string(const char *str)
 {
-    if(setjmp(overflow_jmp) != 0)
+    UInt64 num = 0, len = 0;
+    if(parse_type_is_buffer(str, &num, &len))
+    {
+        return (parser_return_t){ .type = emexParserValueTypeBuffer, .value = num, .len = len };
+    }
+
+    EFStringRef stringRef = EFStringCreateWithCString(kEFAllocatorDefault, str, kEFStringEncodingASCII);
+    if(stringRef == NULL)
     {
         return (parser_return_t){ .type = emexParserValueTypeOverflow };
     }
 
-    UInt64 num = 0, len = 0;
-
-    if(parse_type_is_hex(str, &num) ||
-       parse_type_is_bin(str, &num) ||
-       parse_type_is_dec(str, &num) ||
-       parse_type_is_char(str, &num))
+    EFStringConvertibility convert = EFStringIsNumber(stringRef);
+    if(convert == kEFStringConvertibilityNormal)
     {
+        EFNumberRef numberRef = EFStringCopyNumber(kEFAllocatorDefault, stringRef);
+        EFRelease(stringRef);
+        if(numberRef == NULL)
+        {
+            return (parser_return_t){ .type = emexParserValueTypeOverflow };
+        }
+
+        if(!EFNumberGetValue(numberRef, kEFNumberTypeUInt64, &num))
+        {
+            EFRelease(numberRef);
+            return (parser_return_t){ .type = emexParserValueTypeOverflow };
+        }
+
+        EFRelease(numberRef);
         return (parser_return_t){ .type = emexParserValueTypeNumber, .value = num, .len = len };
     }
-    else if(parse_type_is_buffer(str, &num, &len))
+    else
     {
-        return (parser_return_t){ .type = emexParserValueTypeBuffer, .value = num, .len = len };
+        EFRelease(stringRef);
     }
 
     return (parser_return_t){ .type = emexParserValueTypeString };
