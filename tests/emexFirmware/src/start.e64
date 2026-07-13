@@ -171,15 +171,13 @@ _start:
     ; buhuhuhuhuhu ;w;)
     ;
     ; step 1: zeroing __bss_start -> early_stack
-    sub r0, early_stack, __bss_start
-    blw memset, __bss_start, 0, r0
+    blw memset, __bss_start, 0, [early_stack - __bss_start]
 
-    ; step 2: zerong early_stack + the length of early_stack -> __bss_end
+    ; step 2: zeroing early_stack + the length of early_stack -> __bss_end
     add r0, early_stack, EARLY_STACK_SIZE
     cmp r0, __bss_end
     bge .bss_done   ; nothing left to zero
-    sub r1, __bss_end, r0
-    blw memset, r0, 0, r1
+    blw memset, r0, 0, [__bss_end - r0]
 .bss_done:
 
     ; rest of the routine
