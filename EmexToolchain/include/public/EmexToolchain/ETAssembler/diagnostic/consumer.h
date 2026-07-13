@@ -24,7 +24,7 @@
 
 #include <EmexToolchain/Support/virtual/vfd.h>
 #include <EmexToolchain/Support/diagnostic/consumer.h>
-#include <EmexToolchain/ETAssembler/options.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerOptions.h>
 
 #define AT_TO_DLOC(at) &(diagnostic_location_t){ \
                 .file_name = (at)->al->inv->file[(at)->al->file_idx]->path, \

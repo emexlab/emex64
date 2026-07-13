@@ -28,7 +28,7 @@
 #include <EmexToolchain/ETAssembler/label/label.h>
 #include <EmexToolchain/ETAssembler/label/relocate.h>
 #include <EmexToolchain/ETAssembler/type.h>
-#include <EmexToolchain/ETAssembler/options.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerOptions.h>
 
 typedef struct {
     char *match;

@@ -19,7 +19,7 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/ETAssembler/options.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerOptions.h>
 
 ETAssemblerDriverOptions ETAssemblerDriverOptionsDefault = {
     .assemble_only = false,
