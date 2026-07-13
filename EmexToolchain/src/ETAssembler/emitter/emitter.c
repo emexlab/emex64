@@ -140,6 +140,12 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
                 operand_total++;
             }
         }
+
+        if(ptype == kAssemblerTokenTypeComma)
+        {
+            diagnostic_report(al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(al->token[al->token_cnt - 1]), "expected operand after %s '%s'", assembler_lexer_str_for_token_type(al->token[al->token_cnt - 1]->type), al->token[al->token_cnt - 1]->str);
+            return false;
+        }
     }
 
     if(operand_total > EMEX64_MAX_ARGS)
