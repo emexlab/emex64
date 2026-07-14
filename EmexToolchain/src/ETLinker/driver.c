@@ -65,15 +65,15 @@ linker_driver_t *linker_driver_alloc(int argc,
             fprintf(stderr, "Options:\n");
             fprintf(stderr, "  --help                 Shows this help menu.\n");
             fprintf(stderr, "  --version              Prints version.\n");
+            fprintf(stderr, "  --omagic               Uses old magic (merges .text and .data into one read-write\n");
+            fprintf(stderr, "                         block, note that this could be a security risk).\n");
+            fprintf(stderr, "  --nmagic               Uses new magic (separates .text and .data).\n");
             fprintf(stderr, "\n");
             fprintf(stderr, "  -o <output path>       Sets the output file path, is set to \"a.out\" when not passed.\n");
             fprintf(stderr, "  -e <entry name>        Sets the entry symbol, is set to \"_start\" when not passed.\n");
             fprintf(stderr, "  -T <script path>       Adds a linker script.\n");
             fprintf(stderr, "  -v                     Prints verbose linker log.\n");
             fprintf(stderr, "  -r                     Emits relocatable ELF object.\n");
-            fprintf(stderr, "  -omagic                Uses old magic (merges .text and .data into one read-write\n");
-            fprintf(stderr, "                         block, note that this could be a security risk).\n");
-            fprintf(stderr, "  -nmagic                Uses new magic (separates .text and .data).\n");
             goto failure;
         }
         else if(strcmp(argv[i], "--version") == 0)
