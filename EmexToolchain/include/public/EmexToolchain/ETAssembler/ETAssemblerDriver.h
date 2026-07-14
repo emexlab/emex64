@@ -23,17 +23,28 @@
 #define ETASSEMBLERDRIVER_H
 
 #include <stddef.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/file.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerJob.h>
 #include <EmexToolchain/ETAssembler/invocation.h>
 #include <EmexToolchain/ETLinker/type.h>
+#include <EmexToolchain/ETAssembler/diagnostic/ETAssemblerDiagnosticConsumer.h>
 
-typedef struct __ETAssemblerJob *ETAssemblerJobRef;
+/*
+typedef struct __ETAssemblerDriver *ETAssemblerDriverRef;
+
+ETAssemblerDriverRef ETAssemblerDriverCreateWithCArguments(EFAllocatorRef allocatorRef, int argc, const char **argv);
+Boolean ETAssemblerDriverRun(ETAssemblerDriverRef driverRef);
+
+EFArrayRef ETAssemblerGetJobs(ETAssemblerDriverRef driverRef);
+EFArrayRef ETAssemblerCopyJobs(EFAllocatorRef allocatorRef, ETAssemblerDriverRef driverRef);
+
+*/
 
 typedef struct {
-    ETAssemblerDriverOptions options;
+    ETAssemblerDriverOptions driverOptions;
     ETAssemblerDiagnosticOptions diagnosticOptions;
-    assembler_diagnostic_consumer_t *consumer;  /* owned */
+    ETAssemblerDiagnosticConsumerRef diagnosticConsumer;
     kEmitMode emit_mode;
 
     const char *output_path;    /* borrowed */

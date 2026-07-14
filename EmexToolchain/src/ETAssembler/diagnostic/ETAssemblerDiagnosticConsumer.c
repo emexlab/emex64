@@ -86,6 +86,31 @@ assembler_diagnostic_consumer_t *ETAssemblerDiagnosticConsumerGetPtr(ETAssembler
     return consumer->consumer;
 }
 
+ETAssemblerDiagnosticOptions ETAssemblerDiagnosticConsumerGetDiagnosticOptions(ETAssemblerDiagnosticConsumerRef consumerRef)
+{
+    __ETAssemblerDiagnosticConsumer consumer = (__ETAssemblerDiagnosticConsumer)consumerRef;
+    if(consumer == NULL)
+    {
+        return ETAssemblerDiagnosticOptionsDefault;
+    }
+
+    assembler_diagnostic_consumer_context_t *ctx = (assembler_diagnostic_consumer_context_t*)consumer->consumer->ctx;
+    return ctx->options;
+}
+
+void ETAssemblerDiagnosticConsumerSetDiagnosticOptions(ETAssemblerDiagnosticConsumerRef consumerRef,
+                                                       ETAssemblerDiagnosticOptions diagnosticOptions)
+{
+    __ETAssemblerDiagnosticConsumer consumer = (__ETAssemblerDiagnosticConsumer)consumerRef;
+    if(consumer == NULL)
+    {
+        return;
+    }
+
+    assembler_diagnostic_consumer_context_t *ctx = (assembler_diagnostic_consumer_context_t*)consumer->consumer->ctx;
+    ctx->options = diagnosticOptions;
+}
+
 void ETAssemblerDiagnosticConsumerReport(ETAssemblerDiagnosticConsumerRef consumerRef,
                                          kDiagnosticSeverity severity,
                                          diagnostic_location_t *location,
