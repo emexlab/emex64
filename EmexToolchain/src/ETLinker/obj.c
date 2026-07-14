@@ -187,7 +187,7 @@ Boolean linker_load_object(linker_invocation_t *inv,
 
 void linker_layout(linker_invocation_t *inv)
 {
-    unsigned long cur = BOOT_HEADER_SIZE;
+    unsigned long cur = inv->needs_fw_hdr ? BOOT_HEADER_SIZE : 0;
 
     /* laying out .text segments */
     for(linker_object_t *o = inv->obj; o; o = o->next)

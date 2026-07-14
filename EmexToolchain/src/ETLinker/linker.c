@@ -48,6 +48,8 @@ linker_invocation_t *linker_invocation_alloc(linker_options_t options,
     inv->out_data_off = 0;
     inv->out_bss_off = 0;
 
+    inv->needs_fw_hdr = true;
+
     inv->options = options;
 
     return inv;

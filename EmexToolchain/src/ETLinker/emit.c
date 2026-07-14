@@ -105,6 +105,18 @@ static Boolean obj_register_symbols(linker_invocation_t *inv,
     return true;
 }
 
+static void obj_unregister_all_symbols(linker_invocation_t *inv)
+{
+    linker_symbol_t *sym = inv->sym;
+    while(sym != NULL)
+    {
+        linker_symbol_t *next = sym->next;
+        linker_symbol_dealloc(sym);
+        sym = next;
+    }
+    inv->sym = NULL;
+}
+
 static UInt64 sym_resolve(linker_invocation_t *inv,
                           const linker_object_t *o,
                           UInt32 sym_idx,
@@ -701,6 +713,28 @@ static void emit_boot_header(vbitwalker_t *vb,
 static Boolean __linker_link_firmware(linker_invocation_t *inv,
                                       emex_file_t *output)
 {
+    linker_symbol_t *gsym = linker_symbol_lookup(inv, inv->options.entry_name);
+    if(gsym->addr == BOOT_HEADER_SIZE)
+    {
+        inv->needs_fw_hdr = false;
+
+        /* needs to be entirely relocated */
+        obj_unregister_all_symbols(inv);
+        linker_layout(inv);
+
+        /* reregister them */
+        linker_object_t *obj = inv->obj;
+        while(obj != NULL)
+        {
+            if(!obj_register_symbols(inv, obj))
+            {
+                linker_invocation_dealloc(inv);
+                return false;
+            }
+            obj = obj->next;
+        }
+    }
+
     vbitwalker_t *vb = emex_file_dup_vbitwalker(output, BW_LITTLE_ENDIAN);
     if(vb == NULL)
     {
@@ -749,21 +783,24 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
         obj = obj->next;
     }
 
-    linker_symbol_t *gsym = linker_symbol_lookup(inv, inv->options.entry_name);
-    if(!gsym || !gsym->defined)
+    UInt64 entry_addr = 0;
+    if(inv->needs_fw_hdr)
     {
-        diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "entry symbol '%s' not found", inv->options.entry_name);
-        vbitwalker_dealloc(vb);
-        return false;
+        gsym = linker_symbol_lookup(inv, inv->options.entry_name);
+        if(!gsym || !gsym->defined)
+        {
+            diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "entry symbol '%s' not found", inv->options.entry_name);
+            vbitwalker_dealloc(vb);
+            return false;
+        }
+        entry_addr = gsym->addr;
+        emit_boot_header(vb, entry_addr);
     }
-
-    UInt64 entry_addr = gsym->addr;
-    emit_boot_header(vb, entry_addr);
 
     vbitwalker_sync(vb);
     vbitwalker_dealloc(vb);
 
-    UInt64 total_text = inv->out_text_off - BOOT_HEADER_SIZE;
+    UInt64 total_text = inv->out_text_off - (inv->needs_fw_hdr ? BOOT_HEADER_SIZE : 0);
     UInt64 total_data = inv->out_data_off - inv->out_text_off;
 
     if(inv->options.verbose)
@@ -771,9 +808,9 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
         fprintf(stderr, "emex64ld: linked object(s) → %s\n", output->path);
         if(inv->options.emit_mode == kEmitModeFirmware)
         {
-            fprintf(stderr, "  .fw_hdr  %8lu bytes @ 0x%08lx\n", (unsigned long)BOOT_HEADER_SIZE, (unsigned long)0);
+            fprintf(stderr, "  .fw_hdr  %8lu bytes @ 0x%08lx\n", inv->needs_fw_hdr ? (unsigned long)BOOT_HEADER_SIZE : 0, (unsigned long)0);
         }
-        fprintf(stderr, "  .text    %8lu bytes @ 0x%08lx\n", (unsigned long)total_text, (inv->options.emit_mode == kEmitModeFirmware) ? (unsigned long)BOOT_HEADER_SIZE : 0);
+        fprintf(stderr, "  .text    %8lu bytes @ 0x%08lx\n", (unsigned long)total_text, inv->needs_fw_hdr ? (unsigned long)BOOT_HEADER_SIZE : 0);
         fprintf(stderr, "  .data    %8lu bytes @ 0x%08lx\n", (unsigned long)total_data, (unsigned long)inv->out_text_off);
         fprintf(stderr, "  .bss     %8lu bytes @ 0x%08lx (virtual)\n", (unsigned long)(inv->out_bss_off - inv->out_data_off), (unsigned long)inv->out_data_off);
         fprintf(stderr, "  entry    %s @ 0x%08lx\n", inv->options.entry_name, (unsigned long)entry_addr);

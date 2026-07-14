@@ -45,6 +45,8 @@ typedef struct linker_invocation {
     UInt64 out_text_off;
     UInt64 out_data_off;
     UInt64 out_bss_off;
+
+    Boolean needs_fw_hdr;
 } linker_invocation_t;
 
 linker_invocation_t *linker_invocation_alloc(linker_options_t options, linker_diagnostic_consumer_t *diagnostic_consumer);
