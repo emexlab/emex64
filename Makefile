@@ -36,3 +36,6 @@ xcode_debug:
 package: compile
 	cd build; \
 		cpack -G productbuild --verbose
+
+full: CMAKE_FLAGS = "-DEMEX64_BUILD_EXAMPLES=1"
+full: clean install
