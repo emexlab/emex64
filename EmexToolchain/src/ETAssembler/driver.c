@@ -64,19 +64,19 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
             fprintf(stderr, "Options:\n");
             fprintf(stderr, "  --help                 Shows this help menu.\n");
             fprintf(stderr, "  --version              Prints version.\n");
-            fprintf(stderr, "  --in-process           All jobs are handled within the same process instead of executing subprocesses.\n");
+            fprintf(stderr, "  --in-process           All jobs are executed within the same process.\n");
             fprintf(stderr, "\n");
             fprintf(stderr, "  -o <output path>       Sets the output file path, is set to \"a.out\" when not passed.\n");
-            fprintf(stderr, "  -c                     Assemble the source files, but do not link.\n");
-            fprintf(stderr, "  -r                     Relocatable object mode, meaning a ELF object will be emitted out of all assembly files.\n");
-            fprintf(stderr, "  -v                     Prints verbose driver log.\n");
+            fprintf(stderr, "  -c                     Assemble the source file, but do not link.\n");
+            fprintf(stderr, "  -r                     Assemble all source files to one ELF object.\n");
+            fprintf(stderr, "  -v                     Prints verbose assembler log.\n");
             fprintf(stderr, "  -D macro[=<value>]     Defines an assembler macro, set to 1 when no value is given.\n");
-            fprintf(stderr, "  -I <dir>               Adds a directory to the include search path.\n");
-            fprintf(stderr, "  -Wl,<arg>,...          Pass the comma separated arguments to the linker.\n");
+            fprintf(stderr, "  -I <dir>               Adds a directory to the include search paths.\n");
+            fprintf(stderr, "  -Wl,<arg>,...          Passes the comma separated arguments to the linker.\n");
             fprintf(stderr, "\n");
             fprintf(stderr, "  -fcaret-diagnostics    The assembler will print diagnostics showing their caret positions.\n");
             fprintf(stderr, "  -fcolor-diagnostics    The assembler will print diagnostics with color.\n");
-            fprintf(stderr, "                         Each feature flag can be reversed by prefixing it with a \"no\" (i.e -fno-page-align).\n");
+            fprintf(stderr, "                         Each feature flag can be reversed by prefixing it with a \"no\" (i.e -fno-caret-diagnostics).\n");
             fprintf(stderr, "\n");
             fprintf(stderr, "  -Werror                The assembler will treat every warning as a error.\n");
             fprintf(stderr, "  -Wdeprecated           The assembler will print a warning on every as deprecated marked symbol or internal features.\n");
@@ -376,11 +376,29 @@ static char *assembler_driver_tmppath(assembler_driver_t *driver,
     return path;
 }
 
-static void assembler_driver_append_additional_linker_flag(assembler_driver_t *driver,
-                                                           const char *flag)
+static Boolean assembler_driver_append_additional_linker_flag(assembler_driver_t *driver,
+                                                              const char *flag)
 {
-    driver->linker_flags = realloc(driver->linker_flags, (driver->linker_flags_cnt + 1) * sizeof(char *));
-    driver->linker_flags[driver->linker_flags_cnt++] = strdup(flag);
+    if(flag == NULL)
+    {
+        return false;
+    }
+
+    char *copiedFlag = strdup(flag);
+    if(copiedFlag == NULL)
+    {
+        return false;
+    }
+
+    void *nptr = realloc(driver->linker_flags, (driver->linker_flags_cnt + 1) * sizeof(char *));
+    if(nptr == NULL)
+    {
+        free(copiedFlag);
+        return false;
+    }
+
+    driver->linker_flags[driver->linker_flags_cnt++] = copiedFlag;
+    return true;
 }
 
 Boolean assembler_driver_jobgen(assembler_driver_t *driver)
@@ -487,7 +505,11 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
                 break;
             }
             case kEmexFileTypeObject:
-                assembler_driver_append_additional_linker_flag(driver, input_path);
+                if(!assembler_driver_append_additional_linker_flag(driver, input_path))
+                {
+                    diagnostic_report(driver->consumer, kDiagnosticSeverityFatal, NULL,  "out of memory, can't append object input path to linker flags");
+                    return false;
+                }
                 break;
             default:
                 return false;

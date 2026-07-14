@@ -73,7 +73,7 @@ linker_driver_t *linker_driver_alloc(int argc,
             fprintf(stderr, "  -r                     Emits relocatable ELF object.\n");
             fprintf(stderr, "  -omagic                Uses old magic (merges .text and .data into one read-write\n");
             fprintf(stderr, "                         block, note that this could be a security risk).\n");
-            fprintf(stderr, "  -nmagic                Uses new magic (separates .text and .data.)\n");
+            fprintf(stderr, "  -nmagic                Uses new magic (separates .text and .data).\n");
             goto failure;
         }
         else if(strcmp(argv[i], "--version") == 0)
