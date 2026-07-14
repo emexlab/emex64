@@ -250,7 +250,7 @@ Boolean assembler_elf_emit(assembler_invocation_t *inv)
 
         ELF64_Sym sym = {
             .st_name = (UInt32)strtab_intern(&strtab_buf, lbl->name),
-            .st_info = ELF_SYM_INFO(kELFSymbolTableBindingGlobal, kELFSymbolTableTypeFunc),
+            .st_info = ELF_SYM_INFO(lbl->global ? kELFSymbolTableBindingGlobal : kELFSymbolTableBindingLocal, kELFSymbolTableTypeFunc),
             .st_other = kELFSymbolVisibilityDefault,
             .st_shndx = shndx,
             .st_value = st_value,

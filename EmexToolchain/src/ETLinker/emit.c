@@ -55,21 +55,11 @@ static Boolean obj_register_symbols(linker_invocation_t *inv,
         ELF64_Sym *sym = &syms[i];
         UInt8 bind = sym->st_info >> 4;
 
-        if(bind != kELFSymbolTableBindingGlobal)
-        {
-            continue;
-        }
-        if(sym->st_shndx == kELFSectionHeaderNumberUndefined)
-        {
-            continue;
-        }
-        if(!strtab)
-        {
-            continue;
-        }
-
         const char *name = strtab + sym->st_name;
-        if(!name || !*name)
+        if(bind != kELFSymbolTableBindingGlobal ||
+           sym->st_shndx == kELFSectionHeaderNumberUndefined ||
+           !strtab ||
+           !name || !*name)
         {
             continue;
         }
@@ -407,21 +397,10 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
             ELF64_Sym *sym = &syms[i];
             UInt8 bind = sym->st_info >> 4;
 
-            if(bind != kELFSymbolTableBindingGlobal)
-            {
-                continue;
-            }
-            if(sym->st_shndx == kELFSectionHeaderNumberUndefined)
-            {
-                continue;
-            }
-            if(!strtab)
-            {
-                continue;
-            }
-
             const char *name = strtab + sym->st_name;
-            if(!name || !*name)
+            if(sym->st_shndx == kELFSectionHeaderNumberUndefined ||
+               !strtab ||
+               !name || !*name)
             {
                 continue;
             }
@@ -469,7 +448,7 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
 
             ELF64_Sym new_sym = {
                 .st_name = (UInt32)strtab_intern(&strtab_buf, name),
-                .st_info = ELF_SYM_INFO(kELFSymbolTableBindingGlobal, kELFSymbolTableTypeNoType),
+                .st_info = ELF_SYM_INFO(bind, kELFSymbolTableTypeNoType),
                 .st_other = kELFSymbolVisibilityDefault,
                 .st_shndx = shndx,
                 .st_value = value,
@@ -714,6 +693,12 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
                                       emex_file_t *output)
 {
     linker_symbol_t *gsym = linker_symbol_lookup(inv, inv->options.entry_name);
+    if(gsym == NULL || !gsym->defined)
+    {
+        diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "entry symbol '%s' not found", inv->options.entry_name);
+        return false;
+    }
+
     if(gsym->addr == BOOT_HEADER_SIZE)
     {
         inv->needs_fw_hdr = false;
@@ -728,7 +713,6 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
         {
             if(!obj_register_symbols(inv, obj))
             {
-                linker_invocation_dealloc(inv);
                 return false;
             }
             obj = obj->next;

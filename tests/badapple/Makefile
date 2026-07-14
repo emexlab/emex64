@@ -1,11 +1,11 @@
 # Makefile
-all: ADDITIONAL_FLAGS := -DFULL="1"
+all: ADDITIONAL_FLAGS := -DFULL=1
 all: compile execute clean
 
-all-benchmark: ADDITIONAL_FLAGS := -DBENCHMARK="1"
+all-benchmark: ADDITIONAL_FLAGS := -DBENCHMARK=1
 all-benchmark: compile execute clean
 
-all-minimal: ADDITIONAL_FLAGS := -DMINIMAL="1"
+all-minimal: ADDITIONAL_FLAGS := -DMINIMAL=1
 all-minimal: compile execute clean
 
 compile:

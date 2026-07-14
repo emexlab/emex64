@@ -22,6 +22,8 @@
 %ifndef% PUT_E64INC
 %define% PUT_E64INC
 
+extern putc_sym ; quad word that holds the symbol used to print characters
+
 extern put_init
 extern putc
 extern puts
