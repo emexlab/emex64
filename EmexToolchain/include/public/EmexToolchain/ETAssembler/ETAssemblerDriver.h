@@ -19,8 +19,8 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef EMEX64ASM_DRIVER_H
-#define EMEX64ASM_DRIVER_H
+#ifndef ETASSEMBLERDRIVER_H
+#define ETASSEMBLERDRIVER_H
 
 #include <stddef.h>
 #include <EmexToolchain/Support/file.h>
@@ -61,4 +61,4 @@ void assembler_driver_dealloc(assembler_driver_t *driver);
 
 Boolean assembler_driver_drive_the_fucking_car(assembler_driver_t *driver);
 
-#endif /* EMEX64ASM_DRIVER_H */
+#endif /* ETASSEMBLERDRIVER_H */

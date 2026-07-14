@@ -108,7 +108,7 @@ add_library(EmexToolchain ${LIB_TYPE}
     # Assembler API
     src/ETAssembler/ETAssemblerOptions.c
     src/ETAssembler/ETAssemblerJob.c
-    src/ETAssembler/driver.c
+    src/ETAssembler/ETAssemblerDriver.c
     src/ETAssembler/lexer.c
     src/ETAssembler/expr.c
     src/ETAssembler/code.c

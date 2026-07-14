@@ -28,7 +28,7 @@
 #include <EmexToolchain/Support/version.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
 #include <EmexToolchain/Support/ratchet/args.h>
-#include <EmexToolchain/ETAssembler/driver.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerDriver.h>
 #include <EmexToolchain/ETAssembler/invocation.h>
 #include <EmexToolchain/ETLinker/driver.h>
 
