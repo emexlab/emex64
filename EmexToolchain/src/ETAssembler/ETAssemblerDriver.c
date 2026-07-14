@@ -35,8 +35,8 @@
 extern char **environ;
 
 Boolean assembler_driver_predrive(assembler_driver_t *driver,
-                               int argc,
-                               const char **argv)
+                                  int argc,
+                                  const char **argv)
 {
     /* better starting with the default assembler options ^^ */
     driver->diagnosticOptions = ETAssemblerDiagnosticOptionsDefault;
@@ -739,7 +739,7 @@ void assembler_driver_dealloc(assembler_driver_t *driver)
 Boolean assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
 {
     assembler_diagnostic_consumer_emit(driver->consumer);
-    
+
     if(driver->options.assemble_only)
     {
         assembler_invocation_t *inv = assembler_invocation_alloc(driver->consumer);
