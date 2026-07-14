@@ -23,7 +23,7 @@
 %include% <arch/platform.e64inc>
 
 section .data
-    msg db "hello, world!\r\n\0"
+    msg db "hello, world!\n\0"
 
 _start:
     mov r3, EMEX64_UART_REG_DATA
