@@ -396,6 +396,7 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
         {
             ELF64_Sym *sym = &syms[i];
             UInt8 bind = sym->st_info >> 4;
+            UInt8 type = sym->st_info & 0x0F;
 
             const char *name = strtab + sym->st_name;
             if(sym->st_shndx == kELFSectionHeaderNumberUndefined ||
@@ -448,7 +449,7 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
 
             ELF64_Sym new_sym = {
                 .st_name = (UInt32)strtab_intern(&strtab_buf, name),
-                .st_info = ELF_SYM_INFO(bind, kELFSymbolTableTypeNoType),
+                .st_info = ELF_SYM_INFO(bind, type),
                 .st_other = kELFSymbolVisibilityDefault,
                 .st_shndx = shndx,
                 .st_value = value,
