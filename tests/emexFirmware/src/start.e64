@@ -33,7 +33,15 @@
 %define% FW_TEST_DISASSEMBLY 0
 %endif% ; FW_TEST_DISASSEMBLY
 
+%ifndef% FW_MINIMAL
+%define% FW_MINIMAL 0
+%endif% ; FW_MINIMAL
+
+%if% FW_MINIMAL
+%define% EARLY_STACK_SIZE       (EMEX64_PAGE_SIZE / 2)
+%else%
 %define% EARLY_STACK_SIZE       (EMEX64_PAGE_SIZE * 1)
+%endif% ; FW_MINIMAL
 %define% EARLY_STACK_TOP_SUB    (EARLY_STACK_SIZE - 8)
 
 section .bss
