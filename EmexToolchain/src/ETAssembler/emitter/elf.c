@@ -213,12 +213,7 @@ Boolean assembler_elf_emit(assembler_invocation_t *inv)
     const void *key; size_t klen; assembler_label_t *lbl;
     for(hashmap_iter_t it = hashmap_iter_create(inv->label_hashmap); hashmap_next(&it, &key, &klen, (void**)&lbl);)
     {
-        if(!lbl->name)
-        {
-            continue;
-        }
-
-        if(!lbl->defined)
+        if(!lbl->name || !lbl->defined)
         {
             continue;
         }
@@ -250,7 +245,7 @@ Boolean assembler_elf_emit(assembler_invocation_t *inv)
 
         ELF64_Sym sym = {
             .st_name = (UInt32)strtab_intern(&strtab_buf, lbl->name),
-            .st_info = ELF_SYM_INFO(lbl->global ? kELFSymbolTableBindingGlobal : kELFSymbolTableBindingLocal, kELFSymbolTableTypeFunc),
+            .st_info = ELF_SYM_INFO(lbl->global ? kELFSymbolTableBindingGlobal : kELFSymbolTableBindingLocal, lbl->at_link->al->type == kETAssemblerLineTypeSectionData ? kELFSymbolTableTypeObject : kELFSymbolTableTypeFunc),
             .st_other = kELFSymbolVisibilityDefault,
             .st_shndx = shndx,
             .st_value = st_value,
