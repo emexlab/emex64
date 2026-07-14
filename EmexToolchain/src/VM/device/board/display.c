@@ -482,7 +482,7 @@ emex64_display_t *emex64_display_alloc(E64MachineRef machine,
         #if defined(__linux__)
         if(!glfwInit())
         {
-            diag_warn(NULL, "are we in a TTY? can't present window\n");
+            diag_warn(NULL, "are we in a TTY? can't present window");
             display->enabled = false;
             return display;
         }
