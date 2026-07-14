@@ -26,9 +26,9 @@ section .data
     msg db "hello, world!\r\n\0"
 
 _start:
-    clr r3
+    mov r0, msg
 .loop:
-    ldb r1, [msg + r3++]
+    ldb r1, r0++
 .retry:
     ldq r2, EMEX64_UART_REG_STATUS
     and r2, EMEX64_UART_STATUS_TX_EMPTY
