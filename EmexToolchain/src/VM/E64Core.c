@@ -247,14 +247,14 @@ static inline void __E64CoreExecuteInstructionAtPC(__E64Core core)
                 offsetAdd = (coding == kE64ParameterCodingOffsetAdd);
                 maxarg += 3;
                 offsetI = 2;
-                break;
+                goto skip_after_offsetmode_branch;
             default:
                 /* illegal coding */
                 core->cr_state.crexc.exception = kE64ExceptionBadInstruction;
                 return;
         }
 
-        if(offsetMode && coding != kE64ParameterCodingOffsetAdd && coding != kE64ParameterCodingOffsetSub)
+        if(offsetMode)
         {
             if(--offsetI == 0)
             {
@@ -276,6 +276,8 @@ static inline void __E64CoreExecuteInstructionAtPC(__E64Core core)
                 offsetMode = false;
             }
         }
+
+    skip_after_offsetmode_branch:
     }
 
     /* offsetting mode shall not be enabled now */
