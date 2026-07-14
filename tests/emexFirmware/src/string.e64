@@ -20,6 +20,10 @@
 ;
 
 %include% <emex64.e64inc>
+
+%ifndef% FW_MINIMAL
+%define% FW_MINIMAL 0
+%endif% ; FW_MINIMAL
  
 memset:
     and r1, 0xFF        ; masking set value with byte mask so it doesnt exceed expectations
@@ -44,6 +48,9 @@ memcpy:
     blt .loop
     wret
 
+%if% FW_MINIMAL
+%else%
+
 strlen:
     clr rr                      ; clearing return register
 .loop:
@@ -60,3 +67,5 @@ strdup:
     blw memcpy, rr, r0, r1      ; copying string over
 .null_exception:
     wret
+
+%endif% ; FW_MINIMAL

@@ -38,7 +38,7 @@
 %endif% ; FW_MINIMAL
 
 %if% FW_MINIMAL
-%define% EARLY_STACK_SIZE       (EMEX64_PAGE_SIZE / 2)
+%define% EARLY_STACK_SIZE       (EMEX64_PAGE_SIZE / 6)
 %else%
 %define% EARLY_STACK_SIZE       (EMEX64_PAGE_SIZE * 1)
 %endif% ; FW_MINIMAL
@@ -191,7 +191,10 @@ _start:
     ; rest of the routine
     bl put_init                                     ; checks for fb
     bl pmm_init                                     ; initilizing page allocator
+%if% FW_MINIMAL
+%else%
     bl slab_init                                    ; initilizing slab allocator
+%endif% ; FW_MINIMAL
     bl interrupt_init                               ; initilizing interrupt controller
     bl main                                         ; branching to main symbol
 .poweroff:
