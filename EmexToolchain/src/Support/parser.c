@@ -114,27 +114,30 @@ parser_return_t parse_value_from_string(const char *str)
     EFStringRef stringRef = EFStringCreateWithCString(kEFAllocatorDefault, str, kEFStringEncodingASCII);
     if(stringRef == NULL)
     {
+        /* could be allocation failure */
         return (parser_return_t){ .type = emexParserValueTypeOverflow };
     }
 
-    EFStringConvertibility convert = EFStringIsNumber(stringRef);
-    if(convert == kEFStringConvertibilityNormal)
+    if(EFStringIsNumber(stringRef))
     {
         EFNumberRef numberRef = EFStringCopyNumber(kEFAllocatorDefault, stringRef);
         EFRelease(stringRef);
         if(numberRef == NULL)
         {
+            /* could be allocation failure */
             return (parser_return_t){ .type = emexParserValueTypeOverflow };
         }
 
-        if(!EFNumberGetValue(numberRef, kEFNumberTypeUInt64, &num))
+        EFNumberType type = EFNumberGetType(numberRef);
+        if(type == kEFNumberTypeOverflow)
         {
             EFRelease(numberRef);
             return (parser_return_t){ .type = emexParserValueTypeOverflow };
         }
 
+        Boolean success = EFNumberGetValue(numberRef, kEFNumberTypeUInt64, &num);
         EFRelease(numberRef);
-        return (parser_return_t){ .type = emexParserValueTypeNumber, .value = num, .len = len };
+        return (parser_return_t){ .type = success ? emexParserValueTypeNumber : emexParserValueTypeOverflow, .value = num, .len = len };
     }
     else
     {

@@ -106,14 +106,14 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
             }
             else
             {
-                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EF_STR("missing argument to '-f'"));
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-f'"));
                 return false;
             }
 
             if(strcmp(flag, "page-align") == 0 ||
                strcmp(flag, "no-page-align") == 0)
             {
-                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityWarning, NULL, EF_STR("feature flag '%s' is deprecated, please you equivalents if available"), flag);
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityWarning, NULL, EFSTR("feature flag '%s' is deprecated, please you equivalents if available"), flag);
             }
             else if(strcmp(flag, "caret-diagnostics") == 0)
             {
@@ -133,7 +133,7 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
             }
             else
             {
-                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EF_STR("unknown feature flag '%s'"), flag);
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown feature flag '%s'"), flag);
                 return false;
             }
         }
@@ -142,7 +142,7 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
             const char *p = argv[i] + 4;
             if(*p == '\0')
             {
-                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EF_STR("missing argument to '-Wl,'"));
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-Wl,'"));
                 return false;
             }
 
@@ -174,7 +174,7 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
             }
             else
             {
-                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EF_STR("missing argument to '-W'"));
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-W'"));
                 return false;
             }
 
@@ -196,7 +196,7 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
             }
             else
             {
-                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EF_STR("unknown warning flag '%s'"), flag);
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown warning flag '%s'"), flag);
                 return false;
             }
         }
@@ -213,7 +213,7 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
             }
             else
             {
-                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EF_STR("missing argument to '-D'"));
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-D'"));
                 return false;
             }
 
@@ -283,7 +283,7 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
             }
             else
             {
-                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EF_STR("missing argument to '-I'"));
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-I'"));
                 return false;
             }
             driver->inc_dirs = realloc(driver->inc_dirs, (driver->inc_dir_cnt + 1) * sizeof(char*));
@@ -310,7 +310,7 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
             emex_file_t *file = emex_file_alloc(argv[i], in_data_file_policy);
             if(file == NULL || !(file->type == kEmexFileTypeAssembly || file->type == kEmexFileTypeAssemblyIncludation || file->type == kEmexFileTypeObject))
             {
-                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EF_STR("unknown or non existing input file '%s'"), argv[i]);
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown or non existing input file '%s'"), argv[i]);
                 return false;
             }
 
@@ -318,7 +318,7 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
         }
         else
         {
-            ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EF_STR("unknown option '%s'"), argv[i]);
+            ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown option '%s'"), argv[i]);
             return false;
         }
     }
@@ -327,13 +327,13 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
 
     if(driver->input_file_count <= 0)
     {
-        ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EF_STR("no input files"));
+        ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("no input files"));
         return false;
     }
 
     if(driver->output_path == NULL)
     {
-        ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityWarning, NULL, EF_STR("no output path provided, falling back to 'a.out'"));
+        ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityWarning, NULL, EFSTR("no output path provided, falling back to 'a.out'"));
         driver->output_path = "a.out";
     }
 
@@ -407,7 +407,7 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
     /* -c is only meant to assemble one assembly file to a object file */
     if(driver->driverOptions.assemble_only && driver->input_file_count > 1)
     {
-        ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EF_STR("multiple input files were passed in object emit mode"));
+        ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("multiple input files were passed in object emit mode"));
         return false;
     }
 
@@ -425,7 +425,7 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
                 ratchet_args_t ra;
                 if(!ratchet_args_init(&ra))
                 {
-                    ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EF_STR("out of memory, can't allocate arguments array for assembler job"));
+                    ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate arguments array for assembler job"));
                     ratchet_args_deinit(&ra);
                     return false;
                 }
@@ -480,7 +480,7 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
 
                 if(ra.failed)
                 {
-                    ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EF_STR("out of memory, can't allocate arguments array for assembler job"));
+                    ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate arguments array for assembler job"));
                     ratchet_args_deinit(&ra);
                     return false;
                 }
@@ -488,11 +488,11 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
                 EFMutableArrayRef arguments = EFRetain(ra.array);
                 ratchet_args_deinit(&ra);
 
-                ETAssemblerJobRef job = ETAssemblerJobCreate(kEFAllocatorDefault, (driver->driverOptions.assemble_only) ? kETAssemblerJobTypeAssembler : kETAssemblerJobTypeDriver, EF_STR("emex64asm"), arguments);
+                ETAssemblerJobRef job = ETAssemblerJobCreate(kEFAllocatorDefault, (driver->driverOptions.assemble_only) ? kETAssemblerJobTypeAssembler : kETAssemblerJobTypeDriver, EFSTR("emex64asm"), arguments);
                 EFRelease(arguments);
                 if(job == NULL)
                 {
-                    ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EF_STR("out of memory, can't allocate assembler job"));
+                    ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate assembler job"));
                     return false;
                 }
 
@@ -500,7 +500,7 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
                 EFRelease(job);
                 if(!success)
                 {
-                    ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EF_STR("out of memory, can't allocate assembler job"));
+                    ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate assembler job"));
                     return false;
                 }
                 break;
@@ -508,7 +508,7 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
             case kEmexFileTypeObject:
                 if(!assembler_driver_append_additional_linker_flag(driver, input_path))
                 {
-                    ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EF_STR("out of memory, can't append object input path to linker flags"));
+                    ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't append object input path to linker flags"));
                     return false;
                 }
                 break;
@@ -523,7 +523,7 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
         ratchet_args_t ra;
         if(!ratchet_args_init(&ra))
         {
-            ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EF_STR("out of memory, can't allocate arguments array for linker job"));
+            ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate arguments array for linker job"));
             ratchet_args_deinit(&ra);
             return false;
         }
@@ -550,7 +550,7 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
 
         if(ra.failed)
         {
-            ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EF_STR("out of memory, can't allocate arguments array for linker job"));
+            ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate arguments array for linker job"));
             ratchet_args_deinit(&ra);
             return false;
         }
@@ -558,11 +558,11 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
         EFMutableArrayRef arguments = EFRetain(ra.array);
         ratchet_args_deinit(&ra);
 
-        ETAssemblerJobRef job = ETAssemblerJobCreate(kEFAllocatorDefault, kETAssemblerJobTypeLinker, EF_STR("emex64ld"), arguments);
+        ETAssemblerJobRef job = ETAssemblerJobCreate(kEFAllocatorDefault, kETAssemblerJobTypeLinker, EFSTR("emex64ld"), arguments);
         EFRelease(arguments);
         if(job == NULL)
         {
-            ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EF_STR("out of memory, can't allocate assembler job"));
+            ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate assembler job"));
             return false;
         }
 
@@ -570,7 +570,7 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
         EFRelease(job);
         if(!success)
         {
-            ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EF_STR("out of memory, can't allocate assembler job"));
+            ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate assembler job"));
             return false;
         }
     }
@@ -843,7 +843,7 @@ Boolean assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
                 pid_t pid = 0;
                 if(posix_spawnp(&pid, commandPtr, NULL, NULL, (char *const *)argv, environ) != 0)
                 {
-                    ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EF_STR("couldn't spawn job: %s"), strerror(errno));
+                    ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("couldn't spawn job: %s"), strerror(errno));
                     return false;
                 }
 
@@ -862,7 +862,7 @@ Boolean assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
                 }
                 else if(WIFSIGNALED(rstatus))
                 {
-                    ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EF_STR("job (command='%s' | pid=%d) terminated by signal %d"), commandPtr, pid, WTERMSIG(rstatus));
+                    ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("job (command='%s' | pid=%d) terminated by signal %d"), commandPtr, pid, WTERMSIG(rstatus));
                     return false;
                 }
             }
