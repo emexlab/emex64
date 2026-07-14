@@ -189,6 +189,7 @@ void linker_layout(linker_invocation_t *inv)
 {
     unsigned long cur = BOOT_HEADER_SIZE;
 
+    /* laying out .text segments */
     for(linker_object_t *o = inv->obj; o; o = o->next)
     {
         cur = align_up(cur, obj_sec_align(o, o->idx_text));
@@ -202,25 +203,35 @@ void linker_layout(linker_invocation_t *inv)
     }
     inv->out_text_off = cur;
 
+    /* laying out .data segments */
     for(linker_object_t *o = inv->obj; o; o = o->next)
     {
         cur = align_up(cur, obj_sec_align(o, o->idx_data));
         o->base_data = cur;
         cur += linker_object_data_size(o);
     }
-    cur = align_up(cur, EMEX64_PAGE_SIZE);
-    inv->out_data_off = cur;
-    if(inv->options.use_old_magic)
+    if(!inv->options.use_old_magic)
+    {
+        cur = align_up(cur, EMEX64_PAGE_SIZE);
+        inv->out_data_off = cur;
+    }
+    else
     {
         inv->out_text_off = cur;
+        inv->out_data_off = cur;
     }
 
+    /* laying out .bss segments */
     for(linker_object_t *o = inv->obj; o; o = o->next)
     {
         cur = align_up(cur, obj_sec_align(o, o->idx_bss));
         o->base_bss = cur;
         cur += linker_object_bss_size(o);
     }
-    cur = align_up(cur, EMEX64_PAGE_SIZE);
+
+    if(!inv->options.use_old_magic)
+    {
+        cur = align_up(cur, EMEX64_PAGE_SIZE);
+    }
     inv->out_bss_off = cur;
 }
