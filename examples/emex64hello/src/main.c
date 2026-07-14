@@ -60,20 +60,21 @@ int main(void)
      */
     emex_file_t *unsaved_file = emex_file_alloc_unsaved("test.e64", in_data_file_policy,
         "section .data\n"
-        "    msg db \"hello, world!\\r\\n\\0\"\n"
+        "    msg db \"hello, world!\\n\\0\"\n"
         "\n"
         "_start:\n"
+        "    mov r3, 0x0020000000008000\n"
         "    mov r0, msg\n"
         ".loop:\n"
         "    ldb r1, r0++\n"
         ".retry:\n"
-        "    ldq r2, 0x0020000000008008\n"
+        "    ldq r2, [r3 + 8]\n"
         "    and r2, 0x02\n"
         "    bz r2, .retry\n"
-        "    stq 0x0020000000008000, r1\n"
+        "    stq r3, r1\n"
         "    bnz r1, .loop\n"
         ".end:\n"
-        "    stq 0x002000000000C000, 0\n"
+        "    stq [r3 + 0x4000], 0\n"
     );
     if(unsaved_file == NULL)
     {

@@ -256,19 +256,19 @@ static inline void __E64CoreExecuteInstructionAtPC(__E64Core core)
 
         if(offsetMode)
         {
-            if(--offsetI == 0)
+            if(--offsetI <= 0)
             {
                 /* forcing operand to be offsetted to be a intermediate and giving it the offset */
-                core->op.immcache[i - 1] = *core->op.param[i - 1];
+                core->op.immcache[i - 2] = *core->op.param[i - 1];
                 if(offsetAdd)
                 {
-                    core->op.immcache[i - 1] += *core->op.param[i];
+                    core->op.immcache[i - 2] += *core->op.param[i];
                 }
                 else
                 {
-                    core->op.immcache[i - 1] -= *core->op.param[i];
+                    core->op.immcache[i - 2] -= *core->op.param[i];
                 }
-                core->op.param[i - 2] = &(core->op.immcache[i - 1]);    /* overriding the operand with the offsetted one */
+                core->op.param[i - 2] = &(core->op.immcache[i - 2]);    /* overriding the operand with the offsetted one */
 
                 /* offsets aren't counted as operands */
                 i -= 2;

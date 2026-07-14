@@ -37,6 +37,4 @@ _start:
     stq r3, r1
     bnz r1, .loop
 .end:
-    ;stq [r3 + 0x4000], 0 (bad access?)
-    add r3, 0x4000
-    stq r3, 0
+    stq [r3 + 0x4000], 0
