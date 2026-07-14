@@ -34,6 +34,19 @@ assembler_label_t *assembler_label_lookup(assembler_invocation_t *inv,
     return (assembler_label_t*)hashmap_gets(inv->label_hashmap, name);
 }
 
+Boolean assembler_label_is_symbol(assembler_token_t *at)
+{
+    switch(at->al->type)
+    {
+        case kETAssemblerLineTypeSymbol:
+        case kETAssemblerLineTypeExternSymbol:
+        case kETAssemblerLineTypeSectionData:
+            return true;
+        default:
+            return false;
+    }
+}
+
 Boolean assembler_label_append(assembler_token_t *at)
 {
     /* accessing compiler invocation */
@@ -43,11 +56,11 @@ Boolean assembler_label_append(assembler_token_t *at)
     char *name = NULL;
     switch(at->al->type)
     {
-        case kETAssemblerLineTypeLocalLabel:
+        case kETAssemblerLineTypeLabel:
         {
             if(inv->label_scope == NULL)
             {
-                diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "local label '%s' was defined out of the scope of a global label, which is illegal", at->str);
+                diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "label '%s' was defined out of the scope of a symbol, which is illegal", at->str);
                 return false;
             }
 
@@ -58,46 +71,32 @@ Boolean assembler_label_append(assembler_token_t *at)
             name = malloc(size);
             if(name == NULL)
             {
-                diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), "out of memory, failed to allocate memory for label difinition '%s'", at->str);
+                diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), "out of memory, failed to allocate memory for label definition '%s'", at->str);
                 return false;
             }
 
             memcpy(name, inv->label_scope, label_scope_len);
-            memcpy(name + label_scope_len, at->str, ct_len); /* minus 1 to ommit the ':' character */
+            memcpy(name + label_scope_len, at->str, ct_len);    /* minus 1 to ommit the ':' character */
             name[size - 1] = '\0';
             break;
         }
-        case kETAssemblerLineTypeGlobalLabel:
+        case kETAssemblerLineTypeSymbol:
         {
-            /* constructing global label */
+            /* constructing symbol */
             size_t size = strlen(at->str) + 1;
             name = malloc(size);
             if(name == NULL)
             {
-                diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), "out of memory, failed to allocate memory for label difinition '%s'", at->str);
+                diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), "out of memory, failed to allocate memory for symbol definition '%s'", at->str);
                 return false;
             }
             memcpy(name, at->str, size);
             name[size - 1] = '\0';
             break;
         }
-        case kETAssemblerLineTypeSectionData:
+        case kETAssemblerLineTypeExternSymbol:
         {
-            /* constructing global label */
-            size_t size = strlen(at->str) + 1;
-            name = malloc(size);
-            if(name == NULL)
-            {
-                diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), "out of memory, failed to allocate memory for label difinition '%s'", at->str);
-                return false;
-            }
-            memcpy(name, at->str, size - 1);
-            name[size - 1] = '\0';
-            break;
-        }
-        case kETAssemblerLineTypeExternLabel:
-        {
-            /* constructing extern label */
+            /* constructing extern symbol */
             /* first we need the 2nd token, not the 1st */
             at = at->al->token[1];
 
@@ -105,7 +104,21 @@ Boolean assembler_label_append(assembler_token_t *at)
             name = malloc(size);
             if(name == NULL)
             {
-                diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "failed to allocate memory for this label");
+                diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), "out of memory, failed to allocate memory for external symbol declaration '%s'", at->str);
+                return false;
+            }
+            memcpy(name, at->str, size - 1);
+            name[size - 1] = '\0';
+            break;
+        }
+        case kETAssemblerLineTypeSectionData:
+        {
+            /* constructing symbol */
+            size_t size = strlen(at->str) + 1;
+            name = malloc(size);
+            if(name == NULL)
+            {
+                diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), "out of memory, failed to allocate memory for symbol definition '%s'", at->str);
                 return false;
             }
             memcpy(name, at->str, size - 1);
@@ -122,8 +135,9 @@ Boolean assembler_label_append(assembler_token_t *at)
     if(label != NULL)
     {
         /* can be redeclared using 'extern' safely */
-        if(at->al->type == kETAssemblerLineTypeExternLabel)
+        if(at->al->type == kETAssemblerLineTypeExternSymbol)
         {
+            label->global = true;
             free(name);
             return true;
         }
@@ -131,12 +145,13 @@ Boolean assembler_label_append(assembler_token_t *at)
         /* label can be defined after using 'extern' too */
         if(!label->defined)
         {
-            if(at->al->type == kETAssemblerLineTypeGlobalLabel)
+            if(at->al->type == kETAssemblerLineTypeSymbol)
             {
                 /* set it as scope */
                 inv->label_scope = label->name;
             }
 
+            /* 'extern' already made it global */
             label->defined = true;
             label->at_link = at;
             label->addr = vbitwalker_bytes_used(inv->out_vbitwalker);
@@ -144,13 +159,15 @@ Boolean assembler_label_append(assembler_token_t *at)
             return true;
         }
 
-        diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityNote, AT_TO_DLOC(label->at_link), "label '%s' already defined here", name);
-        diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "duplicated label '%s'", name);
+        /* have to find out flavour */
+        const char *label_string = assembler_label_is_symbol(label->at_link) ? "symbol" : "label";
+        diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityNote, AT_TO_DLOC(label->at_link), "%s '%s' already defined here", label_string, name);
+        diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "duplicated %s '%s'", label_string, name); /* need to mirror cause of name missmatch possibilities */
         free(name);
         return false;
     }
 
-    if(at->al->type == kETAssemblerLineTypeGlobalLabel)
+    if(at->al->type == kETAssemblerLineTypeSymbol)
     {
         /* set it as scope */
         inv->label_scope = name;
@@ -166,7 +183,8 @@ Boolean assembler_label_append(assembler_token_t *at)
 
     label->addr = vbitwalker_bytes_used(inv->out_vbitwalker);
     label->at_link = at;
-    label->defined = at->al->type != kETAssemblerLineTypeExternLabel;
+    label->defined = at->al->type != kETAssemblerLineTypeExternSymbol;
+    label->global = at->al->type == kETAssemblerLineTypeExternSymbol || at->al->type == kETAssemblerLineTypeSymbol;
     label->name = name;
     if(!hashmap_puts(inv->label_hashmap, name, label))
     {

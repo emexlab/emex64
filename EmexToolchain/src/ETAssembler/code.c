@@ -93,7 +93,7 @@ char *assembler_code_find_header(const char *name,
     snprintf(dir_buf, sizeof(dir_buf), "%s", source_file);
     char *slash = strrchr(dir_buf, '/');
     const char *source_dir = slash ? (slash[0] = '\0', dir_buf) : ".";
-    
+
     if(source_dir)
     {
         char buf[PATH_MAX];
@@ -350,7 +350,7 @@ Boolean assembler_code_postparse(assembler_invocation_t *inv)
             /* probably a whitespace or excluded by a macro */
             continue;
         }
-        
+
         if(inv->line[i]->token_cnt >= 2)
         {
             /*
@@ -368,15 +368,15 @@ Boolean assembler_code_postparse(assembler_invocation_t *inv)
                  *       label, which means it can be called by
                  *       any symbol in the same program, while
                  *       '.example' is a local label which can only
-                 *       be called within the same global label's code. 
+                 *       be called within the same global label's code.
                  */
                 switch(inv->line[i]->token[0]->str[0])
                 {
                     case '.':
-                        inv->line[i]->type = kETAssemblerLineTypeLocalLabel;
+                        inv->line[i]->type = kETAssemblerLineTypeLabel;
                         break;
                     default:
-                        inv->line[i]->type = kETAssemblerLineTypeGlobalLabel;
+                        inv->line[i]->type = kETAssemblerLineTypeSymbol;
                         break;
                 }
 
@@ -417,7 +417,7 @@ Boolean assembler_code_postparse(assembler_invocation_t *inv)
                     inv->line[i]->type = kETAssemblerLineTypeSection;
                     break;
                 case kETAssemblerKeywordExtern:
-                    inv->line[i]->type = kETAssemblerLineTypeExternLabel;
+                    inv->line[i]->type = kETAssemblerLineTypeExternSymbol;
                     break;
                 default:
                     break;
@@ -449,7 +449,7 @@ Boolean assembler_code_postparse(assembler_invocation_t *inv)
         /*
          * it is either part of a section or
          * assembly, this is a very important
-         * differentiation. 
+         * differentiation.
          */
         inv->line[i]->type = section_mode ? kETAssemblerLineTypeSectionData : kETAssemblerLineTypeAssembly;
     }

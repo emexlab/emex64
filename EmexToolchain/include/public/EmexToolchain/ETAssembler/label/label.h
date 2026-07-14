@@ -28,8 +28,9 @@ typedef struct assembler_invocation assembler_invocation_t;
 
 typedef struct {
     char *name;                             /* name of resolved label */
-    Boolean defined;                           /* label definitions are defined */
-    UInt64 addr;                          /* address of resolved label */
+    Boolean defined;                        /* label definitions are defined */
+    Boolean global;                         /* if marked as global it will be available for other objects */
+    UInt64 addr;                            /* address of resolved label */
     assembler_token_t *at_link;             /* link to the originator of the label */
 } assembler_label_t;
 

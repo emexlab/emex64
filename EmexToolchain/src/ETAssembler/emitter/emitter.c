@@ -312,9 +312,9 @@ Boolean assembler_emit(assembler_invocation_t *inv)
     {
         switch(inv->line[i]->type)
         {
-            case kETAssemblerLineTypeGlobalLabel:
-            case kETAssemblerLineTypeLocalLabel:
-            case kETAssemblerLineTypeExternLabel:
+            case kETAssemblerLineTypeSymbol:
+            case kETAssemblerLineTypeLabel:
+            case kETAssemblerLineTypeExternSymbol:
                 if(!assembler_label_append(inv->line[i]->token[0]))
                 {
                     failed = true;

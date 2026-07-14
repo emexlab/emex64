@@ -60,9 +60,9 @@ typedef enum: UInt8 {
     kETAssemblerLineTypeNone,
     kETAssemblerLineTypeIgnore,
     kETAssemblerLineTypeAssembly,
-    kETAssemblerLineTypeExternLabel,
-    kETAssemblerLineTypeGlobalLabel,
-    kETAssemblerLineTypeLocalLabel,
+    kETAssemblerLineTypeExternSymbol,
+    kETAssemblerLineTypeSymbol,
+    kETAssemblerLineTypeLabel,      /* automatically marked as local label */
     kETAssemblerLineTypeSection,
     kETAssemblerLineTypeSectionData,
     kETAssemblerLineTypePreprocessorDirective,

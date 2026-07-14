@@ -349,7 +349,7 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
     const char *slash = strrchr(out_name, '/');
     const char *file_name = slash ? slash + 1 : out_name;
 
-    /* making sure the file entry maztches the new output path */
+    /* making sure the file entry matches the new output path */
     ELF64_Sym file_sym = {
         .st_name = (UInt32)strtab_intern(&strtab_buf, file_name),
         .st_info = ELF_SYM_INFO(kELFSymbolTableBindingLocal, kELFSymbolTableTypeFile),
