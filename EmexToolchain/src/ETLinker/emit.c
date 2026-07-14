@@ -433,8 +433,16 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
             }
             else if((SInt32)sym->st_shndx == o->idx_data)
             {
-                value = (o->base_data + sym->st_value) - data_region_base;
-                shndx = kELFSectionHeaderIndexData;
+                if(inv->options.use_old_magic)
+                {
+                    value = (o->base_text + sym->st_value) - text_region_base;
+                    shndx = kELFSectionHeaderIndexText;
+                }
+                else
+                {
+                    value = (o->base_data + sym->st_value) - data_region_base;
+                    shndx = kELFSectionHeaderIndexData;
+                }
             }
             else if((SInt32)sym->st_shndx == o->idx_bss)
             {
