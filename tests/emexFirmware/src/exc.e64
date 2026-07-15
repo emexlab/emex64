@@ -44,23 +44,22 @@ section .data
 
 ; array of all register names
 section .data
-    exception_pc_msg db "pc\0"
-    exception_sp_msg db "sp\0"
-    exception_fp_msg db "fp\0"
-    exception_cf_msg db "cf\0"
+    exception_pc_msg db "pc\0\0"
+    exception_sp_msg db "sp\0\0"
+    exception_fp_msg db "fp\0\0"
+    exception_cf_msg db "cf\0\0"
     exception_fpc_msg db "fpc\0"
-    exception_r0_msg db "r0\0"
-    exception_r1_msg db "r1\0"
-    exception_r2_msg db "r2\0"
-    exception_r3_msg db "r3\0"
-    exception_r4_msg db "r4\0"
-    exception_r5_msg db "r5\0"
-    exception_r6_msg db "r6\0"
-    exception_r7_msg db "r7\0"
-    exception_r8_msg db "r8\0"
-    exception_r9_msg db "r9\0"
-    exception_rr_msg db "rr\0"
-    exception_array_reg_msg dq exception_pc_msg, exception_sp_msg, exception_fp_msg, exception_cf_msg, exception_fpc_msg, exception_r0_msg, exception_r1_msg, exception_r2_msg, exception_r3_msg, exception_r4_msg, exception_r5_msg, exception_r6_msg, exception_r7_msg, exception_r8_msg, exception_r9_msg, exception_rr_msg
+    exception_r0_msg db "r0\0\0"
+    exception_r1_msg db "r1\0\0"
+    exception_r2_msg db "r2\0\0"
+    exception_r3_msg db "r3\0\0"
+    exception_r4_msg db "r4\0\0"
+    exception_r5_msg db "r5\0\0"
+    exception_r6_msg db "r6\0\0"
+    exception_r7_msg db "r7\0\0"
+    exception_r8_msg db "r8\0\0"
+    exception_r9_msg db "r9\0\0"
+    exception_rr_msg db "rr\0\0"
 
 exception_str_for_code:
     ldq rr, exception_str       ; loading exception str
@@ -90,10 +89,10 @@ section .data
 exception_putreg:
     ; get the reg string
     mov r6, r1
+    mul r1, r0, 4
+    add r4, r1, exception_pc_msg        ; gives the string
     mul r1, r0, 8
-    add r2, r1, exception_array_reg_msg ; gives the string
     add r3, r1, exception_putreg_switch ; gives the value getter handle of the switch
-    ldq r4, r2
     ldq r5, r3
 
     ; get the reg value from frame pointer passed in r0
