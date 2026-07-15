@@ -29,10 +29,6 @@
 %define% FW_LOCK_KTRR 0
 %endif% ; FW_LOCK_KTRR
 
-%ifndef% FW_TEST_DISASSEMBLY
-%define% FW_TEST_DISASSEMBLY 0
-%endif% ; FW_TEST_DISASSEMBLY
-
 %ifndef% FW_MINIMAL
 %define% FW_MINIMAL 0
 %endif% ; FW_MINIMAL
@@ -138,13 +134,6 @@ main:
 %if% FW_TEST_EXCEPTION
     blw panic, fw_testpanic_msg
 %endif% ; FW_TEST_EXCEPTION
-
-%if% FW_TEST_DISASSEMBLY
-    blw putc, '\n'
-    sub r0, _start.poweroff, _start
-    blw disasm_sym, _start, r0
-    blw putc, '\n'
-%endif% ; FW_TEST_DISASSEMBLY
 
     cmov REG_CR0, 1
     
