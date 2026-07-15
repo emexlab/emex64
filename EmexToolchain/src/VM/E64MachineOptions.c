@@ -21,31 +21,29 @@
 
 #include <EmexToolchain/VM/E64MachineOptions.h>
 
-E64MachineSupport E64MachineSupportGet(void)
-{
-    E64MachineSupport support;
+E64MachineSupport E64MachineSupportCurrent = {
     #if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || defined(__APPLE__))
-    support.display = true;
+    .display = true,
     #else
-    support.display = false;
+    .display = false,
     #endif /* EMEX64VM_DEVICE_DISPLAY */
-    return support;
-}
+};
 
-E64MachineOptions E64MachineOptionsGetDefault(void)
-{
-    E64MachineOptions options;
+E64MachineOptions E64MachineOptionsDefault = {
     #if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || defined(__APPLE__))
-    options.displayOptions.enabled = true;
-    options.keyboardPeripheralMode = kE64PeripheralMode8042;
-    options.mousePeripheralMode = kE64PeripheralMode8042;
+    .displayOptions = {
+        .enabled = true,
+        .width = 640,
+        .height = 480,
+    },
+    .keyboardPeripheralMode = kE64PeripheralMode8042,
+    .mousePeripheralMode = kE64PeripheralMode8042,
     #else
-    options.displayOptions.enabled = false;
-    options.keyboardPeripheralMode = kE64PeripheralModeOff;
-    options.mousePeripheralMode = kE64PeripheralModeOff;
+    .displayOptions = {
+        .enabled = false,
+    },
+    .keyboardPeripheralMode = kE64PeripheralModeOff,
+    .mousePeripheralMode = kE64PeripheralModeOff,
     #endif /* EMEX64VM_DEVICE_DISPLAY */
-    options.displayOptions.width = 640;
-    options.displayOptions.height = 480;
-    options.memoryLength = 100 * 1024 * 1024;
-    return options;
-}
+    .memoryLength = 100 * 1024 * 1024,
+};

@@ -41,13 +41,12 @@ typedef struct {
 
 typedef struct {
     UInt64 memoryLength;
-    
     E64DisplayOptions displayOptions;
     E64PeripheralMode keyboardPeripheralMode;
     E64PeripheralMode mousePeripheralMode;
 } E64MachineOptions;
 
-E64MachineSupport E64MachineSupportGet(void);
-E64MachineOptions E64MachineOptionsGetDefault(void);
+extern E64MachineSupport E64MachineSupportCurrent;
+extern E64MachineOptions E64MachineOptionsDefault;
 
 #endif /* E64MACHINEOPTIONS_H */

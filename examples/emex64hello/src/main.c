@@ -181,7 +181,7 @@ int main(void)
     }
 
     /* let the core spin >:3 */
-    E64MachineOptions machineOptions = E64MachineOptionsGetDefault();
+    E64MachineOptions machineOptions = E64MachineOptionsDefault;
     machineOptions.displayOptions.enabled = false;
 
     E64MachineRef machine = E64MachineCreateWithOptions(kEFAllocatorDefault, machineOptions);

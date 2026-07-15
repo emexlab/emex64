@@ -34,8 +34,8 @@ int main(int argc, char *argv[])
 {
     const char *firmware_image_path = NULL;
 
-    E64MachineOptions machineOptions = E64MachineOptionsGetDefault();
-    E64MachineSupport machineSupport = E64MachineSupportGet();
+    E64MachineOptions machineOptions = E64MachineOptionsDefault;
+    E64MachineSupport machineSupport = E64MachineSupportCurrent;
 
     /* TODO: we need a driver for the VM later */
     /* parse arguments */

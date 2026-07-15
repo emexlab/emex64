@@ -89,7 +89,7 @@ EFTypeID E64MachineGetTypeID(void)
 
 E64MachineRef E64MachineCreate(EFAllocatorRef allocatorRef)
 {
-    return E64MachineCreateWithOptions(allocatorRef, E64MachineOptionsGetDefault());
+    return E64MachineCreateWithOptions(allocatorRef, E64MachineOptionsDefault);
 }
 
 E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
