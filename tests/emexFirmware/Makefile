@@ -9,7 +9,7 @@ all: compile execute clean
 # Tradeoff is that KTRR can't work in minimal mode (because .text and .data have to both be aligned)
 all-minimal: FILES ?= src/exc.e64 src/gui.e64 src/interrupt.e64 src/mc.e64 src/put.e64 src/string.e64 src/font.e64 src/hang.e64 src/pmm.e64 src/rtc.e64 src/start.e64 src/uart.e64
 all-minimal: FLAGS ?= -Wl,--omagic,-v -DFW_MINIMAL
-all-minimal: MEMORY ?= 24
+all-minimal: MEMORY ?= 16
 all-minimal: compile execute clean
 
 compile:

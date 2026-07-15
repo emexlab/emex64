@@ -21,6 +21,18 @@
 
 %include% <emex64.e64inc>
 
+%ifndef% FW_MINIMAL
+%define% FW_MINIMAL 0
+%endif% ; FW_MINIMAL
+
+%if% FW_MINIMAL
+%define% BSS_KERNEL_STACK_SIZE      (EMEX64_PAGE_SIZE / 16)
+%define% BSS_KERNEL_STACK_TOP_SUB   (BSS_KERNEL_STACK_SIZE - 8)
+
+section .bss
+    kernel_stack db BSS_KERNEL_STACK_SIZE
+%endif% ; FW_MINIMAL
+
 section .bss
     ivec dq 64
 
@@ -29,11 +41,16 @@ section .data
     ic_init_msg db "[ic] initialized\n\0"
 
 interrupt_init:
+%if% FW_MINIMAL
+    add rr, kernel_stack, BSS_KERNEL_STACK_TOP_SUB
+    cmov REG_CR1, rr
+%else%
     ; allocate kernel stack for the interrupt handlers
     blw pmm_alloc
     bz rr, .failed
     add rr, (EMEX64_PAGE_SIZE - 8)
     cmov REG_CR1, rr
+%endif% ; FW_MINIMAL
 
     ; setting up vector table onto interrupt controller
     stq EMEX64_IC_REG_VECTOR, ivec
