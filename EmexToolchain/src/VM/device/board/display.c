@@ -411,6 +411,7 @@ emex64_display_t *emex64_display_alloc(E64MachineRef machine,
                                        UInt16 width,
                                        UInt16 height)
 {
+    #if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || defined(__APPLE__))
     if(width > 1920 || height > 1920)
     {
         diag_error(NULL, "display dimensions are too big");
@@ -421,6 +422,7 @@ emex64_display_t *emex64_display_alloc(E64MachineRef machine,
         diag_error(NULL, "display dimensions are too small");
         return NULL;
     }
+    #endif /* EMEX64VM_DEVICE_DISPLAY */
 
     emex64_display_t *display = malloc(sizeof(emex64_display_t));
     if(display == NULL)
