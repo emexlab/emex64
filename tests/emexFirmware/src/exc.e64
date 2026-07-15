@@ -33,14 +33,13 @@ section .data
 
 ; array of all exception type names
 section .data
-    exception_unknown_msg db "unknown\0"
-    exception_badaccess_msg db "bad access\0"
-    exception_permission_msg db "permission denied\0"
-    exception_badinstruction_msg db "bad instruction\0"
-    exception_badarithmetic_msg db "bad arithmetic\0"
-    exception_pagefault_msg db "page fault\0"
-    exception_ktrr_msg db "ktrr violation\0"
-    exception_type_array_msg dq exception_unknown_msg, exception_badaccess_msg, exception_permission_msg, exception_badinstruction_msg, exception_badarithmetic_msg, exception_pagefault_msg, exception_ktrr_msg
+    exception_unknown_msg db "unknown\0\0\0\0\0\0\0\0\0\0\0"
+    exception_bad_access_msg db "bad access\0\0\0\0\0\0\0\0"
+    exception_permission_denied_msg db "permission denied\0"
+    exception_bad_instruction_msg db "bad instruction\0\0\0"
+    exception_bad_arithmetic_msg db "bad arithmetic\0\0\0\0"
+    exception_page_fault_msg db "page fault\0\0\0\0\0\0\0\0"
+    exception_ktrr_violation_msg db "ktrr violation\0\0\0\0"
 
 ; array of all register names
 section .data
@@ -68,9 +67,8 @@ exception_str_for_code:
 .is_normal_exception:
     cmp r0, 6                   ; checking weither r0 is bigger than the biggest possible exception
     bgt .is_unknown             ; branching if so
-    mul r0, 8
-    add r0, exception_type_array_msg
-    ldq rr, r0
+    mul r0, 18
+    add rr, r0, exception_unknown_msg
     wret
 .is_unknown:
     mov rr, exception_unknown_msg
