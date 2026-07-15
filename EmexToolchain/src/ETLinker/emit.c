@@ -716,6 +716,13 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
         obj_unregister_all_symbols(inv);
         linker_layout(inv);
 
+        /* re-applying linker scripts */
+        if(!linker_script_apply(inv, inv->out_bss_off, 0, inv->out_text_off, inv->out_bss_off > inv->out_data_off ? inv->out_data_off : inv->out_bss_off))
+        {
+            linker_invocation_dealloc(inv);
+            return false;
+        }
+
         /* reregister them */
         linker_object_t *obj = inv->obj;
         while(obj != NULL)
