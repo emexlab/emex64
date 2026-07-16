@@ -42,7 +42,7 @@ typedef struct __ETAssemblerDriver {
     ETAssemblerDiagnosticOptions diagnosticOptions;
     ETAssemblerDiagnosticConsumerRef diagnosticConsumer;
     EFStringRef outputPath;
-    EFArrayRef jobs;
+    EFMutableArrayRef jobs;
 
     EFIndex inputFileCount;
     emex_file_t **inputFiles;
