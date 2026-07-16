@@ -61,12 +61,7 @@ ETAssemblerJobRef ETAssemblerJobCreate(EFAllocatorRef allocatorRef,
                                        EFStringRef command,
                                        EFArrayRef arguments)
 {
-    if(command == NULL || arguments == NULL)
-    {
-        return NULL;
-    }
-
-    EFAUTOREL EFStringRef ownedCommand = EFRetain(command);
+    EFAUTOREL EFStringRef ownedCommand = EFRetainTry(command);
     if(ownedCommand == NULL)
     {
         return NULL;
