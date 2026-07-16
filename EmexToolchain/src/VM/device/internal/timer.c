@@ -94,23 +94,14 @@ emex64_timer_t *emex64_timer_alloc(E64MachineRef machine)
 {
     /* allocate timer */
     emex64_timer_t *timer = malloc(sizeof(emex64_timer_t));
-
     if(timer == NULL)
     {
         return NULL;
     }
 
     /* register timer MMIO */
-    E64MMIORegionRef TimerRegion = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_TIMER_BASE, EMEX64_TIMER_SIZE, timer, emex64_timer_read, emex64_timer_write);
-    if(TimerRegion == NULL)
-    {
-        free(timer);
-        return NULL;
-    }
-
-    Boolean success = E64MMIOBusRegisterRegion(machine->mmio_bus, TimerRegion);
-    EFRelease(TimerRegion);
-    if(!success)
+    EFAUTOREL E64MMIORegionRef TimerRegion = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_TIMER_BASE, EMEX64_TIMER_SIZE, timer, emex64_timer_read, emex64_timer_write);
+    if(TimerRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, TimerRegion))
     {
         free(timer);
         return NULL;

@@ -434,16 +434,8 @@ emex64_display_t *emex64_display_alloc(E64MachineRef machine,
     display->height = height;
     display->fb_size = width * height;
 
-    E64MMIORegionRef FBRegion = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_FB_BASE, EMEX64_FB_FRAMEBUFFER + display->fb_size, display, emex64_fb_read, emex64_fb_write);
-    if(FBRegion == NULL)
-    {
-        free(display);
-        return NULL;
-    }
-
-    Boolean success = E64MMIOBusRegisterRegion(machine->mmio_bus, FBRegion);
-    EFRelease(FBRegion);
-    if(!success)
+    EFAUTOREL E64MMIORegionRef FBRegion = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_FB_BASE, EMEX64_FB_FRAMEBUFFER + display->fb_size, display, emex64_fb_read, emex64_fb_write);
+    if(FBRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, FBRegion))
     {
         free(display);
         return NULL;
