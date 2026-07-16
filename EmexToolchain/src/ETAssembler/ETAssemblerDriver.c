@@ -596,20 +596,15 @@ Boolean __ETAssemblerDriverJobgen(__ETAssemblerDriver driver)
                     return false;
                 }
 
-                EFMutableArrayRef arguments = EFRetain(ra.array);
+                EFAUTOREL ETAssemblerJobRef job = ETAssemblerJobCreate(kEFAllocatorDefault, (driver->driverOptions.assembleOnly) ? kETAssemblerJobTypeAssembler : kETAssemblerJobTypeDriver, EFSTR("emex64asm"), ra.array);
                 ratchet_args_deinit(&ra);
-
-                ETAssemblerJobRef job = ETAssemblerJobCreate(kEFAllocatorDefault, (driver->driverOptions.assembleOnly) ? kETAssemblerJobTypeAssembler : kETAssemblerJobTypeDriver, EFSTR("emex64asm"), arguments);
-                EFRelease(arguments);
                 if(job == NULL)
                 {
                     ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate assembler job"));
                     return false;
                 }
 
-                Boolean success = EFArrayAppendValue(driver->jobs, job);
-                EFRelease(job);
-                if(!success)
+                if(!EFArrayAppendValue(driver->jobs, job))
                 {
                     ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate assembler job"));
                     return false;
@@ -665,20 +660,15 @@ Boolean __ETAssemblerDriverJobgen(__ETAssemblerDriver driver)
             return false;
         }
 
-        EFMutableArrayRef arguments = EFRetain(ra.array);
+        EFAUTOREL ETAssemblerJobRef job = ETAssemblerJobCreate(kEFAllocatorDefault, kETAssemblerJobTypeLinker, EFSTR("emex64ld"), ra.array);
         ratchet_args_deinit(&ra);
-
-        ETAssemblerJobRef job = ETAssemblerJobCreate(kEFAllocatorDefault, kETAssemblerJobTypeLinker, EFSTR("emex64ld"), arguments);
-        EFRelease(arguments);
         if(job == NULL)
         {
             ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate assembler job"));
             return false;
         }
 
-        Boolean success = EFArrayAppendValue(driver->jobs, job);
-        EFRelease(job);
-        if(!success)
+        if(!EFArrayAppendValue(driver->jobs, job))
         {
             ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate assembler job"));
             return false;
@@ -727,16 +717,6 @@ ETAssemblerDriverRef ETAssemblerDriverCreateWithOptions(EFAllocatorRef allocator
                                                         ETAssemblerDriverOptions driverOptions,
                                                         ETAssemblerDiagnosticOptions diagnosticOptions)
 {
-    if(arguments == NULL)
-    {
-        return NULL;
-    }
-
-    if(allocatorRef == NULL)
-    {
-        allocatorRef = EFGetAllocator(arguments);
-    }
-
     EFAUTOREL __ETAssemblerDriver driver = (__ETAssemblerDriver)EFObjectAlloc(allocatorRef, ETAssemblerDriverGetTypeID(), sizeof(struct __ETAssemblerDriver));
     if(driver == NULL)
     {
@@ -749,7 +729,7 @@ ETAssemblerDriverRef ETAssemblerDriverCreateWithOptions(EFAllocatorRef allocator
         return NULL;
     }
 
-    driver->arguments = EFRetain(arguments);
+    driver->arguments = EFArrayCreateCopy(allocatorRef, arguments);
     if(driver->arguments == NULL)
     {
         return NULL;
@@ -915,28 +895,19 @@ Boolean ETAssemblerDriverRun(ETAssemblerDriverRef driverRef)
             argv[0] = commandPtr;
             for(EFIndex argumentsIndex = 0; argumentsIndex < (argumentsCount - 1); argumentsIndex++)
             {
-                EFStringRef argument = EFArrayGetValueAtIndex(jobArguments, argumentsIndex);
-                const char *cptr = EFStringGetCStringPtr(argument, kEFStringEncodingASCII);
+                const char *cptr = EFStringGetCStringPtr(EFArrayGetValueAtIndex(jobArguments, argumentsIndex), kEFStringEncodingASCII);
                 if(cptr == NULL)
                 {
                     return false;
                 }
-
                 argv[argumentsIndex + 1] = cptr;
             }
             argv[argumentsCount] = NULL;
 
             if(jobType == kETAssemblerJobTypeDriver && driver->driverOptions.inProcess)
             {
-                ETAssemblerDriverRef subDriver = ETAssemblerDriverCreate(EFGetAllocator(driverRef), jobArguments);
-                if(subDriver == NULL)
-                {
-                    return false;
-                }
-
-                Boolean success = ETAssemblerDriverRun(subDriver);
-                EFRelease(subDriver);
-                if(!success)
+                EFAUTOREL ETAssemblerDriverRef subDriver = ETAssemblerDriverCreate(EFGetAllocator(driverRef), jobArguments);
+                if(subDriver == NULL || !ETAssemblerDriverRun(subDriver))
                 {
                     return false;
                 }
