@@ -66,29 +66,26 @@ ETAssemblerJobRef ETAssemblerJobCreate(EFAllocatorRef allocatorRef,
         return NULL;
     }
 
-    EFStringRef ownedCommand = EFRetain(command);
+    EFAUTOREL EFStringRef ownedCommand = EFRetain(command);
     if(ownedCommand == NULL)
     {
         return NULL;
     }
 
-    EFArrayRef ownedArguments = EFArrayCreateCopy(allocatorRef, arguments);
+    EFAUTOREL EFArrayRef ownedArguments = EFArrayCreateCopy(allocatorRef, arguments);
     if(ownedArguments == NULL)
     {
-        EFRelease(ownedCommand);
         return NULL;
     }
 
     __ETAssemblerJob job = (__ETAssemblerJob)EFObjectAlloc(allocatorRef, ETAssemblerJobGetTypeID(), sizeof(struct __ETAssemblerJob));
     if(job == NULL)
     {
-        EFRelease(ownedArguments);
-        EFRelease(ownedCommand);
         return NULL;
     }
 
-    job->command = ownedCommand;
-    job->arguments = ownedArguments;
+    job->command = EFAUTOTRANSFER(ownedCommand);
+    job->arguments = EFAUTOTRANSFER(ownedArguments);
     job->type = type;
 
     return (ETAssemblerJobRef)job;
