@@ -44,7 +44,7 @@ void ratchet_args_append(ratchet_args_t *ra,
         return;
     }
 
-    EFStringRef argument = EFStringCreateWithCString(kEFAllocatorDefault, arg, kEFStringEncodingASCII);
+    EFStringRef argument = EFStringCreateWithCString(kEFAllocatorDefault, arg, kEFStringEncodingUTF8);
     if(argument == NULL)
     {
         ra->failed = true;
@@ -54,6 +54,22 @@ void ratchet_args_append(ratchet_args_t *ra,
     Boolean success = EFArrayAppendValue(ra->array, argument);
     EFRelease(argument);
     if(!success)
+    {
+        ra->failed = true;
+        return;
+    }
+}
+
+void ratchet_args_efappend(ratchet_args_t *ra,
+                           EFStringRef argument)
+{
+    if(ra->failed || argument == NULL || ra->array == NULL)
+    {
+        ra->failed = true;  /* when arg is NULL then it is automatically failed */
+        return;
+    }
+
+    if(!EFArrayAppendValue(ra->array, argument))
     {
         ra->failed = true;
         return;

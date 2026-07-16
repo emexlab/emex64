@@ -42,7 +42,7 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
     /* better starting with the default assembler options ^^ */
     driver->diagnosticOptions = ETAssemblerDiagnosticOptionsDefault;
 
-    driver->output_path = NULL;
+    driver->outputPath = NULL;
     driver->input_file_count = 0;
     driver->input_file = calloc(argc, sizeof(emex_file_t*));
     if(driver->input_file == NULL)
@@ -91,7 +91,16 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
         }
         else if(strcmp(argv[i], "-o") == 0 && i + 1 < argc)
         {
-            driver->output_path = argv[++i];
+            if(driver->outputPath != NULL)
+            {
+                EFRelease(driver->outputPath);
+            }
+            driver->outputPath = EFStringCreateWithCString(kEFAllocatorDefault, argv[++i], kEFStringEncodingUTF8);
+            if(driver->outputPath == NULL)
+            {
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("couldn't gain ownership over outputPath '%s'"), argv[i - 1]);
+                return false;
+            }
         }
         else if(strncmp(argv[i], "-f", 2) == 0)
         {
@@ -331,10 +340,10 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
         return false;
     }
 
-    if(driver->output_path == NULL)
+    if(driver->outputPath == NULL)
     {
         ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityWarning, NULL, EFSTR("no output path provided, falling back to 'a.out'"));
-        driver->output_path = "a.out";
+        driver->outputPath = EFSTR("a.out");
     }
 
     return true;
@@ -538,7 +547,7 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
             ratchet_args_append(&ra, "-r");
         }
         ratchet_args_append(&ra, "-o");
-        ratchet_args_append(&ra, driver->output_path);
+        ratchet_args_efappend(&ra, driver->outputPath);
         for(size_t i = 0; i < driver->tmp_path_cnt; i++)
         {
             ratchet_args_append(&ra, driver->tmp_paths[i]);
@@ -644,7 +653,7 @@ assembler_driver_t *assembler_driver_alloc(int argc,
         fprintf(stderr, "    warning_error: %d,\n", driver->diagnosticOptions.warning_error);
         fprintf(stderr, "    warning_deprecated: %d,\n", driver->diagnosticOptions.warning_deprecated);
         fprintf(stderr, "}\n");;
-        fprintf(stderr, "output_path: %s\n", driver->output_path);
+        fprintf(stderr, "output_path: %s\n", EFStringGetCStringPtr(driver->outputPath, kEFStringEncodingUTF8));
 
         fprintf(stderr, "input_file[%d]: { ", driver->input_file_count);
         for(int i = 0; i < driver->input_file_count; i++)
@@ -734,6 +743,10 @@ void assembler_driver_dealloc(assembler_driver_t *driver)
 
     ETAssemblerDiagnosticConsumerEmit(driver->diagnosticConsumer);
     EFRelease(driver->diagnosticConsumer);
+    if(driver->outputPath != NULL)
+    {
+        EFRelease(driver->outputPath);
+    }
     EFRelease(driver->jobs);
 
     free(driver);
@@ -762,7 +775,7 @@ Boolean assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
         inv->include_dir_cnt = driver->inc_dir_cnt;
         inv->include_dirs = driver->inc_dirs;
 
-        emex_file_t *output = emex_file_alloc(driver->output_path, out_data_file_policy);
+        emex_file_t *output = emex_file_alloc(EFStringGetCStringPtr(driver->outputPath, kEFStringEncodingUTF8), out_data_file_policy);
         if(output == NULL)
         {
             emex_file_dealloc(output);

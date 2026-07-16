@@ -32,5 +32,6 @@ typedef struct ratchet_args {
 Boolean ratchet_args_init(ratchet_args_t *ra);
 void ratchet_args_deinit(ratchet_args_t *ra);
 void ratchet_args_append(ratchet_args_t *ra, const char *arg);
+void ratchet_args_efappend(ratchet_args_t *ra, EFStringRef argument);
 
 #endif /* EMEX_RATCHET_ARGS_H */

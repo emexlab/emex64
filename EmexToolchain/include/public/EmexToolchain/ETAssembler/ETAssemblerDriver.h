@@ -45,9 +45,9 @@ typedef struct {
     ETAssemblerDriverOptions driverOptions;
     ETAssemblerDiagnosticOptions diagnosticOptions;
     ETAssemblerDiagnosticConsumerRef diagnosticConsumer;
+    EFStringRef outputPath;
+    EFArrayRef jobs;
     kEmitMode emit_mode;
-
-    const char *output_path;    /* borrowed */
 
     int input_file_count;
     emex_file_t **input_file;
@@ -63,8 +63,6 @@ typedef struct {
 
     int linker_flags_cnt;
     char **linker_flags;
-
-    EFArrayRef jobs;
 } assembler_driver_t;
 
 assembler_driver_t *assembler_driver_alloc(int argc, const char **argv);
