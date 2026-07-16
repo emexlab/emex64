@@ -23,13 +23,6 @@
 
 int main(void)
 {
-    ETAssemblerDriverRef driver = ETAssemblerDriverCreate(kEFAllocatorDefault, EFProcessGetArguments(EFProcessCurrent));
-    if(driver == NULL)
-    {
-        return 1;
-    }
-
-    Boolean success = ETAssemblerDriverRun(driver);
-    EFRelease(driver);
-    return success ? 0 : 1;
+    EFAUTOREL ETAssemblerDriverRef driver = ETAssemblerDriverCreate(kEFAllocatorDefault, EFProcessGetArguments(EFProcessCurrent));
+    return ETAssemblerDriverRun(driver) ? 0 : 1;    /* ETAssemblerDriverRun checks if the driver is not null */
 }
