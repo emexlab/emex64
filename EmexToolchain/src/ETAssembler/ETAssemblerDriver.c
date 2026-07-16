@@ -300,7 +300,7 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
         }
         else if(strncmp(argv[i], "-c", 2) == 0)
         {
-            driver->driverOptions.assemble_only = true;
+            driver->driverOptions.assembleOnly = true;
         }
         else if(strncmp(argv[i], "-v", 2) == 0)
         {
@@ -308,7 +308,7 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
         }
         else if(strncmp(argv[i], "--in-process", 12) == 0)
         {
-            driver->driverOptions.in_process = true;
+            driver->driverOptions.inProcess = true;
         }
         else if(strncmp(argv[i], "-r", 2) == 0)
         {
@@ -414,7 +414,7 @@ static Boolean assembler_driver_append_additional_linker_flag(assembler_driver_t
 Boolean assembler_driver_jobgen(assembler_driver_t *driver)
 {
     /* -c is only meant to assemble one assembly file to a object file */
-    if(driver->driverOptions.assemble_only && driver->input_file_count > 1)
+    if(driver->driverOptions.assembleOnly && driver->input_file_count > 1)
     {
         ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("multiple input files were passed in object emit mode"));
         return false;
@@ -497,7 +497,7 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
                 EFMutableArrayRef arguments = EFRetain(ra.array);
                 ratchet_args_deinit(&ra);
 
-                ETAssemblerJobRef job = ETAssemblerJobCreate(kEFAllocatorDefault, (driver->driverOptions.assemble_only) ? kETAssemblerJobTypeAssembler : kETAssemblerJobTypeDriver, EFSTR("emex64asm"), arguments);
+                ETAssemblerJobRef job = ETAssemblerJobCreate(kEFAllocatorDefault, (driver->driverOptions.assembleOnly) ? kETAssemblerJobTypeAssembler : kETAssemblerJobTypeDriver, EFSTR("emex64asm"), arguments);
                 EFRelease(arguments);
                 if(job == NULL)
                 {
@@ -527,7 +527,7 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
     }
 
     /* we only need a linker job when we got objects to link */
-    if(!driver->driverOptions.assemble_only && driver->tmp_path_cnt > 0)
+    if(!driver->driverOptions.assembleOnly && driver->tmp_path_cnt > 0)
     {
         ratchet_args_t ra;
         if(!ratchet_args_init(&ra))
@@ -602,6 +602,19 @@ const char *assembler_job_string_for_type(ETAssemblerJobType type)
     }
 }
 
+const char *assembler_emit_mode_string_for_mode(kEmitMode mode)
+{
+    switch(mode)
+    {
+        case kEmitModeFirmware:
+            return "firmware image";
+        case kEmitModeRelocatableObject:
+            return "ELF";
+        default:
+            return "unknown";
+    }
+}
+
 assembler_driver_t *assembler_driver_alloc(int argc,
                                            const char **argv)
 {
@@ -619,6 +632,7 @@ assembler_driver_t *assembler_driver_alloc(int argc,
     }
 
     /* need default settings */
+    driver->driverOptions = ETAssemblerDriverOptionsDefault;
     driver->diagnosticOptions = ETAssemblerDiagnosticOptionsDefault;
 
     driver->diagnosticConsumer = ETAssemblerDiagnosticConsumerCreate(kEFAllocatorDefault, driver->diagnosticOptions);
@@ -643,9 +657,10 @@ assembler_driver_t *assembler_driver_alloc(int argc,
         fprintf(stderr, "uid: %d\n", getuid());
         fprintf(stderr, "gid: %d\n", getgid());
         fprintf(stderr, "driverOptions: {\n");
-        fprintf(stderr, "    assemble_only: %d,\n", driver->driverOptions.assemble_only);
+        fprintf(stderr, "    assembleOnly: %d,\n", driver->driverOptions.assembleOnly);
         fprintf(stderr, "    verbose: %d,\n", driver->driverOptions.verbose);
-        fprintf(stderr, "    in_process: %d,\n", driver->driverOptions.in_process || driver->driverOptions.assemble_only);
+        fprintf(stderr, "    inProcess: %d,\n", driver->driverOptions.inProcess || driver->driverOptions.assembleOnly);
+        fprintf(stderr, "    emitMode: %s,\n", assembler_emit_mode_string_for_mode(driver->driverOptions.emitMode));
         fprintf(stderr, "}\n");;
         fprintf(stderr, "diagnosticOptions: {\n");
         fprintf(stderr, "    caret_diagnostics: %d,\n", driver->diagnosticOptions.caret_diagnostics);
@@ -688,7 +703,7 @@ assembler_driver_t *assembler_driver_alloc(int argc,
         }
         fprintf(stderr, " }\n");
 
-        if(!driver->driverOptions.assemble_only)
+        if(!driver->driverOptions.assembleOnly)
         {
             fprintf(stderr, "linker_flags[%d]: { ", driver->linker_flags_cnt);
             for(int i = 0; i < driver->linker_flags_cnt; i++)
@@ -756,7 +771,7 @@ Boolean assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
 {
     ETAssemblerDiagnosticConsumerEmit(driver->diagnosticConsumer);
 
-    if(driver->driverOptions.assemble_only)
+    if(driver->driverOptions.assembleOnly)
     {
         assembler_diagnostic_consumer_t *consumer = ETAssemblerDiagnosticConsumerGetPtr(driver->diagnosticConsumer);
         if(consumer == NULL)
@@ -821,7 +836,7 @@ Boolean assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
             }
             argv[argumentsCount] = NULL;
 
-            if(jobType == kETAssemblerJobTypeDriver && driver->driverOptions.in_process)
+            if(jobType == kETAssemblerJobTypeDriver && driver->driverOptions.inProcess)
             {
                 assembler_driver_t *subdriver = assembler_driver_alloc(argumentsCount, (const char**)argv);
                 if(subdriver == NULL)
@@ -836,7 +851,7 @@ Boolean assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
                     return false;
                 }
             }
-            else if(jobType == kETAssemblerJobTypeLinker && driver->driverOptions.in_process)
+            else if(jobType == kETAssemblerJobTypeLinker && driver->driverOptions.inProcess)
             {
                 linker_driver_t *subdriver = linker_driver_alloc(argumentsCount, (const char**)argv);
                 if(subdriver == NULL)

@@ -22,9 +22,9 @@
 #include <EmexToolchain/ETAssembler/ETAssemblerOptions.h>
 
 ETAssemblerDriverOptions ETAssemblerDriverOptionsDefault = {
-    .assemble_only = false,
+    .assembleOnly = false,
     .verbose = false,
-    .in_process = false,
+    .inProcess = false,
     .emitMode = kEmitModeFirmware,
 };
 

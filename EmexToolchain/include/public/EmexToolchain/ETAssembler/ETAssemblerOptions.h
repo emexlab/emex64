@@ -26,10 +26,10 @@
 #include <EmexToolchain/ETLinker/type.h>
 
 typedef struct {
-    Boolean assemble_only;
-    Boolean verbose;
-    Boolean in_process;
-    kEmitMode emitMode;
+    Boolean assembleOnly;   /* default: false */
+    Boolean verbose;        /* default: false */
+    Boolean inProcess;      /* default: false */
+    kEmitMode emitMode;     /* default: kEmitModeFirmware */
 } ETAssemblerDriverOptions;
 
 typedef struct {
