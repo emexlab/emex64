@@ -32,22 +32,10 @@
 static void __E64MachineDeinit(EFObjectRef machineRef)
 {
     __E64Machine machine = (__E64Machine)machineRef;
-    if(machine->core != NULL)
-    {
-        EFRelease(machine->core);
-    }
-    if(machine->memory != NULL)
-    {
-        EFRelease(machine->memory);
-    }
-    if(machine->mmio_bus != NULL)
-    {
-        EFRelease(machine->mmio_bus);
-    }
-    if(machine->intc != NULL)
-    {
-        EFRelease(machine->intc);
-    }
+    EFReleaseTry(machine->core);
+    EFReleaseTry(machine->memory);
+    EFReleaseTry(machine->mmio_bus);
+    EFReleaseTry(machine->intc);
     if(machine->timer != NULL)
     {
         emex64_timer_dealloc(machine->timer);
@@ -95,7 +83,7 @@ E64MachineRef E64MachineCreate(EFAllocatorRef allocatorRef)
 E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
                                           E64MachineOptions options)
 {
-    __E64Machine machine = (__E64Machine)EFObjectAlloc(allocatorRef, E64MachineGetTypeID(), sizeof(struct __E64Machine));
+    EFAUTOREL __E64Machine machine = (__E64Machine)EFObjectAlloc(allocatorRef, E64MachineGetTypeID(), sizeof(struct __E64Machine));
     if(machine == NULL)
     {
         return NULL;
@@ -104,21 +92,18 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
     machine->memory = E64MemoryCreate(allocatorRef, options.memoryLength);
     if(machine->memory == NULL)
     {
-        EFRelease(machine);
         return NULL;
     }
 
     machine->mmio_bus = E64MMIOBusCreate(allocatorRef);
     if(machine->mmio_bus == NULL)
     {
-        EFRelease(machine);
         return NULL;
     }
 
     machine->core = E64CoreCreate(allocatorRef);
     if(machine->core == NULL)
     {
-        EFRelease(machine);
         return NULL;
     }
     /* machine->core->machine = EFRetain(machine); FIXME: retain cycle */
@@ -127,42 +112,36 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
     machine->intc = E64ICCreate(allocatorRef);
     if(machine->intc == NULL || !E64ICRegisterOnMMIOBus(machine->intc, machine->mmio_bus))
     {
-        EFRelease(machine);
         return NULL;
     }
 
     machine->timer = emex64_timer_alloc(machine);
     if(machine->timer == NULL)
     {
-        EFRelease(machine);
         return NULL;
     }
 
     machine->uart = emex64_uart_alloc(machine);
     if(machine->uart == NULL)
     {
-        EFRelease(machine);
         return NULL;
     }
 
     machine->emex8042 = emex64_8042_alloc(machine, options.keyboardPeripheralMode == kE64PeripheralMode8042, options.mousePeripheralMode == kE64PeripheralMode8042);
     if(machine->emex8042 == NULL)
     {
-        EFRelease(machine);
         return NULL;
     }
 
     machine->display = emex64_display_alloc(machine, options.displayOptions.enabled, options.displayOptions.width, options.displayOptions.height);
     if(machine->display == NULL)
     {
-        EFRelease(machine);
         return NULL;
     }
 
     E64MMIORegionRef RTCMMIORegion = E64MMIORegionCreate(NULL, EMEX64_RTC_BASE, EMEX64_RTC_SIZE, NULL, emex64_rtc_read, NULL);
     if(RTCMMIORegion == NULL)
     {
-        EFRelease(machine);
         return NULL;
     }
 
@@ -170,14 +149,12 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
     EFRelease(RTCMMIORegion);
     if(!success)
     {
-        EFRelease(machine);
         return NULL;
     }
 
     E64MMIORegionRef MCRegion = E64MMIORegionCreate(NULL, EMEX64_MC_BASE, EMEX64_MC_SIZE, NULL, emex64_mc_read, emex64_mc_write);
     if(MCRegion == NULL)
     {
-        EFRelease(machine);
         return NULL;
     }
     
@@ -185,14 +162,12 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
     EFRelease(MCRegion);
     if(!success)
     {
-        EFRelease(machine);
         return NULL;
     }
 
     E64MMIORegionRef PlatformRegion = E64MMIORegionCreate(NULL, EMEX64_PLATFORM_BASE, EMEX64_PLATFORM_SIZE, NULL, emex64_platform_read, emex64_platform_write);
     if(PlatformRegion == NULL)
     {
-        EFRelease(machine);
         return NULL;
     }
     
@@ -200,11 +175,10 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
     EFRelease(PlatformRegion);
     if(!success)
     {
-        EFRelease(machine);
         return NULL;
     }
 
-    return machine;
+    return (E64MachineRef)EFAUTOTRANSFER(machine);
 }
 
 E64CoreRef E64MachineGetCore(E64MachineRef machineRef)

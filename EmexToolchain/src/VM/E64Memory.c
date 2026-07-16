@@ -80,7 +80,7 @@ EFTypeID E64MemoryGetTypeID(void)
 E64MemoryRef E64MemoryCreate(EFAllocatorRef allocatorRef,
                              UInt64 size)
 {
-    E64Memory memory = EFObjectAlloc(allocatorRef, E64MemoryGetTypeID(), sizeof(struct E64Memory));
+    EFAUTOREL E64Memory memory = EFObjectAlloc(allocatorRef, E64MemoryGetTypeID(), sizeof(struct E64Memory));
     if(memory == NULL)
     {
         return NULL;
@@ -91,11 +91,10 @@ E64MemoryRef E64MemoryCreate(EFAllocatorRef allocatorRef,
     memory->memory = mmap(NULL, memory->memory_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if(memory->memory == MAP_FAILED)
     {
-        EFRelease(memory);
         return NULL;
     }
 
-    return (E64MemoryRef)memory;
+    return (E64MemoryRef)EFAUTOTRANSFER(memory);
 }
 
 void E64MemoryLockKTRR(E64MemoryRef memoryRef)

@@ -56,7 +56,7 @@ EFTypeID E64MMIOBusGetTypeID(void)
 
 E64MMIOBusRef E64MMIOBusCreate(EFAllocatorRef allocatorRef)
 {
-    __E64MMIOBus MMIOBus = (__E64MMIOBus)EFObjectAlloc(allocatorRef, E64MMIOBusGetTypeID(), sizeof(struct __E64MMIOBus));
+    EFAUTOREL __E64MMIOBus MMIOBus = (__E64MMIOBus)EFObjectAlloc(allocatorRef, E64MMIOBusGetTypeID(), sizeof(struct __E64MMIOBus));
     if(MMIOBus == NULL)
     {
         return NULL;
@@ -66,11 +66,10 @@ E64MMIOBusRef E64MMIOBusCreate(EFAllocatorRef allocatorRef)
     MMIOBus->regions = EFArrayCreateMutable(allocatorRef, kEFArrayCallbacksObjectCallbacks, 0);
     if(MMIOBus->regions == NULL)
     {
-        EFRelease(MMIOBus);
         return NULL;
     }
 
-    return (E64MMIOBusRef)MMIOBus;
+    return (E64MMIOBusRef)EFAUTOTRANSFER(MMIOBus);
 }
 
 Boolean E64MMIOBusRegisterRegion(E64MMIOBusRef MMIOBusRef,
