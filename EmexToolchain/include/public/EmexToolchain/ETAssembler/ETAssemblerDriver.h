@@ -47,7 +47,6 @@ typedef struct {
     ETAssemblerDiagnosticConsumerRef diagnosticConsumer;
     EFStringRef outputPath;
     EFArrayRef jobs;
-    kEmitMode emit_mode;
 
     int input_file_count;
     emex_file_t **input_file;

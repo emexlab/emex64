@@ -312,7 +312,7 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
         }
         else if(strncmp(argv[i], "-r", 2) == 0)
         {
-            driver->emit_mode = kEmitModeRelocatableObject;
+            driver->driverOptions.emitMode = kEmitModeRelocatableObject;
         }
         else if(argv[i][0] != '-')
         {
@@ -542,7 +542,7 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
         {
             ratchet_args_append(&ra, "-v");
         }
-        if(driver->emit_mode == kEmitModeRelocatableObject)
+        if(driver->driverOptions.emitMode == kEmitModeRelocatableObject)
         {
             ratchet_args_append(&ra, "-r");
         }

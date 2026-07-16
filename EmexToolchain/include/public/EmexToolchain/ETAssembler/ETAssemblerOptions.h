@@ -23,11 +23,13 @@
 #define EMEX64ASM_OPTIONS_H
 
 #include <EmexFoundation/EmexFoundation.h>
+#include <EmexToolchain/ETLinker/type.h>
 
 typedef struct {
     Boolean assemble_only;
     Boolean verbose;
     Boolean in_process;
+    kEmitMode emitMode;
 } ETAssemblerDriverOptions;
 
 typedef struct {
