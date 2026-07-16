@@ -43,18 +43,18 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
     driver->diagnosticOptions = ETAssemblerDiagnosticOptionsDefault;
 
     driver->outputPath = NULL;
-    driver->input_file_count = 0;
-    driver->input_file = calloc(argc, sizeof(emex_file_t*));
-    if(driver->input_file == NULL)
+    driver->inputFileCount = 0;
+    driver->inputFiles = calloc(argc, sizeof(emex_file_t*));
+    if(driver->inputFiles == NULL)
     {
         return false;
     }
 
-    driver->inc_dir_cnt = 0;
-    driver->inc_dirs = NULL;
+    driver->incDirCount = 0;
+    driver->incDirs = NULL;
 
-    driver->macro_cnt = 0;
-    driver->macro = NULL;
+    driver->macroCount = 0;
+    driver->macros = NULL;
 
     for(int i = 1; i < argc; i++)
     {
@@ -164,8 +164,8 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
                 memcpy(arg, p, len);
                 arg[len] = '\0';
 
-                driver->linker_flags = realloc(driver->linker_flags, (driver->linker_flags_cnt + 1) * sizeof(char *));
-                driver->linker_flags[driver->linker_flags_cnt++] = arg;
+                driver->linkerFlags = realloc(driver->linkerFlags, (driver->linkerFlagCount + 1) * sizeof(char *));
+                driver->linkerFlags[driver->linkerFlagCount++] = arg;
 
                 p = comma ? comma + 1 : p + len;
             }
@@ -265,18 +265,18 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
 
         early_macro_append:
             {
-                UInt64 macro_slot = driver->macro_cnt++;
-                if(driver->macro == NULL)
+                EFIndex macroSlot = driver->macroCount++;
+                if(driver->macros == NULL)
                 {
-                    driver->macro = calloc(driver->macro_cnt, sizeof(assembler_macro_definition_t));
+                    driver->macros = calloc(driver->macroCount, sizeof(assembler_macro_definition_t));
                 }
                 else
                 {
-                    driver->macro = realloc(driver->macro, driver->macro_cnt * sizeof(assembler_macro_definition_t));
+                    driver->macros = realloc(driver->macros, driver->macroCount * sizeof(assembler_macro_definition_t));
                 }
 
-                driver->macro[macro_slot].match = match;
-                driver->macro[macro_slot].value = value;
+                driver->macros[macroSlot].match = match;
+                driver->macros[macroSlot].value = value;
             }
         }
         else if(strncmp(argv[i], "-I", 2) == 0)
@@ -295,8 +295,8 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
                 ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-I'"));
                 return false;
             }
-            driver->inc_dirs = realloc(driver->inc_dirs, (driver->inc_dir_cnt + 1) * sizeof(char*));
-            driver->inc_dirs[driver->inc_dir_cnt++] = strdup(dir);
+            driver->incDirs = realloc(driver->incDirs, (driver->incDirCount + 1) * sizeof(char*));
+            driver->incDirs[driver->incDirCount++] = strdup(dir);
         }
         else if(strncmp(argv[i], "-c", 2) == 0)
         {
@@ -323,7 +323,7 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
                 return false;
             }
 
-            driver->input_file[driver->input_file_count++] = file;
+            driver->inputFiles[driver->inputFileCount++] = file;
         }
         else
         {
@@ -334,7 +334,7 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
 
     ETAssemblerDiagnosticConsumerSetDiagnosticOptions(driver->diagnosticConsumer, driver->diagnosticOptions);
 
-    if(driver->input_file_count <= 0)
+    if(driver->inputFileCount <= 0)
     {
         ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("no input files"));
         return false;
@@ -380,8 +380,8 @@ static char *assembler_driver_tmppath(assembler_driver_t *driver,
     }
     close(fd);
 
-    driver->tmp_paths = realloc(driver->tmp_paths, (driver->tmp_path_cnt + 1) * sizeof(char *));
-    driver->tmp_paths[driver->tmp_path_cnt++] = path;
+    driver->tmpPaths = realloc(driver->tmpPaths, (driver->tmpPathCount + 1) * sizeof(char *));
+    driver->tmpPaths[driver->tmpPathCount++] = path;
 
     return path;
 }
@@ -400,31 +400,31 @@ static Boolean assembler_driver_append_additional_linker_flag(assembler_driver_t
         return false;
     }
 
-    void *nptr = realloc(driver->linker_flags, (driver->linker_flags_cnt + 1) * sizeof(char *));
+    void *nptr = realloc(driver->linkerFlags, (driver->linkerFlagCount + 1) * sizeof(char *));
     if(nptr == NULL)
     {
         free(copiedFlag);
         return false;
     }
 
-    driver->linker_flags[driver->linker_flags_cnt++] = copiedFlag;
+    driver->linkerFlags[driver->linkerFlagCount++] = copiedFlag;
     return true;
 }
 
 Boolean assembler_driver_jobgen(assembler_driver_t *driver)
 {
     /* -c is only meant to assemble one assembly file to a object file */
-    if(driver->driverOptions.assembleOnly && driver->input_file_count > 1)
+    if(driver->driverOptions.assembleOnly && driver->inputFileCount > 1)
     {
         ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("multiple input files were passed in object emit mode"));
         return false;
     }
 
     /* creating assembler jobs */
-    for(int i = 0; i < driver->input_file_count; i++)
+    for(int i = 0; i < driver->inputFileCount; i++)
     {
-        const char *input_path = driver->input_file[i]->path;
-        kEmexFileType input_type = driver->input_file[i]->type;
+        const char *input_path = driver->inputFiles[i]->path;
+        kEmexFileType input_type = driver->inputFiles[i]->type;
 
         switch(input_type)
         {
@@ -457,23 +457,23 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
                 ratchet_args_append(&ra, driver->diagnosticOptions.warning_error ? "-Werror" : "-Wno-error");
                 ratchet_args_append(&ra, driver->diagnosticOptions.warning_deprecated ? "-Wdeprecated" : "-Wno-deprecated");
 
-                for(size_t j = 0; j < driver->inc_dir_cnt; j++)
+                for(EFIndex j = 0; j < driver->incDirCount; j++)
                 {
-                    size_t ilen = strlen(driver->inc_dirs[j]);
+                    size_t ilen = strlen(driver->incDirs[j]);
                     char *new_buf = malloc(ilen + 3);
                     if(new_buf == NULL)
                     {
                         ratchet_args_deinit(&ra);
                         return false;
                     }
-                    snprintf(new_buf, ilen + 3, "-I%s", driver->inc_dirs[j]);
+                    snprintf(new_buf, ilen + 3, "-I%s", driver->incDirs[j]);
                     ratchet_args_append(&ra, new_buf);
                     free(new_buf);
                 }
-                for(UInt64 j = 0; j < driver->macro_cnt; j++)
+                for(EFIndex j = 0; j < driver->macroCount; j++)
                 {
-                    const char *m = driver->macro[j].match;
-                    const char *v = driver->macro[j].value;
+                    const char *m = driver->macros[j].match;
+                    const char *v = driver->macros[j].value;
 
                     size_t blen = 2 + strlen(m) + 1 + strlen(v) + 1;
                     char *buf = malloc(blen);
@@ -527,7 +527,7 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
     }
 
     /* we only need a linker job when we got objects to link */
-    if(!driver->driverOptions.assembleOnly && driver->tmp_path_cnt > 0)
+    if(!driver->driverOptions.assembleOnly && driver->tmpPathCount > 0)
     {
         ratchet_args_t ra;
         if(!ratchet_args_init(&ra))
@@ -548,13 +548,13 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
         }
         ratchet_args_append(&ra, "-o");
         ratchet_args_efappend(&ra, driver->outputPath);
-        for(size_t i = 0; i < driver->tmp_path_cnt; i++)
+        for(EFIndex i = 0; i < driver->tmpPathCount; i++)
         {
-            ratchet_args_append(&ra, driver->tmp_paths[i]);
+            ratchet_args_append(&ra, driver->tmpPaths[i]);
         }
-        for(int i = 0; i < driver->linker_flags_cnt; i++)
+        for(EFIndex i = 0; i < driver->linkerFlagCount; i++)
         {
-            ratchet_args_append(&ra, driver->linker_flags[i]);
+            ratchet_args_append(&ra, driver->linkerFlags[i]);
         }
 
         if(ra.failed)
@@ -670,49 +670,49 @@ assembler_driver_t *assembler_driver_alloc(int argc,
         fprintf(stderr, "}\n");;
         fprintf(stderr, "output_path: %s\n", EFStringGetCStringPtr(driver->outputPath, kEFStringEncodingUTF8));
 
-        fprintf(stderr, "input_file[%d]: { ", driver->input_file_count);
-        for(int i = 0; i < driver->input_file_count; i++)
+        fprintf(stderr, "inputFile[%ld]: { ", driver->inputFileCount);
+        for(EFIndex i = 0; i < driver->inputFileCount; i++)
         {
             if(i != 0)
             {
                 fprintf(stderr, ", ");
             }
-            fprintf(stderr, "%s", driver->input_file[i]->path);
+            fprintf(stderr, "%s", driver->inputFiles[i]->path);
         }
         fprintf(stderr, " }\n");
 
-        fprintf(stderr, "inc_dirs[%zu]: { ", driver->inc_dir_cnt);
-        for(size_t i = 0; i < driver->inc_dir_cnt; i++)
+        fprintf(stderr, "incDirs[%ld]: { ", driver->incDirCount);
+        for(EFIndex i = 0; i < driver->incDirCount; i++)
         {
             if(i != 0)
             {
                 fprintf(stderr, ", ");
             }
-            fprintf(stderr, "%s", driver->inc_dirs[i]);
+            fprintf(stderr, "%s", driver->incDirs[i]);
         }
         fprintf(stderr, " }\n");
 
-        fprintf(stderr, "macro[%llu]: { ", (unsigned long long)driver->macro_cnt);
-        for(UInt64 i = 0; i < driver->macro_cnt; i++)
+        fprintf(stderr, "macros[%ld]: { ", driver->macroCount);
+        for(EFIndex i = 0; i < driver->macroCount; i++)
         {
             if(i != 0)
             {
                 fprintf(stderr, ", ");
             }
-            fprintf(stderr, "(match='%s' | replacement='%s')", driver->macro[i].match, driver->macro[i].value);
+            fprintf(stderr, "(match='%s' | replacement='%s')", driver->macros[i].match, driver->macros[i].value);
         }
         fprintf(stderr, " }\n");
 
         if(!driver->driverOptions.assembleOnly)
         {
-            fprintf(stderr, "linker_flags[%d]: { ", driver->linker_flags_cnt);
-            for(int i = 0; i < driver->linker_flags_cnt; i++)
+            fprintf(stderr, "linkerFlags[%ld]: { ", driver->linkerFlagCount);
+            for(EFIndex i = 0; i < driver->linkerFlagCount; i++)
             {
                 if(i != 0)
                 {
                     fprintf(stderr, ", ");
                 }
-                fprintf(stderr, "%s", driver->linker_flags[i]);
+                fprintf(stderr, "%s", driver->linkerFlags[i]);
             }
             fprintf(stderr, " }\n");
         }
@@ -724,37 +724,37 @@ assembler_driver_t *assembler_driver_alloc(int argc,
 
 void assembler_driver_dealloc(assembler_driver_t *driver)
 {
-    for(int i = 0; i < driver->input_file_count; i++)
+    for(int i = 0; i < driver->inputFileCount; i++)
     {
-        emex_file_dealloc(driver->input_file[i]);
+        emex_file_dealloc(driver->inputFiles[i]);
     }
-    free(driver->input_file);
+    free(driver->inputFiles);
 
-    for(size_t i = 0; i < driver->inc_dir_cnt; i++)
+    for(EFIndex i = 0; i < driver->incDirCount; i++)
     {
-        free(driver->inc_dirs[i]);
+        free(driver->incDirs[i]);
     }
-    free(driver->inc_dirs);
+    free(driver->incDirs);
 
-    for(UInt64 i = 0; i < driver->tmp_path_cnt; i++)
+    for(EFIndex i = 0; i < driver->tmpPathCount; i++)
     {
-        unlink(driver->tmp_paths[i]);
-        free(driver->tmp_paths[i]);
+        unlink(driver->tmpPaths[i]);
+        free(driver->tmpPaths[i]);
     }
-    free(driver->tmp_paths);
+    free(driver->tmpPaths);
 
-    for(UInt64 i = 0; i < driver->macro_cnt; i++)
+    for(EFIndex i = 0; i < driver->macroCount; i++)
     {
-        free(driver->macro[i].match);
-        free(driver->macro[i].value);
+        free(driver->macros[i].match);
+        free(driver->macros[i].value);
     }
-    free(driver->macro);
+    free(driver->macros);
 
-    for(int i = 0; i < driver->linker_flags_cnt; i++)
+    for(int i = 0; i < driver->linkerFlagCount; i++)
     {
-        free(driver->linker_flags[i]);
+        free(driver->linkerFlags[i]);
     }
-    free(driver->linker_flags);
+    free(driver->linkerFlags);
 
     ETAssemblerDiagnosticConsumerEmit(driver->diagnosticConsumer);
     EFRelease(driver->diagnosticConsumer);
@@ -785,10 +785,10 @@ Boolean assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
             return false;
         }
 
-        inv->definition_cnt = driver->macro_cnt;
-        inv->definition = driver->macro;
-        inv->include_dir_cnt = driver->inc_dir_cnt;
-        inv->include_dirs = driver->inc_dirs;
+        inv->definition_cnt = driver->macroCount;
+        inv->definition = driver->macros;
+        inv->include_dir_cnt = driver->incDirCount;
+        inv->include_dirs = driver->incDirs;
 
         emex_file_t *output = emex_file_alloc(EFStringGetCStringPtr(driver->outputPath, kEFStringEncodingUTF8), out_data_file_policy);
         if(output == NULL)
@@ -798,7 +798,7 @@ Boolean assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
             return false;
         }
 
-        Boolean success = assembler_invocation_emit(inv, driver->input_file[0], output);
+        Boolean success = assembler_invocation_emit(inv, driver->inputFiles[0], output);
 
         emex_file_dealloc(output);
         assembler_invocation_dealloc(inv);

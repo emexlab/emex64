@@ -48,20 +48,20 @@ typedef struct {
     EFStringRef outputPath;
     EFArrayRef jobs;
 
-    int input_file_count;
-    emex_file_t **input_file;
+    EFIndex inputFileCount;
+    emex_file_t **inputFiles;
 
-    size_t inc_dir_cnt;
-    char **inc_dirs;
+    EFIndex incDirCount;
+    char **incDirs;
 
-    size_t tmp_path_cnt;
-    char **tmp_paths;
+    EFIndex tmpPathCount;
+    char **tmpPaths;
 
-    UInt64 macro_cnt;
-    assembler_macro_definition_t *macro;
+    EFIndex macroCount;
+    assembler_macro_definition_t *macros;
 
-    int linker_flags_cnt;
-    char **linker_flags;
+    EFIndex linkerFlagCount;
+    char **linkerFlags;
 } assembler_driver_t;
 
 assembler_driver_t *assembler_driver_alloc(int argc, const char **argv);
