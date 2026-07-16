@@ -139,41 +139,20 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
         return NULL;
     }
 
-    E64MMIORegionRef RTCMMIORegion = E64MMIORegionCreate(NULL, EMEX64_RTC_BASE, EMEX64_RTC_SIZE, NULL, emex64_rtc_read, NULL);
-    if(RTCMMIORegion == NULL)
+    EFAUTOREL E64MMIORegionRef RTCMMIORegion = E64MMIORegionCreate(NULL, EMEX64_RTC_BASE, EMEX64_RTC_SIZE, NULL, emex64_rtc_read, NULL);
+    if(RTCMMIORegion == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, RTCMMIORegion))
     {
         return NULL;
     }
 
-    Boolean success = E64MMIOBusRegisterRegion(machine->mmio_bus, RTCMMIORegion);
-    EFRelease(RTCMMIORegion);
-    if(!success)
+    EFAUTOREL E64MMIORegionRef MCRegion = E64MMIORegionCreate(NULL, EMEX64_MC_BASE, EMEX64_MC_SIZE, NULL, emex64_mc_read, emex64_mc_write);
+    if(MCRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, MCRegion))
     {
         return NULL;
     }
 
-    E64MMIORegionRef MCRegion = E64MMIORegionCreate(NULL, EMEX64_MC_BASE, EMEX64_MC_SIZE, NULL, emex64_mc_read, emex64_mc_write);
-    if(MCRegion == NULL)
-    {
-        return NULL;
-    }
-    
-    success = E64MMIOBusRegisterRegion(machine->mmio_bus, MCRegion);
-    EFRelease(MCRegion);
-    if(!success)
-    {
-        return NULL;
-    }
-
-    E64MMIORegionRef PlatformRegion = E64MMIORegionCreate(NULL, EMEX64_PLATFORM_BASE, EMEX64_PLATFORM_SIZE, NULL, emex64_platform_read, emex64_platform_write);
-    if(PlatformRegion == NULL)
-    {
-        return NULL;
-    }
-    
-    success = E64MMIOBusRegisterRegion(machine->mmio_bus, PlatformRegion);
-    EFRelease(PlatformRegion);
-    if(!success)
+    EFAUTOREL E64MMIORegionRef PlatformRegion = E64MMIORegionCreate(NULL, EMEX64_PLATFORM_BASE, EMEX64_PLATFORM_SIZE, NULL, emex64_platform_read, emex64_platform_write);
+    if(PlatformRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, PlatformRegion))
     {
         return NULL;
     }
