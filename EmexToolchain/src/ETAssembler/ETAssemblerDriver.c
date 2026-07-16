@@ -146,12 +146,6 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
         return false;
     }
 
-    EFStringRef command = EFProcessGetCommand(EFProcessCurrent);
-    if(command == NULL)
-    {
-        command = EFSTR("emex64asm");
-    }
-
     for(EFIndex index = 0; index < argumentsCount; index++)
     {
         EFStringRef argument = EFArrayGetValueAtIndex(driver->arguments, index);
@@ -168,33 +162,35 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
 
         if(strcmp(cArgument, "--help") == 0 || strcmp(cArgument, "-h") == 0)
         {
-            fprintf(stderr, "Usage: %s [options] file...\n", EFStringGetCStringPtr(command, kEFStringEncodingUTF8));
-            fprintf(stderr, "\n");
-            fprintf(stderr, "Options:\n");
-            fprintf(stderr, "  --help                 Shows this help menu.\n");
-            fprintf(stderr, "  --version              Prints version.\n");
-            fprintf(stderr, "  --in-process           All jobs are executed within the same process.\n");
-            fprintf(stderr, "\n");
-            fprintf(stderr, "  -o <output path>       Sets the output file path, is set to \"a.out\" when not passed.\n");
-            fprintf(stderr, "  -c                     Assemble the source file, but do not link.\n");
-            fprintf(stderr, "  -r                     Assemble all source files to one ELF object.\n");
-            fprintf(stderr, "  -v                     Prints verbose assembler log.\n");
-            fprintf(stderr, "  -D macro[=<value>]     Defines an assembler macro, set to 1 when no value is given.\n");
-            fprintf(stderr, "  -I <dir>               Adds a directory to the include search paths.\n");
-            fprintf(stderr, "  -Wl,<arg>,...          Passes the comma separated arguments to the linker.\n");
-            fprintf(stderr, "\n");
-            fprintf(stderr, "  -fcaret-diagnostics    The assembler will print diagnostics showing their caret positions.\n");
-            fprintf(stderr, "  -fcolor-diagnostics    The assembler will print diagnostics with color.\n");
-            fprintf(stderr, "                         Each feature flag can be reversed by prefixing it with a \"no\" (i.e -fno-caret-diagnostics).\n");
-            fprintf(stderr, "\n");
-            fprintf(stderr, "  -Werror                The assembler will treat every warning as a error.\n");
-            fprintf(stderr, "  -Wdeprecated           The assembler will print a warning on every as deprecated marked symbol or internal features.\n");
-            fprintf(stderr, "                         Each warning flag can be reversed by prefixing it with a \"no\" (i.e -Wno-error).\n");
+            EFLog(EFSTR(
+                "Usage: %@ [options] file...\n"
+                "\n"
+                "Options:\n"
+                "  --help                 Shows this help menu.\n"
+                "  --version              Prints version.\n"
+                "  --in-process           All jobs are executed within the same process.\n"
+                "\n"
+                "  -o <output path>       Sets the output file path, is set to \"a.out\" when not passed.\n"
+                "  -c                     Assemble the source file, but do not link.\n"
+                "  -r                     Assemble all source files to one ELF object.\n"
+                "  -v                     Prints verbose assembler log.\n"
+                "  -D macro[=<value>]     Defines an assembler macro, set to 1 when no value is given.\n"
+                "  -I <dir>               Adds a directory to the include search paths.\n"
+                "  -Wl,<arg>,...          Passes the comma separated arguments to the linker.\n"
+                "\n"
+                "  -fcaret-diagnostics    The assembler will print diagnostics showing their caret positions.\n"
+                "  -fcolor-diagnostics    The assembler will print diagnostics with color.\n"
+                "                         Each feature flag can be reversed by prefixing it with a \"no\" (i.e -fno-caret-diagnostics).\n"
+                "\n"
+                "  -Werror                The assembler will treat every warning as a error.\n"
+                "  -Wdeprecated           The assembler will print a warning on every as deprecated marked symbol or internal features.\n"
+                "                         Each warning flag can be reversed by prefixing it with a \"no\" (i.e -Wno-error).\n"
+            ), EFProcessGetCommand(EFProcessCurrent)?: EFSTR("emex64asm"));
             return false;
         }
         else if(strcmp(cArgument, "--version") == 0)
         {
-            fprintf(stderr, "%s version %d.%d.%d (%s)\n", EFStringGetCStringPtr(command, kEFStringEncodingUTF8), EMEX64_VERSION_MAJOR, EMEX64_VERSION_MINOR, EMEX64_VERSION_PATCH, EMEX64_VERSION_STRING);
+            EFLog(EFSTR("%@ version %d.%d.%d (%s)\n"), EFProcessGetCommand(EFProcessCurrent)?: EFSTR("emex64asm"), EMEX64_VERSION_MAJOR, EMEX64_VERSION_MINOR, EMEX64_VERSION_PATCH, EMEX64_VERSION_STRING);
             return false;
         }
         else if(strcmp(cArgument, "-o") == 0 && index + 1 < argumentsCount)
