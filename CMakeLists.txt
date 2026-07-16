@@ -58,7 +58,7 @@ if(MSVC)
 else()
 
     # Setting up compiler flags
-    set(_EMEX64_WARN_FLAGS -Wall -Wextra -Wpedantic -Wno-unused-parameter -Wformat-truncation)
+    set(_EMEX64_WARN_FLAGS -Wall -Wextra -Wpedantic -Wno-unused-parameter -Wformat-truncation -Wno-gnu-statement-expression-from-macro-expansion)
     set(_EMEX64_OPT_FLAGS -fPIC)
 
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
