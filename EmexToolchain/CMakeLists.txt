@@ -196,6 +196,10 @@ target_link_libraries(EmexToolchain
 
 target_compile_features(EmexToolchain PUBLIC c_std_23)
 
+set_target_properties(EmexToolchain PROPERTIES
+    C_EXTENSIONS ON
+)
+
 # To every maintainer that is confused where the block is with all flags and shit, it is in the root cmake file
 
 target_link_libraries(EmexToolchain

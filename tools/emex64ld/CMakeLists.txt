@@ -6,7 +6,11 @@ add_executable(emex64ld
     src/main.c
 )
 
-target_compile_features(emex64ld PUBLIC c_std_11)
+target_compile_features(emex64ld PUBLIC c_std_23)
+
+set_target_properties(emex64ld PROPERTIES
+    C_EXTENSIONS ON
+)
 
 if(MSVC)
     target_compile_options(emex64ld PRIVATE /W4)

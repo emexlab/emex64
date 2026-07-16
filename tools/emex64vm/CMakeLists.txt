@@ -12,6 +12,10 @@ target_link_libraries(emex64vm
 
 target_compile_features(emex64vm PRIVATE c_std_23)
 
+set_target_properties(emex64vm PROPERTIES
+    C_EXTENSIONS ON
+)
+
 install(TARGETS emex64vm
     RUNTIME DESTINATION bin
     COMPONENT emex64vm
