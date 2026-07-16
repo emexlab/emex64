@@ -89,6 +89,7 @@ ETAssemblerJobRef ETAssemblerJobCreate(EFAllocatorRef allocatorRef,
 
     job->command = ownedCommand;
     job->arguments = ownedArguments;
+    job->type = type;
 
     return (ETAssemblerJobRef)job;
 }

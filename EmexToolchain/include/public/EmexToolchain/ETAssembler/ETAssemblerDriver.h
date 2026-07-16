@@ -30,43 +30,23 @@
 #include <EmexToolchain/ETLinker/type.h>
 #include <EmexToolchain/ETAssembler/diagnostic/ETAssemblerDiagnosticConsumer.h>
 
-/*
 typedef struct __ETAssemblerDriver *ETAssemblerDriverRef;
 
-ETAssemblerDriverRef ETAssemblerDriverCreateWithCArguments(EFAllocatorRef allocatorRef, int argc, const char **argv);
+EFTypeID ETAssemblerDriverGetTypeID(void);
+
+ETAssemblerDriverRef ETAssemblerDriverCreate(EFAllocatorRef allocatorRef, EFArrayRef arguments);
+ETAssemblerDriverRef ETAssemblerDriverCreateWithOptions(EFAllocatorRef allocatorRef, EFArrayRef arguments, ETAssemblerDriverOptions driverOptions, ETAssemblerDiagnosticOptions diagnosticOptions);
+
 Boolean ETAssemblerDriverRun(ETAssemblerDriverRef driverRef);
 
-EFArrayRef ETAssemblerGetJobs(ETAssemblerDriverRef driverRef);
-EFArrayRef ETAssemblerCopyJobs(EFAllocatorRef allocatorRef, ETAssemblerDriverRef driverRef);
+/*
+EFArrayRef ETAssemblerDriverGetJobs(ETAssemblerDriverRef driverRef);
 
+EFStringRef ETAssemblerDriverGetOutputPath(ETAssemblerDriverRef driverRef);
+ETAssemblerDiagnosticConsumerRef ETAssemblerDriverGetDiagnosticConsumer(ETAssemblerDriverRef driverRef);
+
+ETAssemblerDriverOptions ETAssemblerDriverGetDriverOptions(ETAssemblerDriverRef driverRef);
+ETAssemblerDiagnosticOptions ETAssemblerDriverGetDriverOptions(ETAssemblerDriverRef driverRef);
 */
-
-typedef struct {
-    ETAssemblerDriverOptions driverOptions;
-    ETAssemblerDiagnosticOptions diagnosticOptions;
-    ETAssemblerDiagnosticConsumerRef diagnosticConsumer;
-    EFStringRef outputPath;
-    EFArrayRef jobs;
-
-    EFIndex inputFileCount;
-    emex_file_t **inputFiles;
-
-    EFIndex incDirCount;
-    char **incDirs;
-
-    EFIndex tmpPathCount;
-    char **tmpPaths;
-
-    EFIndex macroCount;
-    assembler_macro_definition_t *macros;
-
-    EFIndex linkerFlagCount;
-    char **linkerFlags;
-} assembler_driver_t;
-
-assembler_driver_t *assembler_driver_alloc(int argc, const char **argv);
-void assembler_driver_dealloc(assembler_driver_t *driver);
-
-Boolean assembler_driver_drive_the_fucking_car(assembler_driver_t *driver);
 
 #endif /* ETASSEMBLERDRIVER_H */

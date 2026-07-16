@@ -21,15 +21,15 @@
 
 #include <EmexToolchain/ETAssembler/ETAssemblerDriver.h>
 
-int main(int argc, const char *argv[])
+int main(void)
 {
-    assembler_driver_t *driver = assembler_driver_alloc(argc, argv);
+    ETAssemblerDriverRef driver = ETAssemblerDriverCreate(kEFAllocatorDefault, EFProcessGetArguments(EFProcessCurrent));
     if(driver == NULL)
     {
         return 1;
     }
 
-    Boolean success = assembler_driver_drive_the_fucking_car(driver);
-    assembler_driver_dealloc(driver);
+    Boolean success = ETAssemblerDriverRun(driver);
+    EFRelease(driver);
     return success ? 0 : 1;
 }

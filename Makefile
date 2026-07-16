@@ -39,3 +39,6 @@ package: compile
 
 full: CMAKE_FLAGS = "-DEMEX64_BUILD_EXAMPLES=1"
 full: clean install
+
+full_debug: CMAKE_FLAGS = "-DEMEX64_BUILD_EXAMPLES=1 -DCMAKE_BUILD_TYPE="Debug" -DEMEX64LIB_STATIC=1"
+full_debug: clean install

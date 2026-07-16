@@ -33,22 +33,104 @@
 #include <EmexToolchain/ETAssembler/invocation.h>
 #include <EmexToolchain/ETLinker/driver.h>
 
-extern char **environ;
+typedef struct __ETAssemblerDriver {
+    EFObject header;
 
-Boolean assembler_driver_predrive(assembler_driver_t *driver,
-                                  int argc,
-                                  const char **argv)
+    EFArrayRef arguments;
+
+    ETAssemblerDriverOptions driverOptions;
+    ETAssemblerDiagnosticOptions diagnosticOptions;
+    ETAssemblerDiagnosticConsumerRef diagnosticConsumer;
+    EFStringRef outputPath;
+    EFArrayRef jobs;
+
+    EFIndex inputFileCount;
+    emex_file_t **inputFiles;
+
+    EFIndex incDirCount;
+    char **incDirs;
+
+    EFIndex tmpPathCount;
+    char **tmpPaths;
+
+    EFIndex macroCount;
+    assembler_macro_definition_t *macros;
+
+    EFIndex linkerFlagCount;
+    char **linkerFlags;
+} *__ETAssemblerDriver;
+
+static void __ETAssemblerDriverDeinit(EFObjectRef driverRef)
+{
+    __ETAssemblerDriver driver = (__ETAssemblerDriver)driverRef;
+
+    for(int i = 0; i < driver->inputFileCount; i++)
+    {
+        emex_file_dealloc(driver->inputFiles[i]);
+    }
+    free(driver->inputFiles);
+
+    for(EFIndex i = 0; i < driver->incDirCount; i++)
+    {
+        free(driver->incDirs[i]);
+    }
+    free(driver->incDirs);
+
+    for(EFIndex i = 0; i < driver->tmpPathCount; i++)
+    {
+        unlink(driver->tmpPaths[i]);
+        free(driver->tmpPaths[i]);
+    }
+    free(driver->tmpPaths);
+
+    for(EFIndex i = 0; i < driver->macroCount; i++)
+    {
+        free(driver->macros[i].match);
+        free(driver->macros[i].value);
+    }
+    free(driver->macros);
+
+    for(int i = 0; i < driver->linkerFlagCount; i++)
+    {
+        free(driver->linkerFlags[i]);
+    }
+    free(driver->linkerFlags);
+
+    ETAssemblerDiagnosticConsumerEmit(driver->diagnosticConsumer);
+    EFReleaseTry(driver->diagnosticConsumer);
+    EFReleaseTry(driver->jobs);
+    EFReleaseTry(driver->arguments);
+}
+
+EFClass ETAssemblerDriverClass = {
+    .name = "ETAssemblerDriver",
+    .typeID = kEFNotATypeID,
+    .init = NULL,
+    .deinit = __ETAssemblerDriverDeinit,
+    .equal = NULL,
+    .copyDescription = NULL,
+    .hash = NULL,
+};
+
+static void ETAssemblerDriverRefisterClass(void)
+{
+    EFClassRegister(&ETAssemblerDriverClass);
+}
+
+EFTypeID ETAssemblerDriverGetTypeID(void)
+{
+    pthread_once_t once = PTHREAD_ONCE_INIT;
+    pthread_once(&once, ETAssemblerDriverRefisterClass);
+    return ETAssemblerDriverClass.typeID;
+}
+
+Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
 {
     /* better starting with the default assembler options ^^ */
     driver->diagnosticOptions = ETAssemblerDiagnosticOptionsDefault;
 
     driver->outputPath = NULL;
     driver->inputFileCount = 0;
-    driver->inputFiles = calloc(argc, sizeof(emex_file_t*));
-    if(driver->inputFiles == NULL)
-    {
-        return false;
-    }
 
     driver->incDirCount = 0;
     driver->incDirs = NULL;
@@ -56,11 +138,37 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
     driver->macroCount = 0;
     driver->macros = NULL;
 
-    for(int i = 1; i < argc; i++)
+    EFIndex argumentsCount = EFArrayGetCount(driver->arguments);
+
+    driver->inputFiles = calloc(argumentsCount, sizeof(emex_file_t*));
+    if(driver->inputFiles == NULL)
     {
-        if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0)
+        return false;
+    }
+
+    EFStringRef command = EFProcessGetCommand(EFProcessCurrent);
+    if(command == NULL)
+    {
+        command = EFSTR("emex64asm");
+    }
+
+    for(EFIndex index = 0; index < argumentsCount; index++)
+    {
+        EFStringRef argument = EFArrayGetValueAtIndex(driver->arguments, index);
+        if(argument == NULL)
         {
-            fprintf(stderr, "Usage: %s [options] file...\n", argv[0]);
+            return false;
+        }
+
+        const char *cArgument = EFStringGetCStringPtr(argument, kEFStringEncodingUTF8);
+        if(cArgument == NULL)
+        {
+            return false;
+        }
+
+        if(strcmp(cArgument, "--help") == 0 || strcmp(cArgument, "-h") == 0)
+        {
+            fprintf(stderr, "Usage: %s [options] file...\n", EFStringGetCStringPtr(command, kEFStringEncodingUTF8));
             fprintf(stderr, "\n");
             fprintf(stderr, "Options:\n");
             fprintf(stderr, "  --help                 Shows this help menu.\n");
@@ -84,34 +192,26 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
             fprintf(stderr, "                         Each warning flag can be reversed by prefixing it with a \"no\" (i.e -Wno-error).\n");
             return false;
         }
-        else if(strcmp(argv[i], "--version") == 0)
+        else if(strcmp(cArgument, "--version") == 0)
         {
-            fprintf(stderr, "%s version %d.%d.%d (%s)\n", argv[0], EMEX64_VERSION_MAJOR, EMEX64_VERSION_MINOR, EMEX64_VERSION_PATCH, EMEX64_VERSION_STRING);
+            fprintf(stderr, "%s version %d.%d.%d (%s)\n", EFStringGetCStringPtr(command, kEFStringEncodingUTF8), EMEX64_VERSION_MAJOR, EMEX64_VERSION_MINOR, EMEX64_VERSION_PATCH, EMEX64_VERSION_STRING);
             return false;
         }
-        else if(strcmp(argv[i], "-o") == 0 && i + 1 < argc)
+        else if(strcmp(cArgument, "-o") == 0 && index + 1 < argumentsCount)
         {
-            if(driver->outputPath != NULL)
-            {
-                EFRelease(driver->outputPath);
-            }
-            driver->outputPath = EFStringCreateWithCString(kEFAllocatorDefault, argv[++i], kEFStringEncodingUTF8);
-            if(driver->outputPath == NULL)
-            {
-                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("couldn't gain ownership over outputPath '%s'"), argv[i - 1]);
-                return false;
-            }
+            driver->outputPath = EFArrayGetValueAtIndex(driver->arguments, ++index);
         }
-        else if(strncmp(argv[i], "-f", 2) == 0)
+        else if(strncmp(cArgument, "-f", 2) == 0)
         {
             const char *flag;
-            if(argv[i][2] != '\0')
+            if(cArgument[2] != '\0')
             {
-                flag = argv[i] + 2;
+                flag = cArgument + 2;
             }
-            else if(i + 1 < argc)
+            else if(index + 1 < argumentsCount)
             {
-                flag = argv[++i];
+                EFStringRef argument = EFArrayGetValueAtIndex(driver->arguments, ++index);
+                flag = EFStringGetCStringPtr(argument, kEFStringEncodingUTF8);
             }
             else
             {
@@ -146,9 +246,9 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
                 return false;
             }
         }
-        else if(strncmp(argv[i], "-Wl,", 4) == 0)
+        else if(strncmp(cArgument, "-Wl,", 4) == 0)
         {
-            const char *p = argv[i] + 4;
+            const char *p = cArgument + 4;
             if(*p == '\0')
             {
                 ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-Wl,'"));
@@ -170,16 +270,17 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
                 p = comma ? comma + 1 : p + len;
             }
         }
-        else if(strncmp(argv[i], "-W", 2) == 0)
+        else if(strncmp(cArgument, "-W", 2) == 0)
         {
             const char *flag;
-            if(argv[i][2] != '\0')
+            if(cArgument[2] != '\0')
             {
-                flag = argv[i] + 2;
+                flag = cArgument + 2;
             }
-            else if(i + 1 < argc)
+            else if(index + 1 < argumentsCount)
             {
-                flag = argv[++i];
+                EFStringRef argument = EFArrayGetValueAtIndex(driver->arguments, ++index);
+                flag = EFStringGetCStringPtr(argument, kEFStringEncodingUTF8);
             }
             else
             {
@@ -209,16 +310,17 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
                 return false;
             }
         }
-        else if(strncmp(argv[i], "-D", 2) == 0)
+        else if(strncmp(cArgument, "-D", 2) == 0)
         {
             const char *flag;
-            if(argv[i][2] != '\0')
+            if(cArgument[2] != '\0')
             {
-                flag = argv[i] + 2;
+                flag = cArgument + 2;
             }
-            else if(i + 1 < argc)
+            else if(index + 1 < argumentsCount)
             {
-                flag = argv[++i];
+                EFStringRef argument = EFArrayGetValueAtIndex(driver->arguments, ++index);
+                flag = EFStringGetCStringPtr(argument, kEFStringEncodingUTF8);
             }
             else
             {
@@ -279,16 +381,17 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
                 driver->macros[macroSlot].value = value;
             }
         }
-        else if(strncmp(argv[i], "-I", 2) == 0)
+        else if(strncmp(cArgument, "-I", 2) == 0)
         {
             const char *dir;
-            if(argv[i][2] != '\0')
+            if(cArgument[2] != '\0')
             {
-                dir = argv[i] + 2;
+                dir = cArgument + 2;
             }
-            else if(i + 1 < argc)
+            else if(index + 1 < argumentsCount)
             {
-                dir = argv[++i];
+                EFStringRef argument = EFArrayGetValueAtIndex(driver->arguments, ++index);
+                dir = EFStringGetCStringPtr(argument, kEFStringEncodingUTF8);
             }
             else
             {
@@ -298,28 +401,28 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
             driver->incDirs = realloc(driver->incDirs, (driver->incDirCount + 1) * sizeof(char*));
             driver->incDirs[driver->incDirCount++] = strdup(dir);
         }
-        else if(strncmp(argv[i], "-c", 2) == 0)
+        else if(strncmp(cArgument, "-c", 2) == 0)
         {
             driver->driverOptions.assembleOnly = true;
         }
-        else if(strncmp(argv[i], "-v", 2) == 0)
+        else if(strncmp(cArgument, "-v", 2) == 0)
         {
             driver->driverOptions.verbose = true;
         }
-        else if(strncmp(argv[i], "--in-process", 12) == 0)
+        else if(strncmp(cArgument, "--in-process", 12) == 0)
         {
             driver->driverOptions.inProcess = true;
         }
-        else if(strncmp(argv[i], "-r", 2) == 0)
+        else if(strncmp(cArgument, "-r", 2) == 0)
         {
             driver->driverOptions.emitMode = kEmitModeRelocatableObject;
         }
-        else if(argv[i][0] != '-')
+        else if(cArgument[0] != '-')
         {
-            emex_file_t *file = emex_file_alloc(argv[i], in_data_file_policy);
+            emex_file_t *file = emex_file_alloc(cArgument, in_data_file_policy);
             if(file == NULL || !(file->type == kEmexFileTypeAssembly || file->type == kEmexFileTypeAssemblyIncludation || file->type == kEmexFileTypeObject))
             {
-                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown or non existing input file '%s'"), argv[i]);
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown or non existing input file '%s'"), cArgument);
                 return false;
             }
 
@@ -327,7 +430,7 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
         }
         else
         {
-            ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown option '%s'"), argv[i]);
+            ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown option '%s'"), cArgument);
             return false;
         }
     }
@@ -349,8 +452,8 @@ Boolean assembler_driver_predrive(assembler_driver_t *driver,
     return true;
 }
 
-static char *assembler_driver_tmppath(assembler_driver_t *driver,
-                                      const char *input_path)
+static char *__ETAssemblerDriverTemporaryObjectPathForInputPath(__ETAssemblerDriver driver,
+                                                                const char *input_path)
 {
     const char *base = strrchr(input_path, '/');
     base = base ? base + 1 : input_path;
@@ -386,8 +489,8 @@ static char *assembler_driver_tmppath(assembler_driver_t *driver,
     return path;
 }
 
-static Boolean assembler_driver_append_additional_linker_flag(assembler_driver_t *driver,
-                                                              const char *flag)
+static Boolean __ETAssemblerDriverAppendLinkerFlag(__ETAssemblerDriver driver,
+                                                   const char *flag)
 {
     if(flag == NULL)
     {
@@ -411,7 +514,7 @@ static Boolean assembler_driver_append_additional_linker_flag(assembler_driver_t
     return true;
 }
 
-Boolean assembler_driver_jobgen(assembler_driver_t *driver)
+Boolean __ETAssemblerDriverJobgen(__ETAssemblerDriver driver)
 {
     /* -c is only meant to assemble one assembly file to a object file */
     if(driver->driverOptions.assembleOnly && driver->inputFileCount > 1)
@@ -439,14 +542,13 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
                     return false;
                 }
 
-                ratchet_args_append(&ra, "emex64asm");
                 if(driver->driverOptions.verbose)
                 {
                     ratchet_args_append(&ra, "-v");
                 }
                 ratchet_args_append(&ra, "-c");
                 ratchet_args_append(&ra, "-o");
-                ratchet_args_append(&ra, assembler_driver_tmppath(driver, input_path));
+                ratchet_args_append(&ra, __ETAssemblerDriverTemporaryObjectPathForInputPath(driver, input_path));
                 ratchet_args_append(&ra, input_path);
 
                 /* feature flags */
@@ -515,7 +617,7 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
                 break;
             }
             case kEmexFileTypeObject:
-                if(!assembler_driver_append_additional_linker_flag(driver, input_path))
+                if(!__ETAssemblerDriverAppendLinkerFlag(driver, input_path))
                 {
                     ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't append object input path to linker flags"));
                     return false;
@@ -537,7 +639,6 @@ Boolean assembler_driver_jobgen(assembler_driver_t *driver)
             return false;
         }
 
-        ratchet_args_append(&ra, "emex64ld");
         if(driver->driverOptions.verbose)
         {
             ratchet_args_append(&ra, "-v");
@@ -615,43 +716,72 @@ const char *assembler_emit_mode_string_for_mode(kEmitMode mode)
     }
 }
 
-assembler_driver_t *assembler_driver_alloc(int argc,
-                                           const char **argv)
+ETAssemblerDriverRef ETAssemblerDriverCreate(EFAllocatorRef allocatorRef,
+                                             EFArrayRef arguments)
 {
-    assembler_driver_t *driver = calloc(1, sizeof(assembler_driver_t));
+    return ETAssemblerDriverCreateWithOptions(allocatorRef, arguments, ETAssemblerDriverOptionsDefault, ETAssemblerDiagnosticOptionsDefault);
+}
+
+ETAssemblerDriverRef ETAssemblerDriverCreateWithOptions(EFAllocatorRef allocatorRef,
+                                                        EFArrayRef arguments,
+                                                        ETAssemblerDriverOptions driverOptions,
+                                                        ETAssemblerDiagnosticOptions diagnosticOptions)
+{
+    if(arguments == NULL)
+    {
+        return NULL;
+    }
+
+    if(allocatorRef == NULL)
+    {
+        allocatorRef = EFGetAllocator(arguments);
+    }
+
+    __ETAssemblerDriver driver = (__ETAssemblerDriver)EFObjectAlloc(allocatorRef, ETAssemblerDriverGetTypeID(), sizeof(struct __ETAssemblerDriver));
     if(driver == NULL)
     {
         return NULL;
     }
 
-    driver->jobs = EFArrayCreateMutable(kEFAllocatorDefault, kEFArrayCallbacksObjectCallbacks, 0);
+    driver->jobs = EFArrayCreateMutable(allocatorRef, kEFArrayCallbacksObjectCallbacks, 0);
     if(driver->jobs == NULL)
     {
-        free(driver);
+        EFRelease(driver);
         return NULL;
     }
 
-    /* need default settings */
-    driver->driverOptions = ETAssemblerDriverOptionsDefault;
-    driver->diagnosticOptions = ETAssemblerDiagnosticOptionsDefault;
+    driver->arguments = EFRetain(arguments);
+    if(driver->arguments == NULL)
+    {
+        EFRelease(driver);
+        return NULL;
+    }
 
+    driver->driverOptions = driverOptions;
+    driver->diagnosticOptions = diagnosticOptions;
     driver->diagnosticConsumer = ETAssemblerDiagnosticConsumerCreate(kEFAllocatorDefault, driver->diagnosticOptions);
     if(driver->diagnosticConsumer == NULL)
     {
-        free(driver);
+        EFRelease(driver);
         return NULL;
     }
 
-    if(!assembler_driver_predrive(driver, argc, argv) ||
-       !assembler_driver_jobgen(driver))
+    if(!__ETAssemblerDriverPredrive(driver) ||
+       !__ETAssemblerDriverJobgen(driver))
     {
-        assembler_driver_dealloc(driver);
+        EFRelease(driver);
         return NULL;
+    }
+
+    EFStringRef command = EFProcessGetCommand(EFProcessCurrent);
+    if(command == NULL)
+    {
+        command = EFSTR("emex64asm");
     }
 
     if(driver->driverOptions.verbose)
     {
-        fprintf(stderr, "%s driver version %d.%d.%d (%s)\n", argv[0], EMEX64_VERSION_MAJOR, EMEX64_VERSION_MINOR, EMEX64_VERSION_PATCH, EMEX64_VERSION_STRING);
+        fprintf(stderr, "%s driver version %d.%d.%d (%s)\n", EFStringGetCStringPtr(command, kEFStringEncodingUTF8), EMEX64_VERSION_MAJOR, EMEX64_VERSION_MINOR, EMEX64_VERSION_PATCH, EMEX64_VERSION_STRING);
         fprintf(stderr, "pid: %d\n", getpid());
         fprintf(stderr, "ppid: %d\n", getppid());
         fprintf(stderr, "uid: %d\n", getuid());
@@ -661,13 +791,13 @@ assembler_driver_t *assembler_driver_alloc(int argc,
         fprintf(stderr, "    verbose: %d,\n", driver->driverOptions.verbose);
         fprintf(stderr, "    inProcess: %d,\n", driver->driverOptions.inProcess || driver->driverOptions.assembleOnly);
         fprintf(stderr, "    emitMode: %s,\n", assembler_emit_mode_string_for_mode(driver->driverOptions.emitMode));
-        fprintf(stderr, "}\n");;
+        fprintf(stderr, "}\n");
         fprintf(stderr, "diagnosticOptions: {\n");
         fprintf(stderr, "    caret_diagnostics: %d,\n", driver->diagnosticOptions.caret_diagnostics);
         fprintf(stderr, "    color_diagnostics: %d,\n", driver->diagnosticOptions.color_diagnostics);
         fprintf(stderr, "    warning_error: %d,\n", driver->diagnosticOptions.warning_error);
         fprintf(stderr, "    warning_deprecated: %d,\n", driver->diagnosticOptions.warning_deprecated);
-        fprintf(stderr, "}\n");;
+        fprintf(stderr, "}\n");
         fprintf(stderr, "output_path: %s\n", EFStringGetCStringPtr(driver->outputPath, kEFStringEncodingUTF8));
 
         fprintf(stderr, "inputFile[%ld]: { ", driver->inputFileCount);
@@ -719,56 +849,19 @@ assembler_driver_t *assembler_driver_alloc(int argc,
         fprintf(stderr, "\n");
     }
 
-    return driver;
+    return (ETAssemblerDriverRef)driver;
 }
 
-void assembler_driver_dealloc(assembler_driver_t *driver)
+extern char **environ;
+
+Boolean ETAssemblerDriverRun(ETAssemblerDriverRef driverRef)
 {
-    for(int i = 0; i < driver->inputFileCount; i++)
+    __ETAssemblerDriver driver = (__ETAssemblerDriver)driverRef;
+    if(driver == NULL)
     {
-        emex_file_dealloc(driver->inputFiles[i]);
+        return false;
     }
-    free(driver->inputFiles);
 
-    for(EFIndex i = 0; i < driver->incDirCount; i++)
-    {
-        free(driver->incDirs[i]);
-    }
-    free(driver->incDirs);
-
-    for(EFIndex i = 0; i < driver->tmpPathCount; i++)
-    {
-        unlink(driver->tmpPaths[i]);
-        free(driver->tmpPaths[i]);
-    }
-    free(driver->tmpPaths);
-
-    for(EFIndex i = 0; i < driver->macroCount; i++)
-    {
-        free(driver->macros[i].match);
-        free(driver->macros[i].value);
-    }
-    free(driver->macros);
-
-    for(int i = 0; i < driver->linkerFlagCount; i++)
-    {
-        free(driver->linkerFlags[i]);
-    }
-    free(driver->linkerFlags);
-
-    ETAssemblerDiagnosticConsumerEmit(driver->diagnosticConsumer);
-    EFRelease(driver->diagnosticConsumer);
-    if(driver->outputPath != NULL)
-    {
-        EFRelease(driver->outputPath);
-    }
-    EFRelease(driver->jobs);
-
-    free(driver);
-}
-
-Boolean assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
-{
     ETAssemblerDiagnosticConsumerEmit(driver->diagnosticConsumer);
 
     if(driver->driverOptions.assembleOnly)
@@ -821,9 +914,10 @@ Boolean assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
                 return false;
             }
 
-            EFIndex argumentsCount = EFArrayGetCount(jobArguments);
+            EFIndex argumentsCount = EFArrayGetCount(jobArguments) + 1;
             const char *argv[argumentsCount + 1];
-            for(EFIndex argumentsIndex = 0; argumentsIndex < argumentsCount; argumentsIndex++)
+            argv[0] = commandPtr;
+            for(EFIndex argumentsIndex = 0; argumentsIndex < (argumentsCount - 1); argumentsIndex++)
             {
                 EFStringRef argument = EFArrayGetValueAtIndex(jobArguments, argumentsIndex);
                 const char *cptr = EFStringGetCStringPtr(argument, kEFStringEncodingASCII);
@@ -832,20 +926,20 @@ Boolean assembler_driver_drive_the_fucking_car(assembler_driver_t *driver)
                     return false;
                 }
 
-                argv[argumentsIndex] = cptr;
+                argv[argumentsIndex + 1] = cptr;
             }
             argv[argumentsCount] = NULL;
 
             if(jobType == kETAssemblerJobTypeDriver && driver->driverOptions.inProcess)
             {
-                assembler_driver_t *subdriver = assembler_driver_alloc(argumentsCount, (const char**)argv);
-                if(subdriver == NULL)
+                ETAssemblerDriverRef subDriver = ETAssemblerDriverCreate(EFGetAllocator(driverRef), jobArguments);
+                if(subDriver == NULL)
                 {
                     return false;
                 }
 
-                Boolean success = assembler_driver_drive_the_fucking_car(subdriver);
-                assembler_driver_dealloc(subdriver);
+                Boolean success = ETAssemblerDriverRun(subDriver);
+                EFRelease(subDriver);
                 if(!success)
                 {
                     return false;
