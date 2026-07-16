@@ -737,7 +737,7 @@ ETAssemblerDriverRef ETAssemblerDriverCreateWithOptions(EFAllocatorRef allocator
         allocatorRef = EFGetAllocator(arguments);
     }
 
-    __ETAssemblerDriver driver = (__ETAssemblerDriver)EFObjectAlloc(allocatorRef, ETAssemblerDriverGetTypeID(), sizeof(struct __ETAssemblerDriver));
+    EFAUTOREL __ETAssemblerDriver driver = (__ETAssemblerDriver)EFObjectAlloc(allocatorRef, ETAssemblerDriverGetTypeID(), sizeof(struct __ETAssemblerDriver));
     if(driver == NULL)
     {
         return NULL;
@@ -746,14 +746,12 @@ ETAssemblerDriverRef ETAssemblerDriverCreateWithOptions(EFAllocatorRef allocator
     driver->jobs = EFArrayCreateMutable(allocatorRef, kEFArrayCallbacksObjectCallbacks, 0);
     if(driver->jobs == NULL)
     {
-        EFRelease(driver);
         return NULL;
     }
 
     driver->arguments = EFRetain(arguments);
     if(driver->arguments == NULL)
     {
-        EFRelease(driver);
         return NULL;
     }
 
@@ -762,14 +760,12 @@ ETAssemblerDriverRef ETAssemblerDriverCreateWithOptions(EFAllocatorRef allocator
     driver->diagnosticConsumer = ETAssemblerDiagnosticConsumerCreate(kEFAllocatorDefault, driver->diagnosticOptions);
     if(driver->diagnosticConsumer == NULL)
     {
-        EFRelease(driver);
         return NULL;
     }
 
     if(!__ETAssemblerDriverPredrive(driver) ||
        !__ETAssemblerDriverJobgen(driver))
     {
-        EFRelease(driver);
         return NULL;
     }
 
@@ -849,7 +845,7 @@ ETAssemblerDriverRef ETAssemblerDriverCreateWithOptions(EFAllocatorRef allocator
         fprintf(stderr, "\n");
     }
 
-    return (ETAssemblerDriverRef)driver;
+    return (ETAssemblerDriverRef)EFAUTOTRANSFER(driver);
 }
 
 extern char **environ;
