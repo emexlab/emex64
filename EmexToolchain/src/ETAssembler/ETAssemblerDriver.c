@@ -160,7 +160,7 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
             return false;
         }
 
-        if(strcmp(cArgument, "--help") == 0 || strcmp(cArgument, "-h") == 0)
+        if(EFEqual(argument, EFSTR("--help")))
         {
             EFLog(EFSTR(
                 "Usage: %@ [options] file...\n"
@@ -188,125 +188,125 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
             ), EFProcessGetCommand(EFProcessCurrent)?: EFSTR("emex64asm"));
             return false;
         }
-        else if(strcmp(cArgument, "--version") == 0)
+        else if(EFEqual(argument, EFSTR("--version")))
         {
             EFLog(EFSTR("%@ version %d.%d.%d (%s)\n"), EFProcessGetCommand(EFProcessCurrent)?: EFSTR("emex64asm"), EMEX64_VERSION_MAJOR, EMEX64_VERSION_MINOR, EMEX64_VERSION_PATCH, EMEX64_VERSION_STRING);
             return false;
         }
-        else if(strcmp(cArgument, "-o") == 0 && index + 1 < argumentsCount)
+        else if(EFEqual(argument, EFSTR("-o")) && index + 1 < argumentsCount)
         {
             driver->outputPath = EFArrayGetValueAtIndex(driver->arguments, ++index);
         }
-        else if(strncmp(cArgument, "-f", 2) == 0)
+        else if(EFStringEqualRange(argument, EFSTR("-f"), EFRangeMake(0, 2)))
         {
-            const char *flag;
-            if(cArgument[2] != '\0')
-            {
-                flag = cArgument + 2;
-            }
-            else if(index + 1 < argumentsCount)
-            {
-                EFStringRef argument = EFArrayGetValueAtIndex(driver->arguments, ++index);
-                flag = EFStringGetCStringPtr(argument, kEFStringEncodingUTF8);
-            }
-            else
+            EFIndex length = EFStringGetLength(argument);
+            if(length <= 2)
             {
                 ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-f'"));
                 return false;
             }
+            EFRange flagArgumentRange = EFRangeMake(2, length - 2);
 
-            if(strcmp(flag, "page-align") == 0 ||
-               strcmp(flag, "no-page-align") == 0)
+            if(EFStringEqualRange(argument, EFSTR("page-align"), flagArgumentRange) || EFStringEqualRange(argument, EFSTR("no-page-align"), flagArgumentRange))
             {
-                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityWarning, NULL, EFSTR("feature flag '%s' is deprecated, please you equivalents if available"), flag);
+                EFAUTOREL EFStringRef flagArgument = EFStringCreateCopyWithRange(kEFAllocatorDefault, argument, flagArgumentRange);
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityWarning, NULL, EFSTR("feature flag '%@' is deprecated, please you equivalents if available"), flagArgument);
             }
-            else if(strcmp(flag, "caret-diagnostics") == 0)
+            else if(EFStringEqualRange(argument, EFSTR("caret-diagnostics"), flagArgumentRange))
             {
                 driver->diagnosticOptions.caret_diagnostics = true;
             }
-            else if(strcmp(flag, "no-caret-diagnostics") == 0)
+            else if(EFStringEqualRange(argument, EFSTR("no-caret-diagnostics"), flagArgumentRange))
             {
                 driver->diagnosticOptions.caret_diagnostics = false;
             }
-            else if(strcmp(flag, "color-diagnostics") == 0)
+            else if(EFStringEqualRange(argument, EFSTR("color-diagnostics"), flagArgumentRange))
             {
                 driver->diagnosticOptions.color_diagnostics = true;
             }
-            else if(strcmp(flag, "no-color-diagnostics") == 0)
+            else if(EFStringEqualRange(argument, EFSTR("no-color-diagnostics"), flagArgumentRange))
             {
                 driver->diagnosticOptions.color_diagnostics = false;
             }
             else
             {
-                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown feature flag '%s'"), flag);
+                EFAUTOREL EFStringRef flagArgument = EFStringCreateCopyWithRange(kEFAllocatorDefault, argument, flagArgumentRange);
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown feature flag '%@'"), flagArgument);
                 return false;
             }
         }
-        else if(strncmp(cArgument, "-Wl,", 4) == 0)
+        else if(EFStringEqualRange(argument, EFSTR("-Wl,"), EFRangeMake(0, 4)))
         {
-            const char *p = cArgument + 4;
-            if(*p == '\0')
+            EFIndex length = EFStringGetLength(argument);
+            if(length <= 4)
             {
                 ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-Wl,'"));
                 return false;
             }
+            EFRange flagArgumentRange = EFRangeMake(4, length - 4);
 
-            while(*p != '\0')
+            EFAUTOREL EFStringRef flagArgument = EFStringCreateCopyWithRange(kEFAllocatorDefault, argument, flagArgumentRange);
+            if(flagArgument == NULL)
             {
-                const char *comma = strchr(p, ',');
-                size_t len = comma ? (size_t)(comma - p) : strlen(p);
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't extract arguments from '-Wl,' argument"));
+                return false;
+            }
 
-                char *arg = malloc(len + 1);
-                memcpy(arg, p, len);
-                arg[len] = '\0';
+            EFAUTOREL EFArrayRef components = EFStringComponentsSplitBySeparator(flagArgument, EFSTR(","));
+            if(components == NULL)
+            {
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't extract arguments from '-Wl,' argument"));
+                return false;
+            }
+
+            EFIndex flagCount = EFArrayGetCount(components);
+            for(EFIndex index = 0; index < flagCount; index++)
+            {
+                const char *cptr = EFStringGetCStringPtr(EFArrayGetValueAtIndex(components, index), kEFStringEncodingUTF8);
+                if(cptr == NULL)
+                {
+                    ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't extract arguments from '-Wl,' argument"));
+                    return false;
+                }
 
                 driver->linkerFlags = realloc(driver->linkerFlags, (driver->linkerFlagCount + 1) * sizeof(char *));
-                driver->linkerFlags[driver->linkerFlagCount++] = arg;
-
-                p = comma ? comma + 1 : p + len;
+                driver->linkerFlags[driver->linkerFlagCount++] = strdup(cptr);
             }
         }
-        else if(strncmp(cArgument, "-W", 2) == 0)
+        else if(EFStringEqualRange(argument, EFSTR("-W"), EFRangeMake(0, 2)))
         {
-            const char *flag;
-            if(cArgument[2] != '\0')
-            {
-                flag = cArgument + 2;
-            }
-            else if(index + 1 < argumentsCount)
-            {
-                EFStringRef argument = EFArrayGetValueAtIndex(driver->arguments, ++index);
-                flag = EFStringGetCStringPtr(argument, kEFStringEncodingUTF8);
-            }
-            else
+            EFIndex length = EFStringGetLength(argument);
+            if(length <= 2)
             {
                 ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-W'"));
                 return false;
             }
+            EFRange flagArgumentRange = EFRangeMake(2, length - 2);
 
-            if(strcmp(flag, "error") == 0)
+            if(EFStringEqualRange(argument, EFSTR("error"), flagArgumentRange))
             {
                 driver->diagnosticOptions.warning_error = true;
             }
-            else if(strcmp(flag, "no-error") == 0)
+            else if(EFStringEqualRange(argument, EFSTR("no-error"), flagArgumentRange))
             {
                 driver->diagnosticOptions.warning_error = false;
             }
-            else if(strcmp(flag, "deprecated") == 0)
+            else if(EFStringEqualRange(argument, EFSTR("deprecated"), flagArgumentRange))
             {
                 driver->diagnosticOptions.warning_deprecated = true;
             }
-            else if(strcmp(flag, "no-deprecated") == 0)
+            else if(EFStringEqualRange(argument, EFSTR("no-deprecated"), flagArgumentRange))
             {
                 driver->diagnosticOptions.warning_deprecated = false;
             }
             else
             {
-                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown warning flag '%s'"), flag);
+                EFAUTOREL EFStringRef flagArgument = EFStringCreateCopyWithRange(kEFAllocatorDefault, argument, flagArgumentRange);
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown warning flag '%@'"), flagArgument);
                 return false;
             }
         }
-        else if(strncmp(cArgument, "-D", 2) == 0)
+        else if(EFStringEqualRange(argument, EFSTR("-D"), EFRangeMake(0, 2)))
         {
             const char *flag;
             if(cArgument[2] != '\0')
@@ -377,7 +377,7 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
                 driver->macros[macroSlot].value = value;
             }
         }
-        else if(strncmp(cArgument, "-I", 2) == 0)
+        else if(EFStringEqualRange(argument, EFSTR("-I"), EFRangeMake(0, 2)))
         {
             const char *dir;
             if(cArgument[2] != '\0')
@@ -397,23 +397,23 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
             driver->incDirs = realloc(driver->incDirs, (driver->incDirCount + 1) * sizeof(char*));
             driver->incDirs[driver->incDirCount++] = strdup(dir);
         }
-        else if(strncmp(cArgument, "-c", 2) == 0)
+        else if(EFEqual(argument, EFSTR("-c")))
         {
             driver->driverOptions.assembleOnly = true;
         }
-        else if(strncmp(cArgument, "-v", 2) == 0)
+        else if(EFEqual(argument, EFSTR("-v")))
         {
             driver->driverOptions.verbose = true;
         }
-        else if(strncmp(cArgument, "--in-process", 12) == 0)
+        else if(EFEqual(argument, EFSTR("--in-process")))
         {
             driver->driverOptions.inProcess = true;
         }
-        else if(strncmp(cArgument, "-r", 2) == 0)
+        else if(EFEqual(argument, EFSTR("-r")))
         {
             driver->driverOptions.emitMode = kEmitModeRelocatableObject;
         }
-        else if(cArgument[0] != '-')
+        else if(!EFStringEqualRange(argument, EFSTR("-"), EFRangeMake(0, 1)))
         {
             emex_file_t *file = emex_file_alloc(cArgument, in_data_file_policy);
             if(file == NULL || !(file->type == kEmexFileTypeAssembly || file->type == kEmexFileTypeAssemblyIncludation || file->type == kEmexFileTypeObject))
@@ -426,7 +426,7 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
         }
         else
         {
-            ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown option '%s'"), cArgument);
+            ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown option '%@'"), argument);
             return false;
         }
     }
