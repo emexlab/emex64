@@ -174,12 +174,12 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
                 "  -Werror                The assembler will treat every warning as a error.\n"
                 "  -Wdeprecated           The assembler will print a warning on every as deprecated marked symbol or internal features.\n"
                 "                         Each warning flag can be reversed by prefixing it with a \"no\" (i.e -Wno-error).\n"
-            ), EFProcessGetCommand(EFProcessCurrent)?: EFSTR("emex64asm"));
+            ), EFProcessGetCommand(EFProcessGetCurrentProcess())?: EFSTR("emex64asm"));
             return false;
         }
         else if(EFEqual(argument, EFSTR("--version")))
         {
-            EFLog(EFSTR("%@ version %d.%d.%d (%s)\n"), EFProcessGetCommand(EFProcessCurrent)?: EFSTR("emex64asm"), EMEX64_VERSION_MAJOR, EMEX64_VERSION_MINOR, EMEX64_VERSION_PATCH, EMEX64_VERSION_STRING);
+            EFLog(EFSTR("%@ version %d.%d.%d (%s)\n"), EFProcessGetCommand(EFProcessGetCurrentProcess())?: EFSTR("emex64asm"), EMEX64_VERSION_MAJOR, EMEX64_VERSION_MINOR, EMEX64_VERSION_PATCH, EMEX64_VERSION_STRING);
             return false;
         }
         else if(EFEqual(argument, EFSTR("-o")) && index + 1 < argumentsCount)
@@ -707,7 +707,7 @@ ETAssemblerDriverRef ETAssemblerDriverCreateWithOptions(EFAllocatorRef allocator
         return NULL;
     }
 
-    EFStringRef command = EFProcessGetCommand(EFProcessCurrent);
+    EFStringRef command = EFProcessGetCommand(EFProcessGetCurrentProcess());
     if(command == NULL)
     {
         command = EFSTR("emex64asm");
