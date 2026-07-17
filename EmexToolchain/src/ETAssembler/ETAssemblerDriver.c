@@ -246,12 +246,6 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
             EFRange flagArgumentRange = EFRangeMake(4, length - 4);
 
             EFAUTOREL EFStringRef flagArgument = EFStringCreateCopyWithRange(kEFAllocatorDefault, argument, flagArgumentRange);
-            if(flagArgument == NULL)
-            {
-                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't extract arguments from '-Wl,' argument"));
-                return false;
-            }
-
             EFAUTOREL EFArrayRef components = EFStringComponentsSplitBySeparator(flagArgument, EFSTR(","));
             if(components == NULL)
             {
@@ -308,74 +302,39 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
         }
         else if(EFStringEqualRange(argument, EFSTR("-D"), EFRangeMake(0, 2)))
         {
-            const char *flag;
-            if(cArgument[2] != '\0')
-            {
-                flag = cArgument + 2;
-            }
-            else if(index + 1 < argumentsCount)
-            {
-                EFStringRef argument = EFArrayGetValueAtIndex(driver->arguments, ++index);
-                flag = EFStringGetCStringPtr(argument, kEFStringEncodingUTF8);
-            }
-            else
+            EFIndex length = EFStringGetLength(argument);
+            if(length <= 2)
             {
                 ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-D'"));
                 return false;
             }
+            EFRange flagArgumentRange = EFRangeMake(2, length - 2);
 
-            const char *eq = strchr(flag, '=');
-            char *match = NULL;
-            char *value = NULL;
-            if(!eq)
+            EFAUTOREL EFStringRef flagArgument = EFStringCreateCopyWithRange(kEFAllocatorDefault, argument, flagArgumentRange);
+            EFAUTOREL EFArrayRef components = EFStringComponentsSplitBySeparator(flagArgument, EFSTR("="));
+            if(components == NULL || EFArrayGetCount(components) < 1)
             {
-                match = strdup(flag);
-                size_t len = strlen(match);
-                if(len > 0 && (match[len-1] == '"' || match[len-1] == '\''))
-                {
-                    match[len-1] = '\0';
-                }
-                value = strdup("1");
-                goto early_macro_append;
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't extract arguments from '-D' argument"));
+                return false;
             }
 
-            size_t name_len = eq - flag;
-            match = malloc(name_len + 1);
-            memcpy(match, flag, name_len);
-            match[name_len] = '\0';
+            EFStringRef macro = EFArrayGetValueAtIndex(components, 0);
+            EFRange macroRange = EFRangeMake(0, EFStringGetLength(macro));
+            EFRange valueRange = (EFArrayGetCount(components) > 1) ? EFRangeMake(macroRange.length + 1, EFStringGetLength(flagArgument) - (macroRange.length + 1)) : EFRangeZero;
+            EFAUTOREL EFStringRef value = EFRangeIsEqual(valueRange, EFRangeZero) ? EFSTR("1") : EFStringCreateCopyWithRange(kEFAllocatorDefault, flagArgument, valueRange);
 
-            const char *v = eq + 1;
-            char quote = 0;
-
-            if(*v == '"' || *v == '\'')
+            EFIndex macroSlot = driver->macroCount++;
+            if(driver->macros == NULL)
             {
-                quote = *v;
-                v++;
+                driver->macros = calloc(driver->macroCount, sizeof(assembler_macro_definition_t));
+            }
+            else
+            {
+                driver->macros = realloc(driver->macros, driver->macroCount * sizeof(assembler_macro_definition_t));
             }
 
-            const char *end = v;
-            while (*end && *end != quote && *end != '\0') end++;
-
-            size_t val_len = end - v;
-            value = malloc(val_len + 1);
-            memcpy(value, v, val_len);
-            value[val_len] = '\0';
-
-        early_macro_append:
-            {
-                EFIndex macroSlot = driver->macroCount++;
-                if(driver->macros == NULL)
-                {
-                    driver->macros = calloc(driver->macroCount, sizeof(assembler_macro_definition_t));
-                }
-                else
-                {
-                    driver->macros = realloc(driver->macros, driver->macroCount * sizeof(assembler_macro_definition_t));
-                }
-
-                driver->macros[macroSlot].match = match;
-                driver->macros[macroSlot].value = value;
-            }
+            driver->macros[macroSlot].match = strdup(EFStringGetCStringPtr(macro, kEFStringEncodingUTF8));
+            driver->macros[macroSlot].value = strdup(EFStringGetCStringPtr(value, kEFStringEncodingUTF8));
         }
         else if(EFStringEqualRange(argument, EFSTR("-I"), EFRangeMake(0, 2)))
         {
