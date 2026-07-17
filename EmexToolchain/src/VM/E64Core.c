@@ -294,7 +294,7 @@ escape_from_la:
      * lenght and the amount of parameters, this is
      * very very very good.
      *
-     * we had sex in the studio~~ nobody's watching~~   (the weekend escale from la reference xD)
+     * we had sex in the studio~~ nobody's watching~~   (the weekend escape from la reference xD)
      */
     core->op.param_cnt = i;
     core->op.ilen = (UInt32)((bb.pos + 7u) >> 3);
