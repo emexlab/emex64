@@ -63,7 +63,7 @@ ETAssemblerDiagnosticConsumerRef ETAssemblerDiagnosticConsumerCreate(EFAllocator
         return NULL;
     }
 
-    __ETAssemblerDiagnosticConsumer consumer = (__ETAssemblerDiagnosticConsumer)EFObjectAlloc(allocatorRef, ETAssemblerDiagnosticConsumerGetTypeID(), sizeof(struct __ETAssemblerDiagnosticConsumer));
+    __ETAssemblerDiagnosticConsumer consumer = (__ETAssemblerDiagnosticConsumer)EFObjectCreate(allocatorRef, ETAssemblerDiagnosticConsumerGetTypeID(), (EFIndex)sizeof(struct __ETAssemblerDiagnosticConsumer));
     if(consumer == NULL)
     {
         assembler_diagnostic_consumer_dealloc(rawConsumer);

@@ -73,7 +73,7 @@ VpageObjRef VpageObjCreateWithVpage(EFAllocatorRef allocatorRef,
 {
     assert(vpage != NULL);
 
-    VpageObj obj = EFObjectAlloc(allocatorRef, VpageObjGetType(), sizeof(struct VpageObj));
+    VpageObj obj = EFObjectCreate(allocatorRef, VpageObjGetType(), (EFIndex)sizeof(struct VpageObj));
     if(obj == NULL)
     {
         return NULL;

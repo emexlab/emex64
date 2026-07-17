@@ -83,7 +83,7 @@ E64MachineRef E64MachineCreate(EFAllocatorRef allocatorRef)
 E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
                                           E64MachineOptions options)
 {
-    EFAUTOREL __E64Machine machine = (__E64Machine)EFObjectAlloc(allocatorRef, E64MachineGetTypeID(), sizeof(struct __E64Machine));
+    EFAUTOREL __E64Machine machine = (__E64Machine)EFObjectCreate(allocatorRef, E64MachineGetTypeID(), (EFIndex)sizeof(struct __E64Machine));
     if(machine == NULL)
     {
         return NULL;

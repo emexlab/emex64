@@ -56,7 +56,7 @@ EFTypeID E64MMIOBusGetTypeID(void)
 
 E64MMIOBusRef E64MMIOBusCreate(EFAllocatorRef allocatorRef)
 {
-    EFAUTOREL __E64MMIOBus MMIOBus = (__E64MMIOBus)EFObjectAlloc(allocatorRef, E64MMIOBusGetTypeID(), sizeof(struct __E64MMIOBus));
+    EFAUTOREL __E64MMIOBus MMIOBus = (__E64MMIOBus)EFObjectCreate(allocatorRef, E64MMIOBusGetTypeID(), (EFIndex)sizeof(struct __E64MMIOBus));
     if(MMIOBus == NULL)
     {
         return NULL;

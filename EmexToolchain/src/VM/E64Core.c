@@ -142,7 +142,7 @@ EFTypeID E64CoreGetTypeID(void)
 
 E64CoreRef E64CoreCreate(EFAllocatorRef allocatorRef)
 {
-    __E64Core core = (__E64Core)EFObjectAlloc(allocatorRef, E64CoreGetTypeID(), sizeof(struct __E64Core));
+    __E64Core core = (__E64Core)EFObjectCreate(allocatorRef, E64CoreGetTypeID(), (EFIndex)sizeof(struct __E64Core));
     if(core == NULL)
     {
         return NULL;

@@ -124,7 +124,7 @@ EFTypeID E64ICGetTypeID(void)
 
 E64ICRef E64ICCreate(EFAllocatorRef allocatorRef)
 {
-    __E64IC ic = (__E64IC)EFObjectAlloc(allocatorRef, E64ICGetTypeID(), sizeof(struct __E64IC));
+    __E64IC ic = (__E64IC)EFObjectCreate(allocatorRef, E64ICGetTypeID(), (EFIndex)sizeof(struct __E64IC));
     if(ic == NULL)
     {
         return NULL;

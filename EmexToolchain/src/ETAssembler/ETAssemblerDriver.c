@@ -664,7 +664,7 @@ ETAssemblerDriverRef ETAssemblerDriverCreateWithOptions(EFAllocatorRef allocator
                                                         ETAssemblerDriverOptions driverOptions,
                                                         ETAssemblerDiagnosticOptions diagnosticOptions)
 {
-    EFAUTOREL __ETAssemblerDriver driver = (__ETAssemblerDriver)EFObjectAlloc(allocatorRef, ETAssemblerDriverGetTypeID(), sizeof(struct __ETAssemblerDriver));
+    EFAUTOREL __ETAssemblerDriver driver = (__ETAssemblerDriver)EFObjectCreate(allocatorRef, ETAssemblerDriverGetTypeID(), (EFIndex)sizeof(struct __ETAssemblerDriver));
     if(driver == NULL)
     {
         return NULL;

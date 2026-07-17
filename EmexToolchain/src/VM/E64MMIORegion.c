@@ -66,7 +66,7 @@ E64MMIORegionRef E64MMIORegionCreate(EFAllocatorRef allocatorRef,
                                      mmio_read_fn read,
                                      mmio_write_fn write)
 {
-    __E64MMIORegion MMIORegion = (__E64MMIORegion)EFObjectAlloc(allocatorRef, E64MMIORegionGetTypeID(), sizeof(struct __E64MMIORegion));
+    __E64MMIORegion MMIORegion = (__E64MMIORegion)EFObjectCreate(allocatorRef, E64MMIORegionGetTypeID(), (EFIndex)sizeof(struct __E64MMIORegion));
     if(MMIORegion == NULL)
     {
         return NULL;

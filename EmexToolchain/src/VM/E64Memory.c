@@ -80,7 +80,7 @@ EFTypeID E64MemoryGetTypeID(void)
 E64MemoryRef E64MemoryCreate(EFAllocatorRef allocatorRef,
                              UInt64 size)
 {
-    EFAUTOREL E64Memory memory = EFObjectAlloc(allocatorRef, E64MemoryGetTypeID(), sizeof(struct E64Memory));
+    EFAUTOREL E64Memory memory = EFObjectCreate(allocatorRef, E64MemoryGetTypeID(), (EFIndex)sizeof(struct E64Memory));
     if(memory == NULL)
     {
         return NULL;

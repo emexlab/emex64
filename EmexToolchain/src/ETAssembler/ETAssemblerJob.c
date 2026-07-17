@@ -73,7 +73,7 @@ ETAssemblerJobRef ETAssemblerJobCreate(EFAllocatorRef allocatorRef,
         return NULL;
     }
 
-    __ETAssemblerJob job = (__ETAssemblerJob)EFObjectAlloc(allocatorRef, ETAssemblerJobGetTypeID(), sizeof(struct __ETAssemblerJob));
+    __ETAssemblerJob job = (__ETAssemblerJob)EFObjectCreate(allocatorRef, ETAssemblerJobGetTypeID(), (EFIndex)sizeof(struct __ETAssemblerJob));
     if(job == NULL)
     {
         return NULL;
