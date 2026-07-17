@@ -140,13 +140,22 @@ EFTypeID E64CoreGetTypeID(void)
     return E64CoreClass.typeID;
 }
 
-E64CoreRef E64CoreCreate(EFAllocatorRef allocatorRef)
+E64CoreRef E64CoreCreateWithMachine(EFAllocatorRef allocatorRef,
+                                    E64MachineRef machineRef)
 {
+    __E64Machine machine = (__E64Machine)machineRef;
+    if(machine == NULL || machine->core != NULL)
+    {
+        return NULL;
+    }
+
     __E64Core core = (__E64Core)EFObjectCreate(allocatorRef, E64CoreGetTypeID(), (EFIndex)sizeof(struct __E64Core));
     if(core == NULL)
     {
         return NULL;
     }
+
+    core->machine = machine;    /* borrowed! (otherwise this causes a retain loop) */
 
     /*
      * setting it up with secure monitor, because

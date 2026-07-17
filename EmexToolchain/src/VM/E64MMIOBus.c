@@ -75,7 +75,6 @@ E64MMIOBusRef E64MMIOBusCreate(EFAllocatorRef allocatorRef)
 Boolean E64MMIOBusRegisterRegion(E64MMIOBusRef MMIOBusRef,
                                  E64MMIORegionRef MMIORegionRef)
 {
-
     __E64MMIOBus MMIOBus = (__E64MMIOBus)MMIOBusRef;
     if(MMIOBus == NULL || MMIORegionRef == NULL || EFGetTypeID(MMIORegionRef) != E64MMIORegionGetTypeID())
     {

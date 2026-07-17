@@ -101,13 +101,11 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
         return NULL;
     }
 
-    machine->core = E64CoreCreate(allocatorRef);
+    machine->core = E64CoreCreateWithMachine(allocatorRef, (E64MachineRef)machine);
     if(machine->core == NULL)
     {
         return NULL;
     }
-    /* machine->core->machine = EFRetain(machine); FIXME: retain cycle */
-    machine->core->machine = machine;
 
     machine->intc = E64ICCreate(allocatorRef);
     if(machine->intc == NULL || !E64ICRegisterOnMMIOBus(machine->intc, machine->mmio_bus))

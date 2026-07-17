@@ -31,10 +31,11 @@
 #endif /* ET_PRIVATE */
 
 typedef struct __E64Core *E64CoreRef;
+typedef struct __E64Machine *E64MachineRef;
 
 EFTypeID E64CoreGetTypeID(void);
 
-E64CoreRef E64CoreCreate(EFAllocatorRef allocatorRef);
+E64CoreRef E64CoreCreateWithMachine(EFAllocatorRef allocatorRef, E64MachineRef machineRef);
 E64Exception E64CoreExecute(E64CoreRef coreRef);
 void E64CoreTerminate(E64CoreRef coreRef);
 
