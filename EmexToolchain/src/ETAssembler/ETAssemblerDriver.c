@@ -41,11 +41,9 @@ typedef struct __ETAssemblerDriver {
     ETAssemblerDriverOptions driverOptions;
     ETAssemblerDiagnosticOptions diagnosticOptions;
     ETAssemblerDiagnosticConsumerRef diagnosticConsumer;
+    EFMutableArrayRef inputFiles;
     EFStringRef outputPath;
     EFMutableArrayRef jobs;
-
-    EFIndex inputFileCount;
-    emex_file_t **inputFiles;
 
     EFIndex incDirCount;
     char **incDirs;
@@ -63,12 +61,6 @@ typedef struct __ETAssemblerDriver {
 static void __ETAssemblerDriverDeinit(EFObjectRef driverRef)
 {
     __ETAssemblerDriver driver = (__ETAssemblerDriver)driverRef;
-
-    for(int i = 0; i < driver->inputFileCount; i++)
-    {
-        emex_file_dealloc(driver->inputFiles[i]);
-    }
-    free(driver->inputFiles);
 
     for(EFIndex i = 0; i < driver->incDirCount; i++)
     {
@@ -100,6 +92,7 @@ static void __ETAssemblerDriverDeinit(EFObjectRef driverRef)
     EFReleaseTry(driver->diagnosticConsumer);
     EFReleaseTry(driver->jobs);
     EFReleaseTry(driver->arguments);
+    EFReleaseTry(driver->inputFiles);
 }
 
 EFClass ETAssemblerDriverClass = {
@@ -130,7 +123,6 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
     driver->diagnosticOptions = ETAssemblerDiagnosticOptionsDefault;
 
     driver->outputPath = NULL;
-    driver->inputFileCount = 0;
 
     driver->incDirCount = 0;
     driver->incDirs = NULL;
@@ -140,7 +132,7 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
 
     EFIndex argumentsCount = EFArrayGetCount(driver->arguments);
 
-    driver->inputFiles = calloc(argumentsCount, sizeof(emex_file_t*));
+    driver->inputFiles = EFArrayCreateMutable(EFGetAllocator(driver), kEFArrayCallbacksEmexFileCallbacks, argumentsCount);
     if(driver->inputFiles == NULL)
     {
         return false;
@@ -384,7 +376,11 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
                 return false;
             }
 
-            driver->inputFiles[driver->inputFileCount++] = file;
+            if(!EFArrayAppendValue(driver->inputFiles, file))
+            {
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, couldn't append file to input files"));
+                return false;
+            }
         }
         else
         {
@@ -395,7 +391,7 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
 
     ETAssemblerDiagnosticConsumerSetDiagnosticOptions(driver->diagnosticConsumer, driver->diagnosticOptions);
 
-    if(driver->inputFileCount <= 0)
+    if(EFArrayGetCount(driver->inputFiles) <= 0)
     {
         ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("no input files"));
         return false;
@@ -475,17 +471,20 @@ static Boolean __ETAssemblerDriverAppendLinkerFlag(__ETAssemblerDriver driver,
 Boolean __ETAssemblerDriverJobgen(__ETAssemblerDriver driver)
 {
     /* -c is only meant to assemble one assembly file to a object file */
-    if(driver->driverOptions.assembleOnly && driver->inputFileCount > 1)
+    EFIndex inputFileCount = EFArrayGetCount(driver->inputFiles);
+    if(driver->driverOptions.assembleOnly && inputFileCount > 1)
     {
         ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("multiple input files were passed in object emit mode"));
         return false;
     }
 
     /* creating assembler jobs */
-    for(int i = 0; i < driver->inputFileCount; i++)
+    for(EFIndex index = 0; index < inputFileCount; index++)
     {
-        const char *input_path = driver->inputFiles[i]->path;
-        kEmexFileType input_type = driver->inputFiles[i]->type;
+        emex_file_t *inputFile = EFArrayGetValueAtIndex(driver->inputFiles, index);
+
+        const char *input_path = inputFile->path;
+        kEmexFileType input_type = inputFile->type;
 
         switch(input_type)
         {
@@ -734,14 +733,16 @@ ETAssemblerDriverRef ETAssemblerDriverCreateWithOptions(EFAllocatorRef allocator
         fprintf(stderr, "}\n");
         fprintf(stderr, "output_path: %s\n", EFStringGetCStringPtr(driver->outputPath, kEFStringEncodingUTF8));
 
-        fprintf(stderr, "inputFile[%ld]: { ", driver->inputFileCount);
-        for(EFIndex i = 0; i < driver->inputFileCount; i++)
+        EFIndex inputFileCount = EFArrayGetCount(driver->inputFiles);
+        fprintf(stderr, "inputFile[%ld]: { ", inputFileCount);
+        for(EFIndex index = 0; index < inputFileCount; index++)
         {
-            if(i != 0)
+            if(index != 0)
             {
                 fprintf(stderr, ", ");
             }
-            fprintf(stderr, "%s", driver->inputFiles[i]->path);
+            emex_file_t *file = EFArrayGetValueAtIndex(driver->inputFiles, index);
+            fprintf(stderr, "%s", file->path);
         }
         fprintf(stderr, " }\n");
 
@@ -825,7 +826,8 @@ Boolean ETAssemblerDriverRun(ETAssemblerDriverRef driverRef)
             return false;
         }
 
-        Boolean success = assembler_invocation_emit(inv, driver->inputFiles[0], output);
+        emex_file_t *input = EFArrayGetValueAtIndex(driver->inputFiles, 0);
+        Boolean success = assembler_invocation_emit(inv, input, output);
 
         emex_file_dealloc(output);
         assembler_invocation_dealloc(inv);
