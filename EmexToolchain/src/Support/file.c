@@ -425,3 +425,32 @@ extension_validation:
     /* couldn't resolve file type lol */
     return kEmexFileTypeUnknown;
 }
+
+static Boolean __EFArrayAppendEmexFileCallback(void *ptr)
+{
+    return true;
+}
+
+static void __EFArrayRemoveEmexFileCallback(void *ptr)
+{
+    emex_file_dealloc((emex_file_t*)ptr);
+}
+
+static Boolean __EFArrayEqualEmexFileCallback(void *ptr1,
+                                              void *ptr2)
+{
+    return (ptr1 == ptr2);
+}
+
+static EFStringRef __EFArrayCopyDescriptionEmexFileCallback(EFAllocatorRef allocatorRef,
+                                                            void *ptr)
+{
+    return EFStringCreateWithFormat(allocatorRef, EFSTR("<emexfile %p>"), ptr);
+}
+
+EFArrayCallbacks kEFArrayCallbacksEmexFileCallbacks = &(struct EFArrayCallbacks){
+    .append = __EFArrayAppendEmexFileCallback,
+    .remove = __EFArrayRemoveEmexFileCallback,
+    .equal = __EFArrayEqualEmexFileCallback,
+    .copyDescription = __EFArrayCopyDescriptionEmexFileCallback,
+};

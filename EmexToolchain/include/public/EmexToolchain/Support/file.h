@@ -22,8 +22,7 @@
 #ifndef EMEX64_FILE_H
 #define EMEX64_FILE_H
 
-#include <stdint.h>
-#include <stdbool.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/virtual/vbitwalker.h>
 #include <EmexToolchain/Support/virtual/vfd.h>
 
@@ -85,5 +84,7 @@ void emex_file_unmap(emex_file_t *f);
 void emex_file_unlink(emex_file_t *f);
 
 kEmexFileType emex_file_type_for_path(const char *path, Boolean must_exist);
+
+extern EFArrayCallbacks kEFArrayCallbacksEmexFileCallbacks;
 
 #endif /* EMEX64_FILE_H */
