@@ -887,15 +887,16 @@ Boolean ETAssemblerDriverRun(ETAssemblerDriverRef driverRef)
             }
             else
             {
-                pid_t pid = 0;
-                if(posix_spawnp(&pid, commandPtr, NULL, NULL, (char *const *)argv, environ) != 0)
+                EFAUTOREL EFProcessRef process = EFProcessCreateWithCommand(EFGetAllocator(driver), jobCommand, jobArguments);
+                if(process == NULL)
                 {
                     ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("couldn't spawn job: %s"), strerror(errno));
                     return false;
                 }
 
+                SInt32 processIdentifier = EFProcessGetProcessIdentifier(process);
                 int rstatus = 0;
-                if(waitpid(pid, &rstatus, 0) != pid)
+                if(EFProcessWaitPID(process, &rstatus, 0) != processIdentifier)
                 {
                     return false;
                 }
@@ -909,7 +910,7 @@ Boolean ETAssemblerDriverRun(ETAssemblerDriverRef driverRef)
                 }
                 else if(WIFSIGNALED(rstatus))
                 {
-                    ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("job (command='%s' | pid=%d) terminated by signal %d"), commandPtr, pid, WTERMSIG(rstatus));
+                    ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("job (command='%@' | pid=%d) terminated by signal %d"), jobCommand, processIdentifier, WTERMSIG(rstatus));
                     return false;
                 }
             }
