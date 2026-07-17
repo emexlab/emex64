@@ -149,17 +149,6 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
     for(EFIndex index = 0; index < argumentsCount; index++)
     {
         EFStringRef argument = EFArrayGetValueAtIndex(driver->arguments, index);
-        if(argument == NULL)
-        {
-            return false;
-        }
-
-        const char *cArgument = EFStringGetCStringPtr(argument, kEFStringEncodingUTF8);
-        if(cArgument == NULL)
-        {
-            return false;
-        }
-
         if(EFEqual(argument, EFSTR("--help")))
         {
             EFLog(EFSTR(
@@ -338,6 +327,13 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
         }
         else if(EFStringEqualRange(argument, EFSTR("-I"), EFRangeMake(0, 2)))
         {
+            const char *cArgument = EFStringGetCStringPtr(argument, kEFStringEncodingUTF8);
+            if(cArgument == NULL)
+            {
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-I'"));
+                return false;
+            }
+
             const char *dir;
             if(cArgument[2] != '\0')
             {
@@ -372,12 +368,19 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
         {
             driver->driverOptions.emitMode = kEmitModeRelocatableObject;
         }
-        else if(!EFStringEqualRange(argument, EFSTR("-"), EFRangeMake(0, 1)))
+        else if(argument != NULL && !EFStringEqualRange(argument, EFSTR("-"), EFRangeMake(0, 1)))
         {
+            const char *cArgument = EFStringGetCStringPtr(argument, kEFStringEncodingUTF8);
+            if(cArgument == NULL)
+            {
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown or non existing input file '%@'"), argument);
+                return false;
+            }
+
             emex_file_t *file = emex_file_alloc(cArgument, in_data_file_policy);
             if(file == NULL || !(file->type == kEmexFileTypeAssembly || file->type == kEmexFileTypeAssemblyIncludation || file->type == kEmexFileTypeObject))
             {
-                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown or non existing input file '%s'"), cArgument);
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown or non existing input file '%@'"), argument);
                 return false;
             }
 
