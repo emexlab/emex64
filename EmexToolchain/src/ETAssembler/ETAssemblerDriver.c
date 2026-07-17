@@ -920,3 +920,83 @@ Boolean ETAssemblerDriverRun(ETAssemblerDriverRef driverRef)
 
     return false;
 }
+
+EFArrayRef ETAssemblerDriverGetJobs(ETAssemblerDriverRef driverRef)
+{
+    __ETAssemblerDriver driver = (__ETAssemblerDriver)driverRef;
+    if(driver == NULL)
+    {
+        return NULL;
+    }
+
+    return driver->jobs;
+}
+
+EFStringRef ETAssemblerDriverGetOutputPath(ETAssemblerDriverRef driverRef)
+{
+    __ETAssemblerDriver driver = (__ETAssemblerDriver)driverRef;
+    if(driver == NULL)
+    {
+        return NULL;
+    }
+
+    return driver->outputPath;
+}
+
+ETAssemblerDiagnosticConsumerRef ETAssemblerDriverGetDiagnosticConsumer(ETAssemblerDriverRef driverRef)
+{
+    __ETAssemblerDriver driver = (__ETAssemblerDriver)driverRef;
+    if(driver == NULL)
+    {
+        return NULL;
+    }
+
+    return driver->diagnosticConsumer;
+}
+
+ETAssemblerDriverOptions ETAssemblerDriverGetDriverOptions(ETAssemblerDriverRef driverRef)
+{
+    __ETAssemblerDriver driver = (__ETAssemblerDriver)driverRef;
+    if(driver == NULL)
+    {
+        return ETAssemblerDriverOptionsDefault;
+    }
+
+    return driver->driverOptions;
+}
+
+ETAssemblerDiagnosticOptions ETAssemblerDriverGetDiagnosticOptions(ETAssemblerDriverRef driverRef)
+{
+    __ETAssemblerDriver driver = (__ETAssemblerDriver)driverRef;
+    if(driver == NULL)
+    {
+        return ETAssemblerDiagnosticOptionsDefault;
+    }
+
+    return driver->diagnosticOptions;
+}
+
+void ETAssemblerDriverSetDriverOptions(ETAssemblerDriverRef driverRef,
+                                       ETAssemblerDriverOptions driverOptions)
+{
+    __ETAssemblerDriver driver = (__ETAssemblerDriver)driverRef;
+    if(driver == NULL)
+    {
+        return;
+    }
+
+    driver->driverOptions = driverOptions;
+}
+
+void ETAssemblerDriverSetDiagnosticOptions(ETAssemblerDriverRef driverRef,
+                                           ETAssemblerDiagnosticOptions diagnosticOptions)
+{
+    __ETAssemblerDriver driver = (__ETAssemblerDriver)driverRef;
+    if(driver == NULL)
+    {
+        return;
+    }
+
+    driver->diagnosticOptions = diagnosticOptions;
+    ETAssemblerDiagnosticConsumerSetDiagnosticOptions(driver->diagnosticConsumer, diagnosticOptions);
+}

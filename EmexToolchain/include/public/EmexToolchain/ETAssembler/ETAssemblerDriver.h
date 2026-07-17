@@ -22,7 +22,6 @@
 #ifndef ETASSEMBLERDRIVER_H
 #define ETASSEMBLERDRIVER_H
 
-#include <stddef.h>
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/file.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerJob.h>
@@ -39,14 +38,13 @@ ETAssemblerDriverRef ETAssemblerDriverCreateWithOptions(EFAllocatorRef allocator
 
 Boolean ETAssemblerDriverRun(ETAssemblerDriverRef driverRef);
 
-/*
 EFArrayRef ETAssemblerDriverGetJobs(ETAssemblerDriverRef driverRef);
-
 EFStringRef ETAssemblerDriverGetOutputPath(ETAssemblerDriverRef driverRef);
 ETAssemblerDiagnosticConsumerRef ETAssemblerDriverGetDiagnosticConsumer(ETAssemblerDriverRef driverRef);
-
 ETAssemblerDriverOptions ETAssemblerDriverGetDriverOptions(ETAssemblerDriverRef driverRef);
-ETAssemblerDiagnosticOptions ETAssemblerDriverGetDriverOptions(ETAssemblerDriverRef driverRef);
-*/
+ETAssemblerDiagnosticOptions ETAssemblerDriverGetDiagnosticOptions(ETAssemblerDriverRef driverRef);
+
+void ETAssemblerDriverSetDriverOptions(ETAssemblerDriverRef driverRef, ETAssemblerDriverOptions driverOptions);
+void ETAssemblerDriverSetDiagnosticOptions(ETAssemblerDriverRef driverRef, ETAssemblerDiagnosticOptions diagnosticOptions);
 
 #endif /* ETASSEMBLERDRIVER_H */
