@@ -842,26 +842,6 @@ Boolean ETAssemblerDriverRun(ETAssemblerDriverRef driverRef)
             EFArrayRef jobArguments = ETAssemblerJobGetArguments(job);
             EFStringRef jobCommand = ETAssemblerJobGetCommand(job);
 
-            const char *commandPtr = EFStringGetCStringPtr(jobCommand, kEFStringEncodingASCII);
-            if(commandPtr == NULL)
-            {
-                return false;
-            }
-
-            EFIndex argumentsCount = EFArrayGetCount(jobArguments) + 1;
-            const char *argv[argumentsCount + 1];
-            argv[0] = commandPtr;
-            for(EFIndex argumentsIndex = 0; argumentsIndex < (argumentsCount - 1); argumentsIndex++)
-            {
-                const char *cptr = EFStringGetCStringPtr(EFArrayGetValueAtIndex(jobArguments, argumentsIndex), kEFStringEncodingASCII);
-                if(cptr == NULL)
-                {
-                    return false;
-                }
-                argv[argumentsIndex + 1] = cptr;
-            }
-            argv[argumentsCount] = NULL;
-
             if(jobType == kETAssemblerJobTypeDriver && driver->driverOptions.inProcess)
             {
                 EFAUTOREL ETAssemblerDriverRef subDriver = ETAssemblerDriverCreate(EFGetAllocator(driverRef), jobArguments);
@@ -872,6 +852,25 @@ Boolean ETAssemblerDriverRun(ETAssemblerDriverRef driverRef)
             }
             else if(jobType == kETAssemblerJobTypeLinker && driver->driverOptions.inProcess)
             {
+                const char *commandPtr = EFStringGetCStringPtr(jobCommand, kEFStringEncodingASCII);
+                if(commandPtr == NULL)
+                {
+                    return false;
+                }
+                EFIndex argumentsCount = EFArrayGetCount(jobArguments) + 1;
+                const char *argv[argumentsCount + 1];
+                argv[0] = commandPtr;
+                for(EFIndex argumentsIndex = 0; argumentsIndex < (argumentsCount - 1); argumentsIndex++)
+                {
+                    const char *cptr = EFStringGetCStringPtr(EFArrayGetValueAtIndex(jobArguments, argumentsIndex), kEFStringEncodingASCII);
+                    if(cptr == NULL)
+                    {
+                        return false;
+                    }
+                    argv[argumentsIndex + 1] = cptr;
+                }
+                argv[argumentsCount] = NULL;
+
                 linker_driver_t *subdriver = linker_driver_alloc(argumentsCount, (const char**)argv);
                 if(subdriver == NULL)
                 {
