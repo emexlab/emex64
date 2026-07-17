@@ -40,13 +40,15 @@ typedef struct __ETAssemblerDriver {
 
     ETAssemblerDriverOptions driverOptions;
     ETAssemblerDiagnosticOptions diagnosticOptions;
+
     ETAssemblerDiagnosticConsumerRef diagnosticConsumer;
+
     EFMutableArrayRef inputFiles;
     EFStringRef outputPath;
-    EFMutableArrayRef jobs;
 
-    EFIndex incDirCount;
-    char **incDirs;
+    EFMutableArrayRef includeSearchPaths;
+
+    EFMutableArrayRef jobs;
 
     EFIndex tmpPathCount;
     char **tmpPaths;
@@ -61,12 +63,6 @@ typedef struct __ETAssemblerDriver {
 static void __ETAssemblerDriverDeinit(EFObjectRef driverRef)
 {
     __ETAssemblerDriver driver = (__ETAssemblerDriver)driverRef;
-
-    for(EFIndex i = 0; i < driver->incDirCount; i++)
-    {
-        free(driver->incDirs[i]);
-    }
-    free(driver->incDirs);
 
     for(EFIndex i = 0; i < driver->tmpPathCount; i++)
     {
@@ -93,6 +89,7 @@ static void __ETAssemblerDriverDeinit(EFObjectRef driverRef)
     EFReleaseTry(driver->jobs);
     EFReleaseTry(driver->arguments);
     EFReleaseTry(driver->inputFiles);
+    EFReleaseTry(driver->includeSearchPaths);
 }
 
 EFClass ETAssemblerDriverClass = {
@@ -124,9 +121,6 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
 
     driver->outputPath = NULL;
 
-    driver->incDirCount = 0;
-    driver->incDirs = NULL;
-
     driver->macroCount = 0;
     driver->macros = NULL;
 
@@ -134,6 +128,12 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
 
     driver->inputFiles = EFArrayCreateMutable(EFGetAllocator(driver), kEFArrayCallbacksEmexFileCallbacks, argumentsCount);
     if(driver->inputFiles == NULL)
+    {
+        return false;
+    }
+
+    driver->includeSearchPaths = EFArrayCreateMutable(EFGetAllocator(driver), kEFArrayCallbacksObjectCallbacks, argumentsCount);
+    if(driver->includeSearchPaths == NULL)
     {
         return false;
     }
@@ -295,7 +295,7 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
             EFAUTOREL EFArrayRef components = EFStringComponentsSplitBySeparator(flagArgument, EFSTR("="));
             if(components == NULL || EFArrayGetCount(components) < 1)
             {
-                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't extract arguments from '-D' argument"));
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't extract arguments from '-D'"));
                 return false;
             }
 
@@ -319,30 +319,27 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
         }
         else if(EFStringEqualRange(argument, EFSTR("-I"), EFRangeMake(0, 2)))
         {
-            const char *cArgument = EFStringGetCStringPtr(argument, kEFStringEncodingUTF8);
-            if(cArgument == NULL)
+            EFAUTOREL EFStringRef flagArgument = NULL;
+            EFIndex length = EFStringGetLength(argument);
+            if(length > 2)
             {
-                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-I'"));
-                return false;
+                flagArgument = EFStringCreateCopyWithRange(kEFAllocatorDefault, argument, EFRangeMake(2, length - 2));
             }
-
-            const char *dir;
-            if(cArgument[2] != '\0')
+            else if(index <= argumentsCount)
             {
-                dir = cArgument + 2;
-            }
-            else if(index + 1 < argumentsCount)
-            {
-                EFStringRef argument = EFArrayGetValueAtIndex(driver->arguments, ++index);
-                dir = EFStringGetCStringPtr(argument, kEFStringEncodingUTF8);
+                flagArgument = EFRetainTry(EFArrayGetValueAtIndex(driver->arguments, ++index));
             }
             else
             {
                 ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-I'"));
                 return false;
             }
-            driver->incDirs = realloc(driver->incDirs, (driver->incDirCount + 1) * sizeof(char*));
-            driver->incDirs[driver->incDirCount++] = strdup(dir);
+
+            if(!EFArrayAppendValue(driver->includeSearchPaths, flagArgument))
+            {
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't extract arguments from '-I'"));
+                return false;
+            }
         }
         else if(EFEqual(argument, EFSTR("-c")))
         {
@@ -516,18 +513,11 @@ Boolean __ETAssemblerDriverJobgen(__ETAssemblerDriver driver)
                 ratchet_args_append(&ra, driver->diagnosticOptions.warning_error ? "-Werror" : "-Wno-error");
                 ratchet_args_append(&ra, driver->diagnosticOptions.warning_deprecated ? "-Wdeprecated" : "-Wno-deprecated");
 
-                for(EFIndex j = 0; j < driver->incDirCount; j++)
+                EFIndex includeSearchCount = EFArrayGetCount(driver->includeSearchPaths);
+                for(EFIndex j = 0; j < includeSearchCount; j++)
                 {
-                    size_t ilen = strlen(driver->incDirs[j]);
-                    char *new_buf = malloc(ilen + 3);
-                    if(new_buf == NULL)
-                    {
-                        ratchet_args_deinit(&ra);
-                        return false;
-                    }
-                    snprintf(new_buf, ilen + 3, "-I%s", driver->incDirs[j]);
-                    ratchet_args_append(&ra, new_buf);
-                    free(new_buf);
+                    EFAUTOREL EFStringRef includeSearchArgument = EFStringCreateWithFormat(kEFAllocatorDefault, EFSTR("-I%@"), EFArrayGetValueAtIndex(driver->includeSearchPaths, j));
+                    ratchet_args_efappend(&ra, includeSearchArgument);
                 }
                 for(EFIndex j = 0; j < driver->macroCount; j++)
                 {
@@ -746,14 +736,15 @@ ETAssemblerDriverRef ETAssemblerDriverCreateWithOptions(EFAllocatorRef allocator
         }
         fprintf(stderr, " }\n");
 
-        fprintf(stderr, "incDirs[%ld]: { ", driver->incDirCount);
-        for(EFIndex i = 0; i < driver->incDirCount; i++)
+        EFIndex includeSearchPathCount = EFArrayGetCount(driver->includeSearchPaths);
+        fprintf(stderr, "incDirs[%ld]: { ", includeSearchPathCount);
+        for(EFIndex index = 0; index < includeSearchPathCount; index++)
         {
-            if(i != 0)
+            if(index != 0)
             {
                 fprintf(stderr, ", ");
             }
-            fprintf(stderr, "%s", driver->incDirs[i]);
+            fprintf(stderr, "%s", EFStringGetCStringPtr(EFArrayGetValueAtIndex(driver->includeSearchPaths, index), kEFStringEncodingUTF8)?: "<nil>");
         }
         fprintf(stderr, " }\n");
 
@@ -815,8 +806,16 @@ Boolean ETAssemblerDriverRun(ETAssemblerDriverRef driverRef)
 
         inv->definition_cnt = driver->macroCount;
         inv->definition = driver->macros;
-        inv->include_dir_cnt = driver->incDirCount;
-        inv->include_dirs = driver->incDirs;
+
+        EFIndex includeSearchPathCount = EFArrayGetCount(driver->includeSearchPaths);
+        char *includeSearchPaths[includeSearchPathCount];
+        for(EFIndex index = 0; index < includeSearchPathCount; index++)
+        {
+            includeSearchPaths[index] = (char*)EFStringGetCStringPtr(EFArrayGetValueAtIndex(driver->includeSearchPaths, index), kEFStringEncodingUTF8);
+        }
+
+        inv->include_dir_cnt = includeSearchPathCount;
+        inv->include_dirs = includeSearchPaths;
 
         emex_file_t *output = emex_file_alloc(EFStringGetCStringPtr(driver->outputPath, kEFStringEncodingUTF8), out_data_file_policy);
         if(output == NULL)
