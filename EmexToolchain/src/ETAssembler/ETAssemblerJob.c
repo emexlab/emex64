@@ -35,13 +35,19 @@ static void __ETAssemblerJobDeinit(EFObjectRef jobRef)
     EFRelease(job->arguments);
 }
 
+static EFStringRef __ETAssemblerJobCopyDescription(EFObjectRef jobRef)
+{
+    __ETAssemblerJob job = (__ETAssemblerJob)jobRef;
+    return EFStringCreateWithFormat(EFGetAllocator(jobRef), EFSTR("<ETAssemblerJob %p>{command = %@, arguments = %@}"), jobRef, job->command, job->arguments);
+}
+
 static EFClass ETAssemblerJobClass = {
     .name = "ETAssemblerJob",
     .typeID = kEFNotATypeID,
     .init = NULL,
     .deinit = __ETAssemblerJobDeinit,
     .equal = NULL,
-    .copyDescription = NULL,
+    .copyDescription = __ETAssemblerJobCopyDescription,
 };
 
 static void ETAssemblerJobRegisterClass(void)

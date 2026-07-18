@@ -85,13 +85,19 @@ static void __ETAssemblerDriverDeinit(EFObjectRef driverRef)
     EFReleaseTry(driver->temporaryOutputPaths);
 }
 
+static EFStringRef __ETAssemblerDriverCopyDescription(EFObjectRef driverRef)
+{
+    __ETAssemblerDriver driver = (__ETAssemblerDriver)driverRef;
+    return EFStringCreateWithFormat(EFGetAllocator(driverRef), EFSTR("<ETAssemblerDriver %p>{arguments = %@, diagnosticConsumer = %@, inputFiles = %@, outputPath = %@, includeSearchPaths = %@, temporaryOutputPaths = %@, linkerFlags = %@, jobs = %@}"), driverRef, driver->arguments, driver->diagnosticConsumer, driver->inputFiles, driver->outputPath, driver->includeSearchPaths, driver->temporaryOutputPaths, driver->linkerFlags, driver->jobs);
+}
+
 EFClass ETAssemblerDriverClass = {
     .name = "ETAssemblerDriver",
     .typeID = kEFNotATypeID,
     .init = NULL,
     .deinit = __ETAssemblerDriverDeinit,
     .equal = NULL,
-    .copyDescription = NULL,
+    .copyDescription = __ETAssemblerDriverCopyDescription,
     .hash = NULL,
 };
 
