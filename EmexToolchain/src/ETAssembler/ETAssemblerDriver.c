@@ -47,11 +47,9 @@ typedef struct __ETAssemblerDriver {
     EFStringRef outputPath;
 
     EFMutableArrayRef includeSearchPaths;
+    EFMutableArrayRef temporaryOutputPaths;
 
     EFMutableArrayRef jobs;
-
-    EFIndex tmpPathCount;
-    char **tmpPaths;
 
     EFIndex macroCount;
     assembler_macro_definition_t *macros;
@@ -63,13 +61,6 @@ typedef struct __ETAssemblerDriver {
 static void __ETAssemblerDriverDeinit(EFObjectRef driverRef)
 {
     __ETAssemblerDriver driver = (__ETAssemblerDriver)driverRef;
-
-    for(EFIndex i = 0; i < driver->tmpPathCount; i++)
-    {
-        unlink(driver->tmpPaths[i]);
-        free(driver->tmpPaths[i]);
-    }
-    free(driver->tmpPaths);
 
     for(EFIndex i = 0; i < driver->macroCount; i++)
     {
@@ -90,6 +81,14 @@ static void __ETAssemblerDriverDeinit(EFObjectRef driverRef)
     EFReleaseTry(driver->arguments);
     EFReleaseTry(driver->inputFiles);
     EFReleaseTry(driver->includeSearchPaths);
+
+    /* temporaryOutputPaths have to be unlinked */
+    EFIndex temporaryObjectPathCount = EFArrayGetCount(driver->temporaryOutputPaths);
+    for(EFIndex index = 0; index < temporaryObjectPathCount; index++)
+    {
+        unlink(EFStringGetCStringPtr(EFArrayGetValueAtIndex(driver->temporaryOutputPaths, index), kEFStringEncodingUTF8));
+    }
+    EFReleaseTry(driver->temporaryOutputPaths);
 }
 
 EFClass ETAssemblerDriverClass = {
@@ -134,6 +133,12 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
 
     driver->includeSearchPaths = EFArrayCreateMutable(EFGetAllocator(driver), kEFArrayCallbacksObjectCallbacks, argumentsCount);
     if(driver->includeSearchPaths == NULL)
+    {
+        return false;
+    }
+
+    driver->temporaryOutputPaths = EFArrayCreateMutable(EFGetAllocator(driver), kEFArrayCallbacksObjectCallbacks, argumentsCount);
+    if(driver->temporaryOutputPaths == NULL)
     {
         return false;
     }
@@ -403,8 +408,8 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
     return true;
 }
 
-static char *__ETAssemblerDriverTemporaryObjectPathForInputPath(__ETAssemblerDriver driver,
-                                                                const char *input_path)
+static EFStringRef __ETAssemblerDriverTemporaryObjectPathForInputPath(__ETAssemblerDriver driver,
+                                                                       const char *input_path)
 {
     const char *base = strrchr(input_path, '/');
     base = base ? base + 1 : input_path;
@@ -434,10 +439,13 @@ static char *__ETAssemblerDriverTemporaryObjectPathForInputPath(__ETAssemblerDri
     }
     close(fd);
 
-    driver->tmpPaths = realloc(driver->tmpPaths, (driver->tmpPathCount + 1) * sizeof(char *));
-    driver->tmpPaths[driver->tmpPathCount++] = path;
-
-    return path;
+    EFAUTOREL EFStringRef temporaryOutputPath = EFStringCreateWithCString(EFGetAllocator(driver), path, kEFStringEncodingUTF8);
+    free(path);
+    if(!EFArrayAppendValue(driver->temporaryOutputPaths, temporaryOutputPath))
+    {
+        return NULL;
+    }
+    return EFAUTOTRANSFER(temporaryOutputPath);
 }
 
 static Boolean __ETAssemblerDriverAppendLinkerFlag(__ETAssemblerDriver driver,
@@ -502,7 +510,7 @@ Boolean __ETAssemblerDriverJobgen(__ETAssemblerDriver driver)
                 }
                 ratchet_args_append(&ra, "-c");
                 ratchet_args_append(&ra, "-o");
-                ratchet_args_append(&ra, __ETAssemblerDriverTemporaryObjectPathForInputPath(driver, input_path));
+                ratchet_args_efappend(&ra, __ETAssemblerDriverTemporaryObjectPathForInputPath(driver, input_path));
                 ratchet_args_append(&ra, input_path);
 
                 /* feature flags */
@@ -571,7 +579,8 @@ Boolean __ETAssemblerDriverJobgen(__ETAssemblerDriver driver)
     }
 
     /* we only need a linker job when we got objects to link */
-    if(!driver->driverOptions.assembleOnly && driver->tmpPathCount > 0)
+    EFIndex temporaryOutputPathCount = EFArrayGetCount(driver->temporaryOutputPaths);
+    if(!driver->driverOptions.assembleOnly && temporaryOutputPathCount > 0)
     {
         ratchet_args_t ra;
         if(!ratchet_args_init(&ra))
@@ -591,9 +600,9 @@ Boolean __ETAssemblerDriverJobgen(__ETAssemblerDriver driver)
         }
         ratchet_args_append(&ra, "-o");
         ratchet_args_efappend(&ra, driver->outputPath);
-        for(EFIndex i = 0; i < driver->tmpPathCount; i++)
+        for(EFIndex index = 0; index < temporaryOutputPathCount; index++)
         {
-            ratchet_args_append(&ra, driver->tmpPaths[i]);
+            ratchet_args_efappend(&ra, EFArrayGetValueAtIndex(driver->temporaryOutputPaths, index));
         }
         for(EFIndex i = 0; i < driver->linkerFlagCount; i++)
         {
