@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <EmexToolchain/Support/file.h>
 #include <EmexToolchain/ETAssembler/type.h>
-#include <EmexToolchain/ETAssembler/invocation.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 
 char *assembler_code_find_header(const char *name, const char *source_file);
 char *assembler_code_find_system_header(const char *name, const char **inc_dirs, size_t inc_cnt);

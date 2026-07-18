@@ -26,7 +26,7 @@
 #include <unistd.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
 #include <EmexToolchain/ETAssembler/label/label.h>
-#include <EmexToolchain/ETAssembler/invocation.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 
 assembler_label_t *assembler_label_lookup(assembler_invocation_t *inv,
                                           const char *name)

@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <EmexToolchain/ETAssembler/diagnostic/consumer.h>
-#include <EmexToolchain/ETAssembler/invocation.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 
 static const char *__assembler_diagnostic_color(assembler_diagnostic_consumer_context_t *ctx,
                                                 char *str)

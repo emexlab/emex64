@@ -23,7 +23,7 @@
 #define EMEX64ASM_EMITTER_OPCODE_H
 
 #include <EmexToolchain/VM/E64Core.h>
-#include <EmexToolchain/ETAssembler/invocation.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 
 E64Opcode opcode_from_string(const char *name);
 Boolean opcode_arg_accepts_reg_only(const emex64_opfunc_entry_t *opce, UInt8 arg);

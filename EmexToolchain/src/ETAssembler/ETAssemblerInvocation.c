@@ -29,7 +29,7 @@
 #include <EmexToolchain/ETAssembler/label/label.h>
 #include <EmexToolchain/ETAssembler/emitter/emitter.h>
 #include <EmexToolchain/ETAssembler/emitter/elf.h>
-#include <EmexToolchain/ETAssembler/invocation.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 #include <EmexToolchain/ETAssembler/code.h>
 #include <EmexToolchain/ETAssembler/section.h>
 

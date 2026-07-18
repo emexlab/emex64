@@ -22,7 +22,7 @@
 #ifndef EMEX64ASM_EMITTER_IMMEDIATE_H
 #define EMEX64ASM_EMITTER_IMMEDIATE_H
 
-#include <EmexToolchain/ETAssembler/invocation.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 
 void assembler_emit_imm5(assembler_invocation_t *inv, UInt8 imm);
 void assembler_emit_imm8(assembler_invocation_t *inv, UInt8 imm);

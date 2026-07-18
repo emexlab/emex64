@@ -22,7 +22,7 @@
 #ifndef EMEX64ASM_EMITTER_EMITTER_H
 #define EMEX64ASM_EMITTER_EMITTER_H
 
-#include <EmexToolchain/ETAssembler/invocation.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 #include <EmexToolchain/ETAssembler/type.h>
 #include <EmexToolchain/ETAssembler/emitter/opcode.h>
 #include <EmexToolchain/ETAssembler/emitter/register.h>

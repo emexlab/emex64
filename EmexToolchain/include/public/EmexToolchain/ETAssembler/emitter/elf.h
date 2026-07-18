@@ -22,7 +22,7 @@
 #ifndef EMEX64ASM_EMITTER_ELF_H
 #define EMEX64ASM_EMITTER_ELF_H
 
-#include <EmexToolchain/ETAssembler/invocation.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 
 Boolean assembler_elf_emit(struct assembler_invocation *inv);
 

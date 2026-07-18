@@ -23,7 +23,7 @@
 #define EMEX64ASM_EMITTER_REGISTER_H
 
 #include <EmexToolchain/VM/E64Core.h>
-#include <EmexToolchain/ETAssembler/invocation.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 
 typedef struct {
     Boolean valid;

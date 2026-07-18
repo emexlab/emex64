@@ -23,7 +23,7 @@
 #define EMEX64ASM_SECTION_H
 
 #include <EmexToolchain/ETAssembler/type.h>
-#include <EmexToolchain/ETAssembler/invocation.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 
 Boolean assembler_section_parse(assembler_invocation_t *inv);
 

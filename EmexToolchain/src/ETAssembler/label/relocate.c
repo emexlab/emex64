@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <EmexToolchain/ETAssembler/label/relocate.h>
-#include <EmexToolchain/ETAssembler/invocation.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 
 Boolean assembler_label_relocate_append(assembler_invocation_t *inv,
                                         char *label_str,

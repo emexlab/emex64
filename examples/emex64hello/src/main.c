@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
-#include <EmexToolchain/ETAssembler/invocation.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 #include <EmexToolchain/ETLinker/linker.h>
 #include <EmexToolchain/VM/E64Machine.h>
 

@@ -24,7 +24,7 @@
 #include <EmexToolchain/Support/parser.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
 #include <EmexToolchain/ETAssembler/preprocessor/preprocessor.h>
-#include <EmexToolchain/ETAssembler/invocation.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 #include <EmexToolchain/ETAssembler/code.h>
 
 static inline char *__assembler_preprocessor_include_directive_get_token(const char *token,

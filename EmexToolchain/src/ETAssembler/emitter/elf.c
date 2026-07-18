@@ -30,7 +30,7 @@
 #include <EmexToolchain/Support/virtual/vbitwalker.h>
 #include <EmexToolchain/Support/parser.h>
 #include <EmexToolchain/ETAssembler/label/label.h>
-#include <EmexToolchain/ETAssembler/invocation.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 #include <EmexToolchain/ETAssembler/emitter/opcode.h>
 #include <EmexToolchain/ETAssembler/emitter/register.h>
 #include <EmexToolchain/ETAssembler/emitter/emitter.h>

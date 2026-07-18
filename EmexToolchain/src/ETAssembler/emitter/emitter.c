@@ -31,7 +31,7 @@
 #include <EmexToolchain/ETAssembler/label/label.h>
 #include <EmexToolchain/ETAssembler/label/relocate.h>
 #include <EmexToolchain/ETAssembler/emitter/emitter.h>
-#include <EmexToolchain/ETAssembler/invocation.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 #include <EmexToolchain/ETAssembler/lexer.h>
 #include <EmexToolchain/ETAssembler/expr.h>
 

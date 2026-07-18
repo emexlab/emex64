@@ -23,7 +23,7 @@
 #define ETASSEMBLERJOB_H
 
 #include <EmexToolchain/Support/file.h>
-#include <EmexToolchain/ETAssembler/invocation.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 #include <EmexToolchain/ETLinker/type.h>
 
 typedef enum: UInt8 {
