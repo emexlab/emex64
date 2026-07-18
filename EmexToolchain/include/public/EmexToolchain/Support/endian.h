@@ -46,41 +46,4 @@
 
 typedef UInt8 bw_endian_t;
 
-static inline UInt64 bswap_n(UInt64 v,
-                               UInt8 num_bytes)
-{
-    switch(num_bytes)
-    {
-        case 2: return __builtin_bswap16((UInt16)v);
-        case 3: return ((v >> 16) & 0xFF) | (v & 0xFF00) | ((v & 0xFF) << 16);
-        case 4: return __builtin_bswap32((UInt32)v);
-        case 5:
-        case 6:
-        case 7:
-        case 8: return __builtin_bswap64(v) >> ((8 - num_bytes) * 8);
-        default: return v;
-    }
-}
-
-static inline __uint128_t load_window_le(const UInt8 *p,
-                                         size_t n)
-{
-    __uint128_t v = 0;
-    for(size_t i = 0; i < n; i++)
-    {
-        v |= (__uint128_t)p[i] << (8 * i);
-    }
-    return v;
-}
-
-static inline void store_window_le(UInt8 *p,
-                                   __uint128_t v,
-                                   size_t n)
-{
-    for(size_t i = 0; i < n; i++)
-    {
-        p[i] = (UInt8)(v >> (8 * i));
-    }
-}
-
 #endif /* EMEX64_ENDIAN_H */
