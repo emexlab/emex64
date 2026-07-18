@@ -49,13 +49,12 @@ typedef struct __ETAssemblerDriver {
     EFMutableArrayRef includeSearchPaths;
     EFMutableArrayRef temporaryOutputPaths;
 
+    EFMutableArrayRef linkerFlags;
+
     EFMutableArrayRef jobs;
 
     EFIndex macroCount;
     assembler_macro_definition_t *macros;
-
-    EFIndex linkerFlagCount;
-    char **linkerFlags;
 } *__ETAssemblerDriver;
 
 static void __ETAssemblerDriverDeinit(EFObjectRef driverRef)
@@ -69,18 +68,13 @@ static void __ETAssemblerDriverDeinit(EFObjectRef driverRef)
     }
     free(driver->macros);
 
-    for(int i = 0; i < driver->linkerFlagCount; i++)
-    {
-        free(driver->linkerFlags[i]);
-    }
-    free(driver->linkerFlags);
-
     ETAssemblerDiagnosticConsumerEmit(driver->diagnosticConsumer);
     EFReleaseTry(driver->diagnosticConsumer);
     EFReleaseTry(driver->jobs);
     EFReleaseTry(driver->arguments);
     EFReleaseTry(driver->inputFiles);
     EFReleaseTry(driver->includeSearchPaths);
+    EFReleaseTry(driver->linkerFlags);
 
     /* temporaryOutputPaths have to be unlinked */
     EFIndex temporaryObjectPathCount = EFArrayGetCount(driver->temporaryOutputPaths);
@@ -139,6 +133,12 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
 
     driver->temporaryOutputPaths = EFArrayCreateMutable(EFGetAllocator(driver), kEFArrayCallbacksObjectCallbacks, argumentsCount);
     if(driver->temporaryOutputPaths == NULL)
+    {
+        return false;
+    }
+
+    driver->linkerFlags = EFArrayCreateMutable(EFGetAllocator(driver), kEFArrayCallbacksObjectCallbacks, argumentsCount);
+    if(driver->linkerFlags == NULL)
     {
         return false;
     }
@@ -242,15 +242,11 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
             EFIndex flagCount = EFArrayGetCount(components);
             for(EFIndex index = 0; index < flagCount; index++)
             {
-                const char *cptr = EFStringGetCStringPtr(EFArrayGetValueAtIndex(components, index), kEFStringEncodingUTF8);
-                if(cptr == NULL)
+                if(!EFArrayAppendValue(driver->linkerFlags, EFArrayGetValueAtIndex(components, index)))
                 {
                     ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't extract arguments from '-Wl,' argument"));
                     return false;
                 }
-
-                driver->linkerFlags = realloc(driver->linkerFlags, (driver->linkerFlagCount + 1) * sizeof(char *));
-                driver->linkerFlags[driver->linkerFlagCount++] = strdup(cptr);
             }
         }
         else if(EFStringEqualRange(argument, EFSTR("-W"), EFRangeMake(0, 2)))
@@ -448,31 +444,6 @@ static EFStringRef __ETAssemblerDriverTemporaryObjectPathForInputPath(__ETAssemb
     return EFAUTOTRANSFER(temporaryOutputPath);
 }
 
-static Boolean __ETAssemblerDriverAppendLinkerFlag(__ETAssemblerDriver driver,
-                                                   const char *flag)
-{
-    if(flag == NULL)
-    {
-        return false;
-    }
-
-    char *copiedFlag = strdup(flag);
-    if(copiedFlag == NULL)
-    {
-        return false;
-    }
-
-    void *nptr = realloc(driver->linkerFlags, (driver->linkerFlagCount + 1) * sizeof(char *));
-    if(nptr == NULL)
-    {
-        free(copiedFlag);
-        return false;
-    }
-
-    driver->linkerFlags[driver->linkerFlagCount++] = copiedFlag;
-    return true;
-}
-
 Boolean __ETAssemblerDriverJobgen(__ETAssemblerDriver driver)
 {
     /* -c is only meant to assemble one assembly file to a object file */
@@ -567,7 +538,7 @@ Boolean __ETAssemblerDriverJobgen(__ETAssemblerDriver driver)
                 break;
             }
             case kEmexFileTypeObject:
-                if(!__ETAssemblerDriverAppendLinkerFlag(driver, input_path))
+                if(!EFArrayAppendValue(driver->linkerFlags, EFStringCreateWithCString(EFGetAllocator(driver), input_path, kEFStringEncodingUTF8)))
                 {
                     ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't append object input path to linker flags"));
                     return false;
@@ -604,9 +575,10 @@ Boolean __ETAssemblerDriverJobgen(__ETAssemblerDriver driver)
         {
             ratchet_args_efappend(&ra, EFArrayGetValueAtIndex(driver->temporaryOutputPaths, index));
         }
-        for(EFIndex i = 0; i < driver->linkerFlagCount; i++)
+        EFIndex linkerFlagCount = EFArrayGetCount(driver->linkerFlags);
+        for(EFIndex index = 0; index < linkerFlagCount; index++)
         {
-            ratchet_args_append(&ra, driver->linkerFlags[i]);
+            ratchet_args_efappend(&ra, EFArrayGetValueAtIndex(driver->linkerFlags, index));
         }
 
         if(ra.failed)
@@ -733,7 +705,7 @@ ETAssemblerDriverRef ETAssemblerDriverCreateWithOptions(EFAllocatorRef allocator
         fprintf(stderr, "output_path: %s\n", EFStringGetCStringPtr(driver->outputPath, kEFStringEncodingUTF8));
 
         EFIndex inputFileCount = EFArrayGetCount(driver->inputFiles);
-        fprintf(stderr, "inputFile[%ld]: { ", inputFileCount);
+        fprintf(stderr, "inputFiles[%ld]: { ", inputFileCount);
         for(EFIndex index = 0; index < inputFileCount; index++)
         {
             if(index != 0)
@@ -746,7 +718,7 @@ ETAssemblerDriverRef ETAssemblerDriverCreateWithOptions(EFAllocatorRef allocator
         fprintf(stderr, " }\n");
 
         EFIndex includeSearchPathCount = EFArrayGetCount(driver->includeSearchPaths);
-        fprintf(stderr, "incDirs[%ld]: { ", includeSearchPathCount);
+        fprintf(stderr, "includeSearchPaths[%ld]: { ", includeSearchPathCount);
         for(EFIndex index = 0; index < includeSearchPathCount; index++)
         {
             if(index != 0)
@@ -770,14 +742,15 @@ ETAssemblerDriverRef ETAssemblerDriverCreateWithOptions(EFAllocatorRef allocator
 
         if(!driver->driverOptions.assembleOnly)
         {
-            fprintf(stderr, "linkerFlags[%ld]: { ", driver->linkerFlagCount);
-            for(EFIndex i = 0; i < driver->linkerFlagCount; i++)
+            EFIndex linkerFlagCount = EFArrayGetCount(driver->linkerFlags);
+            fprintf(stderr, "linkerFlags[%ld]: { ", linkerFlagCount);
+            for(EFIndex index = 0; index < linkerFlagCount; index++)
             {
-                if(i != 0)
+                if(index != 0)
                 {
                     fprintf(stderr, ", ");
                 }
-                fprintf(stderr, "%s", driver->linkerFlags[i]);
+                fprintf(stderr, "%s", EFStringGetCStringPtr(EFArrayGetValueAtIndex(driver->linkerFlags, index), kEFStringEncodingUTF8)?: "<nil>");
             }
             fprintf(stderr, " }\n");
         }
