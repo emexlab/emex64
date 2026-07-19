@@ -28,10 +28,10 @@
 
 typedef struct emex_file {
     char *path;
-    char *content;          /* mapped file contents */
-    size_t len;             /* lenght of the mapped file contents */
-    vfd_t *d;               /* file descriptor that gets duped by emex_file_dup_fd */
-    VpageObjRef vpageObjRef;   /* virtual page object */
+    char *content;              /* mapped file contents */
+    size_t len;                 /* lenght of the mapped file contents */
+    vfd_t *d;                   /* file descriptor that gets duped by emex_file_dup_fd */
+    EFPageGroupRef vpageObjRef; /* virtual page object */
     EFFileType type;
     EFFilePolicy policy;
 } emex_file_t;

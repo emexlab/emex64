@@ -265,16 +265,15 @@ Boolean emex_file_map(emex_file_t *f)
     {
         case kVFDTypeReal:
         {
-            vpage_t *p = __vpage_alloc(NULL, f->len, emex_file_policy_to_prot(f->policy.neededPermission), MAP_SHARED, f->d->fd, 0);
-            if(p == NULL)
+            EFAUTOREL EFPageRef page = EFPageCreateWithOptions(kEFAllocatorDefault, NULL, f->len, emex_file_policy_to_prot(f->policy.neededPermission), MAP_SHARED, f->d->fd, 0);
+            if(page == NULL)
             {
                 return false;
             }
 
-            f->vpageObjRef = VpageObjCreateWithVpage(kEFAllocatorDefault, p);
+            f->vpageObjRef = EFPageGroupCreateWithPage(kEFAllocatorDefault, page);
             if(f->vpageObjRef == NULL)
             {
-                vpage_dealloc(p);
                 return false;
             }
             break;
@@ -286,22 +285,25 @@ Boolean emex_file_map(emex_file_t *f)
                 return false;
             }
 
-            VpageObjRef *vpageObjRef = f->d->vd.vpageObjRef;
-            if(!VpageObjMergePage(vpageObjRef))
+            EFAUTOREL EFPageGroupRef vpageObjRef = f->d->vd.vpageObjRef;
+            if(!EFPageGroupMerge(vpageObjRef))
             {
-                EFRelease(vpageObjRef);
                 return false;
             }
-
-            f->vpageObjRef = vpageObjRef;
+            f->vpageObjRef = EFAUTOTRANSFER(vpageObjRef);
             break;
         }
     }
 
+    EFArrayRef pages = EFPageGroupGetPages(f->vpageObjRef);
+    EFPageRef page = EFArrayGetValueAtIndex(pages, 0);
+    if(page == NULL)
+    {
+        return false;
+    }
 
-    vpage_t *vpage = VpageObjGetVpage(f->vpageObjRef);
-    f->content = (char*)vpage->p;
-    f->len = vpage->len;
+    f->content = (char*)EFPageGetPtr(page);
+    f->len = EFPageGetLength(page);
 
     return true;
 }

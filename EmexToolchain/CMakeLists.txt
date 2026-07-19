@@ -64,8 +64,6 @@ add_library(EmexToolchain ${LIB_TYPE}
         src/Support/diagnostic/consumer.c
 
         ## Virtual API (Virtualized UNIX Primitives)
-        src/Support/virtual/vpage.c
-        src/Support/virtual/vpageobj.c
         src/Support/virtual/vfd.c
         src/Support/virtual/vbitwalker.c
 

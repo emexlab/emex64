@@ -84,7 +84,7 @@ vfd_t *vfd_vopen()
     }
 
     d->type = kVFDTypeVirtual;
-    d->vd.vpageObjRef = VpageObjCreate(kEFAllocatorDefault);
+    d->vd.vpageObjRef = EFPageGroupCreate(kEFAllocatorDefault);
     d->vd.off = 0;
 
     if(d->vd.vpageObjRef == NULL)
@@ -160,7 +160,7 @@ ssize_t vfd_read(vfd_t *d,
             return read(d->fd, buf, count);
         case kVFDTypeVirtual:
         {
-            ssize_t vret = (ssize_t)VpageObjRead(d->vd.vpageObjRef, (size_t)d->vd.off, buf, count);
+            ssize_t vret = (ssize_t)EFPageGroupRead(d->vd.vpageObjRef, d->vd.off, buf, count);
             if(vret > 0)
             {
                 d->vd.off += vret;
@@ -184,26 +184,22 @@ ssize_t vfd_write(vfd_t *d,
             size_t start = (size_t)d->vd.off;
             size_t end_off = start + count;
 
-            while(end_off > VpageObjGetSize(d->vd.vpageObjRef))
+            while(end_off > (size_t)EFPageGroupGetLength(d->vd.vpageObjRef))
             {
-                if(!VpageObjExtendPage(d->vd.vpageObjRef))
+                if(!EFPageGroupExtend(d->vd.vpageObjRef))
                 {
                     errno = ENOMEM;
                     return -1;
                 }
             }
 
-            ssize_t vret = (ssize_t)VpageObjWrite(d->vd.vpageObjRef, start, buf, count);
+            ssize_t vret = (ssize_t)EFPageGroupWrite(d->vd.vpageObjRef, start, buf, count);
             if(vret < 0)
             {
                 return vret;
             }
 
             d->vd.off = (off_t)(start + (size_t)vret);
-            if((size_t)d->vd.off > VpageObjGetEndMarker(d->vd.vpageObjRef))
-            {
-                VpageObjSetEndMarker(d->vd.vpageObjRef, (size_t)d->vd.off);
-            }
             return vret;
         }
     }
@@ -225,12 +221,16 @@ int vfd_truncate(vfd_t *d, off_t length)
             }
 
             size_t newlen = (size_t)length;
-            size_t oldlen = VpageObjGetEndMarker(d->vd.vpageObjRef);
+            size_t oldlen = (size_t)EFPageGroupGetLastWrittenOffset(d->vd.vpageObjRef);
 
             /* make sure the backing store can hold the new lenght */
-            while(VpageObjGetSize(d->vd.vpageObjRef) < newlen)
+            while((size_t)EFPageGroupGetLength(d->vd.vpageObjRef) < newlen)
             {
-                if(!VpageObjExtendPage(d->vd.vpageObjRef)) { errno = ENOMEM; return -1; }
+                if(!EFPageGroupExtend(d->vd.vpageObjRef))
+                {
+                    errno = ENOMEM;
+                    return -1;
+                }
             }
 
             if(newlen < oldlen)
@@ -240,13 +240,15 @@ int vfd_truncate(vfd_t *d, off_t length)
                 while(pos < oldlen)
                 {
                     size_t chunk = oldlen - pos;
-                    if(chunk > sizeof(zeros)) chunk = sizeof(zeros);
-                    VpageObjWrite(d->vd.vpageObjRef, pos, zeros, chunk);
+                    if(chunk > sizeof(zeros))
+                    {
+                        chunk = sizeof(zeros);
+                    }
+                    EFPageGroupWrite(d->vd.vpageObjRef, pos, zeros, chunk);
                     pos += chunk;
                 }
             }
 
-            VpageObjSetEndMarker(d->vd.vpageObjRef, newlen);
             return 0;
         }
     }
@@ -275,7 +277,7 @@ off_t vfd_seek(vfd_t *d,
                     base = d->vd.off;
                     break;
                 case SEEK_END:
-                    base = (off_t)VpageObjGetEndMarker(d->vd.vpageObjRef);
+                    base = (off_t)EFPageGroupGetLastWrittenOffset(d->vd.vpageObjRef);
                     break;
                 default:
                     errno = EINVAL;
@@ -328,7 +330,7 @@ int vfd_stat(vfd_t *d,
         case kVFDTypeVirtual:
         {
             fflush(stdout);
-            stat->st_size = (off_t)VpageObjGetEndMarker(d->vd.vpageObjRef);
+            stat->st_size = (off_t)EFPageGroupGetLastWrittenOffset(d->vd.vpageObjRef);
             return 0;
         }
     }

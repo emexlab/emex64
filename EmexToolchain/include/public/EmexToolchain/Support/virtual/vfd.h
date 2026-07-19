@@ -27,7 +27,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <sys/stat.h>
-#include <EmexToolchain/Support/virtual/vpageobj.h>
+#include <EmexFoundation/EmexFoundation.h>
 
 typedef enum: UInt8 {
     kVFDTypeReal,
@@ -42,7 +42,7 @@ typedef struct vfd {
 
         struct {
             off_t off;
-            VpageObjRef vpageObjRef;
+            EFPageGroupRef vpageObjRef;
         } vd;
     };
 } vfd_t;

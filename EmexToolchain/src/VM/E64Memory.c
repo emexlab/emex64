@@ -335,7 +335,7 @@ Boolean E64MemoryLoadImage(E64MemoryRef memoryRef,
         return false;
     }
 
-    ssize_t s = VpageObjRead(file->vpageObjRef, 0, memory->memory, image_size);
+    ssize_t s = (ssize_t)EFPageGroupRead(file->vpageObjRef, 0, memory->memory, image_size);
 
     if((size_t)s < image_size)
     {
