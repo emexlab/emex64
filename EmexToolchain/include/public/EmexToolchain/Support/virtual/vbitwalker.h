@@ -22,17 +22,17 @@
 #ifndef EMEX64_VBITWALKER_H
 #define EMEX64_VBITWALKER_H
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/virtual/vfd.h>
-#include <EmexToolchain/Support/endian.h>
 
 typedef struct {
     vfd_t *d;
     size_t byte_pos;
     UInt8 bit_idx;
-    bw_endian_t endian;
+    EFEndian endian;
 } vbitwalker_t;
 
-vbitwalker_t *vbitwalker_alloc(vfd_t *d, bw_endian_t endian);
+vbitwalker_t *vbitwalker_alloc(vfd_t *d, EFEndian endian);
 void vbitwalker_dealloc(vbitwalker_t *fw);
 
 void vbitwalker_reset(vbitwalker_t *fw);

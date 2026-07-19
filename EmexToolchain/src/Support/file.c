@@ -225,7 +225,7 @@ vfd_t *emex_file_dup_vfd(emex_file_t *f)
 }
 
 vbitwalker_t *emex_file_dup_vbitwalker(emex_file_t *f,
-                                       bw_endian_t endian)
+                                       EFEndian endian)
 {
     if(!emex_file_open(f))
     {

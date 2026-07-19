@@ -24,7 +24,7 @@
 #include <EmexToolchain/Support/virtual/vbitwalker.h>
 
 vbitwalker_t *vbitwalker_alloc(vfd_t *d,
-                               bw_endian_t endian)
+                               EFEndian endian)
 {
     vbitwalker_t *vb = malloc(sizeof(vbitwalker_t));
     if(vb == NULL)
@@ -86,7 +86,7 @@ int vbitwalker_write(vbitwalker_t *vb,
     if(num_bits > 8)
     {
         UInt8 num_bytes = (num_bits + 7) / 8;
-        if(vb->endian == BW_BIG_ENDIAN)
+        if(vb->endian == kEFEndianBig)
         {
             value = bswap_n(value, num_bytes);
         }
@@ -142,7 +142,7 @@ UInt64 vbitwalker_read(vbitwalker_t *vb,
     if(num_bits > 8)
     {
         UInt8 num_bytes = (num_bits + 7) / 8;
-        if(vb->endian == BW_BIG_ENDIAN)
+        if(vb->endian == kEFEndianBig)
         {
             value = bswap_n(value, num_bytes);
         }

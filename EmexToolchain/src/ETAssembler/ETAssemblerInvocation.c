@@ -113,7 +113,7 @@ Boolean assembler_invocation_emit(assembler_invocation_t *inv,
                                emex_file_t *output)
 {
     /* need output */
-    inv->out_vbitwalker = emex_file_dup_vbitwalker(output, BW_LITTLE_ENDIAN);
+    inv->out_vbitwalker = emex_file_dup_vbitwalker(output, kEFEndianLittle);
     if(inv->out_vbitwalker == NULL)
     {
         diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "couldn't allocate fdwalker");

@@ -45,7 +45,7 @@ Boolean emex_file_open(emex_file_t *f);
 void emex_file_close(emex_file_t *f);
 
 vfd_t *emex_file_dup_vfd(emex_file_t *f);
-vbitwalker_t *emex_file_dup_vbitwalker(emex_file_t *f, bw_endian_t endian);
+vbitwalker_t *emex_file_dup_vbitwalker(emex_file_t *f, EFEndian endian);
 
 Boolean emex_file_map(emex_file_t *f);
 void emex_file_unmap(emex_file_t *f);

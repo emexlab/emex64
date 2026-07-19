@@ -567,7 +567,7 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
     size_t shdr_off = shstr_off + shstrtab_buf.len;
 
     /* write relocatable elf file ^^ */
-    vbitwalker_t *vb = emex_file_dup_vbitwalker(output, BW_LITTLE_ENDIAN);
+    vbitwalker_t *vb = emex_file_dup_vbitwalker(output, kEFEndianLittle);
     if(!vb)
     {
         free(text.data);
@@ -735,7 +735,7 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
         }
     }
 
-    vbitwalker_t *vb = emex_file_dup_vbitwalker(output, BW_LITTLE_ENDIAN);
+    vbitwalker_t *vb = emex_file_dup_vbitwalker(output, kEFEndianLittle);
     if(vb == NULL)
     {
         return false;
