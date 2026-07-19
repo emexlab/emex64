@@ -27,7 +27,7 @@
 #include <EmexToolchain/VM/E64Machine.h>
 
 static inline emex_file_t *emex_file_alloc_vopen(const char *path,
-                                                 emex_file_policy_t policy)
+                                                 EFFilePolicy policy)
 {
     /* opening a virtual file descriptor */
     vfd_t *d = vfd_vopen();
@@ -58,7 +58,7 @@ int main(void)
      * assemble to a virtual object file we can
      * then link.
      */
-    emex_file_t *unsaved_file = emex_file_alloc_unsaved("test.e64", in_data_file_policy,
+    emex_file_t *unsaved_file = emex_file_alloc_unsaved("test.e64", EFFilePolicyInData,
         "section .data\n"
         "    msg db \"hello, world!\\n\\0\"\n"
         "\n"
@@ -82,7 +82,7 @@ int main(void)
         return 1;
     }
 
-    emex_file_t *object_file = emex_file_alloc_vopen("test.o", out_data_file_policy);
+    emex_file_t *object_file = emex_file_alloc_vopen("test.o", EFFilePolicyOutData);
     if(object_file == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate virtual object file");
@@ -145,7 +145,7 @@ int main(void)
     }
     input_file[0] = object_file;
 
-    emex_file_t *firmware_file = emex_file_alloc_vopen("test.img", out_data_file_policy);
+    emex_file_t *firmware_file = emex_file_alloc_vopen("test.img", EFFilePolicyOutData);
     if(firmware_file == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate virtual firmware file");

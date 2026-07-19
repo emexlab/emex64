@@ -268,7 +268,7 @@ Boolean assembler_preprocessor_run(assembler_invocation_t *inv)
                         free(hdr_token);
 
                         /* now openup a file */
-                        emex_file_t *file = emex_file_alloc(hdr_path, in_data_file_policy);
+                        emex_file_t *file = emex_file_alloc(hdr_path, EFFilePolicyInData);
                         if(file == NULL)
                         {
                             diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[1]), "couldn't open header at path '%s'", hdr_path);

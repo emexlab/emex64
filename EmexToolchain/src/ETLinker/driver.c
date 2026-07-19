@@ -84,7 +84,7 @@ linker_driver_t *linker_driver_alloc(int argc,
         else if(strcmp(argv[i], "-o") == 0 && i + 1 < argc)
         {
             emex_file_dealloc(driver->output_file);
-            driver->output_file = emex_file_alloc(argv[++i], out_data_file_policy);
+            driver->output_file = emex_file_alloc(argv[++i], EFFilePolicyOutData);
             if(driver->output_file == NULL)
             {
                 diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "don't have permission to open file at '%s'", argv[i]);
@@ -97,7 +97,7 @@ linker_driver_t *linker_driver_alloc(int argc,
         }
         else if((strcmp(argv[i], "-T") == 0 || strcmp(argv[i], "--script") == 0) && i + 1 < argc)
         {
-            emex_file_t *script_file = emex_file_alloc(argv[++i], in_data_file_policy);
+            emex_file_t *script_file = emex_file_alloc(argv[++i], EFFilePolicyInData);
             if(script_file == NULL)
             {
                 diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "unknown or non existing script file '%s'", argv[i]);
@@ -107,7 +107,7 @@ linker_driver_t *linker_driver_alloc(int argc,
         }
         else if (strncmp(argv[i], "-T", 2) == 0 && argv[i][2])
         {
-            emex_file_t *script_file = emex_file_alloc(argv[i] + 2, in_data_file_policy);
+            emex_file_t *script_file = emex_file_alloc(argv[i] + 2, EFFilePolicyInData);
             if(script_file == NULL)
             {
                 diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "unknown or non existing script file '%s'", argv[i] + 2);
@@ -133,7 +133,7 @@ linker_driver_t *linker_driver_alloc(int argc,
         }
         else if (argv[i][0] != '-')
         {
-            emex_file_t *input_file = emex_file_alloc(argv[i], in_data_file_policy);
+            emex_file_t *input_file = emex_file_alloc(argv[i], EFFilePolicyInData);
             if(input_file == NULL)
             {
                 diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "unknown or non existing input file '%s'", argv[i]);
@@ -158,7 +158,7 @@ linker_driver_t *linker_driver_alloc(int argc,
     if(driver->output_file == NULL)
     {
         diagnostic_report(driver->consumer, kDiagnosticSeverityWarning, NULL, "no output binary specified, falling back to 'a.out'");
-        driver->output_file = emex_file_alloc("a.out", out_data_file_policy);
+        driver->output_file = emex_file_alloc("a.out", EFFilePolicyOutData);
         if(driver->output_file == NULL)
         {
             diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "don't have permission to open file at 'a.out'");

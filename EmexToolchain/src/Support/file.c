@@ -29,51 +29,30 @@
 #include <sys/stat.h>
 #include <EmexToolchain/Support/file.h>
 
-emex_file_policy_t in_data_file_policy = {
-    .needed_permission = kEmexFilePolicyPermissionRead,
-    .must_exist = true,
-    .must_be_file = true,
-    .create_on_open = false,
-};
-
-emex_file_policy_t out_data_file_policy = {
-    .needed_permission = kEmexFilePolicyPermissionRead | kEmexFilePolicyPermissionWrite,
-    .must_exist = false,
-    .must_be_file = true,
-    .create_on_open = true,
-};
-
-emex_file_policy_t out_nocreate_file_policy = {
-    .needed_permission = kEmexFilePolicyPermissionRead | kEmexFilePolicyPermissionWrite,
-    .must_exist = false,
-    .must_be_file = true,
-    .create_on_open = false,
-};
-
-static inline int emex_file_policy_to_o_rw(kEmexFilePolicyPermission p)
+static inline int emex_file_policy_to_o_rw(EFFilePolicyPermission p)
 {
-    if((p & (kEmexFilePolicyPermissionRead | kEmexFilePolicyPermissionWrite)) == (kEmexFilePolicyPermissionRead | kEmexFilePolicyPermissionWrite))
+    if((p & (kEFFilePolicyPermissionRead | kEFFilePolicyPermissionWrite)) == (kEFFilePolicyPermissionRead | kEFFilePolicyPermissionWrite))
     {
         return O_RDWR;
     }
-    if(p & kEmexFilePolicyPermissionWrite)
+    if(p & kEFFilePolicyPermissionWrite)
     {
         return O_WRONLY;
     }
     return O_RDONLY;
 }
 
-static inline int emex_file_policy_to_prot(kEmexFilePolicyPermission p)
+static inline int emex_file_policy_to_prot(EFFilePolicyPermission p)
 {
     int prot = PROT_NONE;
-    prot |= ((p & kEmexFilePolicyPermissionRead) ? PROT_READ : PROT_NONE);
-    prot |= ((p & kEmexFilePolicyPermissionWrite) ? PROT_WRITE : PROT_NONE);
-    prot |= ((p & kEmexFilePolicyPermissionExecute) ? PROT_EXEC : PROT_NONE);
+    prot |= ((p & kEFFilePolicyPermissionRead) ? PROT_READ : PROT_NONE);
+    prot |= ((p & kEFFilePolicyPermissionWrite) ? PROT_WRITE : PROT_NONE);
+    prot |= ((p & kEFFilePolicyPermissionExecute) ? PROT_EXEC : PROT_NONE);
     return prot;
 }
 
 static emex_file_t *__emex_file_alloc(const char *path,
-                                      emex_file_policy_t policy,
+                                      EFFilePolicy policy,
                                       Boolean care_about_file_exist_policy)
 {
     emex_file_t *f = malloc(sizeof(emex_file_t));
@@ -92,7 +71,7 @@ static emex_file_t *__emex_file_alloc(const char *path,
     char *tmp_path = malloc(PATH_MAX);
     if(realpath(path, tmp_path) == NULL)
     {
-        if(policy.must_exist && care_about_file_exist_policy)
+        if(policy.mustExist && care_about_file_exist_policy)
         {
             free(tmp_path);
             free(f);
@@ -107,8 +86,8 @@ static emex_file_t *__emex_file_alloc(const char *path,
     /* setting standard values */
     f->len = 0;
     f->content = MAP_FAILED;
-    f->type = emex_file_type_for_path(path, policy.must_exist);
-    if(policy.must_be_file && f->type == kEFFileTypeDirectory)
+    f->type = emex_file_type_for_path(path, policy.mustExist);
+    if(policy.mustBeAFile && f->type == kEFFileTypeDirectory)
     {
         free((void*)f->path);
         free(f);
@@ -120,13 +99,13 @@ static emex_file_t *__emex_file_alloc(const char *path,
 }
 
 emex_file_t *emex_file_alloc(const char *path,
-                             emex_file_policy_t policy)
+                             EFFilePolicy policy)
 {
     return __emex_file_alloc(path, policy, true);
 }
 
 emex_file_t *emex_file_alloc_vfd(const char *path,
-                                 emex_file_policy_t policy,
+                                 EFFilePolicy policy,
                                  vfd_t *d)
 {
     d = vfd_dup(d);
@@ -142,7 +121,7 @@ emex_file_t *emex_file_alloc_vfd(const char *path,
         return NULL;
     }
 
-    f->type = emex_file_type_for_path(path, policy.must_exist);
+    f->type = emex_file_type_for_path(path, policy.mustExist);
     if(f->type == kEFFileTypeDirectory)
     {
         vfd_close(d);
@@ -159,7 +138,7 @@ emex_file_t *emex_file_alloc_vfd(const char *path,
 }
 
 emex_file_t *emex_file_alloc_unsaved(const char *path,
-                                     emex_file_policy_t policy,
+                                     EFFilePolicy policy,
                                      const char *content)
 {
     emex_file_t *f = __emex_file_alloc(path, policy, false);
@@ -168,7 +147,7 @@ emex_file_t *emex_file_alloc_unsaved(const char *path,
         return NULL;
     }
 
-    f->type = emex_file_type_for_path(path, policy.must_exist);
+    f->type = emex_file_type_for_path(path, policy.mustExist);
     if(f->type == kEFFileTypeDirectory)
     {
         free(f);
@@ -218,7 +197,7 @@ Boolean emex_file_open(emex_file_t *f)
     }
 
     /* initial open */
-    f->d = vfd_open(f->path, emex_file_policy_to_o_rw(f->policy.needed_permission) | (f->policy.create_on_open ? (O_CREAT | O_TRUNC) : 0), 0755);
+    f->d = vfd_open(f->path, emex_file_policy_to_o_rw(f->policy.neededPermission) | (f->policy.createOnOpen ? (O_CREAT | O_TRUNC) : 0), 0755);
     if(f->d == NULL)
     {
         return false;
@@ -286,7 +265,7 @@ Boolean emex_file_map(emex_file_t *f)
     {
         case kVFDTypeReal:
         {
-            vpage_t *p = __vpage_alloc(NULL, f->len, emex_file_policy_to_prot(f->policy.needed_permission), MAP_SHARED, f->d->fd, 0);
+            vpage_t *p = __vpage_alloc(NULL, f->len, emex_file_policy_to_prot(f->policy.neededPermission), MAP_SHARED, f->d->fd, 0);
             if(p == NULL)
             {
                 return false;

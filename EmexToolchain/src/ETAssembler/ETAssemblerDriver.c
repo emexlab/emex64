@@ -373,7 +373,7 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
                 return false;
             }
 
-            emex_file_t *file = emex_file_alloc(cArgument, in_data_file_policy);
+            emex_file_t *file = emex_file_alloc(cArgument, EFFilePolicyInData);
             if(file == NULL || !(file->type == kEFFileTypeAssembly || file->type == kEFFileTypeAssemblyIncludations || file->type == kEFFileTypeObject))
             {
                 ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown or non existing input file '%@'"), argument);
@@ -805,7 +805,7 @@ Boolean ETAssemblerDriverRun(ETAssemblerDriverRef driverRef)
         inv->include_dir_cnt = includeSearchPathCount;
         inv->include_dirs = includeSearchPaths;
 
-        emex_file_t *output = emex_file_alloc(EFStringGetCStringPtr(driver->outputPath, kEFStringEncodingUTF8), out_data_file_policy);
+        emex_file_t *output = emex_file_alloc(EFStringGetCStringPtr(driver->outputPath, kEFStringEncodingUTF8), EFFilePolicyOutData);
         if(output == NULL)
         {
             emex_file_dealloc(output);

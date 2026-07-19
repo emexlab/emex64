@@ -191,7 +191,7 @@ Boolean assembler_section_parse(assembler_invocation_t *inv)
                         return false;
                     }
 
-                    emex_file_t *file = emex_file_alloc(resolved, in_data_file_policy);
+                    emex_file_t *file = emex_file_alloc(resolved, EFFilePolicyInData);
                     if(file == NULL || !emex_file_map(file))
                     {
                         diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[a]), "cannot map file at '%s'", path_component);

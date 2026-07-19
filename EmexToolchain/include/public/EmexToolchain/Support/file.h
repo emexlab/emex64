@@ -26,23 +26,6 @@
 #include <EmexToolchain/Support/virtual/vbitwalker.h>
 #include <EmexToolchain/Support/virtual/vfd.h>
 
-typedef enum: UInt8 {
-    kEmexFilePolicyPermissionRead =     0b00000001,
-    kEmexFilePolicyPermissionWrite =    0b00000010,
-    kEmexFilePolicyPermissionExecute =  0b00000100,
-} kEmexFilePolicyPermission;
-
-typedef struct emex_file_policy {
-    kEmexFilePolicyPermission needed_permission;    /* permissions them selves */
-    Boolean must_exist;
-    Boolean must_be_file;
-    Boolean create_on_open;
-} emex_file_policy_t;
-
-extern emex_file_policy_t in_data_file_policy;
-extern emex_file_policy_t out_data_file_policy;
-extern emex_file_policy_t out_nocreate_file_policy;
-
 typedef struct emex_file {
     char *path;
     char *content;          /* mapped file contents */
@@ -50,12 +33,12 @@ typedef struct emex_file {
     vfd_t *d;               /* file descriptor that gets duped by emex_file_dup_fd */
     VpageObjRef vpageObjRef;   /* virtual page object */
     EFFileType type;
-    emex_file_policy_t policy;
+    EFFilePolicy policy;
 } emex_file_t;
 
-emex_file_t *emex_file_alloc(const char *path, emex_file_policy_t policy);
-emex_file_t *emex_file_alloc_vfd(const char *path, emex_file_policy_t policy, vfd_t *d);
-emex_file_t *emex_file_alloc_unsaved(const char *path, emex_file_policy_t policy, const char *content);
+emex_file_t *emex_file_alloc(const char *path, EFFilePolicy policy);
+emex_file_t *emex_file_alloc_vfd(const char *path, EFFilePolicy policy, vfd_t *d);
+emex_file_t *emex_file_alloc_unsaved(const char *path, EFFilePolicy policy, const char *content);
 void emex_file_dealloc(emex_file_t *f);
 
 Boolean emex_file_open(emex_file_t *f);

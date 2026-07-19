@@ -225,7 +225,7 @@ int main(int argc, char *argv[])
 
     if(firmware_image_path != NULL)
     {
-        emex_file_t *file = emex_file_alloc(firmware_image_path, in_data_file_policy);
+        emex_file_t *file = emex_file_alloc(firmware_image_path, EFFilePolicyInData);
         if(file == NULL)
     fail:
         {
