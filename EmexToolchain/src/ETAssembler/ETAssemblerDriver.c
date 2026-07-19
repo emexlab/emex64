@@ -374,7 +374,7 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
             }
 
             emex_file_t *file = emex_file_alloc(cArgument, in_data_file_policy);
-            if(file == NULL || !(file->type == kEmexFileTypeAssembly || file->type == kEmexFileTypeAssemblyIncludation || file->type == kEmexFileTypeObject))
+            if(file == NULL || !(file->type == kEFFileTypeAssembly || file->type == kEFFileTypeAssemblyIncludations || file->type == kEFFileTypeObject))
             {
                 ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown or non existing input file '%@'"), argument);
                 return false;
@@ -466,12 +466,12 @@ Boolean __ETAssemblerDriverJobgen(__ETAssemblerDriver driver)
         emex_file_t *inputFile = EFArrayGetValueAtIndex(driver->inputFiles, index);
 
         const char *input_path = inputFile->path;
-        kEmexFileType input_type = inputFile->type;
+        EFFileType input_type = inputFile->type;
 
         switch(input_type)
         {
-            case kEmexFileTypeAssembly:
-            case kEmexFileTypeAssemblyIncludation:
+            case kEFFileTypeAssembly:
+            case kEFFileTypeAssemblyIncludations:
             {
                 ratchet_args_t ra;
                 if(!ratchet_args_init(&ra))
@@ -543,7 +543,7 @@ Boolean __ETAssemblerDriverJobgen(__ETAssemblerDriver driver)
                 }
                 break;
             }
-            case kEmexFileTypeObject:
+            case kEFFileTypeObject:
                 if(!EFArrayAppendValue(driver->linkerFlags, EFStringCreateWithCString(EFGetAllocator(driver), input_path, kEFStringEncodingUTF8)))
                 {
                     ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't append object input path to linker flags"));

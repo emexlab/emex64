@@ -108,7 +108,7 @@ static emex_file_t *__emex_file_alloc(const char *path,
     f->len = 0;
     f->content = MAP_FAILED;
     f->type = emex_file_type_for_path(path, policy.must_exist);
-    if(policy.must_be_file && f->type == kEmexFileTypeDirectory)
+    if(policy.must_be_file && f->type == kEFFileTypeDirectory)
     {
         free((void*)f->path);
         free(f);
@@ -143,7 +143,7 @@ emex_file_t *emex_file_alloc_vfd(const char *path,
     }
 
     f->type = emex_file_type_for_path(path, policy.must_exist);
-    if(f->type == kEmexFileTypeDirectory)
+    if(f->type == kEFFileTypeDirectory)
     {
         vfd_close(d);
         free(f);
@@ -169,7 +169,7 @@ emex_file_t *emex_file_alloc_unsaved(const char *path,
     }
 
     f->type = emex_file_type_for_path(path, policy.must_exist);
-    if(f->type == kEmexFileTypeDirectory)
+    if(f->type == kEFFileTypeDirectory)
     {
         free(f);
         return NULL;
@@ -212,7 +212,7 @@ Boolean emex_file_open(emex_file_t *f)
         return true;
     }
 
-    if(f->type == kEmexFileTypeDirectory)
+    if(f->type == kEFFileTypeDirectory)
     {
         return false;
     }
@@ -361,7 +361,7 @@ static inline const char *get_extension(const char *path)
     return dot + 1;
 }
 
-kEmexFileType emex_file_type_for_path(const char *path, Boolean must_exist)
+EFFileType emex_file_type_for_path(const char *path, Boolean must_exist)
 {
     struct stat st;
     if(stat(path, &st) != 0)
@@ -371,12 +371,12 @@ kEmexFileType emex_file_type_for_path(const char *path, Boolean must_exist)
             goto extension_validation;
         }
 
-        return kEmexFileTypeUnknown;
+        return kEFFileTypeUnknown;
     }
 
     if(S_ISDIR(st.st_mode))
     {
-        return kEmexFileTypeDirectory;
+        return kEFFileTypeDirectory;
     }
     else if(S_ISREG(st.st_mode))
 extension_validation:
@@ -384,46 +384,46 @@ extension_validation:
         const char *extension = get_extension(path);
         if(strcmp("e64", extension) == 0)
         {
-            return kEmexFileTypeAssembly;
+            return kEFFileTypeAssembly;
         }
         else if(strcmp("e64inc", extension) == 0)
         {
-            return kEmexFileTypeAssemblyIncludation;
+            return kEFFileTypeAssemblyIncludations; /* this shall be named kEFFileTypeAssemblyIncludation, without the s in the end */
         }
         else if(strcmp("c", extension) == 0)
         {
-            return kEmexFileTypeC;
+            return kEFFileTypeC;
         }
         else if(strcmp("h", extension) == 0)
         {
-            return kEmexFileTypeCHeader;
+            return kEFFileTypeCHeader;
         }
         else if(strcmp("cpp", extension) == 0 ||
                 strcmp("cxx", extension) == 0 ||
                 strcmp("cc", extension) == 0)
         {
-            return kEmexFileTypeCXX;
+            return kEFFileTypeCXX;
         }
         else if(strcmp("hpp", extension) == 0)
         {
-            return kEmexFileTypeCXXHeader;
+            return kEFFileTypeCXXHeader;
         }
         else if(strcmp("m", extension) == 0)
         {
-            return kEmexFileTypeObjC;
+            return kEFFileTypeObjC;
         }
         else if(strcmp("mm", extension) == 0)
         {
-            return kEmexFileTypeObjCXX;
+            return kEFFileTypeObjCXX;
         }
         else if(strcmp("o", extension) == 0)
         {
-            return kEmexFileTypeObject;
+            return kEFFileTypeObject;
         }
     }
 
     /* couldn't resolve file type lol */
-    return kEmexFileTypeUnknown;
+    return kEFFileTypeUnknown;
 }
 
 static Boolean __EFArrayAppendEmexFileCallback(void *ptr)

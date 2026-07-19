@@ -27,20 +27,6 @@
 #include <EmexToolchain/Support/virtual/vfd.h>
 
 typedef enum: UInt8 {
-    kEmexFileTypeUnknown,
-    kEmexFileTypeDirectory,
-    kEmexFileTypeAssembly,
-    kEmexFileTypeAssemblyIncludation,
-    kEmexFileTypeC,
-    kEmexFileTypeCHeader,
-    kEmexFileTypeCXX,
-    kEmexFileTypeCXXHeader,
-    kEmexFileTypeObjC,
-    kEmexFileTypeObjCXX,
-    kEmexFileTypeObject
-} kEmexFileType;
-
-typedef enum: UInt8 {
     kEmexFilePolicyPermissionRead =     0b00000001,
     kEmexFilePolicyPermissionWrite =    0b00000010,
     kEmexFilePolicyPermissionExecute =  0b00000100,
@@ -63,7 +49,7 @@ typedef struct emex_file {
     size_t len;             /* lenght of the mapped file contents */
     vfd_t *d;               /* file descriptor that gets duped by emex_file_dup_fd */
     VpageObjRef vpageObjRef;   /* virtual page object */
-    kEmexFileType type;
+    EFFileType type;
     emex_file_policy_t policy;
 } emex_file_t;
 
@@ -83,7 +69,7 @@ void emex_file_unmap(emex_file_t *f);
 
 void emex_file_unlink(emex_file_t *f);
 
-kEmexFileType emex_file_type_for_path(const char *path, Boolean must_exist);
+EFFileType emex_file_type_for_path(const char *path, Boolean must_exist);
 
 extern EFArrayCallbacks kEFArrayCallbacksEmexFileCallbacks;
 
