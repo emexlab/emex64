@@ -52,7 +52,7 @@ static inline int emex_file_policy_to_prot(EFFilePolicyPermission p)
 }
 
 static emex_file_t *__emex_file_alloc(const char *path,
-                                      EFFilePolicy policy,
+                                      EFFilePolicy *policy,
                                       Boolean care_about_file_exist_policy)
 {
     emex_file_t *f = calloc(1, sizeof(emex_file_t));
@@ -61,34 +61,46 @@ static emex_file_t *__emex_file_alloc(const char *path,
         return NULL;
     }
 
-    f->policy = policy;
+    EFAUTOREL EFStringRef pathStr = EFStringCreateWithCString(kEFAllocatorDefault, path, kEFStringEncodingUTF8);
+    EFAUTOREL EFURLRef urlRef = EFURLCreateWithString(kEFAllocatorDefault, pathStr);
+    EFAUTOREL EFStringRef urlPathCopy = EFURLCopyPath(kEFAllocatorDefault, urlRef);
+    if(urlPathCopy == NULL)
+    {
+        return NULL;
+    }
+
+    if(EFURLGetType(urlRef) != kEFURLTypePOSIX)
+    {
+        policy->createOnOpen = false;
+        policy->mustBeAFile = false;
+        policy->mustExist = false;
+    }
+
+    EFIndex totalLength = EFStringGetLength(urlPathCopy) + 1;
+    f->path = malloc((size_t)totalLength * sizeof(char));
+    if(!EFStringGetCString(urlPathCopy, f->path, totalLength, kEFStringEncodingUTF8))
+    {
+        return NULL;
+    }
 
     /*
      * resolving the true paths is important
      * so errors can reveal the actual file
      * locations.
      */
-    char *tmp_path = malloc(PATH_MAX);
-    if(realpath(path, tmp_path) == NULL)
+    if(EFURLGetType(urlRef) == kEFURLTypePOSIX &&   /* enables compatibility to internet files */
+       policy->mustExist && care_about_file_exist_policy &&
+       access(EFStringGetCStringPtr(urlPathCopy, kEFStringEncodingUTF8), F_OK) != 0)
     {
-        if(policy.mustExist && care_about_file_exist_policy)
-        {
-            free(tmp_path);
-            free(f);
-            return NULL;
-        }
-
-        free(tmp_path);
-        tmp_path = strdup(path);
+        return NULL;
     }
-    f->path = tmp_path;
 
     /* setting standard values */
     f->len = 0;
     f->map = NULL;
     f->content = MAP_FAILED;
-    f->type = emex_file_type_for_path(path, policy.mustExist);
-    if(policy.mustBeAFile && f->type == kEFFileTypeDirectory)
+    f->type = emex_file_type_for_path(path, policy->mustExist);
+    if(policy->mustBeAFile && f->type == kEFFileTypeDirectory)
     {
         free((void*)f->path);
         free(f);
@@ -96,18 +108,20 @@ static emex_file_t *__emex_file_alloc(const char *path,
     }
     f->d = NULL;
 
+    f->policy = *policy;
+
     return f;
 }
 
 emex_file_t *emex_file_alloc(const char *path,
                              EFFilePolicy policy)
 {
-    return __emex_file_alloc(path, policy, true);
+    return __emex_file_alloc(path, &policy, true);
 }
 
 emex_file_t *emex_file_alloc_vfd(const char *path,
                                  EFFilePolicy policy,
-                                EFFileHandleRef d)
+                                 EFFileHandleRef d)
 {
     EFAUTOREL EFFileHandleRef handle = EFRetainTry(d);
     if(handle == NULL)
@@ -115,7 +129,7 @@ emex_file_t *emex_file_alloc_vfd(const char *path,
         return NULL;
     }
 
-    emex_file_t *f = __emex_file_alloc(path, policy, false);
+    emex_file_t *f = __emex_file_alloc(path, &policy, false);
     if(f == NULL)
     {
         return NULL;
@@ -140,7 +154,7 @@ emex_file_t *emex_file_alloc_unsaved(const char *path,
                                      EFFilePolicy policy,
                                      const char *content)
 {
-    emex_file_t *f = __emex_file_alloc(path, policy, false);
+    emex_file_t *f = __emex_file_alloc(path, &policy, false);
     if(f == NULL)
     {
         return NULL;
@@ -290,7 +304,8 @@ static inline const char *get_extension(const char *path)
     return dot + 1;
 }
 
-EFFileType emex_file_type_for_path(const char *path, Boolean must_exist)
+EFFileType emex_file_type_for_path(const char *path,
+                                   Boolean must_exist)
 {
     struct stat st;
     if(stat(path, &st) != 0)
