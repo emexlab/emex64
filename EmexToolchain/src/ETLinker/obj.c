@@ -58,7 +58,6 @@ linker_object_t *linker_object_alloc(emex_file_t *object_file)
 
     if(!emex_file_map(obj->file))
     {
-        emex_file_dealloc(obj->file);
         free(obj);
         return NULL;
     }
@@ -66,7 +65,6 @@ linker_object_t *linker_object_alloc(emex_file_t *object_file)
     if(obj->file->len < sizeof(ELF64_Shdr))
     {
         //diag_error(NULL, "%s: too small to be ELF\n", obj->file->path);
-        emex_file_dealloc(obj->file);
         free(obj);
         return NULL;
     }
@@ -79,7 +77,6 @@ linker_object_t *linker_object_alloc(emex_file_t *object_file)
        obj->ehdr->e_ident[3] != ELF_MAGIC_3)
     {
         //diag_error(NULL, "%s: not an ELF file\n", obj->file->path);
-        emex_file_dealloc(obj->file);
         free(obj);
         return NULL;
     }
@@ -87,7 +84,6 @@ linker_object_t *linker_object_alloc(emex_file_t *object_file)
     if(obj->ehdr->e_machine != ELF_MAGIC_EMEX64)
     {
         //diag_error(NULL, "%s: not an emex64 object (e_machine=0x%x)\n", obj->file->path, obj->ehdr->e_machine);
-        emex_file_dealloc(obj->file);
         free(obj);
         return NULL;
     }
@@ -95,7 +91,6 @@ linker_object_t *linker_object_alloc(emex_file_t *object_file)
     if(obj->ehdr->e_type != kELFTypeRel)
     {
         //diag_error(NULL, "%s: not a relocatable object\n", obj->file->path);
-        emex_file_dealloc(obj->file);
         free(obj);
         return NULL;
     }
