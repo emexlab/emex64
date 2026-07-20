@@ -104,13 +104,13 @@ void assembler_invocation_dealloc(assembler_invocation_t *inv)
         rtbe = next;
     }
 
-    vbitwalker_dealloc(inv->out_vbitwalker);
+    EFRelease(inv->out_vbitwalker);
     free(inv);
 }
 
 Boolean assembler_invocation_emit(assembler_invocation_t *inv,
-                               emex_file_t *input,
-                               emex_file_t *output)
+                                  emex_file_t *input,
+                                  emex_file_t *output)
 {
     /* need output */
     inv->out_vbitwalker = emex_file_dup_vbitwalker(output, kEFEndianLittle);
@@ -120,7 +120,7 @@ Boolean assembler_invocation_emit(assembler_invocation_t *inv,
         return false;
     }
 
-    vbitwalker_seek(inv->out_vbitwalker, 10, 0);
+    EFBitWalkerSeek(inv->out_vbitwalker, 10, 0);
 
     if(!assembler_code_preparse(inv, input) ||
        !assembler_preprocessor_run(inv) ||

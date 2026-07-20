@@ -95,5 +95,5 @@ Boolean opcode_arg_accepts_reg_only(const emex64_opfunc_entry_t *opce,
 void assembler_emit_opcode(assembler_invocation_t *inv,
                            E64Opcode op)
 {
-    vbitwalker_write(inv->out_vbitwalker, op, 8);
+    EFBitWalkerWrite(inv->out_vbitwalker, op, 8);
 }

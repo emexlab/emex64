@@ -299,24 +299,15 @@ Boolean E64MemoryLoadImage(E64MemoryRef memoryRef,
         return false;
     }
 
-    vfd_t *d = emex_file_dup_vfd(file);
+    EFAUTOREL EFFileHandleRef d = emex_file_dup_vfd(file);
     if(d == NULL)
     {
         diag_fatal(NULL, "failed to dup virtual file descriptor from file\n");
         return false;
     }
 
-    struct stat image_stat;
-    if(vfd_stat(d, &image_stat) != 0)
-    {
-        vfd_close(d);
-        diag_fatal(NULL, "failed to gather size of file at path '%s'\n", file->path);
-        return false;
-    }
-
-    size_t image_size = image_stat.st_size;
-    vfd_close(d);
-    if(image_size > memory->memory_size)
+    EFIndex imageLength = EFFileHandleGetLength(d);
+    if(imageLength > (EFIndex)memory->memory_size)
     {
         diag_error(NULL, "firmware image is too large");
         return false;
@@ -334,10 +325,10 @@ Boolean E64MemoryLoadImage(E64MemoryRef memoryRef,
         diag_error(NULL, "mapping firmware image failed");
         return false;
     }
-
-    ssize_t s = (ssize_t)EFPageGroupRead(file->vpageObjRef, 0, memory->memory, image_size);
-
-    if((size_t)s < image_size)
+    
+    EFFileHandleSeek(d, 0, kEFFileHandleSeekTypeSet);
+    EFIndex readLength = EFFileHandleRead(d, memory->memory, imageLength);
+    if(readLength < imageLength)
     {
         diag_error(NULL, "mapping boot image failed");
         return false;

@@ -63,10 +63,6 @@ add_library(EmexToolchain ${LIB_TYPE}
         src/Support/diagnostic/diagnostic.c
         src/Support/diagnostic/consumer.c
 
-        ## Virtual API (Virtualized UNIX Primitives)
-        src/Support/virtual/vfd.c
-        src/Support/virtual/vbitwalker.c
-
         ## Ratchet API (Safe argument array construction, etc)
         src/Support/ratchet/args.c
 

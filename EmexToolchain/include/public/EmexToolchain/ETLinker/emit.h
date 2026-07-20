@@ -22,7 +22,7 @@
 #ifndef EMEX64LD_EMIT_H
 #define EMEX64LD_EMIT_H
 
-#include <EmexToolchain/Support/virtual/vbitwalker.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/file.h>
 #include <EmexToolchain/ETLinker/type.h>
 #include <EmexToolchain/ETLinker/options.h>

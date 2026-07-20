@@ -36,7 +36,7 @@ Boolean linker_script_parse(linker_invocation_t *inv,
         return false;
     }
 
-    vfd_t *d = emex_file_dup_vfd(script_file);
+    EFAUTOREL EFFileHandleRef d = emex_file_dup_vfd(script_file);
     if(d == NULL)
     {
         /* couldn't dup descriptor */
@@ -45,7 +45,7 @@ Boolean linker_script_parse(linker_invocation_t *inv,
 
     char line[1024];
     int lineno = 0;
-    while(vfd_gets(d, line, sizeof(line)))
+    while(EFFileHandleGets(d, line, sizeof(line)))
     {
         lineno++;
         char *comment = strchr(line, '#');
@@ -87,7 +87,6 @@ Boolean linker_script_parse(linker_invocation_t *inv,
             if(name_len == 0)
             {
                 diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "%s:%d: expected symbol name after PROVIDE", script_file->path, lineno);
-                vfd_close(d);
                 return false;
             }
             char *sym_name = malloc(name_len + 1);
@@ -102,7 +101,6 @@ Boolean linker_script_parse(linker_invocation_t *inv,
             {
                 diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "%s:%d: expected '=' after symbol name", script_file->path, lineno);
                 free(sym_name);
-                vfd_close(d);
                 return false;
             }
             p++;
@@ -127,7 +125,6 @@ Boolean linker_script_parse(linker_invocation_t *inv,
             {
                 diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "%s:%d: empty expression", script_file->path, lineno);
                 free(sym_name);
-                vfd_close(d);
                 return false;
             }
 
@@ -136,7 +133,6 @@ Boolean linker_script_parse(linker_invocation_t *inv,
             {
                 diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "out of memory", script_file->path, lineno);
                 free(sym_name);
-                vfd_close(d);
                 return false;
             }
             inv->script_syms = new;
@@ -148,11 +144,8 @@ Boolean linker_script_parse(linker_invocation_t *inv,
         }
 
         diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "%s:%d: unrecognised linker script directive: '%s'", script_file->path, lineno, p);
-        vfd_close(d);
         return false;
     }
-
-    vfd_close(d);
     return true;
 }
 

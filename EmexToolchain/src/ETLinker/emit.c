@@ -183,7 +183,7 @@ static UInt64 sym_resolve(linker_invocation_t *inv,
 
 static Boolean obj_apply_relocs(linker_invocation_t *inv,
                                 const linker_object_t *o,
-                                vbitwalker_t *vb)
+                                EFBitWalkerRef vb)
 {
     if(o->idx_rela_text >= 0)
     {
@@ -213,8 +213,8 @@ static Boolean obj_apply_relocs(linker_invocation_t *inv,
             }
             UInt64 value = sym_addr + (UInt64)addend;
 
-            vbitwalker_seek(vb, o->base_text + offset, 0);
-            vbitwalker_write(vb, value, 64);
+            EFBitWalkerSeek(vb, o->base_text + offset, 0);
+            EFBitWalkerWrite(vb, value, 64);
         }
     }
 
@@ -246,8 +246,8 @@ static Boolean obj_apply_relocs(linker_invocation_t *inv,
             }
             UInt64 value = sym_addr + (UInt64)addend;
 
-            vbitwalker_seek(vb, o->base_data + offset, 0);
-            vbitwalker_write(vb, value, 64);
+            EFBitWalkerSeek(vb, o->base_data + offset, 0);
+            EFBitWalkerWrite(vb, value, 64);
         }
     }
 
@@ -567,7 +567,7 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
     size_t shdr_off = shstr_off + shstrtab_buf.len;
 
     /* write relocatable elf file ^^ */
-    vbitwalker_t *vb = emex_file_dup_vbitwalker(output, kEFEndianLittle);
+    EFAUTOREL EFBitWalkerRef vb = emex_file_dup_vbitwalker(output, kEFEndianLittle);
     if(!vb)
     {
         free(text.data);
@@ -591,14 +591,14 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
     ehdr.e_shnum = kELFSectionHeaderIndexCount;
     ehdr.e_shstrndx = kELFSectionHeaderIndexShstrtab;
 
-    vbitwalker_write_buf(vb, (const char*)&ehdr, sizeof(ehdr));
-    vbitwalker_write_buf(vb, (const char*)text.data, text.len);
-    vbitwalker_write_buf(vb, (const char*)data.data, data.len);
-    vbitwalker_write_buf(vb, (const char*)rela_text.data, rela_text.len);
-    vbitwalker_write_buf(vb, (const char*)rela_data.data, rela_data.len);
-    vbitwalker_write_buf(vb, (const char*)sym_buf.data, sym_buf.len);
-    vbitwalker_write_buf(vb, (const char*)strtab_buf.data, strtab_buf.len);
-    vbitwalker_write_buf(vb, (const char*)shstrtab_buf.data, shstrtab_buf.len);
+    EFBitWalkerWriteBuffer(vb, (const char*)&ehdr, sizeof(ehdr));
+    EFBitWalkerWriteBuffer(vb, (const char*)text.data, text.len);
+    EFBitWalkerWriteBuffer(vb, (const char*)data.data, data.len);
+    EFBitWalkerWriteBuffer(vb, (const char*)rela_text.data, rela_text.len);
+    EFBitWalkerWriteBuffer(vb, (const char*)rela_data.data, rela_data.len);
+    EFBitWalkerWriteBuffer(vb, (const char*)sym_buf.data, sym_buf.len);
+    EFBitWalkerWriteBuffer(vb, (const char*)strtab_buf.data, strtab_buf.len);
+    EFBitWalkerWriteBuffer(vb, (const char*)shstrtab_buf.data, shstrtab_buf.len);
 
     ELF64_Shdr shdrs[kELFSectionHeaderIndexCount] = {
         [kELFSectionHeaderIndexText] = (ELF64_Shdr){
@@ -671,10 +671,9 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
         },
     };
 
-    vbitwalker_write_buf(vb, (const char *)shdrs, sizeof(shdrs));
+    EFBitWalkerWriteBuffer(vb, (const char *)shdrs, sizeof(shdrs));
 
-    vbitwalker_sync(vb);
-    vbitwalker_dealloc(vb);
+    EFBitWalkerSync(vb);
 
     /* cleanup */
     free(text.data);
@@ -688,14 +687,14 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
     return true;
 }
 
-static void emit_boot_header(vbitwalker_t *vb,
+static void emit_boot_header(EFBitWalkerRef vb,
                              UInt64 entry)
 {
-    vbitwalker_seek(vb, 0, 0);
-    vbitwalker_write(vb, kE64OpcodeB, 8);
-    vbitwalker_write(vb, kE64ParameterCodingAddr64, 3);
-    vbitwalker_align_byte(vb);
-    vbitwalker_write(vb, entry, 64);
+    EFBitWalkerSeek(vb, 0, 0);
+    EFBitWalkerWrite(vb, kE64OpcodeB, 8);
+    EFBitWalkerWrite(vb, kE64ParameterCodingAddr64, 3);
+    EFBitWalkerAlignByte(vb);
+    EFBitWalkerWrite(vb, entry, 64);
 }
 
 static Boolean __linker_link_firmware(linker_invocation_t *inv,
@@ -735,7 +734,7 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
         }
     }
 
-    vbitwalker_t *vb = emex_file_dup_vbitwalker(output, kEFEndianLittle);
+    EFAUTOREL EFBitWalkerRef vb = emex_file_dup_vbitwalker(output, kEFEndianLittle);
     if(vb == NULL)
     {
         return false;
@@ -751,8 +750,8 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
             continue;
         }
         ELF64_Shdr *sh = &obj->shdrs[obj->idx_text];
-        vbitwalker_seek(vb, obj->base_text, 0);
-        vbitwalker_write_buf(vb, obj->file->content + sh->sh_offset, sh->sh_size);
+        EFBitWalkerSeek(vb, obj->base_text, 0);
+        EFBitWalkerWriteBuffer(vb, obj->file->content + sh->sh_offset, sh->sh_size);
         obj = obj->next;
     }
 
@@ -766,8 +765,8 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
             continue;
         }
         ELF64_Shdr *sh = &obj->shdrs[obj->idx_data];
-        vbitwalker_seek(vb, obj->base_data, 0);
-        vbitwalker_write_buf(vb, obj->file->content + sh->sh_offset, sh->sh_size);
+        EFBitWalkerSeek(vb, obj->base_data, 0);
+        EFBitWalkerWriteBuffer(vb, obj->file->content + sh->sh_offset, sh->sh_size);
         obj = obj->next;
     }
 
@@ -777,7 +776,6 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
     {
         if(!obj_apply_relocs(inv, obj, vb))
         {
-            vbitwalker_dealloc(vb);
             return false;
         }
         obj = obj->next;
@@ -790,15 +788,13 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
         if(!gsym || !gsym->defined)
         {
             diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "entry symbol '%s' not found", inv->options.entry_name);
-            vbitwalker_dealloc(vb);
             return false;
         }
         entry_addr = gsym->addr;
         emit_boot_header(vb, entry_addr);
     }
 
-    vbitwalker_sync(vb);
-    vbitwalker_dealloc(vb);
+    EFBitWalkerSync(vb);
 
     UInt64 total_text = inv->out_text_off - (inv->needs_fw_hdr ? BOOT_HEADER_SIZE : 0);
     UInt64 total_data = inv->out_data_off - inv->out_text_off;

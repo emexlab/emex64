@@ -59,7 +59,7 @@ linker_diagnostic_consumer_t *linker_diagnostic_consumer_alloc()
     linker_diagnostic_consumer_context_t *ctx = consumer->ctx;
     ctx->diagnostic = NULL;
     ctx->diagnostic_cnt = 0;
-    ctx->d = vfd_open_fd(STDERR_FILENO);
+    ctx->d = EFFileHandleCreateWithFileDescriptor(kEFAllocatorDefault, STDERR_FILENO);
     if(ctx->d == NULL)
     {
         free(ctx);
@@ -80,7 +80,7 @@ void linker_diagnostic_consumer_dealloc(linker_diagnostic_consumer_t *consumer)
     }
 
     linker_diagnostic_consumer_context_t *ctx = consumer->ctx;
-    vfd_close(ctx->d);
+    EFRelease(ctx->d);
     for(UInt64 i = 0; i < ctx->diagnostic_cnt; i++)
     {
         diagnostic_dealloc(ctx->diagnostic[i]);
@@ -100,31 +100,31 @@ void linker_diagnostic_consumer_emit(linker_diagnostic_consumer_t *consumer)
         diagnostic_t *diagnostic = ctx->diagnostic[i];
         if(diagnostic->location != NULL)
         {
-            vfdprintf(ctx->d, "%s:%llu:%llu: ", diagnostic->location->file_name, diagnostic->location->ln, diagnostic->location->col);
+            EFFileHandlePrintf(ctx->d, "%s:%llu:%llu: ", diagnostic->location->file_name, diagnostic->location->ln, diagnostic->location->col);
         }
 
         /* fallback when no consumer was specified */
         switch(diagnostic->severity)
         {
             case kDiagnosticSeverityNote:
-                vfdprintf(ctx->d, "%snote:", C_NOTE);
+                EFFileHandlePrintf(ctx->d, "%snote:", C_NOTE);
                 break;
             case kDiagnosticSeverityWarning:
-                vfdprintf(ctx->d, "%swarning:", C_WARN);
+                EFFileHandlePrintf(ctx->d, "%swarning:", C_WARN);
                 break;
             case kDiagnosticSeverityError:
-                vfdprintf(ctx->d, "%serror:", C_ERROR);
+                EFFileHandlePrintf(ctx->d, "%serror:", C_ERROR);
                 break;
             case kDiagnosticSeverityFatal:
             default:
-                vfdprintf(ctx->d, "%sfatal:", C_ERROR);
+                EFFileHandlePrintf(ctx->d, "%sfatal:", C_ERROR);
                 break;
         }
-        vfdprintf(ctx->d, "%s ", C_RESET);
+        EFFileHandlePrintf(ctx->d, "%s ", C_RESET);
 
-        vfdprintf(ctx->d, "%s\n", diagnostic->str);
+        EFFileHandlePrintf(ctx->d, "%s\n", diagnostic->str);
 
         /* dont forget to flush the toilet otherwise things get stinky */
-        vfd_sync(ctx->d);
+        EFFileHandleSync(ctx->d);
     }
 }

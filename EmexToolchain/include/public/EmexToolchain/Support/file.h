@@ -23,29 +23,30 @@
 #define EMEX64_FILE_H
 
 #include <EmexFoundation/EmexFoundation.h>
-#include <EmexToolchain/Support/virtual/vbitwalker.h>
-#include <EmexToolchain/Support/virtual/vfd.h>
 
 typedef struct emex_file {
     char *path;
+
+    EFDataRef map;              /* compatibility layer */
     char *content;              /* mapped file contents */
     size_t len;                 /* lenght of the mapped file contents */
-    vfd_t *d;                   /* file descriptor that gets duped by emex_file_dup_fd */
+    
+    EFFileHandleRef d;          /* file descriptor that gets duped by emex_file_dup_fd */
     EFPageGroupRef vpageObjRef; /* virtual page object */
     EFFileType type;
     EFFilePolicy policy;
 } emex_file_t;
 
 emex_file_t *emex_file_alloc(const char *path, EFFilePolicy policy);
-emex_file_t *emex_file_alloc_vfd(const char *path, EFFilePolicy policy, vfd_t *d);
+emex_file_t *emex_file_alloc_vfd(const char *path, EFFilePolicy policy, EFFileHandleRef d);
 emex_file_t *emex_file_alloc_unsaved(const char *path, EFFilePolicy policy, const char *content);
 void emex_file_dealloc(emex_file_t *f);
 
 Boolean emex_file_open(emex_file_t *f);
 void emex_file_close(emex_file_t *f);
 
-vfd_t *emex_file_dup_vfd(emex_file_t *f);
-vbitwalker_t *emex_file_dup_vbitwalker(emex_file_t *f, EFEndian endian);
+EFFileHandleRef emex_file_dup_vfd(emex_file_t *f);
+EFBitWalkerRef emex_file_dup_vbitwalker(emex_file_t *f, EFEndian endian);
 
 Boolean emex_file_map(emex_file_t *f);
 void emex_file_unmap(emex_file_t *f);

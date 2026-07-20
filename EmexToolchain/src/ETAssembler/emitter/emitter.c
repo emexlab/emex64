@@ -25,8 +25,8 @@
 #include <assert.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/parser.h>
-#include <EmexToolchain/Support/virtual/vbitwalker.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
 #include <EmexToolchain/ETAssembler/label/label.h>
 #include <EmexToolchain/ETAssembler/label/relocate.h>
@@ -37,7 +37,7 @@
 
 void assembler_emit_end(assembler_invocation_t *inv)
 {
-    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingEnd, 4);
+    EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingEnd, 4);
 }
 
 static inline Boolean opcode_arg_is_branch_target(E64Opcode op,
@@ -91,8 +91,8 @@ static inline Boolean assembler_emit_operand(assembler_token_t *operand)
             label = strdup(operand->str);
         }
 
-        vbitwalker_write(operand->al->inv->out_vbitwalker, kE64ParameterCodingAddr64, 4);
-        vbitwalker_align_byte(operand->al->inv->out_vbitwalker);
+        EFBitWalkerWrite(operand->al->inv->out_vbitwalker, kE64ParameterCodingAddr64, 4);
+        EFBitWalkerAlignByte(operand->al->inv->out_vbitwalker);
 
         if(!assembler_label_relocate_append(operand->al->inv, label, local, operand))
         {
@@ -100,7 +100,7 @@ static inline Boolean assembler_emit_operand(assembler_token_t *operand)
             return false;
         }
 
-        vbitwalker_skip(operand->al->inv->out_vbitwalker, 64);
+        EFBitWalkerSkip(operand->al->inv->out_vbitwalker, 64);
     }
     else
     {
@@ -220,11 +220,11 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
             /* the second operand has to be a plus or a minus */
             if(operand[2]->type == kETAssemblerTokenTypePlus)
             {
-                vbitwalker_write(al->inv->out_vbitwalker, kE64ParameterCodingOffsetAdd, 4);
+                EFBitWalkerWrite(al->inv->out_vbitwalker, kE64ParameterCodingOffsetAdd, 4);
             }
             else if(operand[2]->type == kETAssemblerTokenTypeMinus)
             {
-                vbitwalker_write(al->inv->out_vbitwalker, kE64ParameterCodingOffsetSub, 4);
+                EFBitWalkerWrite(al->inv->out_vbitwalker, kE64ParameterCodingOffsetSub, 4);
             }
             else
             {
@@ -262,8 +262,8 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
                 label = strdup(operand[0]->str);
             }
 
-            vbitwalker_write(al->inv->out_vbitwalker, kE64ParameterCodingAddr64, 4);
-            vbitwalker_align_byte(al->inv->out_vbitwalker);
+            EFBitWalkerWrite(al->inv->out_vbitwalker, kE64ParameterCodingAddr64, 4);
+            EFBitWalkerAlignByte(al->inv->out_vbitwalker);
 
             if(!assembler_label_relocate_append(al->inv, label, local, operand[0]))
             {
@@ -271,7 +271,7 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
                 return false;
             }
 
-            vbitwalker_skip(al->inv->out_vbitwalker, 64);
+            EFBitWalkerSkip(al->inv->out_vbitwalker, 64);
             argno++;
             continue;
         }
@@ -298,7 +298,7 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
         assembler_emit_end(al->inv);
     }
 
-    vbitwalker_align_byte(al->inv->out_vbitwalker);
+    EFBitWalkerAlignByte(al->inv->out_vbitwalker);
     return true;
 }
 
@@ -362,7 +362,7 @@ Boolean assembler_emit(assembler_invocation_t *inv)
         reloc = reloc->next;
     }
 
-    vbitwalker_sync(inv->out_vbitwalker);
+    EFBitWalkerSync(inv->out_vbitwalker);
 
     return !failed;
 }

@@ -67,34 +67,34 @@ static void __assembler_diagnostic_consumer_show_caret_preview(assembler_diagnos
 
     for(int i = 0; i < w - nlen; i++)
     {
-        vfd_putc(ctx->d, ' ');
+        EFFileHandlePutc(ctx->d, ' ');
     }
-    vfd_puts(ctx->d, numbuf);
-    vfd_puts(ctx->d, " | ");
-    vfd_puts(ctx->d, src);
-    vfd_putc(ctx->d, '\n');
+    EFFileHandlePuts(ctx->d, numbuf);
+    EFFileHandlePuts(ctx->d, " | ");
+    EFFileHandlePuts(ctx->d, src);
+    EFFileHandlePutc(ctx->d, '\n');
 
     for(int i = 0; i < w + 1; i++)
     {
-        vfd_putc(ctx->d, ' ');
+        EFFileHandlePutc(ctx->d, ' ');
     }
-    vfd_puts(ctx->d, "| ");
+    EFFileHandlePuts(ctx->d, "| ");
     size_t indent = diagnostic->location->range.start_col > 0 ? diagnostic->location->range.start_col - 1 : 0;
     for(size_t i = 0; i < indent && src[i] != '\0'; i++)
     {
-        vfd_putc(ctx->d, src[i] == '\t' ? '\t' : ' ');
+        EFFileHandlePutc(ctx->d, src[i] == '\t' ? '\t' : ' ');
     }
 
-    vfd_puts(ctx->d, __assembler_diagnostic_color(ctx, C_BOLD));
-    vfd_puts(ctx->d, __assembler_diagnostic_color(ctx, C_CARET));
-    vfd_putc(ctx->d, '^');
+    EFFileHandlePuts(ctx->d, __assembler_diagnostic_color(ctx, C_BOLD));
+    EFFileHandlePuts(ctx->d, __assembler_diagnostic_color(ctx, C_CARET));
+    EFFileHandlePutc(ctx->d, '^');
     size_t span = diagnostic->location->range.end_col > diagnostic->location->range.start_col ? diagnostic->location->range.end_col - diagnostic->location->range.start_col : 1;
     for(size_t i = 1; i < span; i++)
     {
-        vfd_putc(ctx->d, '~');
+        EFFileHandlePutc(ctx->d, '~');
     }
-    vfd_puts(ctx->d, __assembler_diagnostic_color(ctx, C_RESET));
-    vfd_putc(ctx->d, '\n');
+    EFFileHandlePuts(ctx->d, __assembler_diagnostic_color(ctx, C_RESET));
+    EFFileHandlePutc(ctx->d, '\n');
 }
 
 static void __assembler_diagnostic_consumer_consume_diagnostic_handler(diagnostic_consumer_t *consumer,
@@ -133,7 +133,7 @@ assembler_diagnostic_consumer_t *assembler_diagnostic_consumer_alloc(ETAssembler
     ctx->options = options;
     ctx->diagnostic = NULL;
     ctx->diagnostic_cnt = 0;
-    ctx->d = vfd_open_fd(STDERR_FILENO);
+    ctx->d = EFFileHandleCreateWithFileDescriptor(kEFAllocatorDefault, STDERR_FILENO);
     if(ctx->d == NULL)
     {
         free(ctx);
@@ -154,7 +154,7 @@ void assembler_diagnostic_consumer_dealloc(assembler_diagnostic_consumer_t *cons
     }
 
     assembler_diagnostic_consumer_context_t *ctx = consumer->ctx;
-    vfd_close(ctx->d);
+    EFRelease(ctx->d);
     for(UInt64 i = 0; i < ctx->diagnostic_cnt; i++)
     {
         diagnostic_dealloc(ctx->diagnostic[i]);
@@ -174,7 +174,7 @@ void assembler_diagnostic_consumer_emit(assembler_diagnostic_consumer_t *consume
         diagnostic_t *diagnostic = ctx->diagnostic[i];
         if(diagnostic->location != NULL)
         {
-            vfdprintf(ctx->d, "%s:%llu:%llu: ", diagnostic->location->file_name, diagnostic->location->ln, diagnostic->location->col);
+            EFFileHandlePrintf(ctx->d, "%s:%llu:%llu: ", diagnostic->location->file_name, diagnostic->location->ln, diagnostic->location->col);
         }
 
         /* fallback when no consumer was specified */
@@ -182,16 +182,16 @@ void assembler_diagnostic_consumer_emit(assembler_diagnostic_consumer_t *consume
         switch(diagnostic->severity)
         {
             case kDiagnosticSeverityNote:
-                vfdprintf(ctx->d, "%snote:", __assembler_diagnostic_color(ctx, C_NOTE));
+                EFFileHandlePrintf(ctx->d, "%snote:", __assembler_diagnostic_color(ctx, C_NOTE));
                 break;
             case kDiagnosticSeverityWarning:
-                vfdprintf(ctx->d, "%swarning:", __assembler_diagnostic_color(ctx, C_WARN));
+                EFFileHandlePrintf(ctx->d, "%swarning:", __assembler_diagnostic_color(ctx, C_WARN));
                 break;
             case kDiagnosticSeverityError:
-                vfdprintf(ctx->d, "%serror:", __assembler_diagnostic_color(ctx, C_ERROR));
+                EFFileHandlePrintf(ctx->d, "%serror:", __assembler_diagnostic_color(ctx, C_ERROR));
                 break;
             case kDiagnosticSeverityFatal:
-                vfdprintf(ctx->d, "%sfatal:", __assembler_diagnostic_color(ctx, C_ERROR));
+                EFFileHandlePrintf(ctx->d, "%sfatal:", __assembler_diagnostic_color(ctx, C_ERROR));
                 break;
             default:
                 isNotRaw = false;
@@ -200,12 +200,12 @@ void assembler_diagnostic_consumer_emit(assembler_diagnostic_consumer_t *consume
 
         if(isNotRaw)
         {
-            vfdprintf(ctx->d, "%s ", __assembler_diagnostic_color(ctx, C_RESET));
-            vfdprintf(ctx->d, "%s\n", diagnostic->str);
+            EFFileHandlePrintf(ctx->d, "%s ", __assembler_diagnostic_color(ctx, C_RESET));
+            EFFileHandlePrintf(ctx->d, "%s\n", diagnostic->str);
         }
         else
         {
-            vfdprintf(ctx->d, "%s", diagnostic->str);
+            EFFileHandlePrintf(ctx->d, "%s", diagnostic->str);
         }
 
         if(ctx->options.caret_diagnostics &&
@@ -215,7 +215,7 @@ void assembler_diagnostic_consumer_emit(assembler_diagnostic_consumer_t *consume
         }
 
         /* dont forget to flush the toilet otherwise things get stinky */
-        vfd_sync(ctx->d);
+        EFFileHandleSync(ctx->d);
     }
 
     for(UInt64 i = 0; i < ctx->diagnostic_cnt; i++)

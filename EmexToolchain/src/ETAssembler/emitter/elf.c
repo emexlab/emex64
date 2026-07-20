@@ -26,8 +26,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
-#include <EmexToolchain/Support/virtual/vbitwalker.h>
 #include <EmexToolchain/Support/parser.h>
 #include <EmexToolchain/ETAssembler/label/label.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
@@ -108,16 +108,9 @@ Boolean assembler_elf_emit(assembler_invocation_t *inv)
 {
     Boolean ok = false;
 
-    vfd_t *d = inv->out_vbitwalker->d;
+    EFFileHandleRef d = EFBitWalkerGetHandle(inv->out_vbitwalker);
 
-    struct stat st;
-    if(vfd_stat(d, &st) != 0)
-    {
-        diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "elf_emit: fstat failed");
-        return false;
-    }
-
-    size_t flat_size = (size_t)st.st_size;
+    size_t flat_size = (size_t)EFFileHandleGetLength(d);
     UInt8 *flat = malloc(flat_size);
     if(!flat)
     {
@@ -125,7 +118,7 @@ Boolean assembler_elf_emit(assembler_invocation_t *inv)
         return false;
     }
 
-    if(vfd_seek(d, 0, SEEK_SET) < 0 || vfd_read(d, flat, flat_size) != (ssize_t)flat_size)
+    if(EFFileHandleSeek(d, 0, kEFFileHandleSeekTypeSet) < 0 || EFFileHandleRead(d, flat, (EFIndex)flat_size) != (ssize_t)flat_size)
     {
         diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "elf_emit: read flat binary failed");
         free(flat);
@@ -332,19 +325,19 @@ Boolean assembler_elf_emit(assembler_invocation_t *inv)
     size_t shstr_off = str_off + strtab_buf.len;
     size_t shdr_off = shstr_off + shstrtab_buf.len;
 
-    if(vfd_truncate(d, 0) != 0)
+    if(EFFileHandleTruncate(d, 0) != 0)
     {
         diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "elf_emit: ftruncate failed");
         goto done;
     }
-    if(vfd_seek(d, 0, SEEK_SET) < 0)
+    if(EFFileHandleSeek(d, 0, kEFFileHandleSeekTypeSet) < 0)
     {
         diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "elf_emit: lseek failed");
         goto done;
     }
 
 #define WRITE_BUF(buf, len) do { \
-    if(vfd_write(d, (buf), (len)) != (ssize_t)(len)) \
+    if(EFFileHandleWrite(d, (const UInt8*)(buf), (len)) != (ssize_t)(len)) \
     { \
         diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "elf_emit: write failed"); \
         goto done; \
@@ -476,7 +469,7 @@ Boolean assembler_elf_emit(assembler_invocation_t *inv)
 
     WRITE_BUF(shdrs, sizeof(shdrs));
 
-    vfd_sync(d);
+    EFFileHandleSync(d);
     ok = true;
 
 done:

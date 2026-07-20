@@ -30,7 +30,7 @@ static inline emex_file_t *emex_file_alloc_vopen(const char *path,
                                                  EFFilePolicy policy)
 {
     /* opening a virtual file descriptor */
-    vfd_t *d = vfd_vopen();
+    EFAUTOREL EFFileHandleRef d = EFFileHandleCreate(kEFAllocatorDefault);
     if(d == NULL)
     {
         return NULL;
@@ -41,7 +41,6 @@ static inline emex_file_t *emex_file_alloc_vopen(const char *path,
      * which is backed by a vpageobj_t.
      */
     emex_file_t *file = emex_file_alloc_vfd(path, policy, d);
-    vfd_close(d);
     if(file == NULL)
     {
         return NULL;
@@ -122,17 +121,7 @@ int main(void)
     }
     else
     {
-        vfd_t *d = emex_file_dup_vfd(object_file);
-        if(d != NULL)
-        {
-            struct stat fdstat;
-            if(vfd_stat(d, &fdstat) == 0)
-            {
-                diagnostic_report(NULL, kDiagnosticSeverityNote, NULL, "compiled virtual assembly file into virtual object file");
-                fprintf(stderr, "\tvirtual_object_file_size: %llu bytes\n", (unsigned long long)fdstat.st_size);
-            }
-            vfd_close(d);
-        }
+        diagnostic_report(NULL, kDiagnosticSeverityNote, NULL, "compiled virtual assembly file into virtual object file");
     }
 
     /* now we come to linkage >:3 */

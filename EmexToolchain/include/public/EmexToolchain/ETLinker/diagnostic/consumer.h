@@ -24,7 +24,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <EmexToolchain/Support/virtual/vfd.h>
 #include <EmexToolchain/Support/diagnostic/consumer.h>
 
 typedef diagnostic_consumer_t linker_diagnostic_consumer_t;
@@ -32,7 +31,7 @@ typedef diagnostic_consumer_t linker_diagnostic_consumer_t;
 typedef struct linker_diagnostic_consumer_context {
     diagnostic_t **diagnostic;
     UInt64 diagnostic_cnt;
-    vfd_t *d;
+    EFFileHandleRef d;
 } linker_diagnostic_consumer_context_t;
 
 linker_diagnostic_consumer_t *linker_diagnostic_consumer_alloc();

@@ -23,10 +23,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-#include <fcntl.h>
 #include <unistd.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/file.h>
 
 static inline int emex_file_policy_to_o_rw(EFFilePolicyPermission p)
@@ -106,10 +106,10 @@ emex_file_t *emex_file_alloc(const char *path,
 
 emex_file_t *emex_file_alloc_vfd(const char *path,
                                  EFFilePolicy policy,
-                                 vfd_t *d)
+                                EFFileHandleRef d)
 {
-    d = vfd_dup(d);
-    if(d == NULL)
+    EFAUTOREL EFFileHandleRef handle = EFRetainTry(d);
+    if(handle == NULL)
     {
         return NULL;
     }
@@ -117,14 +117,12 @@ emex_file_t *emex_file_alloc_vfd(const char *path,
     emex_file_t *f = __emex_file_alloc(path, policy, false);
     if(f == NULL)
     {
-        vfd_close(d);
         return NULL;
     }
 
     f->type = emex_file_type_for_path(path, policy.mustExist);
     if(f->type == kEFFileTypeDirectory)
     {
-        vfd_close(d);
         free(f);
         return NULL;
     }
@@ -132,7 +130,7 @@ emex_file_t *emex_file_alloc_vfd(const char *path,
     /* setting unsaved values */
     f->len = 0;
     f->content = MAP_FAILED;
-    f->d = d;
+    f->d = EFAUTOTRANSFER(handle);
 
     return f;
 }
@@ -157,7 +155,7 @@ emex_file_t *emex_file_alloc_unsaved(const char *path,
     /* setting unsaved values */
     f->len = 0;
     f->content = MAP_FAILED;
-    f->d = vfd_vopen();
+    f->d = EFFileHandleCreate(kEFAllocatorDefault);
     if(f->d == NULL)
     {
         free(f->path);
@@ -165,8 +163,8 @@ emex_file_t *emex_file_alloc_unsaved(const char *path,
         return NULL;
     }
 
-    vfd_write(f->d, content, strlen(content));
-    vfd_seek(f->d, 0, SEEK_SET);
+    EFFileHandleWrite(f->d, (const UInt8*)content, (EFIndex)strlen(content));
+    EFFileHandleSeek(f->d, 0, kEFFileHandleSeekTypeSet);
 
     return f;
 }
@@ -197,7 +195,8 @@ Boolean emex_file_open(emex_file_t *f)
     }
 
     /* initial open */
-    f->d = vfd_open(f->path, emex_file_policy_to_o_rw(f->policy.neededPermission) | (f->policy.createOnOpen ? (O_CREAT | O_TRUNC) : 0), 0755);
+    EFAUTOREL EFStringRef pathStr = EFStringCreateWithCString(kEFAllocatorDefault, f->path, kEFStringEncodingUTF8);
+    f->d = EFFileHandleCreateWithPathAndOptions(kEFAllocatorDefault, pathStr, emex_file_policy_to_o_rw(f->policy.neededPermission) | (f->policy.createOnOpen ? (O_CREAT | O_TRUNC) : 0), 0755);
     if(f->d == NULL)
     {
         return false;
@@ -210,29 +209,27 @@ void emex_file_close(emex_file_t *f)
 {
     if(f->d != NULL)
     {
-        vfd_close(f->d);
+        EFRelease(f->d);
         f->d = NULL;
     }
 }
 
-vfd_t *emex_file_dup_vfd(emex_file_t *f)
+EFFileHandleRef emex_file_dup_vfd(emex_file_t *f)
 {
     if(!emex_file_open(f))
     {
         return NULL;
     }
-    return vfd_dup(f->d);
+    return EFRetain(f->d);
 }
-
-vbitwalker_t *emex_file_dup_vbitwalker(emex_file_t *f,
-                                       EFEndian endian)
+EFBitWalkerRef emex_file_dup_vbitwalker(emex_file_t *f,
+                                        EFEndian endian)
 {
     if(!emex_file_open(f))
     {
         return NULL;
     }
-
-    return vbitwalker_alloc(f->d, endian);
+    return EFBitWalkerCreateWithHandle(kEFAllocatorDefault, f->d, endian);
 }
 
 Boolean emex_file_map(emex_file_t *f)
@@ -253,57 +250,10 @@ Boolean emex_file_map(emex_file_t *f)
     }
 
     /* initially mapping assembly file */
-    struct stat fdstat;
-    if(vfd_stat(f->d, &fdstat) < 0)
-    {
-        return false;
-    }
-
-    f->len = fdstat.st_size;
-    /* TODO: check if UTF8 encoded or force UTF8 encoding */
-    switch(f->d->type)
-    {
-        case kVFDTypeReal:
-        {
-            EFAUTOREL EFPageRef page = EFPageCreateWithOptions(kEFAllocatorDefault, NULL, f->len, emex_file_policy_to_prot(f->policy.neededPermission), MAP_SHARED, f->d->fd, 0);
-            if(page == NULL)
-            {
-                return false;
-            }
-
-            f->vpageObjRef = EFPageGroupCreateWithPage(kEFAllocatorDefault, page);
-            if(f->vpageObjRef == NULL)
-            {
-                return false;
-            }
-            break;
-        }
-        case kVFDTypeVirtual:
-        {
-            if(!EFRetain(f->d->vd.vpageObjRef))
-            {
-                return false;
-            }
-
-            EFAUTOREL EFPageGroupRef vpageObjRef = f->d->vd.vpageObjRef;
-            if(!EFPageGroupMerge(vpageObjRef))
-            {
-                return false;
-            }
-            f->vpageObjRef = EFAUTOTRANSFER(vpageObjRef);
-            break;
-        }
-    }
-
-    EFArrayRef pages = EFPageGroupGetPages(f->vpageObjRef);
-    EFPageRef page = EFArrayGetValueAtIndex(pages, 0);
-    if(page == NULL)
-    {
-        return false;
-    }
-
-    f->content = (char*)EFPageGetPtr(page);
-    f->len = EFPageGetLength(page);
+    f->len = EFFileHandleGetLength(f->d);
+    EFReleaseTry(f->map);
+    f->map = EFFileHandleReadData(f->d, f->len);
+    f->content = (char*)EFDataGetPtr(f->map);
 
     return true;
 }
@@ -312,7 +262,7 @@ void emex_file_unmap(emex_file_t *f)
 {
     if(f->content != MAP_FAILED)
     {
-        EFRelease(f->vpageObjRef);
+        EFReleaseTry(f->vpageObjRef);
         f->content = MAP_FAILED;
         f->len = 0;
     }
@@ -320,13 +270,10 @@ void emex_file_unmap(emex_file_t *f)
 
 void emex_file_unlink(emex_file_t *f)
 {
-    if(f->d != NULL && f->d->type == kVFDTypeVirtual)
+    if(EFFileHandleGetType(f->d) != kEFFileHandleTypeBSD)
     {
-        /* is virtual anyways */
-        return;
+        unlink(f->path);
     }
-
-    unlink(f->path);
 }
 
 static inline const char *get_extension(const char *path)

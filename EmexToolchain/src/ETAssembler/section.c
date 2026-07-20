@@ -42,7 +42,7 @@ static Boolean __assembler_section_emit_value(assembler_invocation_t *inv,
 {
     if(entry_cnt == 1 && entry[0]->type == kETAssemblerTokenTypeString)
     {
-        vbitwalker_write_buf(inv->out_vbitwalker, entry[0]->string_literal.buf, entry[0]->string_literal.len);
+        EFBitWalkerWriteBuffer(inv->out_vbitwalker, entry[0]->string_literal.buf, (EFIndex)entry[0]->string_literal.len);
         return true;
     }
 
@@ -58,7 +58,7 @@ static Boolean __assembler_section_emit_value(assembler_invocation_t *inv,
             diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(entry[0]), "out of memory, can't append relocation to relocation table");
             return false;
         }
-        vbitwalker_skip(inv->out_vbitwalker, 64);
+        EFBitWalkerSkip(inv->out_vbitwalker, 64);
         return true;
     }
 
@@ -79,7 +79,7 @@ static Boolean __assembler_section_emit_value(assembler_invocation_t *inv,
         }
     }
 
-    vbitwalker_write(inv->out_vbitwalker, (UInt64)value, dbs);
+    EFBitWalkerWrite(inv->out_vbitwalker, (UInt64)value, dbs);
     return true;
 }
 
@@ -113,10 +113,10 @@ Boolean assembler_section_parse(assembler_invocation_t *inv)
             continue;
         }
 
-        vbitwalker_align_byte(inv->out_vbitwalker);
+        EFBitWalkerAlignByte(inv->out_vbitwalker);
         if(inv->data_section_start == UINT64_MAX)
         {
-            inv->data_section_start = vbitwalker_bytes_used(inv->out_vbitwalker);
+            inv->data_section_start = EFBitWalkerBytesUsed(inv->out_vbitwalker);
         }
 
         i++;
@@ -198,7 +198,7 @@ Boolean assembler_section_parse(assembler_invocation_t *inv)
                         return false;
                     }
 
-                    vbitwalker_write_buf(inv->out_vbitwalker, file->content, file->len);
+                    EFBitWalkerWriteBuffer(inv->out_vbitwalker, file->content, (EFIndex)file->len);
                     emex_file_dealloc(file);
                 }
                 continue;
@@ -240,10 +240,10 @@ Boolean assembler_section_parse(assembler_invocation_t *inv)
         i--;
     }
 
-    vbitwalker_align_byte(inv->out_vbitwalker);
+    EFBitWalkerAlignByte(inv->out_vbitwalker);
     if(inv->data_section_start != UINT64_MAX)
     {
-        inv->data_section_end = vbitwalker_bytes_used(inv->out_vbitwalker);
+        inv->data_section_end = (UInt64)EFBitWalkerBytesUsed(inv->out_vbitwalker);
     }
 
     /* only emitting bss section into out virtual file descriptor */
@@ -255,10 +255,10 @@ Boolean assembler_section_parse(assembler_invocation_t *inv)
             continue;
         }
 
-        vbitwalker_align_byte(inv->out_vbitwalker);
+        EFBitWalkerAlignByte(inv->out_vbitwalker);
         if(inv->bss_section_start == UINT64_MAX)
         {
-            inv->bss_section_start = vbitwalker_bytes_used(inv->out_vbitwalker);
+            inv->bss_section_start = (UInt64)EFBitWalkerBytesUsed(inv->out_vbitwalker);
         }
 
         i++;
@@ -298,15 +298,17 @@ Boolean assembler_section_parse(assembler_invocation_t *inv)
                 return false;
             }
 
-            inv->out_vbitwalker->byte_pos += (UInt64)(dbs / 8) * (UInt64)count;
+            EFBitWalkerPosition position = EFBitWalkerGetPosition(inv->out_vbitwalker);
+            position.bytePos += (UInt64)(dbs / 8) * (UInt64)count;
+            EFBitWalkerSetPosition(inv->out_vbitwalker, position);
         }
         i--;
     }
 
-    vbitwalker_align_byte(inv->out_vbitwalker);
+    EFBitWalkerAlignByte(inv->out_vbitwalker);
     if(inv->bss_section_start != UINT64_MAX)
     {
-        UInt64 bss_end = vbitwalker_bytes_used(inv->out_vbitwalker);
+        UInt64 bss_end = (UInt64)EFBitWalkerBytesUsed(inv->out_vbitwalker);
         inv->bss_section_size = bss_end > inv->bss_section_start ? bss_end - inv->bss_section_start : 0;
     }
 

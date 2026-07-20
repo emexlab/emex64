@@ -23,7 +23,6 @@
 #define EMEX64ASM_TYPE_H
 
 #include <stdlib.h>
-#include <EmexToolchain/Support/virtual/vbitwalker.h>
 #include <EmexToolchain/VM/E64Core.h>
 
 typedef enum: UInt8 {

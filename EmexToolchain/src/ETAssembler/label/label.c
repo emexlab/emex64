@@ -154,7 +154,7 @@ Boolean assembler_label_append(assembler_token_t *at)
             /* 'extern' already made it global */
             label->defined = true;
             label->at_link = at;
-            label->addr = vbitwalker_bytes_used(inv->out_vbitwalker);
+            label->addr = (UInt64)EFBitWalkerBytesUsed(inv->out_vbitwalker);
             free(name);
             return true;
         }
@@ -181,7 +181,7 @@ Boolean assembler_label_append(assembler_token_t *at)
         return false;
     }
 
-    label->addr = vbitwalker_bytes_used(inv->out_vbitwalker);
+    label->addr = (UInt64)EFBitWalkerBytesUsed(inv->out_vbitwalker);
     label->at_link = at;
     label->defined = at->al->type != kETAssemblerLineTypeExternSymbol;
     label->global = at->al->type == kETAssemblerLineTypeExternSymbol || at->al->type == kETAssemblerLineTypeSymbol;

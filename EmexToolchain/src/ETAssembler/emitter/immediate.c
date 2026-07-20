@@ -25,44 +25,44 @@
 void assembler_emit_imm5(assembler_invocation_t *inv,
                          UInt8 imm)
 {
-    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingImm4, 4);
-    vbitwalker_write(inv->out_vbitwalker, imm, 4);
+    EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingImm4, 4);
+    EFBitWalkerWrite(inv->out_vbitwalker, imm, 4);
 }
 
 void assembler_emit_imm8(assembler_invocation_t *inv,
                          UInt8 imm)
 {
-    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingImm8, 4);
-    vbitwalker_write(inv->out_vbitwalker, imm, 8);
+    EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingImm8, 4);
+    EFBitWalkerWrite(inv->out_vbitwalker, imm, 8);
 }
 
 void assembler_emit_imm16(assembler_invocation_t *inv,
                           UInt16 imm)
 {
-    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingImm16, 4);
-    vbitwalker_write(inv->out_vbitwalker, imm, 16);
+    EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingImm16, 4);
+    EFBitWalkerWrite(inv->out_vbitwalker, imm, 16);
 }
 
 void assembler_emit_imm32(assembler_invocation_t *inv,
                           UInt32 imm)
 {
-    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingImm32, 4);
-    vbitwalker_write(inv->out_vbitwalker, imm, 32);
+    EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingImm32, 4);
+    EFBitWalkerWrite(inv->out_vbitwalker, imm, 32);
 }
 
 void assembler_emit_imm64(assembler_invocation_t *inv,
                           UInt64 imm)
 {
-    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingImm64, 4);
-    vbitwalker_write(inv->out_vbitwalker, imm, 64);
+    EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingImm64, 4);
+    EFBitWalkerWrite(inv->out_vbitwalker, imm, 64);
 }
 
 void assembler_emit_addr64(assembler_invocation_t *inv,
                            UInt64 addr)
 {
-    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingAddr64, 4);
-    vbitwalker_align_byte(inv->out_vbitwalker);
-    vbitwalker_write(inv->out_vbitwalker, addr, 64);
+    EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingAddr64, 4);
+    EFBitWalkerAlignByte(inv->out_vbitwalker);
+    EFBitWalkerWrite(inv->out_vbitwalker, addr, 64);
 }
 
 void assembler_emit_imm(assembler_invocation_t *inv,

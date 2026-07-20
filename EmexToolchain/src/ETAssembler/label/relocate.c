@@ -54,7 +54,7 @@ Boolean assembler_label_relocate_append(assembler_invocation_t *inv,
     }
 
     rtbe->name = label_str;
-    rtbe->byte_pos = vbitwalker_bytes_used(inv->out_vbitwalker);
+    rtbe->byte_pos = (UInt64)EFBitWalkerBytesUsed(inv->out_vbitwalker);
     rtbe->at_link = at_link;
     rtbe->local = local;
 

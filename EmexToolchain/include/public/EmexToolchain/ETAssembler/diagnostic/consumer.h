@@ -22,7 +22,6 @@
 #ifndef EMEX64ASM_DIAGNOSTIC_CONSUMER_H
 #define EMEX64ASM_DIAGNOSTIC_CONSUMER_H
 
-#include <EmexToolchain/Support/virtual/vfd.h>
 #include <EmexToolchain/Support/diagnostic/consumer.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerOptions.h>
 
@@ -42,7 +41,7 @@ typedef struct assembler_diagnostic_consumer_context {
     ETAssemblerDiagnosticOptions options;
     diagnostic_t **diagnostic;
     UInt64 diagnostic_cnt;
-    vfd_t *d;
+    EFFileHandleRef d;
 } assembler_diagnostic_consumer_context_t;
 
 assembler_diagnostic_consumer_t *assembler_diagnostic_consumer_alloc(ETAssemblerDiagnosticOptions options);

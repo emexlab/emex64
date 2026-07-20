@@ -130,17 +130,17 @@ void assembler_emit_register(assembler_invocation_t *inv,
 
     if(increment && actuallyDecrement)
     {
-        vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingRegImmDec, 4);
+        EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingRegImmDec, 4);
     }
     else if(increment)
     {
-        vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingRegImmInc, 4);
+        EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingRegImmInc, 4);
     }
     else
     {
-        vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingReg, 4);
+        EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingReg, 4);
     }
-    vbitwalker_write(inv->out_vbitwalker, reg, 4);
+    EFBitWalkerWrite(inv->out_vbitwalker, reg, 4);
 }
 
 void assembler_emit_register_extended(assembler_invocation_t *inv,
@@ -148,6 +148,6 @@ void assembler_emit_register_extended(assembler_invocation_t *inv,
 {
     assert(reg <= kE64RegisterExtendedMAX);
 
-    vbitwalker_write(inv->out_vbitwalker, kE64ParameterCodingRegExtended, 4);
-    vbitwalker_write(inv->out_vbitwalker, reg, 4);
+    EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingRegExtended, 4);
+    EFBitWalkerWrite(inv->out_vbitwalker, reg, 4);
 }
