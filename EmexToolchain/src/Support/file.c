@@ -55,7 +55,7 @@ static emex_file_t *__emex_file_alloc(const char *path,
                                       EFFilePolicy policy,
                                       Boolean care_about_file_exist_policy)
 {
-    emex_file_t *f = malloc(sizeof(emex_file_t));
+    emex_file_t *f = calloc(1, sizeof(emex_file_t));
     if(f == NULL)
     {
         return NULL;
