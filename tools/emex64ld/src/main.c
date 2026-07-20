@@ -19,6 +19,7 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETLinker/linker.h>
 
 int main(int argc, const char *argv[])

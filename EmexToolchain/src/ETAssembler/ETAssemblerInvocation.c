@@ -104,7 +104,7 @@ void assembler_invocation_dealloc(assembler_invocation_t *inv)
         rtbe = next;
     }
 
-    EFRelease(inv->out_vbitwalker);
+    EFReleaseTry(inv->out_vbitwalker);
     free(inv);
 }
 
