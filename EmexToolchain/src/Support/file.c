@@ -85,6 +85,7 @@ static emex_file_t *__emex_file_alloc(const char *path,
 
     /* setting standard values */
     f->len = 0;
+    f->map = NULL;
     f->content = MAP_FAILED;
     f->type = emex_file_type_for_path(path, policy.mustExist);
     if(policy.mustBeAFile && f->type == kEFFileTypeDirectory)
