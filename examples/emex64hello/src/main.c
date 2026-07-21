@@ -21,33 +21,19 @@
 
 #include <stdio.h>
 #include <fcntl.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 #include <EmexToolchain/ETLinker/linker.h>
 #include <EmexToolchain/VM/E64Machine.h>
 
-static inline emex_file_t *emex_file_alloc_vopen(const char *path,
-                                                 EFFilePolicy policy)
+EFFileRef EFFileCreateWithStringAndPath(EFAllocatorRef allocatorRef,
+                                        EFFilePolicy policy,
+                                        EFStringRef path,
+                                        EFStringRef content)
 {
-    /* opening a virtual file descriptor */
-    EFAUTOREL EFFileHandleRef d = EFFileHandleCreate(kEFAllocatorDefault);
-    if(d == NULL)
-    {
-        return NULL;
-    }
-
-    /*
-     * creating a file backed by the virtual file descriptor
-     * which is backed by a vpageobj_t.
-     */
-    emex_file_t *file = emex_file_alloc_vfd(path, policy, d);
-    if(file == NULL)
-    {
-        return NULL;
-    }
-
-    /* file made a duplication of it */
-    return file;
+    EFAUTOREL EFURLRef fileURL = EFURLCreateWithString(allocatorRef, path);
+    return EFFileCreateWithString(allocatorRef, policy, fileURL, content);
 }
 
 int main(void)
@@ -57,7 +43,7 @@ int main(void)
      * assemble to a virtual object file we can
      * then link.
      */
-    emex_file_t *unsaved_file = emex_file_alloc_unsaved("test.e64", EFFilePolicyInData,
+    EFFileRef unsaved_file = EFFileCreateWithStringAndPath(kEFAllocatorDefault, EFFilePolicyInData, EFSTR("test.e64"), EFSTR(
         "section .data\n"
         "    msg db \"hello, world!\\n\\0\"\n"
         "\n"
@@ -74,18 +60,18 @@ int main(void)
         "    bnz r1, .loop\n"
         ".end:\n"
         "    stq [r3 + 0x4000], 0\n"
-    );
+    ));
     if(unsaved_file == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate virtual assembly file");
         return 1;
     }
 
-    emex_file_t *object_file = emex_file_alloc_vopen("test.o", EFFilePolicyOutData);
+    EFFileRef object_file = EFFileCreateWithStringAndPath(kEFAllocatorDefault, EFFilePolicyOutData, EFSTR("test.o"), EFSTR(""));
     if(object_file == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate virtual object file");
-        emex_file_dealloc(unsaved_file);
+        EFRelease(unsaved_file);
         return 1;
     }
 
@@ -94,8 +80,8 @@ int main(void)
     if(consumer == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate consumer for assembler invocation");
-        emex_file_dealloc(object_file);
-        emex_file_dealloc(unsaved_file);
+        EFRelease(object_file);
+        EFRelease(unsaved_file);
         return 1;
     }
 
@@ -104,8 +90,8 @@ int main(void)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate assembler invocation");
         assembler_diagnostic_consumer_dealloc(consumer);
-        emex_file_dealloc(object_file);
-        emex_file_dealloc(unsaved_file);
+        EFRelease(object_file);
+        EFRelease(unsaved_file);
         return 1;
     }
 
@@ -113,11 +99,11 @@ int main(void)
     assembler_invocation_dealloc(inv);
     assembler_diagnostic_consumer_emit(consumer);
     assembler_diagnostic_consumer_dealloc(consumer);
-    emex_file_dealloc(unsaved_file);
+    EFRelease(unsaved_file);
     if(!success)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "ouweee =<");
-        emex_file_dealloc(object_file);
+        EFRelease(object_file);
         return 1;
     }
     else
@@ -126,21 +112,21 @@ int main(void)
     }
 
     /* now we come to linkage >:3 */
-    emex_file_t **input_file = calloc(1, sizeof(emex_file_t*));
+    EFFileRef *input_file = calloc(1, sizeof(EFFileRef));
     if(input_file == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "couldn't allocate input files array for the linker");
-        emex_file_dealloc(object_file);
+        EFRelease(object_file);
         return 1;
     }
     input_file[0] = object_file;
 
-    emex_file_t *firmware_file = emex_file_alloc_vopen("test.img", EFFilePolicyOutData);
+    EFFileRef firmware_file = EFFileCreateWithStringAndPath(kEFAllocatorDefault, EFFilePolicyOutData, EFSTR("test.img"), EFSTR(""));
     if(firmware_file == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate virtual firmware file");
         free(input_file);
-        emex_file_dealloc(object_file);
+        EFRelease(object_file);
         return 1;
     }
 
@@ -148,9 +134,9 @@ int main(void)
     if(lnkconsumer == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate linkers consumer");
-        emex_file_dealloc(firmware_file);
+        EFRelease(firmware_file);
         free(input_file);
-        emex_file_dealloc(object_file);
+        EFRelease(object_file);
         return 1;
     }
 
@@ -158,11 +144,11 @@ int main(void)
     linker_diagnostic_consumer_emit(lnkconsumer);
     linker_diagnostic_consumer_dealloc(lnkconsumer);
     free(input_file);
-    emex_file_dealloc(object_file);
+    EFRelease(object_file);
     if(!success)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to link virtual object file into virtual firmware file");
-        emex_file_dealloc(firmware_file);
+        EFRelease(firmware_file);
         return 1;
     }
     else
@@ -178,7 +164,7 @@ int main(void)
     if(machine == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate virtual machine");
-        emex_file_dealloc(firmware_file);
+        EFRelease(firmware_file);
         return 1;
     }
 
@@ -191,7 +177,7 @@ int main(void)
     }
 
     success = E64MemoryLoadImage(memory, firmware_file);
-    emex_file_dealloc(firmware_file);
+    EFRelease(firmware_file);
     if(!success)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to load virtual firmware file");

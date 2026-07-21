@@ -291,7 +291,7 @@ static inline Boolean emex64_mmu_translate(E64Memory memory,
 }
 
 Boolean E64MemoryLoadImage(E64MemoryRef memoryRef,
-                           emex_file_t *file)
+                           EFFileRef fileRef)
 {
     E64Memory memory = (E64MemoryRef)memoryRef;
     if(memory == NULL)
@@ -299,14 +299,14 @@ Boolean E64MemoryLoadImage(E64MemoryRef memoryRef,
         return false;
     }
 
-    EFAUTOREL EFFileHandleRef d = emex_file_dup_vfd(file);
-    if(d == NULL)
+    EFAUTOREL EFFileHandleRef fileHandle = EFFileCopyFileHandle(EFGetAllocator(memoryRef), fileRef);
+    if(fileHandle == NULL)
     {
-        diag_fatal(NULL, "failed to dup virtual file descriptor from file\n");
+        diag_fatal(NULL, "failed to dup file descriptor from file\n");
         return false;
     }
 
-    EFIndex imageLength = EFFileHandleGetLength(d);
+    EFIndex imageLength = EFFileHandleGetLength(fileHandle);
     if(imageLength > (EFIndex)memory->memory_size)
     {
         diag_error(NULL, "firmware image is too large");
@@ -320,19 +320,14 @@ Boolean E64MemoryLoadImage(E64MemoryRef memoryRef,
      * to a writable page, this is much faster than copying it
      * our selves.
      */
-    if(!emex_file_map(file))
+    SInt32 fileDescriptor = EFFileHandleGetFileDescriptor(fileHandle);
+    EFAUTOREL EFMappingRef mapping = EFMappingCreate(EFGetAllocator(memoryRef), memory->memory, (size_t)imageLength, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_FIXED, fileDescriptor, 0);
+    if(mapping == NULL)
     {
         diag_error(NULL, "mapping firmware image failed");
         return false;
     }
-    
-    EFFileHandleSeek(d, 0, kEFFileHandleSeekTypeSet);
-    EFIndex readLength = EFFileHandleRead(d, memory->memory, imageLength);
-    if(readLength < imageLength)
-    {
-        diag_error(NULL, "mapping boot image failed");
-        return false;
-    }
+    EFMappingDisableUnmap(mapping);
 
     return true;
 }

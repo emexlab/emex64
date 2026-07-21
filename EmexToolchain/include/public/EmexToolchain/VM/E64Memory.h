@@ -27,7 +27,6 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
-#include <EmexToolchain/Support/file.h>
 #include <EmexToolchain/VM/E64Core.h>
 #include <EmexFoundation/EmexFoundation.h>
 
@@ -96,7 +95,7 @@ Boolean E64MemorySetKTRRSize(E64MemoryRef memoryRef, UInt64 size);
 UInt64 E64MemoryGetSize(E64MemoryRef memoryRef);
 Boolean E64MemoryAccessIsWithinBounds(E64MemoryRef memoryRef, UInt64 address, UInt64 size);
 
-Boolean E64MemoryLoadImage(E64MemoryRef memoryRef, emex_file_t *file);
+Boolean E64MemoryLoadImage(E64MemoryRef memoryRef, EFFileRef fileRef);
 
 Boolean E64MemoryAction(E64MemoryRef memoryRef, UInt64 addr, size_t size, UInt64 *value, E64MemoryActionType actionType);
 

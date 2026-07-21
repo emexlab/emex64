@@ -36,18 +36,20 @@ typedef struct expand_entry {
     size_t line_num;
 } expand_entry_t;
 
-static Boolean __assembler_code_fastline(emex_file_t *file,
-                                      expand_entry_t **entries,
-                                      size_t *cnt,
-                                      size_t *cap)
+static Boolean __assembler_code_fastline(EFFileRef file,
+                                         expand_entry_t **entries,
+                                         size_t *cnt,
+                                         size_t *cap)
 {
-    if(!emex_file_map(file))
+    EFAUTOREL EFFileHandleRef fileHandle = EFFileCopyFileHandle(EFGetAllocator(file), file);
+    EFAUTOREL EFMappingRef mapping = EFFileHandleCopyMapping(EFGetAllocator(file), fileHandle);
+    if(mapping == NULL)
     {
         return false;
     }
 
-    size_t len = file->len;
-    const char *code = file->content;
+    size_t len = (size_t)EFMappingGetLength(mapping);
+    const char *code = (const char*)EFMappingGetAddress(mapping);
 
     size_t start = 0;
     size_t phys_line = 0;
@@ -176,8 +178,8 @@ static inline Boolean __assembler_splice_line(assembler_invocation_t *inv,
 }
 
 Boolean assembler_code_inject_file(assembler_invocation_t *inv,
-                                UInt64 at_line_index,
-                                emex_file_t *inj_file)
+                                   UInt64 at_line_index,
+                                   EFFileRef inj_file)
 {
     /* getting code */
     expand_entry_t *entries = NULL;
@@ -190,7 +192,7 @@ Boolean assembler_code_inject_file(assembler_invocation_t *inv,
 
     /* injecting file into array */
     UInt64 inj_file_idx;
-    emex_file_t **newp = realloc(inv->file, (inv->file_cnt + 1) *  sizeof(emex_file_t*));
+    EFFileRef *newp = realloc(inv->file, (inv->file_cnt + 1) *  sizeof(EFFileRef));
     if(newp == NULL)
     {
         goto out_failure;
@@ -307,11 +309,13 @@ out_failure:
 }
 
 Boolean assembler_code_preparse(assembler_invocation_t *inv,
-                             emex_file_t *input)
+                                EFFileRef input)
 {
     if(!assembler_code_inject_file(inv, 0, input))
     {
-        diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "couldn't parse file at '%s'", input->path);
+        EFURLRef url = EFFileGetURL(input);
+        EFAUTOREL EFStringRef path = EFURLCopyPath(EFGetAllocator(url), url);
+        diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "couldn't parse file at '%s'", EFStringGetCStringPtr(path, kEFStringEncodingUTF8));
         return false;
     }
 

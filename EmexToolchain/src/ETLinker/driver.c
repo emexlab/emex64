@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/version.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
 #include <EmexToolchain/ETLinker/linker.h>
@@ -50,10 +51,10 @@ linker_driver_t *linker_driver_alloc(int argc,
 
     driver->output_file = NULL;
 
-    driver->input_file = calloc(argc, sizeof(emex_file_t));
+    driver->input_file = calloc(argc, sizeof(EFFileRef));
     driver->input_file_cnt = 0;
 
-    driver->linker_script_file = calloc(argc, sizeof(emex_file_t));
+    driver->linker_script_file = calloc(argc, sizeof(EFFileRef));
     driver->linker_script_file_cnt = 0;
 
     for(int i = 1; i < argc; i++)
@@ -83,8 +84,9 @@ linker_driver_t *linker_driver_alloc(int argc,
         }
         else if(strcmp(argv[i], "-o") == 0 && i + 1 < argc)
         {
-            emex_file_dealloc(driver->output_file);
-            driver->output_file = emex_file_alloc(argv[++i], EFFilePolicyOutData);
+            EFReleaseTry(driver->output_file);
+            EFAUTOREL EFStringRef pathStr = EFStringCreateWithCString(kEFAllocatorDefault, argv[++i], kEFStringEncodingUTF8);
+            driver->output_file = EFFileCreateWithPath(kEFAllocatorDefault, EFFilePolicyOutData, pathStr);
             if(driver->output_file == NULL)
             {
                 diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "don't have permission to open file at '%s'", argv[i]);
@@ -97,7 +99,8 @@ linker_driver_t *linker_driver_alloc(int argc,
         }
         else if((strcmp(argv[i], "-T") == 0 || strcmp(argv[i], "--script") == 0) && i + 1 < argc)
         {
-            emex_file_t *script_file = emex_file_alloc(argv[++i], EFFilePolicyInData);
+            EFAUTOREL EFStringRef pathStr = EFStringCreateWithCString(kEFAllocatorDefault, argv[++i], kEFStringEncodingUTF8);
+            EFFileRef script_file = EFFileCreateWithPath(kEFAllocatorDefault, EFFilePolicyInData, pathStr);
             if(script_file == NULL)
             {
                 diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "unknown or non existing script file '%s'", argv[i]);
@@ -107,7 +110,8 @@ linker_driver_t *linker_driver_alloc(int argc,
         }
         else if (strncmp(argv[i], "-T", 2) == 0 && argv[i][2])
         {
-            emex_file_t *script_file = emex_file_alloc(argv[i] + 2, EFFilePolicyInData);
+            EFAUTOREL EFStringRef pathStr = EFStringCreateWithCString(kEFAllocatorDefault, argv[i] + 2, kEFStringEncodingUTF8);
+            EFFileRef script_file = EFFileCreateWithPath(kEFAllocatorDefault, EFFilePolicyInData, pathStr);
             if(script_file == NULL)
             {
                 diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "unknown or non existing script file '%s'", argv[i] + 2);
@@ -133,7 +137,8 @@ linker_driver_t *linker_driver_alloc(int argc,
         }
         else if (argv[i][0] != '-')
         {
-            emex_file_t *input_file = emex_file_alloc(argv[i], EFFilePolicyInData);
+            EFAUTOREL EFStringRef pathStr = EFStringCreateWithCString(kEFAllocatorDefault, argv[i], kEFStringEncodingUTF8);
+            EFFileRef input_file = EFFileCreateWithPath(kEFAllocatorDefault, EFFilePolicyInData, pathStr);
             if(input_file == NULL)
             {
                 diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "unknown or non existing input file '%s'", argv[i]);
@@ -158,7 +163,7 @@ linker_driver_t *linker_driver_alloc(int argc,
     if(driver->output_file == NULL)
     {
         diagnostic_report(driver->consumer, kDiagnosticSeverityWarning, NULL, "no output binary specified, falling back to 'a.out'");
-        driver->output_file = emex_file_alloc("a.out", EFFilePolicyOutData);
+        driver->output_file = EFFileCreateWithPath(kEFAllocatorDefault, EFFilePolicyOutData, EFSTR("a.out"));
         if(driver->output_file == NULL)
         {
             diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "don't have permission to open file at 'a.out'");
@@ -176,16 +181,16 @@ void linker_driver_dealloc(linker_driver_t *driver)
 {
     for(UInt64 i = 0; i < driver->input_file_cnt; i++)
     {
-        emex_file_dealloc(driver->input_file[i]);
+        EFRelease(driver->input_file[i]);
     }
     free(driver->input_file);
 
     for(UInt64 i = 0; i < driver->linker_script_file_cnt; i++)
     {
-        emex_file_dealloc(driver->linker_script_file[i]);
+        EFRelease(driver->linker_script_file[i]);
     }
     free(driver->linker_script_file);
-    emex_file_dealloc(driver->output_file);
+    EFReleaseTry(driver->output_file);
     linker_diagnostic_consumer_emit(driver->consumer);
     linker_diagnostic_consumer_dealloc(driver->consumer);
     free(driver);
@@ -196,7 +201,7 @@ Boolean linker_driver_drive_the_fucking_car(linker_driver_t *driver)
     Boolean success = linker_link(driver->options, driver->consumer, driver->input_file, driver->input_file_cnt, driver->linker_script_file, driver->linker_script_file_cnt, driver->output_file);
     if(!success)
     {
-        emex_file_unlink(driver->output_file);
+        EFFileUnlink(driver->output_file);
     }
     return success;
 }

@@ -225,20 +225,13 @@ int main(int argc, char *argv[])
 
     if(firmware_image_path != NULL)
     {
-        emex_file_t *file = emex_file_alloc(firmware_image_path, EFFilePolicyInData);
-        if(file == NULL)
-    fail:
+        EFAUTOREL EFStringRef firmwareImagePathStr = EFStringCreateWithCString(kEFAllocatorDefault, firmware_image_path, kEFStringEncodingUTF8);
+        EFAUTOREL EFFileRef file = EFFileCreateWithPath(kEFAllocatorDefault, EFFilePolicyInData, firmwareImagePathStr);
+        if(file == NULL || !E64MemoryLoadImage(memory, file))
         {
             diag_error(NULL, "failed to load firmware image");
             EFRelease(machine);
             return 1;
-        }
-
-        Boolean success = E64MemoryLoadImage(memory, file);
-        emex_file_dealloc(file);
-        if(!success)
-        {
-            goto fail;
         }
     }
 

@@ -23,7 +23,6 @@
 #define ETASSEMBLERDRIVER_H
 
 #include <EmexFoundation/EmexFoundation.h>
-#include <EmexToolchain/Support/file.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerJob.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 #include <EmexToolchain/ETLinker/type.h>

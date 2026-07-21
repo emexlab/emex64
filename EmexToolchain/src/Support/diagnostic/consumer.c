@@ -28,7 +28,8 @@ static void __diagnostic_consumer_consume_diagnostic_fallback_handler(diagnostic
 {
     if(diagnostic->location != NULL)
     {
-        fprintf(stderr, "%s:%" PRIu64 ":%" PRIu64 ":", diagnostic->location->file_name, diagnostic->location->ln, diagnostic->location->col);
+        EFAUTOREL EFStringRef path = EFURLCopyPath(kEFAllocatorDefault, diagnostic->location->fileURL);
+        fprintf(stderr, "%s:%" PRIu64 ":%" PRIu64 ":", EFStringGetCStringPtr(path, kEFStringEncodingUTF8), diagnostic->location->ln, diagnostic->location->col);
     }
 
     /* fallback when no consumer was specified */
@@ -68,6 +69,11 @@ void diagnostic_report(diagnostic_consumer_t *consumer,
                        const char *str,
                        ...)
 {
+    if(location != NULL && location->fileURL == NULL)
+    {
+        location = NULL;
+    }
+
     va_list args;
     va_start(args, str);
     diagnostic_t *diagnostic = diagnostic_allocv(severity, location, str, args);

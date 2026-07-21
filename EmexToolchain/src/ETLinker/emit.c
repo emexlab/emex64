@@ -46,9 +46,9 @@ static Boolean obj_register_symbols(linker_invocation_t *inv,
     }
 
     ELF64_Shdr *symsh = &o->shdrs[o->idx_symtab];
-    ELF64_Sym *syms = (ELF64_Sym *)(o->file->content + symsh->sh_offset);
+    ELF64_Sym *syms = (ELF64_Sym *)(o->content + symsh->sh_offset);
     size_t nsyms  = symsh->sh_size / sizeof(ELF64_Sym);
-    const char *strtab = (o->idx_strtab >= 0) ? (char *)(o->file->content + o->shdrs[o->idx_strtab].sh_offset) : NULL;
+    const char *strtab = (o->idx_strtab >= 0) ? (char *)(o->content + o->shdrs[o->idx_strtab].sh_offset) : NULL;
 
     for(size_t i = 0; i < nsyms; i++)
     {
@@ -87,7 +87,10 @@ static Boolean obj_register_symbols(linker_invocation_t *inv,
             addr = sym->st_value;
         }
 
-        if(!linker_symbol_append_definition(inv, name, o->file->path, addr))
+        EFURLRef url = EFFileGetURL(o->file);
+        EFAUTOREL EFStringRef pathStr = EFURLCopyPath(kEFAllocatorDefault, url);
+        const char *pathCStr = EFStringGetCStringPtr(pathStr, kEFStringEncodingUTF8);
+        if(!linker_symbol_append_definition(inv, name, pathCStr, addr))
         {
             return false;
         }
@@ -120,9 +123,9 @@ static UInt64 sym_resolve(linker_invocation_t *inv,
     }
 
     ELF64_Shdr *symsh = &o->shdrs[o->idx_symtab];
-    ELF64_Sym *syms = (ELF64_Sym *)(o->file->content + symsh->sh_offset);
+    ELF64_Sym *syms = (ELF64_Sym *)(o->content + symsh->sh_offset);
     size_t nsyms = symsh->sh_size / sizeof(ELF64_Sym);
-    const char *strtab = (o->idx_strtab >= 0) ? (char *)(o->file->content + o->shdrs[o->idx_strtab].sh_offset) : NULL;
+    const char *strtab = (o->idx_strtab >= 0) ? (char *)(o->content + o->shdrs[o->idx_strtab].sh_offset) : NULL;
 
     if(sym_idx >= nsyms)
     {
@@ -174,7 +177,10 @@ static UInt64 sym_resolve(linker_invocation_t *inv,
             }
         }
 
-        diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "undefined symbol '%s', needed by '%s'", name, o->file->path);
+        EFURLRef url = EFFileGetURL(o->file);
+        EFAUTOREL EFStringRef pathStr = EFURLCopyPath(kEFAllocatorDefault, url);
+        const char *pathCStr = EFStringGetCStringPtr(pathStr, kEFStringEncodingUTF8);
+        diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "undefined symbol '%s', needed by '%s'", name, pathCStr);
         *success = false;
         return 0;
     }
@@ -188,7 +194,7 @@ static Boolean obj_apply_relocs(linker_invocation_t *inv,
     if(o->idx_rela_text >= 0)
     {
         ELF64_Shdr *rs = &o->shdrs[o->idx_rela_text];
-        ELF64_Rela *rela = (ELF64_Rela *)(o->file->content + rs->sh_offset);
+        ELF64_Rela *rela = (ELF64_Rela *)(o->content + rs->sh_offset);
         size_t cnt = rs->sh_size / sizeof(ELF64_Rela);
 
         for(size_t i = 0; i < cnt; i++)
@@ -221,7 +227,7 @@ static Boolean obj_apply_relocs(linker_invocation_t *inv,
     if(o->idx_rela_data >= 0)
     {
         ELF64_Shdr *rs = &o->shdrs[o->idx_rela_data];
-        ELF64_Rela *rela = (ELF64_Rela *)(o->file->content + rs->sh_offset);
+        ELF64_Rela *rela = (ELF64_Rela *)(o->content + rs->sh_offset);
         size_t cnt = rs->sh_size / sizeof(ELF64_Rela);
 
         for(size_t i = 0; i < cnt; i++)
@@ -324,7 +330,7 @@ static size_t strtab_intern(buf_t *strtab, const char *s)
 }
 
 static Boolean __linker_link_relocatable(linker_invocation_t *inv,
-                                         emex_file_t *output)
+                                         EFFileRef output)
 {
     buf_t text = {0}, data = {0};
     buf_t rela_text = {0}, rela_data = {0};
@@ -335,7 +341,11 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
     ELF64_Sym null_sym = {0};
     buf_append(&sym_buf, &null_sym, sizeof(null_sym));
 
-    const char *out_name = (output && output->path) ? output->path : "linked.o";
+    EFURLRef url = EFFileGetURL(output);
+    EFAUTOREL EFStringRef pathStr = EFURLCopyPath(kEFAllocatorDefault, url);
+    const char *pathCStr = EFStringGetCStringPtr(pathStr, kEFStringEncodingUTF8);
+
+    const char *out_name = (output && pathCStr) ? pathCStr : "linked.o";
     const char *slash = strrchr(out_name, '/');
     const char *file_name = slash ? slash + 1 : out_name;
 
@@ -370,12 +380,12 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
         if(o->idx_text >= 0)
         {
             ELF64_Shdr *sh = &o->shdrs[o->idx_text];
-            buf_append(&text, o->file->content + sh->sh_offset, sh->sh_size);
+            buf_append(&text, o->content + sh->sh_offset, sh->sh_size);
         }
         if(o->idx_data >= 0)
         {
             ELF64_Shdr *sh = &o->shdrs[o->idx_data];
-            buf_append(&data, o->file->content + sh->sh_offset, sh->sh_size);
+            buf_append(&data, o->content + sh->sh_offset, sh->sh_size);
         }
     }
 
@@ -388,9 +398,9 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
         }
 
         ELF64_Shdr *symsh = &o->shdrs[o->idx_symtab];
-        ELF64_Sym  *syms  = (ELF64_Sym *)(o->file->content + symsh->sh_offset);
+        ELF64_Sym  *syms  = (ELF64_Sym *)(o->content + symsh->sh_offset);
         size_t nsyms = symsh->sh_size / sizeof(ELF64_Sym);
-        const char *strtab = (o->idx_strtab >= 0) ? (char *)(o->file->content + o->shdrs[o->idx_strtab].sh_offset) : NULL;
+        const char *strtab = (o->idx_strtab >= 0) ? (char *)(o->content + o->shdrs[o->idx_strtab].sh_offset) : NULL;
 
         for(size_t i = 0; i < nsyms; i++)
         {
@@ -474,7 +484,7 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
             if(o->rela_shdr_idx >= 0) \
             { \
                 ELF64_Shdr *rs = &o->shdrs[o->rela_shdr_idx]; \
-                ELF64_Rela *rela = (ELF64_Rela *)(o->file->content + rs->sh_offset); \
+                ELF64_Rela *rela = (ELF64_Rela *)(o->content + rs->sh_offset); \
                 size_t cnt = rs->sh_size / sizeof(ELF64_Rela); \
                 for(size_t i = 0; i < cnt; i++) \
                 { \
@@ -493,10 +503,10 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
                     if(o->idx_symtab >= 0 && o->idx_strtab >= 0) \
                     { \
                         ELF64_Shdr *symsh = &o->shdrs[o->idx_symtab]; \
-                        ELF64_Sym *syms = (ELF64_Sym *)(o->file->content + symsh->sh_offset); \
+                        ELF64_Sym *syms = (ELF64_Sym *)(o->content + symsh->sh_offset); \
                         if(in_sym < symsh->sh_size / sizeof(ELF64_Sym)) \
                         { \
-                            name = (char*)(o->file->content + o->shdrs[o->idx_strtab].sh_offset) + syms[in_sym].st_name; \
+                            name = (char*)(o->content + o->shdrs[o->idx_strtab].sh_offset) + syms[in_sym].st_name; \
                         } \
                     } \
                     if(!name || !*name) \
@@ -567,7 +577,7 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
     size_t shdr_off = shstr_off + shstrtab_buf.len;
 
     /* write relocatable elf file ^^ */
-    EFAUTOREL EFBitWalkerRef vb = emex_file_dup_vbitwalker(output, kEFEndianLittle);
+    EFAUTOREL EFBitWalkerRef vb = EFFileCopyBitWalker(EFGetAllocator(output), output, kEFEndianLittle);
     if(!vb)
     {
         free(text.data);
@@ -698,7 +708,7 @@ static void emit_boot_header(EFBitWalkerRef vb,
 }
 
 static Boolean __linker_link_firmware(linker_invocation_t *inv,
-                                      emex_file_t *output)
+                                      EFFileRef output)
 {
     linker_symbol_t *gsym = linker_symbol_lookup(inv, inv->options.entry_name);
     if(gsym == NULL || !gsym->defined)
@@ -734,7 +744,7 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
         }
     }
 
-    EFAUTOREL EFBitWalkerRef vb = emex_file_dup_vbitwalker(output, kEFEndianLittle);
+    EFAUTOREL EFBitWalkerRef vb = EFFileCopyBitWalker(EFGetAllocator(output), output, kEFEndianLittle);
     if(vb == NULL)
     {
         return false;
@@ -751,7 +761,7 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
         }
         ELF64_Shdr *sh = &obj->shdrs[obj->idx_text];
         EFBitWalkerSeek(vb, obj->base_text, 0);
-        EFBitWalkerWriteBuffer(vb, obj->file->content + sh->sh_offset, sh->sh_size);
+        EFBitWalkerWriteBuffer(vb, obj->content + sh->sh_offset, sh->sh_size);
         obj = obj->next;
     }
 
@@ -766,7 +776,7 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
         }
         ELF64_Shdr *sh = &obj->shdrs[obj->idx_data];
         EFBitWalkerSeek(vb, obj->base_data, 0);
-        EFBitWalkerWriteBuffer(vb, obj->file->content + sh->sh_offset, sh->sh_size);
+        EFBitWalkerWriteBuffer(vb, obj->content + sh->sh_offset, sh->sh_size);
         obj = obj->next;
     }
 
@@ -801,7 +811,11 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
 
     if(inv->options.verbose)
     {
-        fprintf(stderr, "emex64ld: linked object(s) → %s\n", output->path);
+        EFURLRef url = EFFileGetURL(output);
+        EFAUTOREL EFStringRef pathStr = EFURLCopyPath(kEFAllocatorDefault, url);
+        const char *pathCStr = EFStringGetCStringPtr(pathStr, kEFStringEncodingUTF8);
+
+        fprintf(stderr, "emex64ld: linked object(s) → %s\n", pathCStr);
         if(inv->options.emit_mode == kEmitModeFirmware)
         {
             fprintf(stderr, "  .fw_hdr  %8lu bytes @ 0x%08lx\n", inv->needs_fw_hdr ? (unsigned long)BOOT_HEADER_SIZE : 0, (unsigned long)0);
@@ -817,11 +831,11 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
 
 Boolean linker_link(linker_options_t options,
                     linker_diagnostic_consumer_t *diagnostic_consumer,
-                    emex_file_t **input_file,
+                    EFFileRef *input_file,
                     UInt64 input_file_cnt,
-                    emex_file_t **linker_script_file,
+                    EFFileRef *linker_script_file,
                     UInt64 linker_script_file_cnt,
-                    emex_file_t *output)
+                    EFFileRef output)
 {
     linker_invocation_t *inv = linker_invocation_alloc(options, diagnostic_consumer);
     if(inv == NULL)
@@ -833,7 +847,10 @@ Boolean linker_link(linker_options_t options,
     {
         if(!linker_load_object(inv, input_file[i]))
         {
-            diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "object file \'%s\' couldn't be loaded", input_file[i]->path);
+            EFURLRef url = EFFileGetURL(input_file[i]);
+            EFAUTOREL EFStringRef pathStr = EFURLCopyPath(kEFAllocatorDefault, url);
+            const char *pathCStr = EFStringGetCStringPtr(pathStr, kEFStringEncodingUTF8);
+            diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "object file \'%s\' couldn't be loaded", pathCStr);
             linker_invocation_dealloc(inv);
             return false;
         }
@@ -844,7 +861,10 @@ Boolean linker_link(linker_options_t options,
     {
         if(!linker_script_parse(inv, linker_script_file[i]))
         {
-            diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "linker script file \'%s\' is problematic", linker_script_file[i]->path);
+            EFURLRef url = EFFileGetURL(input_file[i]);
+            EFAUTOREL EFStringRef pathStr = EFURLCopyPath(kEFAllocatorDefault, url);
+            const char *pathCStr = EFStringGetCStringPtr(pathStr, kEFStringEncodingUTF8);
+            diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "linker script file \'%s\' is problematic", pathCStr);
             linker_invocation_dealloc(inv);
             return false;
         }
@@ -874,7 +894,10 @@ Boolean linker_link(linker_options_t options,
             success = __linker_link_relocatable(inv, output);
             if(options.verbose && success)
             {
-                fprintf(stderr, "emex64ld: emitted relocatable object → %s\n", output->path);
+                EFURLRef url = EFFileGetURL(output);
+                EFAUTOREL EFStringRef pathStr = EFURLCopyPath(kEFAllocatorDefault, url);
+                const char *pathCStr = EFStringGetCStringPtr(pathStr, kEFStringEncodingUTF8);
+                fprintf(stderr, "emex64ld: emitted relocatable object → %s\n", pathCStr);
             }
             break;
         case kEmitModeFirmware:

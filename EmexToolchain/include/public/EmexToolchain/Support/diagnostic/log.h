@@ -29,23 +29,7 @@
 /* legacy wrapper */
 #define diag_log_legacy(severity, at, msg, ...) \
     do { \
-        if((at) == NULL) \
-        { \
-            diagnostic_report(NULL, severity, NULL, msg __VA_OPT__(,) __VA_ARGS__); \
-        } \
-        else \
-        { \
-            assembler_token_t *_diag_at = (assembler_token_t *)(at); \
-            diagnostic_report(NULL, severity, &(diagnostic_location_t){ \
-                .file_name = _diag_at->al->inv->file[_diag_at->al->file_idx]->path, \
-                .line = _diag_at->al->str, \
-                .ln = _diag_at->al->line_num, \
-                .col = _diag_at->column_num, \
-                .range = (diagnostic_location_text_range_t){ \
-                    .start_col = _diag_at->column_num, \
-                    .end_col = _diag_at->column_num + _diag_at->real_len } \
-            }, msg __VA_OPT__(,) __VA_ARGS__); \
-        } \
+        diagnostic_report(NULL, severity, NULL, msg __VA_OPT__(,) __VA_ARGS__); \
     } while(0);
 
 #define diag_note(at, msg, ...) diag_log_legacy(kDiagnosticSeverityNote, at, msg __VA_OPT__(,) __VA_ARGS__)

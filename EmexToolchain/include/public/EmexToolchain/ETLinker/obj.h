@@ -22,7 +22,7 @@
 #ifndef EMEX64LD_OBJ_H
 #define EMEX64LD_OBJ_H
 
-#include <EmexToolchain/Support/file.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETLinker/type.h>
 #include <EmexToolchain/ETLinker/header.h>
 
@@ -33,7 +33,11 @@
 typedef struct linker_invocation linker_invocation_t;
 
 typedef struct linker_object {
-    emex_file_t *file;  /* borrowed */
+    EFFileRef file;  /* borrowed */
+    EFMappingRef mapping;
+
+    EFIndex length;
+    const char *content;
 
     ELF64_Ehdr *ehdr;
     ELF64_Shdr *shdrs;
@@ -54,10 +58,10 @@ typedef struct linker_object {
     struct linker_object *next;
 } linker_object_t;
 
-linker_object_t *linker_object_alloc(emex_file_t *object_file);
+linker_object_t *linker_object_alloc(EFFileRef object_file);
 void linker_object_dealloc(linker_object_t *obj);
 
-Boolean linker_load_object(linker_invocation_t *inv, emex_file_t *object_file);
+Boolean linker_load_object(linker_invocation_t *inv, EFFileRef object_file);
 void linker_layout(linker_invocation_t *inv);
 
 #endif /* EMEX64LD_OBJ_H */

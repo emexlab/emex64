@@ -22,7 +22,7 @@
 #ifndef ETASSEMBLERJOB_H
 #define ETASSEMBLERJOB_H
 
-#include <EmexToolchain/Support/file.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 #include <EmexToolchain/ETLinker/type.h>
 

@@ -77,8 +77,8 @@ diagnostic_t *diagnostic_allocv(kDiagnosticSeverity severity,
             return NULL;
         }
 
-        diagnostic->location->file_name = strdup(location->file_name);
-        if(diagnostic->location->file_name == NULL)
+        diagnostic->location->fileURL = EFRetain(location->fileURL);
+        if(diagnostic->location->fileURL == NULL)
         {
             free(diagnostic->str);
             free(diagnostic->location);
@@ -89,7 +89,7 @@ diagnostic_t *diagnostic_allocv(kDiagnosticSeverity severity,
         diagnostic->location->line = strdup(location->line);
         if(diagnostic->location->line == NULL)
         {
-            free(diagnostic->location->file_name);
+            EFRelease(diagnostic->location->fileURL);
             free(diagnostic->str);
             free(diagnostic->location);
             free(diagnostic);
@@ -131,7 +131,7 @@ void diagnostic_dealloc(diagnostic_t *diagnostic)
 
     if(diagnostic->location != NULL)
     {
-        free(diagnostic->location->file_name);
+        EFRelease(diagnostic->location->fileURL);
         free(diagnostic->location->line);
         free(diagnostic->location);
     }

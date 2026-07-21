@@ -22,7 +22,7 @@
 #ifndef EMEX64ASM_INVOCATION_H
 #define EMEX64ASM_INVOCATION_H
 
-#include <EmexToolchain/Support/file.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/hashmap/hashmap.h>
 #include <EmexToolchain/ETAssembler/diagnostic/consumer.h>
 #include <EmexToolchain/ETAssembler/label/label.h>
@@ -38,7 +38,7 @@ typedef struct {
 typedef struct assembler_invocation {
     assembler_diagnostic_consumer_t *consumer;  /* borrowed */
 
-    emex_file_t **file;
+    EFFileRef *file;
     size_t file_cnt;
 
     assembler_line_t **line;
@@ -65,6 +65,6 @@ typedef struct assembler_invocation {
 assembler_invocation_t *assembler_invocation_alloc(assembler_diagnostic_consumer_t *consumer);
 void assembler_invocation_dealloc(assembler_invocation_t *inv);
 
-Boolean assembler_invocation_emit(assembler_invocation_t *inv, emex_file_t *input, emex_file_t *output);
+Boolean assembler_invocation_emit(assembler_invocation_t *inv, EFFileRef input, EFFileRef output);
 
 #endif /* EMEX64ASM_INVOCATION_H */

@@ -28,16 +28,12 @@
 #include <EmexToolchain/ETLinker/script.h>
 
 Boolean linker_script_parse(linker_invocation_t *inv,
-                            emex_file_t *script_file)
+                            EFFileRef script_file)
 {
-    if(!emex_file_open(script_file))
-    {
-        /* couldn't open the script file */
-        return false;
-    }
-
-    EFAUTOREL EFFileHandleRef d = emex_file_dup_vfd(script_file);
-    if(d == NULL)
+    EFAUTOREL EFFileHandleRef d = EFFileCopyFileHandle(EFGetAllocator(script_file), script_file);
+    EFAUTOREL EFStringRef filePathStr = EFURLCopyPath(EFGetAllocator(script_file), EFFileGetURL(script_file));
+    const char *filePathCStr = EFStringGetCStringPtr(filePathStr, kEFStringEncodingUTF8);
+    if(d == NULL || filePathCStr == NULL)
     {
         /* couldn't dup descriptor */
         return false;
@@ -86,7 +82,7 @@ Boolean linker_script_parse(linker_invocation_t *inv,
             size_t name_len = (size_t)(p - name_start);
             if(name_len == 0)
             {
-                diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "%s:%d: expected symbol name after PROVIDE", script_file->path, lineno);
+                diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "%s:%d: expected symbol name after PROVIDE", filePathCStr, lineno);
                 return false;
             }
             char *sym_name = malloc(name_len + 1);
@@ -99,7 +95,7 @@ Boolean linker_script_parse(linker_invocation_t *inv,
             }
             if(*p != '=')
             {
-                diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "%s:%d: expected '=' after symbol name", script_file->path, lineno);
+                diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "%s:%d: expected '=' after symbol name", filePathCStr, lineno);
                 free(sym_name);
                 return false;
             }
@@ -123,7 +119,7 @@ Boolean linker_script_parse(linker_invocation_t *inv,
 
             if(!*expr_start)
             {
-                diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "%s:%d: empty expression", script_file->path, lineno);
+                diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "%s:%d: empty expression", filePathCStr, lineno);
                 free(sym_name);
                 return false;
             }
@@ -131,19 +127,19 @@ Boolean linker_script_parse(linker_invocation_t *inv,
             script_sym_t *new = realloc(inv->script_syms, (inv->script_sym_cnt + 1) * sizeof(script_sym_t));
             if(new == NULL)
             {
-                diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "out of memory", script_file->path, lineno);
+                diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "out of memory");
                 free(sym_name);
                 return false;
             }
             inv->script_syms = new;
             inv->script_syms[inv->script_sym_cnt].name = sym_name;
             inv->script_syms[inv->script_sym_cnt].expr = strdup(expr_start);
-            inv->script_syms[inv->script_sym_cnt].script_path = script_file->path;
+            inv->script_syms[inv->script_sym_cnt].script_path = strdup(filePathCStr);
             inv->script_sym_cnt++;
             continue;
         }
 
-        diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "%s:%d: unrecognised linker script directive: '%s'", script_file->path, lineno, p);
+        diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "%s:%d: unrecognised linker script directive: '%s'", filePathCStr, lineno, p);
         return false;
     }
     return true;

@@ -25,9 +25,9 @@
 #include <ctype.h>
 #include <limits.h>
 #include <errno.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/parser.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
-#include <EmexToolchain/Support/file.h>
 #include <EmexToolchain/Support/pack.h>
 #include <EmexToolchain/ETAssembler/label/label.h>
 #include <EmexToolchain/ETAssembler/label/relocate.h>
@@ -141,7 +141,9 @@ Boolean assembler_section_parse(assembler_invocation_t *inv)
             int dbs = __assembler_section_dbs_get(inv->line[i]->token[1]->str);
             if(dbs == 0)
             {
-                const char *base_file_path = inv->file[inv->line[i]->file_idx]->path;
+                EFURLRef url = EFFileGetURL(inv->file[inv->line[i]->file_idx]);
+                EFAUTOREL EFStringRef pathStr = EFURLCopyPath(EFGetAllocator(url), url);
+                const char *base_file_path = EFStringGetCStringPtr(pathStr, kEFStringEncodingUTF8);
                 char base_dir[PATH_MAX];
                 const char *last_slash = strrchr(base_file_path, '/');
                 if(!last_slash)
@@ -191,15 +193,20 @@ Boolean assembler_section_parse(assembler_invocation_t *inv)
                         return false;
                     }
 
-                    emex_file_t *file = emex_file_alloc(resolved, EFFilePolicyInData);
-                    if(file == NULL || !emex_file_map(file))
+                    EFAUTOREL EFStringRef resolvedStr = EFStringCreateWithCString(EFGetAllocator(url), resolved, kEFStringEncodingUTF8);
+                    EFAUTOREL EFFileRef file = EFFileCreateWithPath(EFGetAllocator(url), EFFilePolicyInData, resolvedStr);
+                    EFAUTOREL EFFileHandleRef fileHandle = EFFileCopyFileHandle(EFGetAllocator(url), file);
+                    EFAUTOREL EFMappingRef mapping = EFFileHandleCopyMapping(EFGetAllocator(url), fileHandle);
+                    if(file == NULL || mapping == NULL)
                     {
                         diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[a]), "cannot map file at '%s'", path_component);
                         return false;
                     }
 
-                    EFBitWalkerWriteBuffer(inv->out_vbitwalker, file->content, (EFIndex)file->len);
-                    emex_file_dealloc(file);
+                    void *address = EFMappingGetAddress(mapping);
+                    EFIndex length = EFMappingGetLength(mapping);
+
+                    EFBitWalkerWriteBuffer(inv->out_vbitwalker, address, (EFIndex)length);
                 }
                 continue;
             }

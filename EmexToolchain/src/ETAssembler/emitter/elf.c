@@ -155,7 +155,9 @@ Boolean assembler_elf_emit(assembler_invocation_t *inv)
     ELF64_Sym sym0 = {0};
     buf_append(&sym_buf, &sym0, sizeof(sym0));
 
-    const char *src_fname = (inv->file_cnt > 0) ? inv->file[0]->path : "<unknown>";
+    EFURLRef url = EFFileGetURL(inv->file[0]);
+    EFAUTOREL EFStringRef string = EFURLCopyPath(kEFAllocatorDefault, url);
+    const char *src_fname = (inv->file_cnt > 0) ? EFStringGetCStringPtr(string, kEFStringEncodingUTF8) : "<unknown>";
     const char *base = strrchr(src_fname, '/');
     base = base ? base + 1 : src_fname;
 

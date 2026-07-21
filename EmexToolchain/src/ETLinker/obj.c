@@ -26,7 +26,8 @@
 #include <EmexToolchain/ETLinker/obj.h>
 #include <EmexToolchain/VM/E64Memory.h>
 
-static unsigned long obj_sec_align(linker_object_t *o, SInt32 idx)
+static unsigned long obj_sec_align(linker_object_t *o,
+                                   SInt32 idx)
 {
     if(idx < 0)
     {
@@ -36,12 +37,13 @@ static unsigned long obj_sec_align(linker_object_t *o, SInt32 idx)
     return a < 2 ? 1 : a;
 }
 
-static inline unsigned long align_up(unsigned long v, unsigned long a)
+static inline unsigned long align_up(unsigned long v,
+                                     unsigned long a)
 {
     return (v + a - 1) & ~(a - 1);
 }
 
-linker_object_t *linker_object_alloc(emex_file_t *object_file)
+linker_object_t *linker_object_alloc(EFFileRef object_file)
 {
     linker_object_t *obj = calloc(1, sizeof(linker_object_t));
 
@@ -56,20 +58,25 @@ linker_object_t *linker_object_alloc(emex_file_t *object_file)
 
     obj->file = object_file;
 
-    if(!emex_file_map(obj->file))
+    EFAUTOREL EFFileHandleRef fileHandle = EFFileCopyFileHandle(EFGetAllocator(object_file), object_file);
+    obj->mapping = EFFileHandleCopyMapping(EFGetAllocator(object_file), fileHandle);
+    if(obj->mapping == NULL)
     {
         free(obj);
         return NULL;
     }
 
-    if(obj->file->len < sizeof(ELF64_Shdr))
+    obj->content = (const char *)EFMappingGetAddress(obj->mapping);
+    obj->length = EFMappingGetLength(obj->mapping);
+
+    if(obj->length < (EFIndex)sizeof(ELF64_Shdr))
     {
         //diag_error(NULL, "%s: too small to be ELF\n", obj->file->path);
         free(obj);
         return NULL;
     }
 
-    obj->ehdr = (ELF64_Ehdr *)obj->file->content;
+    obj->ehdr = (ELF64_Ehdr *)obj->content;
 
     if(obj->ehdr->e_ident[0] != ELF_MAGIC_0 ||
        obj->ehdr->e_ident[1] != ELF_MAGIC_1 ||
@@ -95,13 +102,13 @@ linker_object_t *linker_object_alloc(emex_file_t *object_file)
         return NULL;
     }
 
-    obj->shdrs = (ELF64_Shdr *)(obj->file->content + obj->ehdr->e_shoff);
+    obj->shdrs = (ELF64_Shdr *)(obj->content + obj->ehdr->e_shoff);
 
     if(obj->ehdr->e_shstrndx != 0xFFFF &&
        obj->ehdr->e_shstrndx < obj->ehdr->e_shnum)
     {
         ELF64_Shdr *ss = &obj->shdrs[obj->ehdr->e_shstrndx];
-        obj->shstrtab = (char *)(obj->file->content + ss->sh_offset);
+        obj->shstrtab = (char *)(obj->content + ss->sh_offset);
     }
 
     /* find known sections */
@@ -149,11 +156,12 @@ linker_object_t *linker_object_alloc(emex_file_t *object_file)
 
 void linker_object_dealloc(linker_object_t *obj)
 {
+    EFReleaseTry(obj->mapping);
     free(obj);
 }
 
 Boolean linker_load_object(linker_invocation_t *inv,
-                           emex_file_t *object_file)
+                           EFFileRef object_file)
 {
     /* load object */
     linker_object_t *obj = linker_object_alloc(object_file);

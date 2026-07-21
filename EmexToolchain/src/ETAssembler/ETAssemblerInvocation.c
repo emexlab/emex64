@@ -23,8 +23,8 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
-#include <EmexToolchain/Support/file.h>
 #include <EmexToolchain/ETAssembler/preprocessor/preprocessor.h>
 #include <EmexToolchain/ETAssembler/label/label.h>
 #include <EmexToolchain/ETAssembler/emitter/emitter.h>
@@ -63,7 +63,7 @@ void assembler_invocation_dealloc(assembler_invocation_t *inv)
     /* skipping the tool managed input file object */
     for(size_t i = 1; i < inv->file_cnt; i++)
     {
-        emex_file_dealloc(inv->file[i]);
+        EFRelease(inv->file[i]);
     }
     free(inv->file);
 
@@ -109,11 +109,11 @@ void assembler_invocation_dealloc(assembler_invocation_t *inv)
 }
 
 Boolean assembler_invocation_emit(assembler_invocation_t *inv,
-                                  emex_file_t *input,
-                                  emex_file_t *output)
+                                  EFFileRef input,
+                                  EFFileRef output)
 {
     /* need output */
-    inv->out_vbitwalker = emex_file_dup_vbitwalker(output, kEFEndianLittle);
+    inv->out_vbitwalker = EFFileCopyBitWalker(kEFAllocatorDefault, output, kEFEndianLittle);
     if(inv->out_vbitwalker == NULL)
     {
         diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "couldn't allocate fdwalker");
@@ -129,7 +129,7 @@ Boolean assembler_invocation_emit(assembler_invocation_t *inv,
        !assembler_emit(inv) ||
        !assembler_elf_emit(inv))
     {
-        emex_file_unlink(output);
+        EFFileUnlink(output);
         return false;
     }
 

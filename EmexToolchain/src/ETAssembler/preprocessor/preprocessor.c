@@ -248,6 +248,8 @@ Boolean assembler_preprocessor_run(assembler_invocation_t *inv)
                         }
 
                         /* looking for da cat in the file system ^^ */
+                        EFURLRef url = EFFileGetURL(inv->file[inv->line[li]->file_idx]);
+                        EFAUTOREL EFStringRef path = EFURLCopyPath(EFGetAllocator(url), url);
                         char *hdr_path;
                         if(system_hdr)
                         {
@@ -255,7 +257,7 @@ Boolean assembler_preprocessor_run(assembler_invocation_t *inv)
                         }
                         else
                         {
-                            hdr_path = assembler_code_find_header(hdr_token, inv->file[inv->line[li]->file_idx]->path);
+                            hdr_path = assembler_code_find_header(hdr_token, EFStringGetCStringPtr(path, kEFStringEncodingUTF8));
                         }
 
                         /* did I catch this cat >:3 */
@@ -268,7 +270,8 @@ Boolean assembler_preprocessor_run(assembler_invocation_t *inv)
                         free(hdr_token);
 
                         /* now openup a file */
-                        emex_file_t *file = emex_file_alloc(hdr_path, EFFilePolicyInData);
+                        EFAUTOREL EFStringRef hdrPathStr = EFStringCreateWithCString(EFGetAllocator(url), hdr_path, kEFStringEncodingUTF8);
+                        EFAUTOREL EFFileRef file = EFFileCreateWithPath(EFGetAllocator(url), EFFilePolicyInData, hdrPathStr);
                         if(file == NULL)
                         {
                             diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[1]), "couldn't open header at path '%s'", hdr_path);
@@ -279,11 +282,11 @@ Boolean assembler_preprocessor_run(assembler_invocation_t *inv)
                         if(!assembler_code_inject_file(inv, li, file))
                         {
                             diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(inv->line[li]->token[1]), "couldn't inject header at path '%s' into invocation", hdr_path);
-                            emex_file_dealloc(file);
                             free(hdr_path);
                             goto failure;
                         }
                         free(hdr_path);
+                        EFAUTOTRANSFER(file);   /* transferred at injection */
 
                         li--; /* file was inseted at this location */
                         break;

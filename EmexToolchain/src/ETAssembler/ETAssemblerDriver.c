@@ -125,7 +125,7 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
 
     EFIndex argumentsCount = EFArrayGetCount(driver->arguments);
 
-    driver->inputFiles = EFArrayCreateMutable(EFGetAllocator(driver), kEFArrayCallbacksEmexFileCallbacks, argumentsCount);
+    driver->inputFiles = EFArrayCreateMutable(EFGetAllocator(driver), kEFArrayCallbacksObjectCallbacks, argumentsCount);
     if(driver->inputFiles == NULL)
     {
         return false;
@@ -373,8 +373,9 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
                 return false;
             }
 
-            emex_file_t *file = emex_file_alloc(cArgument, EFFilePolicyInData);
-            if(file == NULL || !(file->type == kEFFileTypeAssembly || file->type == kEFFileTypeAssemblyIncludations || file->type == kEFFileTypeObject))
+            EFAUTOREL EFFileRef file = EFFileCreateWithPath(EFGetAllocator(driver), EFFilePolicyInData, argument);
+            EFFileType fileType = EFFileGetType(file);
+            if(file == NULL || !(fileType == kEFFileTypeAssembly || fileType == kEFFileTypeAssemblyIncludations || fileType == kEFFileTypeObject))
             {
                 ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown or non existing input file '%@'"), argument);
                 return false;
@@ -463,10 +464,11 @@ Boolean __ETAssemblerDriverJobgen(__ETAssemblerDriver driver)
     /* creating assembler jobs */
     for(EFIndex index = 0; index < inputFileCount; index++)
     {
-        emex_file_t *inputFile = EFArrayGetValueAtIndex(driver->inputFiles, index);
-
-        const char *input_path = inputFile->path;
-        EFFileType input_type = inputFile->type;
+        EFFileRef inputFile = EFArrayGetValueAtIndex(driver->inputFiles, index);
+        EFURLRef url = EFFileGetURL(inputFile);
+        EFAUTOREL EFStringRef path = EFURLCopyPath(EFGetAllocator(driver), url);
+        const char *input_path = EFStringGetCStringPtr(path, kEFStringEncodingUTF8);
+        EFFileType input_type = EFFileGetType(inputFile);
 
         switch(input_type)
         {
@@ -718,8 +720,10 @@ ETAssemblerDriverRef ETAssemblerDriverCreateWithOptions(EFAllocatorRef allocator
             {
                 fprintf(stderr, ", ");
             }
-            emex_file_t *file = EFArrayGetValueAtIndex(driver->inputFiles, index);
-            fprintf(stderr, "%s", file->path);
+            EFFileRef file = EFArrayGetValueAtIndex(driver->inputFiles, index);
+            EFURLRef fileURL = EFFileGetURL(file);
+            EFAUTOREL EFStringRef filePath = EFURLCopyPath(EFGetAllocator(driver), fileURL);
+            fprintf(stderr, "%s", EFStringGetCStringPtr(filePath, kEFStringEncodingUTF8));
         }
         fprintf(stderr, " }\n");
 
@@ -805,18 +809,16 @@ Boolean ETAssemblerDriverRun(ETAssemblerDriverRef driverRef)
         inv->include_dir_cnt = includeSearchPathCount;
         inv->include_dirs = includeSearchPaths;
 
-        emex_file_t *output = emex_file_alloc(EFStringGetCStringPtr(driver->outputPath, kEFStringEncodingUTF8), EFFilePolicyOutData);
+        EFAUTOREL EFFileRef output = EFFileCreateWithPath(EFGetAllocator(driver), EFFilePolicyOutData, driver->outputPath);
         if(output == NULL)
         {
-            emex_file_dealloc(output);
             assembler_invocation_dealloc(inv);
             return false;
         }
 
-        emex_file_t *input = EFArrayGetValueAtIndex(driver->inputFiles, 0);
+        EFFileRef input = EFArrayGetValueAtIndex(driver->inputFiles, 0);
         Boolean success = assembler_invocation_emit(inv, input, output);
 
-        emex_file_dealloc(output);
         assembler_invocation_dealloc(inv);
 
         return success;

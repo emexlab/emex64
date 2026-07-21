@@ -22,18 +22,18 @@
 #ifndef EMEX64LD_SCRIPT_H
 #define EMEX64LD_SCRIPT_H
 
-#include <EmexToolchain/Support/file.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETLinker/type.h>
 
 typedef struct linker_invocation linker_invocation_t;
 
 typedef struct {
-    const char *script_path;    /* borrowed */
+    char *script_path;  /* borrowed */
     char *name;
     char *expr;
 } script_sym_t;
 
-Boolean linker_script_parse(linker_invocation_t *inv, emex_file_t *script_file);
+Boolean linker_script_parse(linker_invocation_t *inv, EFFileRef script_file);
 Boolean linker_script_apply(linker_invocation_t *inv, UInt64 image_end, UInt64 text_start, UInt64 data_start, UInt64 bss_start);
 
 #endif /* EMEX64LD_SCRIPT_H */

@@ -56,7 +56,6 @@ endif()
 add_library(EmexToolchain ${LIB_TYPE}
     # Support API
     src/Support/parser.c
-    src/Support/file.c
     src/Support/bitbolt.c
 
         ## Diagnostic API (Errors, Warnings, Notes, etc ^^)

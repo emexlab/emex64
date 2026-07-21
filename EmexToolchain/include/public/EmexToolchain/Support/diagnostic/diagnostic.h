@@ -40,7 +40,7 @@ typedef struct diagnostic_location_text_range {
 } diagnostic_location_text_range_t;
 
 typedef struct diagnostic_location {
-    char *file_name;
+    EFURLRef fileURL;
     char *line;
     UInt64 ln;
     UInt64 col;

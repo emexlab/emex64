@@ -23,13 +23,12 @@
 #define EMEX64LD_EMIT_H
 
 #include <EmexFoundation/EmexFoundation.h>
-#include <EmexToolchain/Support/file.h>
 #include <EmexToolchain/ETLinker/type.h>
 #include <EmexToolchain/ETLinker/options.h>
 #include <EmexToolchain/ETLinker/diagnostic/consumer.h>
 
 typedef struct linker_invocation linker_invocation_t;
 
-Boolean linker_link(linker_options_t options, linker_diagnostic_consumer_t *diagnostic_consumer, emex_file_t **input_file, UInt64 input_file_cnt, emex_file_t **linker_script_file, UInt64 linker_script_file_cnt, emex_file_t *output);
+Boolean linker_link(linker_options_t options, linker_diagnostic_consumer_t *diagnostic_consumer, EFFileRef *input_file, UInt64 input_file_cnt, EFFileRef *linker_script_file, UInt64 linker_script_file_cnt, EFFileRef output);
 
 #endif /* EMEX64LD_EMIT_H */

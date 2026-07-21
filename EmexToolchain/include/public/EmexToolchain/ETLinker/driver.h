@@ -22,7 +22,7 @@
 #ifndef EMEX64LD_DRIVER_H
 #define EMEX64LD_DRIVER_H
 
-#include <EmexToolchain/Support/file.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETLinker/options.h>
 #include <EmexToolchain/ETLinker/diagnostic/consumer.h>
 
@@ -30,12 +30,12 @@ typedef struct {
     linker_options_t options;
     linker_diagnostic_consumer_t *consumer; /* owned */
 
-    emex_file_t *output_file;
+    EFFileRef output_file;
 
-    emex_file_t **input_file;               /* borrowed */
+    EFFileRef *input_file;               /* borrowed */
     UInt64 input_file_cnt;
 
-    emex_file_t **linker_script_file;       /* borrowed */
+    EFFileRef *linker_script_file;       /* borrowed */
     UInt64 linker_script_file_cnt;
 } linker_driver_t;
 

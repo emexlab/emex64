@@ -75,6 +75,7 @@ void linker_invocation_dealloc(linker_invocation_t *inv)
 
     for(size_t i = 0; i < inv->script_sym_cnt; i++)
     {
+        free(inv->script_syms[i].script_path);
         free(inv->script_syms[i].name);
         free(inv->script_syms[i].expr);
     }
