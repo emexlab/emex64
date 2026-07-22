@@ -143,26 +143,6 @@ Boolean assembler_section_parse(ETAssemblerInvocationRef inv)
             {
                 EFURLRef url = EFFileGetURL(inv->file[inv->line[i]->file_idx]);
                 EFAUTOREL EFStringRef pathStr = EFURLCopyPath(EFGetAllocator(url), url);
-                const char *base_file_path = EFStringGetCStringPtr(pathStr, kEFStringEncodingUTF8);
-                char base_dir[PATH_MAX];
-                const char *last_slash = strrchr(base_file_path, '/');
-                if(!last_slash)
-                {
-                    strcpy(base_dir, ".");
-                }
-                else
-                {
-                    size_t len = last_slash - base_file_path;
-                    if(len == 0)
-                    {
-                        strcpy(base_dir, "/");
-                    }
-                    else
-                    {
-                        memcpy(base_dir, base_file_path, len);
-                        base_dir[len] = '\0';
-                    }
-                }
 
                 for(unsigned long a = 2; a < inv->line[i]->token_cnt; a++)
                 {
@@ -178,23 +158,9 @@ Boolean assembler_section_parse(ETAssemblerInvocationRef inv)
 
                     const char *path_component = inv->line[i]->token[a]->string_literal.buf;
 
-                    char joined[PATH_MAX];
-                    int n = snprintf(joined, sizeof(joined), "%s/%s", base_dir, path_component);
-                    if(n < 0 || n >= (int)sizeof(joined))
-                    {
-                        diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[a]), "path too long: %s", path_component);
-                        return false;
-                    }
-
-                    char resolved[PATH_MAX];
-                    if(realpath(joined, resolved) == NULL)
-                    {
-                        diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[a]), "cannot resolve path '%s'", path_component);
-                        return false;
-                    }
-
-                    EFAUTOREL EFStringRef resolvedStr = EFStringCreateWithCString(EFGetAllocator(url), resolved, kEFStringEncodingUTF8);
-                    EFAUTOREL EFFileRef file = EFFileCreateWithPath(EFGetAllocator(url), EFFilePolicyInData, resolvedStr);
+                    EFAUTOREL EFStringRef pathComponentStr = EFStringCreateWithCString(kEFAllocatorDefault, path_component, kEFStringEncodingUTF8);
+                    EFAUTOREL EFURLRef newUrl = EFURLCreateURLByReplacingLastPathComponent(kEFAllocatorDefault, url, pathComponentStr);
+                    EFAUTOREL EFFileRef file = EFFileCreateWithURL(EFGetAllocator(url), EFFilePolicyInData, newUrl);
                     EFAUTOREL EFFileHandleRef fileHandle = EFFileCopyFileHandle(EFGetAllocator(url), file);
                     EFAUTOREL EFMappingRef mapping = EFFileHandleCopyMapping(EFGetAllocator(url), fileHandle);
                     if(file == NULL || mapping == NULL)
