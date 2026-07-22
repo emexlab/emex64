@@ -191,15 +191,11 @@ Boolean assembler_code_inject_file(ETAssemblerInvocationRef inv,
     }
 
     /* injecting file into array */
-    UInt64 inj_file_idx;
-    EFFileRef *newp = realloc(inv->file, (inv->file_cnt + 1) *  sizeof(EFFileRef));
-    if(newp == NULL)
+    EFIndex inj_file_idx = EFArrayGetCount(inv->files);
+    if(!EFArrayAppendValue(inv->files, inj_file))
     {
         goto out_failure;
     }
-    inv->file = newp;
-    inv->file[inv->file_cnt] = inj_file;
-    inj_file_idx = inv->file_cnt++;
 
     /* handling tokenization and preparse */
     if(inv->line_cnt != 0)
@@ -264,13 +260,13 @@ Boolean assembler_code_inject_file(ETAssemblerInvocationRef inv,
             if(token.type == kETAssemblerTokenTypeInvalid)
             {
                 diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "token '%s' is not valid", at->str);
-                inv->file[inj_file_idx] = NULL;
+                EFArrayRemoveValueAtIndex(inv->files, inj_file_idx);
                 return false;
             }
             else if(token.type == kETAssemblerTokenTypeTooLong)
             {
                 diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "token is too long, token lenght limit is %d characters", LEXTOK_LENGHT_MAX);
-                inv->file[inj_file_idx] = NULL;
+                EFArrayRemoveValueAtIndex(inv->files, inj_file_idx);
                 return false;
             }
             at->type = token.type;
@@ -298,7 +294,7 @@ Boolean assembler_code_inject_file(ETAssemblerInvocationRef inv,
 
 out_failure_file_rm:
     /* preventing evObj issues */
-    inv->file[inj_file_idx] = NULL;
+    EFArrayRemoveValueAtIndex(inv->files, inj_file_idx);
 out_failure:
     for(size_t i = 0; i < entry_cnt; i++)
     {

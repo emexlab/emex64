@@ -141,7 +141,7 @@ Boolean assembler_section_parse(ETAssemblerInvocationRef inv)
             int dbs = __assembler_section_dbs_get(inv->line[i]->token[1]->str);
             if(dbs == 0)
             {
-                EFURLRef url = EFFileGetURL(inv->file[inv->line[i]->file_idx]);
+                EFURLRef url = EFFileGetURL(EFArrayGetValueAtIndex(inv->files, inv->line[i]->file_idx));
                 EFAUTOREL EFStringRef pathStr = EFURLCopyPath(EFGetAllocator(url), url);
 
                 for(unsigned long a = 2; a < inv->line[i]->token_cnt; a++)

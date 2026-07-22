@@ -26,7 +26,7 @@
 #include <EmexToolchain/ETAssembler/ETAssemblerOptions.h>
 
 #define AT_TO_DLOC(at) &(diagnostic_location_t){ \
-                .fileURL = EFFileGetURL((at)->al->inv->file[(at)->al->file_idx]), \
+                .fileURL = EFFileGetURL(EFArrayGetValueAtIndex((at)->al->inv->files, (at)->al->file_idx)), \
                 .line = (at)->al->str, \
                 .ln = (at)->al->line_num, \
                 .col = (at)->column_num, \

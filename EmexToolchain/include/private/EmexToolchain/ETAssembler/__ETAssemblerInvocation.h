@@ -36,8 +36,7 @@ typedef struct __ETAssemblerInvocation {
     ETAssemblerDiagnosticConsumerRef diagnosticConsumer;
     assembler_diagnostic_consumer_t *consumer;              /* borrowed */
 
-    EFFileRef *file;
-    size_t file_cnt;
+    EFMutableArrayRef files;
 
     assembler_line_t **line;
     UInt64 line_cnt;
@@ -45,8 +44,8 @@ typedef struct __ETAssemblerInvocation {
     char *label_scope;
     hashmap_t *label_hashmap;
 
-    EFArrayRef definitions;                                 /* borrowed */
-    EFArrayRef includeSearchPaths;
+    EFMutableArrayRef definitions;                          /* borrowed */
+    EFMutableArrayRef includeSearchPaths;
 
     reloc_table_entry_t *rtbe;
     EFBitWalkerRef out_vbitwalker;

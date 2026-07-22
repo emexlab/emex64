@@ -77,19 +77,7 @@ int main(void)
 
     /* we need the invocation to assemble */
     EFAUTOREL ETAssemblerDiagnosticConsumerRef assemblerDiagnosticConsumer = ETAssemblerDiagnosticConsumerCreate(kEFAllocatorDefault, ETAssemblerDiagnosticOptionsDefault);
-    if(assemblerDiagnosticConsumer == NULL)
-    {
-        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate consumer for assembler invocation");
-        return 1;
-    }
-
     EFAUTOREL ETAssemblerInvocationRef inv = ETAssemblerInvocationCreate(kEFAllocatorDefault, assemblerDiagnosticConsumer);
-    if(inv == NULL)
-    {
-        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate assembler invocation");
-        return 1;
-    }
-
     if(!ETAssemblerInvocationEmit(inv, unsaved_file, object_file))
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "ouweee =<");

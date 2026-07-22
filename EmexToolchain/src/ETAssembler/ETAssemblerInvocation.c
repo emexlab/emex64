@@ -40,11 +40,7 @@ static void __ETAssemblerInvocationDeinit(EFObjectRef invocationRef)
     /* options have to be freed by who allocated them */
 
     /* skipping the tool managed input file object */
-    for(size_t i = 1; i < invocation->file_cnt; i++)
-    {
-        EFRelease(invocation->file[i]);
-    }
-    free(invocation->file);
+    EFReleaseTry(invocation->files);
 
     for(UInt64 i = 0; i < invocation->line_cnt; i++)
     {
@@ -115,13 +111,14 @@ ETAssemblerInvocationRef ETAssemblerInvocationCreate(EFAllocatorRef allocatorRef
                                                      ETAssemblerDiagnosticConsumerRef diagnosticConsumer)
 {
     EFAUTOREL __ETAssemblerInvocation invocation = (__ETAssemblerInvocation)EFObjectCreate(allocatorRef, ETAssemblerInvocationGetTypeID(), (EFIndex)sizeof(struct __ETAssemblerInvocation));
-    if(invocation == NULL)
+    if(invocation == NULL || diagnosticConsumer == NULL)
     {
         return NULL;
     }
 
     invocation->definitions = EFArrayCreateMutable(allocatorRef, kEFArrayCallbacksDefaultCallbacks, 0);
     invocation->includeSearchPaths = EFArrayCreateMutable(allocatorRef, kEFArrayCallbacksObjectCallbacks, 0);
+    invocation->files = EFArrayCreateMutable(allocatorRef, kEFArrayCallbacksObjectCallbacks, 0);
 
     invocation->diagnosticConsumer = EFRetainTry(diagnosticConsumer);
     invocation->consumer = ETAssemblerDiagnosticConsumerGetPtr(invocation->diagnosticConsumer);

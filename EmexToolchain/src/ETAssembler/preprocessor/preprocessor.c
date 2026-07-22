@@ -251,7 +251,7 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
                         }
 
                         /* looking for da cat in the file system ^^ */
-                        EFURLRef url = EFFileGetURL(inv->file[inv->line[li]->file_idx]);
+                        EFURLRef url = EFFileGetURL(EFArrayGetValueAtIndex(inv->files, inv->line[li]->file_idx));
                         EFAUTOREL EFStringRef path = EFURLCopyPath(EFGetAllocator(url), url);
                         char *hdr_path;
                         if(system_hdr)
