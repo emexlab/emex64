@@ -43,8 +43,8 @@ typedef struct __ETAssemblerInvocation *ETAssemblerInvocationRef;
 EFTypeID ETAssemblerInvocationGetTypeID(void);
 
 ETAssemblerInvocationRef ETAssemblerInvocationCreate(EFAllocatorRef allocatorRef, ETAssemblerDiagnosticConsumerRef diagnosticConsumer);
-Boolean ETAssemblerInvocationAddMacroDefinition(ETAssemblerInvocationRef invocation, assembler_macro_definition_t *macro);
-Boolean ETAssemblerInvocationAddIncludeSearchPath(ETAssemblerInvocationRef invocation, EFStringRef includeSearchPath);
-Boolean ETAssemblerInvocationEmit(ETAssemblerInvocationRef invocation, EFFileRef input, EFFileRef output);
+Boolean ETAssemblerInvocationAddMacroDefinition(ETAssemblerInvocationRef invocationRef, assembler_macro_definition_t *macro);
+Boolean ETAssemblerInvocationAddIncludeSearchPath(ETAssemblerInvocationRef invocationRef, EFStringRef includeSearchPath);
+Boolean ETAssemblerInvocationEmit(ETAssemblerInvocationRef invocationRef, EFFileRef input, EFFileRef output);
 
 #endif /* ETASSEMBLERINVOCATION_H */

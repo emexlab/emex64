@@ -807,12 +807,8 @@ Boolean ETAssemblerDriverRun(ETAssemblerDriverRef driverRef)
             }
         }
 
-        EFAUTOREL EFFileRef output = EFFileCreateWithPath(EFGetAllocator(driver), EFFilePolicyOutData, driver->outputPath);
-        if(output == NULL)
-        {
-            return false;
-        }
         EFFileRef input = EFArrayGetValueAtIndex(driver->inputFiles, 0);
+        EFAUTOREL EFFileRef output = EFFileCreateWithPath(EFGetAllocator(driver), EFFilePolicyOutData, driver->outputPath);
 
         return ETAssemblerInvocationEmit(invocation, input, output);
     }

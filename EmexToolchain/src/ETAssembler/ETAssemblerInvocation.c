@@ -182,7 +182,7 @@ Boolean ETAssemblerInvocationEmit(ETAssemblerInvocationRef invocationRef,
                                   EFFileRef output)
 {
     __ETAssemblerInvocation invocation = (__ETAssemblerInvocation)invocationRef;
-    if(invocation == NULL)
+    if(invocation == NULL || input == NULL || output == NULL)
     {
         return false;
     }
