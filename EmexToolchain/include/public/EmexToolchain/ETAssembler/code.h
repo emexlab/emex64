@@ -28,11 +28,11 @@
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 
 char *assembler_code_find_header(const char *name, const char *source_file);
-char *assembler_code_find_system_header(const char *name, const char **inc_dirs, size_t inc_cnt);
+char *assembler_code_find_system_header(const char *name, EFArrayRef includeSearchPaths);
 
-Boolean assembler_code_inject_file(assembler_invocation_t *inv, UInt64 at_line_index, EFFileRef inj_file);
+Boolean assembler_code_inject_file(ETAssemblerInvocationRef inv, UInt64 at_line_index, EFFileRef inj_file);
 
-Boolean assembler_code_preparse(assembler_invocation_t *inv, EFFileRef input);
-Boolean assembler_code_postparse(assembler_invocation_t *inv);
+Boolean assembler_code_preparse(ETAssemblerInvocationRef inv, EFFileRef input);
+Boolean assembler_code_postparse(ETAssemblerInvocationRef inv);
 
 #endif /* EMEX64ASM_CODE_H */

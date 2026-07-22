@@ -28,7 +28,7 @@
 #include <EmexToolchain/ETAssembler/label/label.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 
-assembler_label_t *assembler_label_lookup(assembler_invocation_t *inv,
+assembler_label_t *assembler_label_lookup(ETAssemblerInvocationRef inv,
                                           const char *name)
 {
     return (assembler_label_t*)hashmap_gets(inv->label_hashmap, name);
@@ -50,7 +50,7 @@ Boolean assembler_label_is_symbol(assembler_token_t *at)
 Boolean assembler_label_append(assembler_token_t *at)
 {
     /* accessing compiler invocation */
-    assembler_invocation_t *inv = at->al->inv;
+    ETAssemblerInvocationRef inv = at->al->inv;
 
     /* copying label name */
     char *name = NULL;

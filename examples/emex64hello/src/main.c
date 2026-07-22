@@ -83,21 +83,20 @@ int main(void)
         return 1;
     }
 
-    assembler_invocation_t *inv = assembler_invocation_alloc(ETAssemblerDiagnosticConsumerGetPtr(assemblerDiagnosticConsumer));
+    EFAUTOREL ETAssemblerInvocationRef inv = ETAssemblerInvocationCreate(kEFAllocatorDefault, assemblerDiagnosticConsumer);
     if(inv == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate assembler invocation");
         return 1;
     }
 
-    Boolean success = assembler_invocation_emit(inv, unsaved_file, object_file);
-    assembler_invocation_dealloc(inv);
-    ETAssemblerDiagnosticConsumerEmit(assemblerDiagnosticConsumer);
-    if(!success)
+    if(!ETAssemblerInvocationEmit(inv, unsaved_file, object_file))
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "ouweee =<");
         return 1;
     }
+
+    ETAssemblerDiagnosticConsumerEmit(assemblerDiagnosticConsumer);
 
     /* now we come to linkage >:3 */
     EFFileRef *input_file = calloc(1, sizeof(EFFileRef));
@@ -127,7 +126,7 @@ int main(void)
     linker_options_t linkerOptions = linker_options_default;
     linkerOptions.verbose = true;
     linkerOptions.use_old_magic = true;
-    success = linker_link(linkerOptions, lnkconsumer, input_file, 1, NULL, 0, firmware_file);
+    Boolean success = linker_link(linkerOptions, lnkconsumer, input_file, 1, NULL, 0, firmware_file);
     linker_diagnostic_consumer_emit(lnkconsumer);
     linker_diagnostic_consumer_dealloc(lnkconsumer);
     free(input_file);

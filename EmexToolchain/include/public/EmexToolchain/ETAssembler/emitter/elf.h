@@ -24,6 +24,8 @@
 
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 
-Boolean assembler_elf_emit(struct assembler_invocation *inv);
+typedef struct __ETAssemblerInvocation *ETAssemblerInvocationRef;
+
+Boolean assembler_elf_emit(ETAssemblerInvocationRef inv);
 
 #endif /* EMEX64ASM_EMITTER_ELF_H */

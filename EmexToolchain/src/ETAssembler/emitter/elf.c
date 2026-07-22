@@ -104,7 +104,7 @@ static size_t strtab_intern(buf_t *strtab, const char *s)
     return off;
 }
 
-Boolean assembler_elf_emit(assembler_invocation_t *inv)
+Boolean assembler_elf_emit(ETAssemblerInvocationRef inv)
 {
     Boolean ok = false;
 

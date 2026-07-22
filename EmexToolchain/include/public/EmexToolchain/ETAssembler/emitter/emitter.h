@@ -28,9 +28,9 @@
 #include <EmexToolchain/ETAssembler/emitter/register.h>
 #include <EmexToolchain/ETAssembler/emitter/immediate.h>
 
-void assembler_emit_end(assembler_invocation_t *inv);
+void assembler_emit_end(ETAssemblerInvocationRef inv);
 
 Boolean assembler_emit_instruction(assembler_line_t *al);
-Boolean assembler_emit(assembler_invocation_t *inv);
+Boolean assembler_emit(ETAssemblerInvocationRef inv);
 
 #endif /* EMEX64ASM_EMITTER_EMITTER_H */

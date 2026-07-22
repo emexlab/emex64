@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <EmexToolchain/VM/E64Core.h>
 
+typedef struct __ETAssemblerInvocation *ETAssemblerInvocationRef;
+
 typedef enum: UInt8 {
     kETAssemblerTokenTypeInvalid,
     kETAssemblerTokenTypeTooLong,
@@ -106,7 +108,7 @@ typedef struct assembler_line {
     UInt64 token_cnt;                       /* count of subtokens */
     size_t line_num;                        /* line number in file */   
     size_t file_idx;                        /* index of file in compiler invocation */
-    struct assembler_invocation *inv;       /* pointer back to compiler invocation */
+    ETAssemblerInvocationRef inv;           /* pointer back to compiler invocation */
 } assembler_line_t;
 
 #endif /* EMEX64ASM_TYPE_H */

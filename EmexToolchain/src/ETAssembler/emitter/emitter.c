@@ -35,7 +35,7 @@
 #include <EmexToolchain/ETAssembler/lexer.h>
 #include <EmexToolchain/ETAssembler/expr.h>
 
-void assembler_emit_end(assembler_invocation_t *inv)
+void assembler_emit_end(ETAssemblerInvocationRef inv)
 {
     EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingEnd, 4);
 }
@@ -302,7 +302,7 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
     return true;
 }
 
-Boolean assembler_emit(assembler_invocation_t *inv)
+Boolean assembler_emit(ETAssemblerInvocationRef inv)
 {
     Boolean failed = false;
     UInt8 errors = 0;

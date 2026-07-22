@@ -19,8 +19,8 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef ETASSEMBLERINVOCATION_H
-#define ETASSEMBLERINVOCATION_H
+#ifndef __ETASSEMBLERINVOCATION_H
+#define __ETASSEMBLERINVOCATION_H
 
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/hashmap/hashmap.h>
@@ -29,22 +29,32 @@
 #include <EmexToolchain/ETAssembler/label/relocate.h>
 #include <EmexToolchain/ETAssembler/type.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerOptions.h>
-#ifdef ET_PRIVATE
-#include <EmexToolchain/ETAssembler/__ETAssemblerInvocation.h>
-#endif /* ET_PRIVATE */
 
-typedef struct {
-    char *match;
-    char *value;
-} assembler_macro_definition_t;
+typedef struct __ETAssemblerInvocation {
+    EFObject header;
 
-typedef struct __ETAssemblerInvocation *ETAssemblerInvocationRef;
+    ETAssemblerDiagnosticConsumerRef diagnosticConsumer;
+    assembler_diagnostic_consumer_t *consumer;              /* borrowed */
 
-EFTypeID ETAssemblerInvocationGetTypeID(void);
+    EFFileRef *file;
+    size_t file_cnt;
 
-ETAssemblerInvocationRef ETAssemblerInvocationCreate(EFAllocatorRef allocatorRef, ETAssemblerDiagnosticConsumerRef diagnosticConsumer);
-Boolean ETAssemblerInvocationAddMacroDefinition(ETAssemblerInvocationRef invocation, assembler_macro_definition_t *macro);
-Boolean ETAssemblerInvocationAddIncludeSearchPath(ETAssemblerInvocationRef invocation, EFStringRef includeSearchPath);
-Boolean ETAssemblerInvocationEmit(ETAssemblerInvocationRef invocation, EFFileRef input, EFFileRef output);
+    assembler_line_t **line;
+    UInt64 line_cnt;
 
-#endif /* ETASSEMBLERINVOCATION_H */
+    char *label_scope;
+    hashmap_t *label_hashmap;
+
+    EFArrayRef definitions;                                 /* borrowed */
+    EFArrayRef includeSearchPaths;
+
+    reloc_table_entry_t *rtbe;
+    EFBitWalkerRef out_vbitwalker;
+
+    UInt64 data_section_start;
+    UInt64 data_section_end;
+    UInt64 bss_section_start;
+    UInt64 bss_section_size;
+} *__ETAssemblerInvocation;
+
+#endif /* __ETASSEMBLERINVOCATION_H */

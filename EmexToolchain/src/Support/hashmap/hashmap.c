@@ -246,9 +246,9 @@ hashmap_iter_t hashmap_iter_create(hashmap_t *m)
 }
 
 Boolean hashmap_next(hashmap_iter_t *it,
-                  const void **key,
-                  size_t *klen,
-                  void **val)
+                     const void **key,
+                     size_t *klen,
+                     void **val)
 {
     hashmap_t *m = it->m;
     while(it->i <= m->mask)

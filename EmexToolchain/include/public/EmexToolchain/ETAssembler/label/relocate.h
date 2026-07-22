@@ -24,7 +24,7 @@
 
 #include <EmexToolchain/ETAssembler/type.h>
 
-typedef struct assembler_invocation assembler_invocation_t;
+typedef struct __ETAssemblerInvocation *ETAssemblerInvocationRef;
 
 typedef struct reloc_table_entry {
     char *name;                         /* resolved label name */
@@ -34,6 +34,6 @@ typedef struct reloc_table_entry {
     struct reloc_table_entry *next;     /* pointer to next entry */
 } reloc_table_entry_t;
 
-Boolean assembler_label_relocate_append(assembler_invocation_t *inv, char *label_str, Boolean local, assembler_token_t *at_link);
+Boolean assembler_label_relocate_append(ETAssemblerInvocationRef inv, char *label_str, Boolean local, assembler_token_t *at_link);
 
 #endif /* EMEX64ASM_LABEL_RELOCATE_H */

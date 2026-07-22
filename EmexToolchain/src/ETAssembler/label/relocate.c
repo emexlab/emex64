@@ -24,7 +24,7 @@
 #include <EmexToolchain/ETAssembler/label/relocate.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 
-Boolean assembler_label_relocate_append(assembler_invocation_t *inv,
+Boolean assembler_label_relocate_append(ETAssemblerInvocationRef inv,
                                         char *label_str,
                                         Boolean local,
                                         assembler_token_t *at_link)

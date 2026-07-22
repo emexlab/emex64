@@ -24,7 +24,7 @@
 
 #include <EmexToolchain/ETAssembler/type.h>
 
-typedef struct assembler_invocation assembler_invocation_t;
+typedef struct __ETAssemblerInvocation *ETAssemblerInvocationRef;
 
 typedef struct {
     char *name;                             /* name of resolved label */
@@ -36,6 +36,6 @@ typedef struct {
 
 Boolean assembler_label_append(assembler_token_t *at);
 
-assembler_label_t *assembler_label_lookup(assembler_invocation_t *inv, const char *name);
+assembler_label_t *assembler_label_lookup(ETAssemblerInvocationRef inv, const char *name);
 
 #endif /* EMEX64ASM_LABEL_LABEL_H */

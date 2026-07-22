@@ -121,7 +121,7 @@ E64RegisterIdentifier register_from_string(const char *name)
     }
 }
 
-void assembler_emit_register(assembler_invocation_t *inv,
+void assembler_emit_register(ETAssemblerInvocationRef inv,
                              E64Register reg,
                              Boolean increment,
                              Boolean actuallyDecrement)
@@ -143,7 +143,7 @@ void assembler_emit_register(assembler_invocation_t *inv,
     EFBitWalkerWrite(inv->out_vbitwalker, reg, 4);
 }
 
-void assembler_emit_register_extended(assembler_invocation_t *inv,
+void assembler_emit_register_extended(ETAssemblerInvocationRef inv,
                                       E64RegisterExtended reg)
 {
     assert(reg <= kE64RegisterExtendedMAX);

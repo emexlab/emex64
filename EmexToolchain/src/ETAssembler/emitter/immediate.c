@@ -22,42 +22,42 @@
 #include <EmexToolchain/ETAssembler/emitter/immediate.h>
 #include <EmexToolchain/VM/E64Core.h>
 
-void assembler_emit_imm5(assembler_invocation_t *inv,
+void assembler_emit_imm5(ETAssemblerInvocationRef inv,
                          UInt8 imm)
 {
     EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingImm4, 4);
     EFBitWalkerWrite(inv->out_vbitwalker, imm, 4);
 }
 
-void assembler_emit_imm8(assembler_invocation_t *inv,
+void assembler_emit_imm8(ETAssemblerInvocationRef inv,
                          UInt8 imm)
 {
     EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingImm8, 4);
     EFBitWalkerWrite(inv->out_vbitwalker, imm, 8);
 }
 
-void assembler_emit_imm16(assembler_invocation_t *inv,
+void assembler_emit_imm16(ETAssemblerInvocationRef inv,
                           UInt16 imm)
 {
     EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingImm16, 4);
     EFBitWalkerWrite(inv->out_vbitwalker, imm, 16);
 }
 
-void assembler_emit_imm32(assembler_invocation_t *inv,
+void assembler_emit_imm32(ETAssemblerInvocationRef inv,
                           UInt32 imm)
 {
     EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingImm32, 4);
     EFBitWalkerWrite(inv->out_vbitwalker, imm, 32);
 }
 
-void assembler_emit_imm64(assembler_invocation_t *inv,
+void assembler_emit_imm64(ETAssemblerInvocationRef inv,
                           UInt64 imm)
 {
     EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingImm64, 4);
     EFBitWalkerWrite(inv->out_vbitwalker, imm, 64);
 }
 
-void assembler_emit_addr64(assembler_invocation_t *inv,
+void assembler_emit_addr64(ETAssemblerInvocationRef inv,
                            UInt64 addr)
 {
     EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingAddr64, 4);
@@ -65,7 +65,7 @@ void assembler_emit_addr64(assembler_invocation_t *inv,
     EFBitWalkerWrite(inv->out_vbitwalker, addr, 64);
 }
 
-void assembler_emit_imm(assembler_invocation_t *inv,
+void assembler_emit_imm(ETAssemblerInvocationRef inv,
                         UInt64 imm)
 {
     if(imm <= 0xF)

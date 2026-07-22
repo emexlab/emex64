@@ -40,7 +40,7 @@ typedef struct {
 
 E64RegisterIdentifier register_from_string(const char *name);
 
-void assembler_emit_register(assembler_invocation_t *inv, E64Register reg, Boolean increment, Boolean actuallyDecrement);
-void assembler_emit_register_extended(assembler_invocation_t *inv, E64RegisterExtended reg);
+void assembler_emit_register(ETAssemblerInvocationRef inv, E64Register reg, Boolean increment, Boolean actuallyDecrement);
+void assembler_emit_register_extended(ETAssemblerInvocationRef inv, E64RegisterExtended reg);
 
 #endif /* EMEX64ASM_EMITTER_REGISTER_H */

@@ -25,6 +25,6 @@
 #include <EmexToolchain/ETAssembler/type.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 
-Boolean assembler_section_parse(assembler_invocation_t *inv);
+Boolean assembler_section_parse(ETAssemblerInvocationRef inv);
 
 #endif /* EMEX64ASM_SECTION_H */

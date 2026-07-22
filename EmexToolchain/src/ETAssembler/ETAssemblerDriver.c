@@ -412,7 +412,7 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
 }
 
 static EFStringRef __ETAssemblerDriverTemporaryObjectPathForInputPath(__ETAssemblerDriver driver,
-                                                                       const char *input_path)
+                                                                      const char *input_path)
 {
     const char *base = strrchr(input_path, '/');
     base = base ? base + 1 : input_path;
@@ -784,44 +784,37 @@ Boolean ETAssemblerDriverRun(ETAssemblerDriverRef driverRef)
 
     if(driver->driverOptions.assembleOnly)
     {
-        assembler_diagnostic_consumer_t *consumer = ETAssemblerDiagnosticConsumerGetPtr(driver->diagnosticConsumer);
-        if(consumer == NULL)
+        EFAUTOREL ETAssemblerInvocationRef invocation = ETAssemblerInvocationCreate(kEFAllocatorDefault, driver->diagnosticConsumer);
+        if(invocation == NULL)
         {
             return false;
         }
 
-        assembler_invocation_t *inv = assembler_invocation_alloc(consumer);
-        if(inv == NULL)
+        for(EFIndex index = 0; index < driver->macroCount; index++)
         {
-            return false;
+            if(!ETAssemblerInvocationAddMacroDefinition(invocation, &driver->macros[index]))
+            {
+                return false;
+            }
         }
-
-        inv->definition_cnt = driver->macroCount;
-        inv->definition = driver->macros;
 
         EFIndex includeSearchPathCount = EFArrayGetCount(driver->includeSearchPaths);
-        char *includeSearchPaths[includeSearchPathCount];
         for(EFIndex index = 0; index < includeSearchPathCount; index++)
         {
-            includeSearchPaths[index] = (char*)EFStringGetCStringPtr(EFArrayGetValueAtIndex(driver->includeSearchPaths, index), kEFStringEncodingUTF8);
+            if(!ETAssemblerInvocationAddIncludeSearchPath(invocation, EFArrayGetValueAtIndex(driver->includeSearchPaths, index)))
+            {
+                return false;
+            }
         }
-
-        inv->include_dir_cnt = includeSearchPathCount;
-        inv->include_dirs = includeSearchPaths;
 
         EFAUTOREL EFFileRef output = EFFileCreateWithPath(EFGetAllocator(driver), EFFilePolicyOutData, driver->outputPath);
         if(output == NULL)
         {
-            assembler_invocation_dealloc(inv);
             return false;
         }
-
         EFFileRef input = EFArrayGetValueAtIndex(driver->inputFiles, 0);
-        Boolean success = assembler_invocation_emit(inv, input, output);
 
-        assembler_invocation_dealloc(inv);
-
-        return success;
+        return ETAssemblerInvocationEmit(invocation, input, output);
     }
     else
     {

@@ -66,7 +66,7 @@ static inline char *__assembler_preprocessor_include_directive_get_token(const c
     return hdr;
 }
 
-Boolean assembler_preprocessor_run(assembler_invocation_t *inv)
+Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
 {
     /* allocating macro storage */
     assembler_macro_storage_t *storage = assembler_macro_storage_alloc();
@@ -77,8 +77,11 @@ Boolean assembler_preprocessor_run(assembler_invocation_t *inv)
     }
 
     /* adding predefined macro definitions */
-    for(UInt64 i = 0; i < inv->definition_cnt; i++)
+    EFIndex definitionCount = EFArrayGetCount(inv->definitions);
+    for(EFIndex index = 0; index < definitionCount; index++)
     {
+        assembler_macro_definition_t *definition = EFArrayGetValueAtIndex(inv->definitions, index);
+
         const char **inject_token = calloc(1, sizeof(char*));
         if(inject_token == NULL)
         {
@@ -87,9 +90,9 @@ Boolean assembler_preprocessor_run(assembler_invocation_t *inv)
             return false;
         }
 
-        inject_token[0] = inv->definition[i].value;
+        inject_token[0] = definition->value;
 
-        if(!assembler_macro_storage_append_macro_char(storage, inv->definition[i].match, inject_token, 1))
+        if(!assembler_macro_storage_append_macro_char(storage, definition->match, inject_token, 1))
         {
             diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "out of memory, can't append macro to macro storage");
             free(inject_token);
@@ -253,7 +256,7 @@ Boolean assembler_preprocessor_run(assembler_invocation_t *inv)
                         char *hdr_path;
                         if(system_hdr)
                         {
-                            hdr_path = assembler_code_find_system_header(hdr_token, (const char**)inv->include_dirs, inv->include_dir_cnt);
+                            hdr_path = assembler_code_find_system_header(hdr_token, inv->includeSearchPaths);
                         }
                         else
                         {

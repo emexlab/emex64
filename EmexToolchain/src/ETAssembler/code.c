@@ -114,13 +114,13 @@ char *assembler_code_find_header(const char *name,
 }
 
 char *assembler_code_find_system_header(const char *name,
-                                        const char **inc_dirs,
-                                        size_t inc_cnt)
+                                        EFArrayRef includeSearchPaths)
 {
     char buf[PATH_MAX];
-    for(size_t i = 0; i < inc_cnt; i++)
+    EFIndex includeSearchPathCount = EFArrayGetCount(includeSearchPaths);
+    for(EFIndex index = 0; index < includeSearchPathCount; index++)
     {
-        snprintf(buf, sizeof(buf), "%s/%s", inc_dirs[i], name);
+        snprintf(buf, sizeof(buf), "%s/%s", EFStringGetCStringPtr(EFArrayGetValueAtIndex(includeSearchPaths, index), kEFStringEncodingUTF8), name);
         if(access(buf, R_OK) == 0)
         {
             return strdup(buf);
@@ -129,9 +129,9 @@ char *assembler_code_find_system_header(const char *name,
     return NULL;
 }
 
-static inline Boolean __assembler_splice_line(assembler_invocation_t *inv,
-                                           UInt64 idx,
-                                           size_t count)
+static inline Boolean __assembler_splice_line(ETAssemblerInvocationRef inv,
+                                              UInt64 idx,
+                                              size_t count)
 {
     /* bounds check */
     if(idx >= inv->line_cnt)
@@ -177,7 +177,7 @@ static inline Boolean __assembler_splice_line(assembler_invocation_t *inv,
     return true;
 }
 
-Boolean assembler_code_inject_file(assembler_invocation_t *inv,
+Boolean assembler_code_inject_file(ETAssemblerInvocationRef inv,
                                    UInt64 at_line_index,
                                    EFFileRef inj_file)
 {
@@ -308,7 +308,7 @@ out_failure:
     return false;
 }
 
-Boolean assembler_code_preparse(assembler_invocation_t *inv,
+Boolean assembler_code_preparse(ETAssemblerInvocationRef inv,
                                 EFFileRef input)
 {
     if(!assembler_code_inject_file(inv, 0, input))
@@ -322,7 +322,7 @@ Boolean assembler_code_preparse(assembler_invocation_t *inv,
     return true;
 }
 
-Boolean assembler_code_postparse(assembler_invocation_t *inv)
+Boolean assembler_code_postparse(ETAssemblerInvocationRef inv)
 {
     /* token type emitter */
     for(UInt64 li = 0; li < inv->line_cnt; li++)

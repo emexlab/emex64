@@ -26,8 +26,8 @@
 #include <EmexToolchain/ETAssembler/preprocessor/macro.h>
 #include <EmexToolchain/ETAssembler/preprocessor/directive.h>
 
-typedef struct assembler_invocation assembler_invocation_t;
+typedef struct __ETAssemblerInvocation *ETAssemblerInvocationRef;
 
-Boolean assembler_preprocessor_run(assembler_invocation_t *inv);
+Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv);
 
 #endif /* EMEX64ASM_PREPROCESSOR_H */

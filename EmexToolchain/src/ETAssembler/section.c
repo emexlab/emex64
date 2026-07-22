@@ -35,10 +35,10 @@
 #include <EmexToolchain/ETAssembler/code.h>
 #include <EmexToolchain/ETAssembler/expr.h>
 
-static Boolean __assembler_section_emit_value(assembler_invocation_t *inv,
-                                           assembler_token_t **entry,
-                                           UInt64 entry_cnt,
-                                           int dbs)
+static Boolean __assembler_section_emit_value(ETAssemblerInvocationRef inv,
+                                              assembler_token_t **entry,
+                                              UInt64 entry_cnt,
+                                              int dbs)
 {
     if(entry_cnt == 1 && entry[0]->type == kETAssemblerTokenTypeString)
     {
@@ -102,7 +102,7 @@ static int __assembler_section_dbs_get(const char *str)
     }
 }
 
-Boolean assembler_section_parse(assembler_invocation_t *inv)
+Boolean assembler_section_parse(ETAssemblerInvocationRef inv)
 {
     /* only emitting data section into out virtual file descriptor */
     for(UInt64 i = 0; i < inv->line_cnt; i++)
