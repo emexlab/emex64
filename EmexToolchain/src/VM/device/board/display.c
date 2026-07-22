@@ -412,15 +412,18 @@ emex64_display_t *emex64_display_alloc(E64MachineRef machine,
                                        UInt16 height)
 {
     #if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || defined(__APPLE__))
-    if(width > 1920 || height > 1920)
+    if(install)
     {
-        diag_error(NULL, "display dimensions are too big");
-        return NULL;
-    }
-    else if(width < 256 || height < 256)
-    {
-        diag_error(NULL, "display dimensions are too small");
-        return NULL;
+        if(width > 1920 || height > 1920)
+        {
+            diag_error(NULL, "display dimensions are too big");
+            return NULL;
+        }
+        else if(width < 256 || height < 256)
+        {
+            diag_error(NULL, "display dimensions are too small");
+            return NULL;
+        }
     }
     #endif /* EMEX64VM_DEVICE_DISPLAY */
 
