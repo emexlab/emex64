@@ -98,10 +98,6 @@ int main(void)
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "ouweee =<");
         return 1;
     }
-    else
-    {
-        diagnostic_report(NULL, kDiagnosticSeverityNote, NULL, "compiled virtual assembly file into virtual object file");
-    }
 
     /* now we come to linkage >:3 */
     EFFileRef *input_file = calloc(1, sizeof(EFFileRef));
@@ -128,7 +124,10 @@ int main(void)
         return 1;
     }
 
-    success = linker_link(linker_options_default, lnkconsumer, input_file, 1, NULL, 0, firmware_file);
+    linker_options_t linkerOptions = linker_options_default;
+    linkerOptions.verbose = true;
+    linkerOptions.use_old_magic = true;
+    success = linker_link(linkerOptions, lnkconsumer, input_file, 1, NULL, 0, firmware_file);
     linker_diagnostic_consumer_emit(lnkconsumer);
     linker_diagnostic_consumer_dealloc(lnkconsumer);
     free(input_file);
@@ -137,16 +136,9 @@ int main(void)
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to link virtual object file into virtual firmware file");
         return 1;
     }
-    else
-    {
-        diagnostic_report(NULL, kDiagnosticSeverityNote, NULL, "linked virtual object file into virtual firmware file");
-    }
 
     /* let the core spin >:3 */
-    E64MachineOptions machineOptions = E64MachineOptionsDefault;
-    machineOptions.displayOptions.enabled = false;
-
-    EFAUTOREL E64MachineRef machine = E64MachineCreateWithOptions(kEFAllocatorDefault, machineOptions);
+    EFAUTOREL E64MachineRef machine = E64MachineCreateWithOptions(kEFAllocatorDefault, E64MachineOptionsMinimal);
     if(machine == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate virtual machine");
