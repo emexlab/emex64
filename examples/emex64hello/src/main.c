@@ -23,6 +23,7 @@
 #include <fcntl.h>
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
+#include <EmexToolchain/ETAssembler/diagnostic/ETAssemblerDiagnosticConsumer.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 #include <EmexToolchain/ETLinker/linker.h>
 #include <EmexToolchain/VM/E64Machine.h>
@@ -43,7 +44,7 @@ int main(void)
      * assemble to a virtual object file we can
      * then link.
      */
-    EFFileRef unsaved_file = EFFileCreateWithStringAndPath(kEFAllocatorDefault, EFFilePolicyInData, EFSTR("test.e64"), EFSTR(
+    EFAUTOREL EFFileRef unsaved_file = EFFileCreateWithStringAndPath(kEFAllocatorDefault, EFFilePolicyInData, EFSTR("test.e64"), EFSTR(
         "section .data\n"
         "    msg db \"hello, world!\\n\\0\"\n"
         "\n"
@@ -67,43 +68,34 @@ int main(void)
         return 1;
     }
 
-    EFFileRef object_file = EFFileCreateWithStringAndPath(kEFAllocatorDefault, EFFilePolicyOutData, EFSTR("test.o"), EFSTR(""));
+    EFAUTOREL EFFileRef object_file = EFFileCreateWithStringAndPath(kEFAllocatorDefault, EFFilePolicyOutData, EFSTR("test.o"), EFSTR(""));
     if(object_file == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate virtual object file");
-        EFRelease(unsaved_file);
         return 1;
     }
 
     /* we need the invocation to assemble */
-    assembler_diagnostic_consumer_t *consumer = assembler_diagnostic_consumer_alloc(ETAssemblerDiagnosticOptionsDefault);
-    if(consumer == NULL)
+    EFAUTOREL ETAssemblerDiagnosticConsumerRef assemblerDiagnosticConsumer = ETAssemblerDiagnosticConsumerCreate(kEFAllocatorDefault, ETAssemblerDiagnosticOptionsDefault);
+    if(assemblerDiagnosticConsumer == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate consumer for assembler invocation");
-        EFRelease(object_file);
-        EFRelease(unsaved_file);
         return 1;
     }
 
-    assembler_invocation_t *inv = assembler_invocation_alloc(consumer);
+    assembler_invocation_t *inv = assembler_invocation_alloc(ETAssemblerDiagnosticConsumerGetPtr(assemblerDiagnosticConsumer));
     if(inv == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate assembler invocation");
-        assembler_diagnostic_consumer_dealloc(consumer);
-        EFRelease(object_file);
-        EFRelease(unsaved_file);
         return 1;
     }
 
     Boolean success = assembler_invocation_emit(inv, unsaved_file, object_file);
     assembler_invocation_dealloc(inv);
-    assembler_diagnostic_consumer_emit(consumer);
-    assembler_diagnostic_consumer_dealloc(consumer);
-    EFRelease(unsaved_file);
+    ETAssemblerDiagnosticConsumerEmit(assemblerDiagnosticConsumer);
     if(!success)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "ouweee =<");
-        EFRelease(object_file);
         return 1;
     }
     else
@@ -116,17 +108,15 @@ int main(void)
     if(input_file == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "couldn't allocate input files array for the linker");
-        EFRelease(object_file);
         return 1;
     }
     input_file[0] = object_file;
 
-    EFFileRef firmware_file = EFFileCreateWithStringAndPath(kEFAllocatorDefault, EFFilePolicyOutData, EFSTR("test.img"), EFSTR(""));
+    EFAUTOREL EFFileRef firmware_file = EFFileCreateWithStringAndPath(kEFAllocatorDefault, EFFilePolicyOutData, EFSTR("test.img"), EFSTR(""));
     if(firmware_file == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate virtual firmware file");
         free(input_file);
-        EFRelease(object_file);
         return 1;
     }
 
@@ -134,9 +124,7 @@ int main(void)
     if(lnkconsumer == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate linkers consumer");
-        EFRelease(firmware_file);
         free(input_file);
-        EFRelease(object_file);
         return 1;
     }
 
@@ -144,11 +132,9 @@ int main(void)
     linker_diagnostic_consumer_emit(lnkconsumer);
     linker_diagnostic_consumer_dealloc(lnkconsumer);
     free(input_file);
-    EFRelease(object_file);
     if(!success)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to link virtual object file into virtual firmware file");
-        EFRelease(firmware_file);
         return 1;
     }
     else
@@ -160,11 +146,10 @@ int main(void)
     E64MachineOptions machineOptions = E64MachineOptionsDefault;
     machineOptions.displayOptions.enabled = false;
 
-    E64MachineRef machine = E64MachineCreateWithOptions(kEFAllocatorDefault, machineOptions);
+    EFAUTOREL E64MachineRef machine = E64MachineCreateWithOptions(kEFAllocatorDefault, machineOptions);
     if(machine == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate virtual machine");
-        EFRelease(firmware_file);
         return 1;
     }
 
@@ -172,16 +157,12 @@ int main(void)
     if(memory == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to aquire memory from machine");
-        EFRelease(machine);
         return 1;
     }
 
-    success = E64MemoryLoadImage(memory, firmware_file);
-    EFRelease(firmware_file);
-    if(!success)
+    if(!E64MemoryLoadImage(memory, firmware_file))
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to load virtual firmware file");
-        EFRelease(machine);
         return 1;
     }
 
@@ -189,10 +170,8 @@ int main(void)
     if(core == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to aquire core from machine");
-        EFRelease(machine);
         return 1;
     }
-    E64Exception exception = E64CoreExecute(core);
-    EFRelease(machine);
-    return exception == kE64ExceptionNone ? 0 : 1;
+
+    return E64CoreExecute(core) == kE64ExceptionNone ? 0 : 1;
 }
