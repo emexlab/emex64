@@ -153,25 +153,11 @@ int main(void)
         return 1;
     }
 
-    E64MemoryRef memory = E64MachineGetMemory(machine);
-    if(memory == NULL)
+    if(!E64MemoryLoadImage(E64MachineGetMemory(machine), firmware_file))
     {
-        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to aquire memory from machine");
+        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to load virtual firmware file into virtual machine");
         return 1;
     }
 
-    if(!E64MemoryLoadImage(memory, firmware_file))
-    {
-        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to load virtual firmware file");
-        return 1;
-    }
-
-    E64CoreRef core = E64MachineGetCore(machine);
-    if(core == NULL)
-    {
-        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to aquire core from machine");
-        return 1;
-    }
-
-    return E64CoreExecute(core) == kE64ExceptionNone ? 0 : 1;
+    return E64CoreExecute(E64MachineGetCore(machine)) == kE64ExceptionNone ? 0 : 1;
 }
