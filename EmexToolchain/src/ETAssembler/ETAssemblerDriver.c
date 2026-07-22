@@ -366,13 +366,6 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
         }
         else if(argument != NULL && !EFStringEqualRange(argument, EFSTR("-"), EFRangeMake(0, 1)))
         {
-            const char *cArgument = EFStringGetCStringPtr(argument, kEFStringEncodingUTF8);
-            if(cArgument == NULL)
-            {
-                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown or non existing input file '%@'"), argument);
-                return false;
-            }
-
             EFAUTOREL EFFileRef file = EFFileCreateWithPath(EFGetAllocator(driver), EFFilePolicyInData, argument);
             EFFileType fileType = EFFileGetType(file);
             if(file == NULL || !(fileType == kEFFileTypeAssembly || fileType == kEFFileTypeAssemblyIncludations || fileType == kEFFileTypeObject))
