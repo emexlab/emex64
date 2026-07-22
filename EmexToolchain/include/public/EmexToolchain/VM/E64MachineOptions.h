@@ -48,5 +48,6 @@ typedef struct {
 
 extern E64MachineSupport E64MachineSupportCurrent;
 extern E64MachineOptions E64MachineOptionsDefault;
+extern E64MachineOptions E64MachineOptionsMinimal;
 
 #endif /* E64MACHINEOPTIONS_H */

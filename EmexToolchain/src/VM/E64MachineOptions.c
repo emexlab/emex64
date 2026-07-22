@@ -20,6 +20,7 @@
  */
 
 #include <EmexToolchain/VM/E64MachineOptions.h>
+#include <EmexToolchain/VM/E64Memory.h>
 
 E64MachineSupport E64MachineSupportCurrent = {
     #if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || defined(__APPLE__))
@@ -41,9 +42,22 @@ E64MachineOptions E64MachineOptionsDefault = {
     #else
     .displayOptions = {
         .enabled = false,
+        .width = 0,
+        .height = 0,
     },
     .keyboardPeripheralMode = kE64PeripheralModeOff,
     .mousePeripheralMode = kE64PeripheralModeOff,
     #endif /* EMEX64VM_DEVICE_DISPLAY */
     .memoryLength = 100 * 1024 * 1024,
+};
+
+E64MachineOptions E64MachineOptionsMinimal = {
+    .displayOptions = {
+        .enabled = false,
+        .width = 0,
+        .height = 0,
+    },
+    .keyboardPeripheralMode = kE64PeripheralModeOff,
+    .mousePeripheralMode = kE64PeripheralModeOff,
+    .memoryLength = EMEX64_PAGE_SIZE,
 };
