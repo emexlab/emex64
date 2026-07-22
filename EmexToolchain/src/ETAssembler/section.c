@@ -158,9 +158,17 @@ Boolean assembler_section_parse(ETAssemblerInvocationRef inv)
 
                     const char *path_component = inv->line[i]->token[a]->string_literal.buf;
 
+                    EFAUTOREL EFFileRef file = NULL;
                     EFAUTOREL EFStringRef pathComponentStr = EFStringCreateWithCString(kEFAllocatorDefault, path_component, kEFStringEncodingUTF8);
-                    EFAUTOREL EFURLRef newUrl = EFURLCreateURLByReplacingLastPathComponent(kEFAllocatorDefault, url, pathComponentStr);
-                    EFAUTOREL EFFileRef file = EFFileCreateWithURL(EFGetAllocator(url), EFFilePolicyInData, newUrl);
+                    if(EFStringHasPrefix(pathComponentStr, EFSTR("https://")) || EFStringHasPrefix(pathComponentStr, EFSTR("http://")) || EFStringHasPrefix(pathComponentStr, EFSTR("/")))
+                    {
+                        file = EFFileCreateWithPath(EFGetAllocator(url), EFFilePolicyInData, pathComponentStr);
+                    }
+                    else
+                    {
+                        EFAUTOREL EFURLRef newUrl = EFURLCreateURLByReplacingLastPathComponent(kEFAllocatorDefault, url, pathComponentStr);
+                        file = EFFileCreateWithURL(EFGetAllocator(url), EFFilePolicyInData, newUrl);
+                    }
                     EFAUTOREL EFFileHandleRef fileHandle = EFFileCopyFileHandle(EFGetAllocator(url), file);
                     EFAUTOREL EFMappingRef mapping = EFFileHandleCopyMapping(EFGetAllocator(url), fileHandle);
                     if(file == NULL || mapping == NULL)
