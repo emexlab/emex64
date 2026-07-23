@@ -31,10 +31,10 @@ typedef enum: UInt8 {
     kETAssemblerTokenTypeInvalid,
     kETAssemblerTokenTypeTooLong,
 
-    kETAssemblerTokenTypeIdentifier,    /* in the lextok step everything becomes a identifier at first */
+    kETAssemblerTokenTypeIdentifier,        /* in the lextok step everything becomes a identifier at first */
     kETAssemblerTokenTypeInteger,
     kETAssemblerTokenTypeString,
-    kETAssemblerTokenTypeHeaderName,    /* shouldn't be classified after tokenization */
+    kETAssemblerTokenTypeHeaderName,        /* shouldn't be classified after tokenization */
     kETAssemblerTokenTypeRegister,
     kETAssemblerTokenTypeRegisterExtended,
     kETAssemblerTokenTypeInstruction,
@@ -63,7 +63,7 @@ typedef enum: UInt8 {
     kETAssemblerLineTypeAssembly,
     kETAssemblerLineTypeExternSymbol,
     kETAssemblerLineTypeSymbol,
-    kETAssemblerLineTypeLabel,      /* automatically marked as local label */
+    kETAssemblerLineTypeLabel,                  /* automatically marked as local label */
     kETAssemblerLineTypeSection,
     kETAssemblerLineTypeSectionData,
     kETAssemblerLineTypePreprocessorDirective,
@@ -71,14 +71,14 @@ typedef enum: UInt8 {
 
 typedef struct assembler_token {
     char *str;
-    size_t column_num;                      /* start offset of the token in the text file */
-    size_t real_len;                        /* real lenght in text file */
-    struct assembler_line *al;              /* pointer back to compiler line */
-    ETAssemblerTokenType type;              /* OMG THAT IS AI?!?! the token type, WOAHHH AM I A AI, DID A AI GENERATE THIS TOKEN?!??!*/
+    size_t column_num;                          /* start offset of the token in the text file */
+    size_t real_len;                            /* real lenght in text file */
+    struct assembler_line *al;                  /* pointer back to compiler line */
+    ETAssemblerTokenType type;                  /* OMG THAT IS AI?!?! the token type, WOAHHH AM I A AI, DID A AI GENERATE THIS TOKEN?!??!*/
 
     union {
         struct {
-            UInt64 v; /* signed by default */
+            UInt64 v;                           /* signed by default */
         } integer_literal;
         struct {
             char *buf;
@@ -103,12 +103,12 @@ typedef struct assembler_token {
 
 typedef struct assembler_line {
     char *str;
-    ETAssemblerLineType type;               /* type of line */
-    struct assembler_token **token;         /* subtokens */
-    UInt64 token_cnt;                       /* count of subtokens */
-    size_t line_num;                        /* line number in file */   
-    size_t file_idx;                        /* index of file in compiler invocation */
-    ETAssemblerInvocationRef inv;           /* pointer back to compiler invocation */
+    ETAssemblerLineType type;       /* type of line */
+    struct assembler_token **token; /* subtokens */
+    UInt64 token_cnt;               /* count of subtokens */
+    size_t line_num;                /* line number in file */   
+    size_t file_idx;                /* index of file in compiler invocation */
+    ETAssemblerInvocationRef inv;   /* pointer back to compiler invocation */
 } assembler_line_t;
 
 #endif /* EMEX64ASM_TYPE_H */

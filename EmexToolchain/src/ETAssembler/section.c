@@ -141,9 +141,6 @@ Boolean assembler_section_parse(ETAssemblerInvocationRef inv)
             int dbs = __assembler_section_dbs_get(inv->line[i]->token[1]->str);
             if(dbs == 0)
             {
-                EFURLRef url = EFFileGetURL(EFArrayGetValueAtIndex(inv->files, inv->line[i]->file_idx));
-                EFAUTOREL EFStringRef pathStr = EFURLCopyPath(EFGetAllocator(url), url);
-
                 for(unsigned long a = 2; a < inv->line[i]->token_cnt; a++)
                 {
                     if(inv->line[i]->token[a]->type == kETAssemblerTokenTypeComma)
@@ -158,6 +155,7 @@ Boolean assembler_section_parse(ETAssemblerInvocationRef inv)
 
                     const char *path_component = inv->line[i]->token[a]->string_literal.buf;
 
+                    EFURLRef url = EFFileGetURL(EFArrayGetValueAtIndex(inv->files, inv->line[i]->file_idx));
                     EFAUTOREL EFFileRef file = NULL;
                     EFAUTOREL EFStringRef pathComponentStr = EFStringCreateWithCString(kEFAllocatorDefault, path_component, kEFStringEncodingUTF8);
                     if(EFStringHasPrefix(pathComponentStr, EFSTR("https://")) || EFStringHasPrefix(pathComponentStr, EFSTR("http://")) || EFStringHasPrefix(pathComponentStr, EFSTR("/")))
