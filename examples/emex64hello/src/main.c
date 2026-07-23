@@ -78,7 +78,10 @@ int main(void)
     /* we need the invocation to assemble */
     EFAUTOREL ETAssemblerDiagnosticConsumerRef assemblerDiagnosticConsumer = ETAssemblerDiagnosticConsumerCreate(kEFAllocatorDefault, ETAssemblerDiagnosticOptionsDefault);
     EFAUTOREL ETAssemblerInvocationRef inv = ETAssemblerInvocationCreate(kEFAllocatorDefault, assemblerDiagnosticConsumer);
-    if(!ETAssemblerInvocationEmit(inv, unsaved_file, object_file))
+
+    if(!ETAssemblerInvocationSetInputFile(inv, unsaved_file) ||
+       !ETAssemblerInvocationSetOutputFile(inv, object_file) ||
+       !ETAssemblerInvocationEmit(inv))
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "ouweee =<");
         return 1;

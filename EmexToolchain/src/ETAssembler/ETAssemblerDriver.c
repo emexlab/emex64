@@ -800,10 +800,16 @@ Boolean ETAssemblerDriverRun(ETAssemblerDriverRef driverRef)
             }
         }
 
-        EFFileRef input = EFArrayGetValueAtIndex(driver->inputFiles, 0);
-        EFAUTOREL EFFileRef output = EFFileCreateWithPath(EFGetAllocator(driver), EFFilePolicyOutData, driver->outputPath);
+        {
+            EFAUTOREL EFFileRef outputFile = EFFileCreateWithPath(EFGetAllocator(driver), EFFilePolicyOutData, driver->outputPath);
+            if(!ETAssemblerInvocationSetInputFile(invocation, EFArrayGetValueAtIndex(driver->inputFiles, 0)) ||
+               !ETAssemblerInvocationSetOutputFile(invocation, outputFile))
+            {
+                return false;
+            }
+        }
 
-        return ETAssemblerInvocationEmit(invocation, input, output);
+        return ETAssemblerInvocationEmit(invocation);
     }
     else
     {

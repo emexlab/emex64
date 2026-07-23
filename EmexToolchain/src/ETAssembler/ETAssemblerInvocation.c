@@ -83,6 +83,9 @@ static void __ETAssemblerInvocationDeinit(EFObjectRef invocationRef)
     
     EFReleaseTry(invocation->definitions);
     EFReleaseTry(invocation->includeSearchPaths);
+
+    EFReleaseTry(invocation->inputFile);
+    EFReleaseTry(invocation->outputFile);
 }
 
 EFClass ETAssemblerInvocationClass = {
@@ -173,18 +176,16 @@ Boolean ETAssemblerInvocationAddIncludeSearchPath(ETAssemblerInvocationRef invoc
     return true;
 }
 
-Boolean ETAssemblerInvocationEmit(ETAssemblerInvocationRef invocationRef,
-                                  EFFileRef input,
-                                  EFFileRef output)
+Boolean ETAssemblerInvocationEmit(ETAssemblerInvocationRef invocationRef)
 {
     __ETAssemblerInvocation invocation = (__ETAssemblerInvocation)invocationRef;
-    if(invocation == NULL || input == NULL || output == NULL)
+    if(invocation == NULL || invocation->inputFile == NULL || invocation->outputFile == NULL)
     {
         return false;
     }
 
     /* need output */
-    invocation->out_vbitwalker = EFFileCopyBitWalker(kEFAllocatorDefault, output, kEFEndianLittle);
+    invocation->out_vbitwalker = EFFileCopyBitWalker(kEFAllocatorDefault, invocation->outputFile, kEFEndianLittle);
     if(invocation->out_vbitwalker == NULL)
     {
         ETAssemblerDiagnosticConsumerReport(invocation->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("couldn't allocate fdwalker"));
@@ -193,16 +194,66 @@ Boolean ETAssemblerInvocationEmit(ETAssemblerInvocationRef invocationRef,
 
     EFBitWalkerSeek(invocation->out_vbitwalker, 10, 0);
 
-    if(!assembler_code_preparse(invocation, input) ||
+    if(!assembler_code_preparse(invocation, invocation->inputFile) ||
        !assembler_preprocessor_run(invocation) ||
        !assembler_code_postparse(invocation) ||
        !assembler_section_parse(invocation) ||
        !assembler_emit(invocation) ||
        !assembler_elf_emit(invocation))
     {
-        EFFileUnlink(output);
+        EFFileUnlink(invocation->outputFile);
         return false;
     }
 
     return true;
+}
+
+EFFileRef ETAssemblerInvocationGetInputFile(ETAssemblerInvocationRef invocationRef)
+{
+    __ETAssemblerInvocation invocation = (__ETAssemblerInvocation)invocationRef;
+    if(invocation == NULL)
+    {
+        return NULL;
+    }
+
+    return invocation->inputFile;
+}
+
+EFFileRef ETAssemblerInvocationGetOutputFile(ETAssemblerInvocationRef invocationRef)
+{
+    __ETAssemblerInvocation invocation = (__ETAssemblerInvocation)invocationRef;
+    if(invocation == NULL)
+    {
+        return NULL;
+    }
+
+    return invocation->outputFile;
+}
+
+Boolean ETAssemblerInvocationSetInputFile(ETAssemblerInvocationRef invocationRef,
+                                          EFFileRef inputFile)
+{
+    __ETAssemblerInvocation invocation = (__ETAssemblerInvocation)invocationRef;
+    if(invocation == NULL)
+    {
+        return false;
+    }
+
+    EFReleaseTry(invocation->inputFile);
+    invocation->inputFile = EFRetainTry(inputFile);
+    return (invocation->inputFile != NULL);
+}
+
+Boolean ETAssemblerInvocationSetOutputFile(ETAssemblerInvocationRef invocationRef,
+                                           EFFileRef outputFile)
+{
+    __ETAssemblerInvocation invocation = (__ETAssemblerInvocation)invocationRef;
+    if(invocation == NULL)
+    {
+        return false;
+    }
+
+    EFReleaseTry(invocation->outputFile);
+    invocation->outputFile = EFRetainTry(outputFile);
+    return (invocation->outputFile != NULL);
 }
