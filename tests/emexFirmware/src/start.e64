@@ -40,6 +40,10 @@
 %endif% ; FW_MINIMAL
 %define% EARLY_STACK_TOP_SUB    (EARLY_STACK_SIZE - 8)
 
+%ifndef% FW_TEST_RBM
+%define% FW_TEST_RBM 0
+%endif% ; FW_TEST_RBM
+
 section .bss
     early_stack db EARLY_STACK_SIZE
 
@@ -136,6 +140,16 @@ main:
 %endif% ; FW_TEST_EXCEPTION
 
     cmov REG_CR0, 1
+
+%if% FW_TEST_RBM
+    ; needs bootstrap code (firmware needs to first self randomize)
+    cmov REG_CR6, 0b00110011
+    cmovb rr, REG_CR6
+    blw putc, '0'
+    blw putc, 'b'
+    blw putbase, rr, 2
+    blw putc, '\n'
+%endif% ; FW_TEST_RBM
     
 .hang:
     ldq r0, meow_cnt

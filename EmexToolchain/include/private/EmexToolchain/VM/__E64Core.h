@@ -127,6 +127,11 @@ typedef struct __E64Core {
          *
          * } crfpc;
         */
+
+        struct {
+            UInt8 layout;
+            UInt64 scaledCode;
+        } crrbm;
     } cr_state;
 
     /*

@@ -260,7 +260,7 @@ typedef enum: UInt8 {
     kE64ControlRegisterCR3 = 0b0011,    /* CRVEC:   cpu vector table */
     kE64ControlRegisterCR4 = 0b0100,    /* CRPTB:   page table pointer (first 8bits are the flags and the rest is the physical address where the page table is) */
     kE64ControlRegisterCR5 = 0b0101,    /* CRFPC:   kernel only floating point control register */
-    kE64ControlRegisterCR6 = 0b0110,
+    kE64ControlRegisterCR6 = 0b0110,    /* CRRBM:   random byte math */
     kE64ControlRegisterCR7 = 0b0111,
     kE64ControlRegisterCR8 = 0b1000,
     kE64ControlRegisterCR9 = 0b1001,

@@ -75,6 +75,7 @@ void emex64_op_ldb(E64CoreRef core)
     emex64_instr_termcond(core->op.param_cnt != 2);
 
     E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), sizeof(UInt8), core->op.param[0], kE64MemoryActionTypeRead);
+    *(core->op.param[0]) = *(core->op.param[0]) - *((UInt8*)&core->cr_state.crrbm.scaledCode);
 }
 
 void emex64_op_ldw(E64CoreRef core)
@@ -82,6 +83,7 @@ void emex64_op_ldw(E64CoreRef core)
     emex64_instr_termcond(core->op.param_cnt != 2);
 
     E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), sizeof(UInt16), core->op.param[0], kE64MemoryActionTypeRead);
+    *(core->op.param[0]) = *(core->op.param[0]) - *((UInt16*)&core->cr_state.crrbm.scaledCode);
 }
 
 void emex64_op_ldd(E64CoreRef core)
@@ -89,6 +91,7 @@ void emex64_op_ldd(E64CoreRef core)
     emex64_instr_termcond(core->op.param_cnt != 2);
 
     E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), sizeof(UInt32), core->op.param[0], kE64MemoryActionTypeRead);
+    *(core->op.param[0]) = *(core->op.param[0]) - *((UInt32*)&core->cr_state.crrbm.scaledCode);
 }
 
 void emex64_op_ldq(E64CoreRef core)
@@ -96,12 +99,14 @@ void emex64_op_ldq(E64CoreRef core)
     emex64_instr_termcond(core->op.param_cnt != 2);
 
     E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), sizeof(UInt64), core->op.param[0], kE64MemoryActionTypeRead);
+    *(core->op.param[0]) = *(core->op.param[0]) - *((UInt64*)&core->cr_state.crrbm.scaledCode);
 }
 
 void emex64_op_stb(E64CoreRef core)
 {
     emex64_instr_termcond(core->op.param_cnt != 2);
 
+    *(core->op.param[1]) = *(core->op.param[1]) + *((UInt8*)&core->cr_state.crrbm.scaledCode);
     E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[0]), sizeof(UInt8), core->op.param[1], kE64MemoryActionTypeWrite);
 }
 
@@ -109,6 +114,7 @@ void emex64_op_stw(E64CoreRef core)
 {
     emex64_instr_termcond(core->op.param_cnt != 2);
 
+    *(core->op.param[1]) = *(core->op.param[1]) + *((UInt16*)&core->cr_state.crrbm.scaledCode);
     E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[0]), sizeof(UInt16), core->op.param[1], kE64MemoryActionTypeWrite);
 }
 
@@ -116,6 +122,7 @@ void emex64_op_std(E64CoreRef core)
 {
     emex64_instr_termcond(core->op.param_cnt != 2);
 
+    *(core->op.param[1]) = *(core->op.param[1]) + *((UInt32*)&core->cr_state.crrbm.scaledCode);
     E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[0]), sizeof(UInt32), core->op.param[1], kE64MemoryActionTypeWrite);
 }
 
@@ -123,6 +130,7 @@ void emex64_op_stq(E64CoreRef core)
 {
     emex64_instr_termcond(core->op.param_cnt != 2);
 
+    *(core->op.param[1]) = *(core->op.param[1]) + *((UInt64*)&core->cr_state.crrbm.scaledCode);
     E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[0]), sizeof(UInt64), core->op.param[1], kE64MemoryActionTypeWrite);
 }
 
@@ -174,6 +182,17 @@ void emex64_op_cmov(E64CoreRef core)
             core->cr_state.crptb.enabled = (cr_value & EMEX64_MEMORY_MMU_MASK_FLAGS) & kE64MMUPTPresent;
             core->cr_state.crptb.pgd_addr = ((cr_value & EMEX64_MEMORY_MMU_MASK_PFN) >> 8) << 13;
             break;
+        case kE64ControlRegisterCR6: /* randomized byte math */
+            core->cr_state.crrbm.layout = (cr_value & 0xFF);
+            UInt8 *scaledLayout = (UInt8*)&(core->cr_state.crrbm.scaledCode);
+            for(UInt8 index = 0; index < 8; index++)
+            {
+                scaledLayout[index] = core->cr_state.crrbm.layout;
+            }
+            break;
+        default:
+            core->cr_state.crexc.exception = kE64ExceptionBadInstruction;
+            return;
     }
 }
 
@@ -212,6 +231,12 @@ void emex64_op_cmovb(E64CoreRef core)
             *cr_recv |= ((core->cr_state.crptb.pgd_addr >> 13) << 8) & EMEX64_MEMORY_MMU_MASK_PFN;
             *cr_recv |= -(UInt64)core->cr_state.crptb.enabled & kE64MMUPTPresent;
             break;
+        case kE64ControlRegisterCR6: /* randomized byte math */
+            *cr_recv = core->cr_state.crrbm.layout;
+            break;
+        default:
+            core->cr_state.crexc.exception = kE64ExceptionBadInstruction;
+            return;
     }
 }
 
