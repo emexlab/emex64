@@ -178,9 +178,9 @@ Boolean assembler_section_parse(ETAssemblerInvocationRef inv)
                     }
 
                     void *address = EFMappingGetAddress(mapping);
-                    EFIndex length = EFMappingGetLength(mapping);
+                    EFSize size = EFMappingGetSize(mapping);
 
-                    EFBitWalkerWriteBuffer(inv->out_vbitwalker, address, (EFIndex)length);
+                    EFBitWalkerWriteBuffer(inv->out_vbitwalker, address, (EFIndex)size);
                 }
                 continue;
             }

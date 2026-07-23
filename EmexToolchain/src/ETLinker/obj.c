@@ -67,9 +67,8 @@ linker_object_t *linker_object_alloc(EFFileRef object_file)
     }
 
     obj->content = (const char *)EFMappingGetAddress(obj->mapping);
-    obj->length = EFMappingGetLength(obj->mapping);
-
-    if(obj->length < (EFIndex)sizeof(ELF64_Shdr))
+    obj->size = EFMappingGetSize(obj->mapping);
+    if(obj->size < sizeof(ELF64_Shdr))
     {
         //diag_error(NULL, "%s: too small to be ELF\n", obj->file->path);
         free(obj);

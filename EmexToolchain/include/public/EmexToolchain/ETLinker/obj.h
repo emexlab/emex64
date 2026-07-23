@@ -36,7 +36,7 @@ typedef struct linker_object {
     EFFileRef file;  /* borrowed */
     EFMappingRef mapping;
 
-    EFIndex length;
+    EFSize size;
     const char *content;
 
     ELF64_Ehdr *ehdr;

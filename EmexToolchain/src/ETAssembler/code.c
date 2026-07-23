@@ -48,14 +48,14 @@ static Boolean __assembler_code_fastline(EFFileRef file,
         return false;
     }
 
-    size_t len = (size_t)EFMappingGetLength(mapping);
+    EFSize size = (size_t)EFMappingGetSize(mapping);
     const char *code = (const char*)EFMappingGetAddress(mapping);
 
     size_t start = 0;
     size_t phys_line = 0;
-    for(size_t i = 0; i <= len; i++)
+    for(size_t i = 0; i <= size; i++)
     {
-        if(code[i] != '\n' && i != len)
+        if(code[i] != '\n' && i != size)
         {
             continue;
         }
