@@ -24,6 +24,8 @@
 
 extern memset
 extern memcpy
+extern memadd
+extern memsub
 
 extern strlen
 extern strdup

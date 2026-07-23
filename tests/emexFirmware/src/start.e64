@@ -60,6 +60,7 @@ section .data
     fw_testpanic_msg db "this is a test panic string\0"
     fw_interrupted_msg db "\r[fw] interrupted: \0"
     fw_interrupted_suffix_msg db " times\0"
+    fw_rbm_msg db "[fw] rbm test\n\0"
 
 extern putc_sym
 
@@ -142,12 +143,29 @@ main:
     cmov REG_CR0, 1
 
 %if% FW_TEST_RBM
-    ; needs bootstrap code (firmware needs to first self randomize)
-    cmov REG_CR6, 0b00000010
-    ldb r0, fw_display_msg
-    cmov REG_CR6, 0b00000000
-    blw putc, r0
+    ; bootstrapping
+    blw strlen, fw_rbm_msg
+    mov r0, rr
+    blw putbase, r0, 10
     blw putc, '\n'
+    blw memadd, fw_rbm_msg, 0b00000101, [r0 + 1]
+
+    ; bootstrapping done.. now we need to enable RBL
+    cmov REG_CR6, 0b00000001
+    ;blw putc, '\n'
+    ;blw puts, fw_rbm_msg
+    blw strlen, fw_rbm_msg
+    cmov REG_CR6, 0b00000000
+
+    blw putbase, rr, 10
+    blw putc, '\n'    
+
+    ; needs bootstrap code (firmware needs to first self randomize)
+    ;cmov REG_CR6, 0b00000010
+    ;ldb r0, fw_display_msg
+    ;cmov REG_CR6, 0b00000000
+    ;blw putc, r0
+    ;blw putc, '\n'
     ;cmovb rr, REG_CR6
     ;blw putc, '0'
     ;blw putc, 'b'

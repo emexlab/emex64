@@ -37,6 +37,34 @@ memset:
     bnz r3, .loop       ; in-case r3 is still not zero we continue
     wret
 
+memadd:
+    and r1, 0xFF        ; masking set value with byte mask so it doesnt exceed expectations
+    add r2, r0          ; adding base address to lenght to have the end address
+    b .loop_continue
+.loop:
+    ldb r4, r0          ; loading to add
+    add r4, r1          ; add
+    stb r0, r4          ; setting value at address
+    inc r0
+.loop_continue:
+    sub r3, r2, r0      ; calculating remaining lenght
+    bnz r3, .loop       ; in-case r3 is still not zero we continue
+    wret
+
+memsub:
+    and r1, 0xFF        ; masking set value with byte mask so it doesnt exceed expectations
+    add r2, r0          ; adding base address to lenght to have the end address
+    b .loop_continue
+.loop:
+    ldb r4, r0          ; loading to sub
+    sub r4, r1          ; sub
+    stb r0, r4          ; setting value at address
+    inc r0
+.loop_continue:
+    sub r3, r2, r0      ; calculating remaining lenght
+    bnz r3, .loop       ; in-case r3 is still not zero we continue
+    wret
+
 memcpy:
     add r3, r0, r2      ; calculating end address of destination
 .loop:
@@ -57,12 +85,12 @@ strlen:
     ldb r1, r0                  ; loading byte from address
     inc r0, rr                  ; incrementing address
     bnz r1, .loop               ; if not reached a null terminator yet continue till we reached one
+    dec rr                      ; don't count the null terminator
     wret
 
 strdup:
     blw strlen, r0              ; getting size of string
-    mov r1, rr
-    blw kmalloc, r1             ; allocating memory for string
+    blw kmalloc, [rr + 1]       ; allocating memory for string
     bz rr, .null_exception      ; null pointer checking allocation
     blw memcpy, rr, r0, r1      ; copying string over
 .null_exception:
