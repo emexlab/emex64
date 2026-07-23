@@ -41,7 +41,7 @@
 %define% EARLY_STACK_TOP_SUB    (EARLY_STACK_SIZE - 8)
 
 %ifndef% FW_TEST_RBM
-%define% FW_TEST_RBM 0
+%define% FW_TEST_RBM 1
 %endif% ; FW_TEST_RBM
 
 section .bss
@@ -143,12 +143,16 @@ main:
 
 %if% FW_TEST_RBM
     ; needs bootstrap code (firmware needs to first self randomize)
-    cmov REG_CR6, 0b00110011
-    cmovb rr, REG_CR6
-    blw putc, '0'
-    blw putc, 'b'
-    blw putbase, rr, 2
+    cmov REG_CR6, 0b00000010
+    ldb r0, fw_display_msg
+    cmov REG_CR6, 0b00000000
+    blw putc, r0
     blw putc, '\n'
+    ;cmovb rr, REG_CR6
+    ;blw putc, '0'
+    ;blw putc, 'b'
+    ;blw putbase, rr, 2
+    ;blw putc, '\n'
 %endif% ; FW_TEST_RBM
     
 .hang:
