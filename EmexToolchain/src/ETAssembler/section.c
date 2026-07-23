@@ -50,12 +50,12 @@ static Boolean __assembler_section_emit_value(ETAssemblerInvocationRef inv,
     {
         if(dbs != 64)
         {
-            diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(entry[0]), "don't put labels inside improper data types, i watch you!");
+            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(entry[0]), EFSTR("don't put labels inside improper data types, i watch you!"));
             return false;
         }
         if(!assembler_label_relocate_append(inv, strdup(entry[0]->str), false, entry[0]))
         {
-            diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(entry[0]), "out of memory, can't append relocation to relocation table");
+            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityFatal, AT_TO_DLOC(entry[0]), EFSTR("out of memory, can't append relocation to relocation table"));
             return false;
         }
         EFBitWalkerSkip(inv->out_vbitwalker, 64);
@@ -74,7 +74,7 @@ static Boolean __assembler_section_emit_value(ETAssemblerInvocationRef inv,
         SInt64 smin = -(INT64_C(1) << (dbs - 1));
         if(value < smin || (UInt64)value > umax)
         {
-            diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(entry[0]), "value %ld doesn't fit in a %d bits data entry", (long long)value, dbs);
+            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(entry[0]), EFSTR("value %ld doesn't fit in a %d bits data entry"), (long long)value, dbs);
             return false;
         }
     }
@@ -129,7 +129,7 @@ Boolean assembler_section_parse(ETAssemblerInvocationRef inv)
 
             if(inv->line[i]->token_cnt < 3)
             {
-                diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[inv->line[i]->token_cnt - 1]), "insufficient tokens for entry in .data section");
+                ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[inv->line[i]->token_cnt - 1]), EFSTR("insufficient tokens for entry in .data section"));
                 return false;
             }
 
@@ -149,7 +149,7 @@ Boolean assembler_section_parse(ETAssemblerInvocationRef inv)
                     }
                     if(inv->line[i]->token[a]->type != kETAssemblerTokenTypeString)
                     {
-                        diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[a]), "not a file path '%s'", inv->line[i]->token[a]->str);
+                        ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[a]), EFSTR("not a file path '%s'"), inv->line[i]->token[a]->str);
                         return false;
                     }
 
@@ -182,7 +182,7 @@ Boolean assembler_section_parse(ETAssemblerInvocationRef inv)
             }
             else if(dbs == 128)
             {
-                diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[1]), "invalid data type for .data section entry '%s'", inv->line[i]->token[1]->str);
+                ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[1]), EFSTR("invalid data type for .data section entry '%s'"), inv->line[i]->token[1]->str);
                 return false;
             }
 
@@ -204,7 +204,7 @@ Boolean assembler_section_parse(ETAssemblerInvocationRef inv)
 
                 if(entry_cnt == 0)
                 {
-                    diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[start - 1]), "empty value in .data entry");
+                    ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[start - 1]), EFSTR("empty value in .data entry"));
                     return false;
                 }
 
@@ -248,7 +248,7 @@ Boolean assembler_section_parse(ETAssemblerInvocationRef inv)
 
             if(inv->line[i]->token_cnt < 3)
             {
-                diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[inv->line[i]->token_cnt - 1]), "insufficient tokens for entry in .bss section");
+                ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[inv->line[i]->token_cnt - 1]), EFSTR("insufficient tokens for entry in .bss section"));
                 return false;
             }
 
@@ -260,7 +260,7 @@ Boolean assembler_section_parse(ETAssemblerInvocationRef inv)
             int dbs = __assembler_section_dbs_get(inv->line[i]->token[1]->str);
             if(dbs == 128 || dbs == 0)
             {
-                diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[1]), "invalid data type for .bss section entry '%s'", inv->line[i]->token[1]->str);
+                ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[1]), EFSTR("invalid data type for .bss section entry '%s'"), inv->line[i]->token[1]->str);
                 return false;
             }
 
@@ -271,7 +271,7 @@ Boolean assembler_section_parse(ETAssemblerInvocationRef inv)
             }
             if(count < 0)
             {
-                diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[2]), "negative size in .bss section entry");
+                ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[2]), EFSTR("negative size in .bss section entry"));
                 return false;
             }
 

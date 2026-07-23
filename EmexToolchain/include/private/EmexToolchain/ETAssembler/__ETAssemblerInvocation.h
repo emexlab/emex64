@@ -34,7 +34,6 @@ typedef struct __ETAssemblerInvocation {
     EFObject header;
 
     ETAssemblerDiagnosticConsumerRef diagnosticConsumer;
-    assembler_diagnostic_consumer_t *consumer;              /* borrowed */
 
     EFMutableArrayRef files;
 

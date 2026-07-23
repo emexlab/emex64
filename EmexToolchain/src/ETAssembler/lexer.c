@@ -308,7 +308,7 @@ Boolean assembler_lexer_classify(assembler_token_t *at)
             at->string_literal.buf = calloc(pret.len + 1, sizeof(char));
             if(at->string_literal.buf == NULL)
             {
-                diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), "out of memory, couldn't allocate buffer for string literal '%s'", at->str);
+                ETAssemblerDiagnosticConsumerReport(at->al->inv->diagnosticConsumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), EFSTR("out of memory, couldn't allocate buffer for string literal '%s'"), at->str);
                 return false;
             }
             memcpy(at->string_literal.buf, (const char*)pret.value, pret.len);
@@ -317,7 +317,7 @@ Boolean assembler_lexer_classify(assembler_token_t *at)
             at->type = kETAssemblerTokenTypeString;
             return true;
         case emexParserValueTypeOverflow:
-            diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "integer literal '%s' overflows 64bit length", at->str);
+            ETAssemblerDiagnosticConsumerReport(at->al->inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(at), EFSTR("integer literal '%s' overflows 64bit length"), at->str);
             return false;
         case emexParserValueTypeString:
             /* remains a identifier under certain conditions */
@@ -404,14 +404,14 @@ Boolean assembler_lexer_classify(assembler_token_t *at)
             /* checking if identifier is in a valid format */
             if(!__assembly_lexer_validate_identifier(at->str))
             {
-                diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "token '%s' is not a valid identifier", at->str);
+                ETAssemblerDiagnosticConsumerReport(at->al->inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(at), EFSTR("token '%s' is not a valid identifier"), at->str);
                 return false;
             }
 
             at->type = kETAssemblerTokenTypeIdentifier;
             return true;
         default:
-            diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "unknown token '%s'", at->str);
+            ETAssemblerDiagnosticConsumerReport(at->al->inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(at), EFSTR("unknown token '%s'"), at->str);
             return false;
     }
 }

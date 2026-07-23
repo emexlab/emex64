@@ -72,7 +72,7 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
     assembler_macro_storage_t *storage = assembler_macro_storage_alloc();
     if(storage == NULL)
     {
-        diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "out of memory, can't allocate macro storage");
+        ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate macro storage"));
         return false;
     }
 
@@ -85,7 +85,7 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
         const char **inject_token = calloc(1, sizeof(char*));
         if(inject_token == NULL)
         {
-            diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "out of memory, can't allocate inject_token");
+            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate inject_token"));
             assembler_macro_storage_dealloc(storage);
             return false;
         }
@@ -94,7 +94,7 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
 
         if(!assembler_macro_storage_append_macro_char(storage, definition->match, inject_token, 1))
         {
-            diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "out of memory, can't append macro to macro storage");
+            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't append macro to macro storage"));
             free(inject_token);
             assembler_macro_storage_dealloc(storage);
             return false;
@@ -169,7 +169,7 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
                         assembler_token_t **grown = realloc(inv->line[li]->token, new_token_cnt * sizeof(assembler_token_t*));
                         if(grown == NULL)
                         {
-                            diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "out of memory expanding macro");
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory expanding macro"));
                             goto failure;
                         }
                         inv->line[li]->token = grown;
@@ -197,7 +197,7 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
                         assembler_token_t *at = calloc(1, sizeof(assembler_token_t));
                         if(at == NULL)
                         {
-                            diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "out of memory expanding macro");
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory expanding macro"));
                             goto failure;
                         }
                         at->al = inv->line[li];
@@ -210,7 +210,7 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
                     macro_nest_remaining--;
                     if(macro_nest_remaining == 0)
                     {
-                        diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[ti]), "macro nesting limit of %d was reached", UINT16_MAX);
+                        ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[ti]), EFSTR("macro nesting limit of %d was reached"), UINT16_MAX);
                         goto failure;
                     }
 
@@ -246,7 +246,7 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
                         char *hdr_token = __assembler_preprocessor_include_directive_get_token(inv->line[li]->token[1]->str, &system_hdr);
                         if(hdr_token == NULL)
                         {
-                            diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[1]), "invalid token '%s' passed after %%include%% directive", inv->line[li]->token[1]->str);
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[1]), EFSTR("invalid token '%s' passed after %%include%% directive"), inv->line[li]->token[1]->str);
                             goto failure;
                         }
 
@@ -266,7 +266,7 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
                         /* did I catch this cat >:3 */
                         if(hdr_path == NULL)
                         {
-                            diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[1]), "couldn't find header at path '%s'", hdr_token);
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[1]), EFSTR("couldn't find header at path '%s'"), hdr_token);
                             free(hdr_token);
                             goto failure;
                         }
@@ -277,14 +277,14 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
                         EFAUTOREL EFFileRef file = EFFileCreateWithPath(EFGetAllocator(url), EFFilePolicyInData, hdrPathStr);
                         if(file == NULL)
                         {
-                            diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[1]), "couldn't open header at path '%s'", hdr_path);
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[1]), EFSTR("couldn't open header at path '%s'"), hdr_path);
                             free(hdr_path);
                             goto failure;
                         }
 
                         if(!assembler_code_inject_file(inv, li, file))
                         {
-                            diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(inv->line[li]->token[1]), "couldn't inject header at path '%s' into invocation", hdr_path);
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityFatal, AT_TO_DLOC(inv->line[li]->token[1]), EFSTR("couldn't inject header at path '%s' into invocation"), hdr_path);
                             free(hdr_path);
                             goto failure;
                         }
@@ -297,7 +297,7 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
                     case kAssemblerPreprocessorDirectiveTypeDefine:
                         if(!assembler_macro_storage_append_macro(storage, inv->line[li]->token[1]->str, &inv->line[li]->token[2], inv->line[li]->token_cnt - 2))
                         {
-                            diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "out of memory, can't append macro to macro storage");
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't append macro to macro storage"));
                             goto failure;
                         }
                         break;
@@ -309,7 +309,7 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
                         Boolean parent_active = !state.in_a_condition || state.condition_met;
                         if(!assembler_condition_state_push(&state))
                         {
-                            diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(inv->line[li]->token[0]), "failed to push condition frame onto condition state");
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityFatal, AT_TO_DLOC(inv->line[li]->token[0]), EFSTR("failed to push condition frame onto condition state"));
                             goto failure;
                         }
                         state.parent_active = parent_active;
@@ -342,7 +342,7 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
                         Boolean parent_active = !state.in_a_condition || state.condition_met;
                         if(!assembler_condition_state_push(&state))
                         {
-                            diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(inv->line[li]->token[0]), "failed to push condition frame onto condition state");
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityFatal, AT_TO_DLOC(inv->line[li]->token[0]), EFSTR("failed to push condition frame onto condition state"));
                             goto failure;
                         }
                         state.parent_active = parent_active;
@@ -368,7 +368,7 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
                         Boolean parent_active = !state.in_a_condition || state.condition_met;
                         if(!assembler_condition_state_push(&state))
                         {
-                            diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(inv->line[li]->token[0]), "failed to push condition frame onto condition state");
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityFatal, AT_TO_DLOC(inv->line[li]->token[0]), EFSTR("failed to push condition frame onto condition state"));
                             goto failure;
                         }
                         state.parent_active = parent_active;
@@ -392,7 +392,7 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
                     case kAssemblerPreprocessorDirectiveTypeElseIf:
                         if(state.in_a_condition == false)
                         {
-                            diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[0]), "%%elif%% directive was defined, but no %%if%% directive was defined before.");
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[0]), EFSTR("%%elif%% directive was defined, but no %%if%% directive was defined before."));
                             goto failure;
                         }
 
@@ -409,13 +409,13 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
                     case kAssemblerPreprocessorDirectiveTypeElse:
                         if(!state.in_a_condition)
                         {
-                            diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[0]), "%%else%% directive was defined, but no %%if%% directive was defined before.");
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[0]), EFSTR("%%else%% directive was defined, but no %%if%% directive was defined before."));
                             goto failure;
                         }
 
                         if(state.in_a_else_condition)
                         {
-                            diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[0]), "%%else%% directive was defined inside another %%else%% directive.");
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[0]), EFSTR("%%else%% directive was defined inside another %%else%% directive."));
                             goto failure;
                         }
 
@@ -425,7 +425,7 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
                     case kAssemblerPreprocessorDirectiveTypeEndIf:
                         if(state.in_a_condition == false)
                         {
-                            diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[0]), "%%endif%% directive was defined, but no %%if%% directive was defined before.");
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[0]), EFSTR("%%endif%% directive was defined, but no %%if%% directive was defined before."));
                             goto failure;
                         }
                         assembler_condition_state_pop(&state);
@@ -453,7 +453,7 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
 
     if(state.in_a_condition)
     {
-        diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(state.last_condition_line->token[0]), "%%if%% was defined but no matching %%endif%% was found.");
+        ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(state.last_condition_line->token[0]), EFSTR("%%if%% was defined but no matching %%endif%% was found."));
     }
 
     Boolean in_a_condition = state.in_a_condition;

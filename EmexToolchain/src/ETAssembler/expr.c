@@ -156,12 +156,12 @@ Boolean assembler_eval_const(assembler_token_t **tok,
     if(e.error)
     {
         assembler_token_t *token = e.blame != NULL ? e.blame : tok[0];
-        diagnostic_report(token->al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(token), "%s", e.why);
+        ETAssemblerDiagnosticConsumerReport(token->al->inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(token), EFSTR("%s"), e.why);
         return false;
     }
     if(e.pos != count)
     {
-        diagnostic_report(tok[e.pos]->al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(tok[e.pos]), "unexpected %s '%s' after constant expression", assembler_lexer_str_for_token_type(tok[e.pos]->type), tok[e.pos]->str);
+        ETAssemblerDiagnosticConsumerReport(tok[e.pos]->al->inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(tok[e.pos]), EFSTR("unexpected %s '%s' after constant expression"), assembler_lexer_str_for_token_type(tok[e.pos]->type), tok[e.pos]->str);
         return false;
     }
 

@@ -60,7 +60,7 @@ Boolean assembler_label_append(assembler_token_t *at)
         {
             if(inv->label_scope == NULL)
             {
-                diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "label '%s' was defined out of the scope of a symbol, which is illegal", at->str);
+                ETAssemblerDiagnosticConsumerReport(at->al->inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(at), EFSTR("label '%s' was defined out of the scope of a symbol, which is illegal"), at->str);
                 return false;
             }
 
@@ -71,7 +71,7 @@ Boolean assembler_label_append(assembler_token_t *at)
             name = malloc(size);
             if(name == NULL)
             {
-                diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), "out of memory, failed to allocate memory for label definition '%s'", at->str);
+                ETAssemblerDiagnosticConsumerReport(at->al->inv->diagnosticConsumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), EFSTR("out of memory, failed to allocate memory for label definition '%s'"), at->str);
                 return false;
             }
 
@@ -87,7 +87,7 @@ Boolean assembler_label_append(assembler_token_t *at)
             name = malloc(size);
             if(name == NULL)
             {
-                diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), "out of memory, failed to allocate memory for symbol definition '%s'", at->str);
+                ETAssemblerDiagnosticConsumerReport(at->al->inv->diagnosticConsumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), EFSTR("out of memory, failed to allocate memory for symbol definition '%s'"), at->str);
                 return false;
             }
             memcpy(name, at->str, size);
@@ -104,7 +104,7 @@ Boolean assembler_label_append(assembler_token_t *at)
             name = malloc(size);
             if(name == NULL)
             {
-                diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), "out of memory, failed to allocate memory for external symbol declaration '%s'", at->str);
+                ETAssemblerDiagnosticConsumerReport(at->al->inv->diagnosticConsumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), EFSTR("out of memory, failed to allocate memory for external symbol declaration '%s'"), at->str);
                 return false;
             }
             memcpy(name, at->str, size - 1);
@@ -118,7 +118,7 @@ Boolean assembler_label_append(assembler_token_t *at)
             name = malloc(size);
             if(name == NULL)
             {
-                diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), "out of memory, failed to allocate memory for symbol definition '%s'", at->str);
+                ETAssemblerDiagnosticConsumerReport(at->al->inv->diagnosticConsumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), EFSTR("out of memory, failed to allocate memory for symbol definition '%s'"), at->str);
                 return false;
             }
             memcpy(name, at->str, size - 1);
@@ -126,7 +126,7 @@ Boolean assembler_label_append(assembler_token_t *at)
             break;
         }
         default:
-            diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), "this is not a label, report this at 'https://github.com/emexlab/emex64'");
+            ETAssemblerDiagnosticConsumerReport(at->al->inv->diagnosticConsumer, kDiagnosticSeverityFatal, AT_TO_DLOC(at), EFSTR("this is not a label, report this at 'https://github.com/emexlab/emex64'"));
             exit(1);
     }
 
@@ -161,8 +161,8 @@ Boolean assembler_label_append(assembler_token_t *at)
 
         /* have to find out flavour */
         const char *label_string = assembler_label_is_symbol(label->at_link) ? "symbol" : "label";
-        diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityNote, AT_TO_DLOC(label->at_link), "%s '%s' already defined here", label_string, name);
-        diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "duplicated %s '%s'", label_string, name); /* need to mirror cause of name missmatch possibilities */
+        ETAssemblerDiagnosticConsumerReport(at->al->inv->diagnosticConsumer, kDiagnosticSeverityNote, AT_TO_DLOC(label->at_link), EFSTR("%s '%s' already defined here"), label_string, name);
+        ETAssemblerDiagnosticConsumerReport(at->al->inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(at), EFSTR("duplicated %s '%s'"), label_string, name); /* need to mirror cause of name missmatch possibilities */
         free(name);
         return false;
     }
@@ -176,7 +176,7 @@ Boolean assembler_label_append(assembler_token_t *at)
     label = calloc(1, sizeof(assembler_label_t));
     if(label == NULL)
     {
-        diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityFatal, NULL, "out of memory, failed to allocate assembler label");
+        ETAssemblerDiagnosticConsumerReport(at->al->inv->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, failed to allocate assembler label"));
         free(name);
         return false;
     }
@@ -188,7 +188,7 @@ Boolean assembler_label_append(assembler_token_t *at)
     label->name = name;
     if(!hashmap_puts(inv->label_hashmap, name, label))
     {
-        diagnostic_report(at->al->inv->consumer, kDiagnosticSeverityFatal, NULL, "out of memory, failed to insert label into hashmap");
+        ETAssemblerDiagnosticConsumerReport(at->al->inv->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, failed to insert label into hashmap"));
         free(label);
         free(name);
         return false;

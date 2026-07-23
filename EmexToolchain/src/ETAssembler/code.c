@@ -259,13 +259,13 @@ Boolean assembler_code_inject_file(ETAssemblerInvocationRef inv,
             at->al = inv->line[at_line_index + i];
             if(token.type == kETAssemblerTokenTypeInvalid)
             {
-                diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "token '%s' is not valid", at->str);
+                ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(at), EFSTR("token '%s' is not valid"), at->str);
                 EFArrayRemoveValueAtIndex(inv->files, inj_file_idx);
                 return false;
             }
             else if(token.type == kETAssemblerTokenTypeTooLong)
             {
-                diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(at), "token is too long, token lenght limit is %d characters", LEXTOK_LENGHT_MAX);
+                ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(at), EFSTR("token is too long, token lenght limit is %d characters"), LEXTOK_LENGHT_MAX);
                 EFArrayRemoveValueAtIndex(inv->files, inj_file_idx);
                 return false;
             }
@@ -311,7 +311,7 @@ Boolean assembler_code_preparse(ETAssemblerInvocationRef inv,
     {
         EFURLRef url = EFFileGetURL(input);
         EFAUTOREL EFStringRef path = EFURLCopyPath(EFGetAllocator(url), url);
-        diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "couldn't parse file at '%s'", EFStringGetCStringPtr(path, kEFStringEncodingUTF8));
+        ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("couldn't parse file at '%s'"), EFStringGetCStringPtr(path, kEFStringEncodingUTF8));
         return false;
     }
 
@@ -384,13 +384,13 @@ Boolean assembler_code_postparse(ETAssemblerInvocationRef inv)
                 Boolean valid = true;
                 if(inv->line[i]->token[0]->type != kETAssemblerTokenTypeIdentifier)
                 {
-                    diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[0]), "expected identifier in label definition, but got %s '%s'", assembler_lexer_str_for_token_type(inv->line[i]->token[0]->type), inv->line[i]->token[0]->str);
+                    ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[0]), EFSTR("expected identifier in label definition, but got %s '%s'"), assembler_lexer_str_for_token_type(inv->line[i]->token[0]->type), inv->line[i]->token[0]->str);
                     valid = false;
                 }
 
                 for(UInt64 j = 2; j < inv->line[i]->token_cnt; j++)
                 {
-                    diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[j]), "unexpected %s '%s' after label definition", assembler_lexer_str_for_token_type(inv->line[i]->token[j]->type), inv->line[i]->token[j]->str);
+                    ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[j]), EFSTR("unexpected %s '%s' after label definition"), assembler_lexer_str_for_token_type(inv->line[i]->token[j]->type), inv->line[i]->token[j]->str);
                     valid = false;
                 }
                 if(!valid)
@@ -406,7 +406,7 @@ Boolean assembler_code_postparse(ETAssemblerInvocationRef inv)
         {
             if(inv->line[i]->token_cnt == 1)
             {
-                diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[0]), "expected identifier after %s '%s'", assembler_lexer_str_for_token_type(inv->line[i]->token[0]->type), inv->line[i]->token[0]->str);
+                ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[0]), EFSTR("expected identifier after %s '%s'"), assembler_lexer_str_for_token_type(inv->line[i]->token[0]->type), inv->line[i]->token[0]->str);
                 return false;
             }
 
@@ -427,14 +427,14 @@ Boolean assembler_code_postparse(ETAssemblerInvocationRef inv)
 
             if(inv->line[i]->token[1]->type != kETAssemblerTokenTypeIdentifier)
             {
-                diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[1]), "expected identifier in keyword construct, but got %s '%s'", assembler_lexer_str_for_token_type(inv->line[i]->token[1]->type), inv->line[i]->token[1]->str);
+                ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[1]), EFSTR("expected identifier in keyword construct, but got %s '%s'"), assembler_lexer_str_for_token_type(inv->line[i]->token[1]->type), inv->line[i]->token[1]->str);
                 valid = false;
             }
 
             for(UInt64 j = 2; j < inv->line[i]->token_cnt; j++)
             {
                 /* idk keyword construct, keyword definition ahhhhhh */
-                diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[j]), "unexpected %s '%s' after keyword construct", assembler_lexer_str_for_token_type(inv->line[i]->token[j]->type), inv->line[i]->token[j]->str);
+                ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[j]), EFSTR("unexpected %s '%s' after keyword construct"), assembler_lexer_str_for_token_type(inv->line[i]->token[j]->type), inv->line[i]->token[j]->str);
                 valid = false;
             }
 

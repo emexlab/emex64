@@ -121,8 +121,7 @@ ETAssemblerInvocationRef ETAssemblerInvocationCreate(EFAllocatorRef allocatorRef
     invocation->files = EFArrayCreateMutable(allocatorRef, kEFArrayCallbacksObjectCallbacks, 0);
 
     invocation->diagnosticConsumer = EFRetainTry(diagnosticConsumer);
-    invocation->consumer = ETAssemblerDiagnosticConsumerGetPtr(invocation->diagnosticConsumer);
-    if(invocation->consumer == NULL)
+    if(invocation->diagnosticConsumer == NULL)
     {
         return NULL;
     }
@@ -188,7 +187,7 @@ Boolean ETAssemblerInvocationEmit(ETAssemblerInvocationRef invocationRef,
     invocation->out_vbitwalker = EFFileCopyBitWalker(kEFAllocatorDefault, output, kEFEndianLittle);
     if(invocation->out_vbitwalker == NULL)
     {
-        diagnostic_report(invocation->consumer, kDiagnosticSeverityFatal, NULL, "couldn't allocate fdwalker");
+        ETAssemblerDiagnosticConsumerReport(invocation->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("couldn't allocate fdwalker"));
         return false;
     }
 

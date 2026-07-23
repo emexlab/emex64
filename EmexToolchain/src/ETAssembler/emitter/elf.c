@@ -114,13 +114,13 @@ Boolean assembler_elf_emit(ETAssemblerInvocationRef inv)
     UInt8 *flat = malloc(flat_size);
     if(!flat)
     {
-        diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "elf_emit: out of memory");
+        ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("elf_emit: out of memory"));
         return false;
     }
 
     if(EFFileHandleSeek(d, 0, kEFFileHandleSeekTypeSet) < 0 || EFFileHandleRead(d, flat, (EFIndex)flat_size) != (ssize_t)flat_size)
     {
-        diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "elf_emit: read flat binary failed");
+        ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("elf_emit: read flat binary failed"));
         free(flat);
         return false;
     }
@@ -329,19 +329,19 @@ Boolean assembler_elf_emit(ETAssemblerInvocationRef inv)
 
     if(EFFileHandleTruncate(d, 0) != 0)
     {
-        diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "elf_emit: ftruncate failed");
+        ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("elf_emit: ftruncate failed"));
         goto done;
     }
     if(EFFileHandleSeek(d, 0, kEFFileHandleSeekTypeSet) < 0)
     {
-        diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "elf_emit: lseek failed");
+        ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("elf_emit: lseek failed"));
         goto done;
     }
 
 #define WRITE_BUF(buf, len) do { \
     if(EFFileHandleWrite(d, (const UInt8*)(buf), (len)) != (ssize_t)(len)) \
     { \
-        diagnostic_report(inv->consumer, kDiagnosticSeverityFatal, NULL, "elf_emit: write failed"); \
+        ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("elf_emit: write failed")); \
         goto done; \
     } \
 } while(0)
