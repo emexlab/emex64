@@ -55,4 +55,7 @@ EFFileRef ETAssemblerInvocationGetOutputFile(ETAssemblerInvocationRef invocation
 Boolean ETAssemblerInvocationSetInputFile(ETAssemblerInvocationRef invocationRef, EFFileRef inputFile);
 Boolean ETAssemblerInvocationSetOutputFile(ETAssemblerInvocationRef invocationRef, EFFileRef outputFile);
 
+Boolean ETAssemblerInvocationHasErrorOccured(ETAssemblerInvocationRef invocationRef);
+Boolean ETAssemblerInvocationHasRan(ETAssemblerInvocationRef invocationRef);
+
 #endif /* ETASSEMBLERINVOCATION_H */

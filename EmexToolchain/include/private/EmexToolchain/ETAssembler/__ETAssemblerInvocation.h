@@ -55,6 +55,9 @@ typedef struct __ETAssemblerInvocation {
     UInt64 data_section_end;
     UInt64 bss_section_start;
     UInt64 bss_section_size;
+
+    Boolean hasRan;
+    Boolean hasErrorOccured;
 } *__ETAssemblerInvocation;
 
 #endif /* __ETASSEMBLERINVOCATION_H */

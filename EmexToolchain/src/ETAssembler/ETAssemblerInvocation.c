@@ -179,16 +179,19 @@ Boolean ETAssemblerInvocationAddIncludeSearchPath(ETAssemblerInvocationRef invoc
 Boolean ETAssemblerInvocationEmit(ETAssemblerInvocationRef invocationRef)
 {
     __ETAssemblerInvocation invocation = (__ETAssemblerInvocation)invocationRef;
-    if(invocation == NULL || invocation->inputFile == NULL || invocation->outputFile == NULL)
+    if(invocation == NULL || invocation->hasRan || invocation->inputFile == NULL || invocation->outputFile == NULL)
     {
         return false;
     }
+
+    invocation->hasRan = true;
 
     /* need output */
     invocation->out_vbitwalker = EFFileCopyBitWalker(kEFAllocatorDefault, invocation->outputFile, kEFEndianLittle);
     if(invocation->out_vbitwalker == NULL)
     {
         ETAssemblerDiagnosticConsumerReport(invocation->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("couldn't allocate fdwalker"));
+        invocation->hasErrorOccured = true;
         return false;
     }
 
@@ -202,9 +205,11 @@ Boolean ETAssemblerInvocationEmit(ETAssemblerInvocationRef invocationRef)
        !assembler_elf_emit(invocation))
     {
         EFFileUnlink(invocation->outputFile);
+        invocation->hasErrorOccured = true;
         return false;
     }
 
+    invocation->hasErrorOccured = false;
     return true;
 }
 
@@ -256,4 +261,26 @@ Boolean ETAssemblerInvocationSetOutputFile(ETAssemblerInvocationRef invocationRe
     EFReleaseTry(invocation->outputFile);
     invocation->outputFile = EFRetainTry(outputFile);
     return (invocation->outputFile != NULL);
+}
+
+Boolean ETAssemblerInvocationHasErrorOccured(ETAssemblerInvocationRef invocationRef)
+{
+    __ETAssemblerInvocation invocation = (__ETAssemblerInvocation)invocationRef;
+    if(invocation == NULL)
+    {
+        return true;
+    }
+
+    return invocation->hasErrorOccured;
+}
+
+Boolean ETAssemblerInvocationHasRan(ETAssemblerInvocationRef invocationRef)
+{
+    __ETAssemblerInvocation invocation = (__ETAssemblerInvocation)invocationRef;
+    if(invocation == NULL)
+    {
+        return true;
+    }
+
+    return invocation->hasRan;
 }
