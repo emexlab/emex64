@@ -153,11 +153,9 @@ Boolean assembler_section_parse(ETAssemblerInvocationRef inv)
                         return false;
                     }
 
-                    const char *path_component = inv->line[i]->token[a]->string_literal.buf;
-
                     EFURLRef url = EFFileGetURL(EFArrayGetValueAtIndex(inv->files, inv->line[i]->file_idx));
                     EFAUTOREL EFFileRef file = NULL;
-                    EFAUTOREL EFStringRef pathComponentStr = EFStringCreateWithCString(kEFAllocatorDefault, path_component, kEFStringEncodingUTF8);
+                    EFAUTOREL EFStringRef pathComponentStr = EFStringCreateWithCString(kEFAllocatorDefault, inv->line[i]->token[a]->string_literal.buf, kEFStringEncodingUTF8);
                     if(EFStringHasPrefix(pathComponentStr, EFSTR("https://")) || EFStringHasPrefix(pathComponentStr, EFSTR("http://")) || EFStringHasPrefix(pathComponentStr, EFSTR("/")))
                     {
                         file = EFFileCreateWithPath(EFGetAllocator(url), EFFilePolicyInData, pathComponentStr);
@@ -171,7 +169,7 @@ Boolean assembler_section_parse(ETAssemblerInvocationRef inv)
                     EFAUTOREL EFMappingRef mapping = EFFileHandleCopyMapping(EFGetAllocator(url), fileHandle);
                     if(file == NULL || mapping == NULL)
                     {
-                        diagnostic_report(inv->consumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[a]), "cannot map file at '%s'", path_component);
+                        ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[a]), EFSTR("cannot map file at '%@'"), pathComponentStr);
                         return false;
                     }
 
