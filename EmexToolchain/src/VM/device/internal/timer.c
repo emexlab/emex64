@@ -25,6 +25,7 @@
 #include <EmexToolchain/VM/E64Machine.h>
 #include <EmexToolchain/VM/device/internal/timer.h>
 #include <EmexToolchain/VM/device/internal/controller/E64IC.h>
+#include <EmexToolchain/Support/likely.h>
 
 UInt64 emex64_get_host_cycles(void)
 {
@@ -136,7 +137,7 @@ void emex64_timer_tick(emex64_timer_t *timer,
     /* calculate elappsed cycles */
     UInt64 elapsed_host = host_cycles - timer->last_host_cycles;
     timer->last_host_cycles = host_cycles;
-    if(elapsed_host == 0)
+    if(unlikely(elapsed_host == 0))
     {
         return;
     }
@@ -145,7 +146,7 @@ void emex64_timer_tick(emex64_timer_t *timer,
     __uint128_t numerator = (__uint128_t)elapsed_host * TIMER_VIRTUAL_FREQ + timer->tick_remainder;
     UInt64 virtual_ticks = (UInt64)(numerator / timer->host_freq);
     timer->tick_remainder  = (UInt64)(numerator % timer->host_freq);
-    if(virtual_ticks == 0)
+    if(unlikely(virtual_ticks == 0))
     {
         return;
     }
