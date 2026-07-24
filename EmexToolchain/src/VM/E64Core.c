@@ -294,14 +294,14 @@ static inline void __E64CoreExecuteInstructionAtPC(__E64Core core)
     skip_after_offsetmode_branch:
     }
 
+escape_from_la:
+
     /* offsetting mode shall not be enabled now */
     if(unlikely(offsetMode))
     {
         core->cr_state.crexc.exception = kE64ExceptionBadInstruction;
         return;
     }
-
-escape_from_la:
 
     /*
      * now we know all about this instruction, the
