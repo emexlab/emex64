@@ -901,56 +901,31 @@ Boolean ETAssemblerDriverRun(ETAssemblerDriverRef driverRef)
 EFArrayRef ETAssemblerDriverGetJobs(ETAssemblerDriverRef driverRef)
 {
     __ETAssemblerDriver driver = (__ETAssemblerDriver)driverRef;
-    if(driver == NULL)
-    {
-        return NULL;
-    }
-
-    return driver->jobs;
+    return driver != NULL ? driver->jobs : NULL;
 }
 
 EFStringRef ETAssemblerDriverGetOutputPath(ETAssemblerDriverRef driverRef)
 {
     __ETAssemblerDriver driver = (__ETAssemblerDriver)driverRef;
-    if(driver == NULL)
-    {
-        return NULL;
-    }
-
-    return driver->outputPath;
+    return driver != NULL ? driver->outputPath : NULL;
 }
 
 ETAssemblerDiagnosticConsumerRef ETAssemblerDriverGetDiagnosticConsumer(ETAssemblerDriverRef driverRef)
 {
     __ETAssemblerDriver driver = (__ETAssemblerDriver)driverRef;
-    if(driver == NULL)
-    {
-        return NULL;
-    }
-
-    return driver->diagnosticConsumer;
+    return driver != NULL ? driver->diagnosticConsumer : NULL;
 }
 
 ETAssemblerDriverOptions ETAssemblerDriverGetDriverOptions(ETAssemblerDriverRef driverRef)
 {
     __ETAssemblerDriver driver = (__ETAssemblerDriver)driverRef;
-    if(driver == NULL)
-    {
-        return ETAssemblerDriverOptionsDefault;
-    }
-
-    return driver->driverOptions;
+    return driver != NULL ? driver->driverOptions : ETAssemblerDriverOptionsDefault;
 }
 
 ETAssemblerDiagnosticOptions ETAssemblerDriverGetDiagnosticOptions(ETAssemblerDriverRef driverRef)
 {
     __ETAssemblerDriver driver = (__ETAssemblerDriver)driverRef;
-    if(driver == NULL)
-    {
-        return ETAssemblerDiagnosticOptionsDefault;
-    }
-
-    return driver->diagnosticOptions;
+    return driver != NULL ? driver->diagnosticOptions : ETAssemblerDiagnosticOptionsDefault;
 }
 
 void ETAssemblerDriverSetDriverOptions(ETAssemblerDriverRef driverRef,

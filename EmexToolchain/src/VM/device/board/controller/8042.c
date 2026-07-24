@@ -211,7 +211,8 @@ static void update_8042_interrupt(emex64_8042_t *dev)
     }
 }
 
-void emex64_8042_send_keyboard(emex64_8042_t *dev, UInt8 scancode)
+void emex64_8042_send_keyboard(emex64_8042_t *dev,
+                               UInt8 scancode)
 {
     if(dev->keyboard_attached)
     {
@@ -233,7 +234,8 @@ void emex64_8042_send_keyboard(emex64_8042_t *dev, UInt8 scancode)
     }
 }
 
-void emex64_8042_send_keyboard_make(emex64_8042_t *dev, kEmexKeyPhys key)
+void emex64_8042_send_keyboard_make(emex64_8042_t *dev,
+                                    kEmexKeyPhys key)
 {
     if(dev->keyboard_attached)
     {
@@ -245,7 +247,8 @@ void emex64_8042_send_keyboard_make(emex64_8042_t *dev, kEmexKeyPhys key)
     }
 }
 
-void emex64_8042_send_keyboard_break(emex64_8042_t *dev, kEmexKeyPhys key)
+void emex64_8042_send_keyboard_break(emex64_8042_t *dev,
+                                     kEmexKeyPhys key)
 {
     if(dev->keyboard_attached)
     {
@@ -276,7 +279,8 @@ void emex64_8042_send_keyboard_break(emex64_8042_t *dev, kEmexKeyPhys key)
     }
 }
 
-void emex64_8042_send_mouse(emex64_8042_t *dev, UInt8 byte)
+void emex64_8042_send_mouse(emex64_8042_t *dev,
+                            UInt8 byte)
 {
     if(dev->mouse_attached)
     {
@@ -298,7 +302,10 @@ void emex64_8042_send_mouse(emex64_8042_t *dev, UInt8 byte)
     }
 }
 
-UInt64 emex64_8042_read(E64CoreRef core, void *device, UInt64 offset, int size)
+UInt64 emex64_8042_read(E64CoreRef core,
+                        void *device,
+                        UInt64 offset,
+                        int size)
 {
     emex64_8042_t *dev = device;
     UInt64 val = 0;

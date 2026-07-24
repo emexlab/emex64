@@ -80,9 +80,9 @@ assembler_macro_t *assembler_macro_storage_lookup(assembler_macro_storage_t *sto
 }
 
 Boolean assembler_macro_storage_append_macro_char(assembler_macro_storage_t *storage,
-                                               const char *match,
-                                               const char **token,
-                                               UInt64 token_cnt)
+                                                  const char *match,
+                                                  const char **token,
+                                                  UInt64 token_cnt)
 {
     /* checking if it is already defined */
     assembler_macro_t *found = assembler_macro_storage_lookup(storage, match);
@@ -112,9 +112,9 @@ Boolean assembler_macro_storage_append_macro_char(assembler_macro_storage_t *sto
 }
 
 Boolean assembler_macro_storage_append_macro(assembler_macro_storage_t *storage,
-                                          const char *match,
-                                          assembler_token_t **token,
-                                          UInt64 token_cnt)
+                                             const char *match,
+                                             assembler_token_t **token,
+                                             UInt64 token_cnt)
 {
     /* checking if it is already defined */
     const char **token_char = calloc(token_cnt, sizeof(const char *));

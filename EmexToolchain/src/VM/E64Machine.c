@@ -161,43 +161,23 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
 E64CoreRef E64MachineGetCore(E64MachineRef machineRef)
 {
     __E64Machine machine = (__E64Machine)machineRef;
-    if(machine == NULL)
-    {
-        return NULL;
-    }
-
-    return machine->core;
+    return machine != NULL ? machine->core : NULL;
 }
 
 E64MemoryRef E64MachineGetMemory(E64MachineRef machineRef)
 {
     __E64Machine machine = (__E64Machine)machineRef;
-    if(machine == NULL)
-    {
-        return NULL;
-    }
-
-    return machine->memory;
+    return machine != NULL ? machine->memory : NULL;
 }
 
 E64MMIOBusRef E64MachineGetMMIOBus(E64MachineRef machineRef)
 {
     __E64Machine machine = (__E64Machine)machineRef;
-    if(machine == NULL)
-    {
-        return NULL;
-    }
-
-    return machine->mmio_bus;
+    return machine != NULL ? machine->mmio_bus : NULL;
 }
 
 E64ICRef E64MachineGetIC(E64MachineRef machineRef)
 {
     __E64Machine machine = (__E64Machine)machineRef;
-    if(machine == NULL)
-    {
-        return NULL;
-    }
-
-    return machine->intc;
+    return machine != NULL ? machine->intc : NULL;
 }

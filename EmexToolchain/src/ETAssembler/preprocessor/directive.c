@@ -24,11 +24,6 @@
 
 kAssemblerPreprocessorDirectiveType assembler_directive_type_for_str(const char *str)
 {
-    if(str == NULL)
-    {
-        return kAssemblerPreprocessorDirectiveTypeUnknown;
-    }
-
     switch(pack_name(str))
     {
         case PACK('%','i','n','c','l','u','d','e','%'): return kAssemblerPreprocessorDirectiveTypeInclude;

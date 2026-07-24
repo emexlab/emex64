@@ -160,7 +160,8 @@ static void run_on_main(void (^block)(void))
     }
 }
 
-static GLuint compileShader(GLenum type, const char* src)
+static GLuint compileShader(GLenum type,
+                            const char* src)
 {
     GLuint s = glCreateShader(type);
     glShaderSource(s, 1, &src, NULL);
@@ -182,7 +183,8 @@ static GLuint compileShader(GLenum type, const char* src)
     return s;
 }
 
-static GLuint linkProgram(GLuint vs, GLuint fs)
+static GLuint linkProgram(GLuint vs,
+                          GLuint fs)
 {
     GLuint p = glCreateProgram();
     glAttachShader(p, vs);
@@ -211,7 +213,8 @@ static GLuint linkProgram(GLuint vs, GLuint fs)
     BOOL _mouseGrabbed;
 }
 
-- (instancetype)initWithFrame:(NSRect)frame display:(emex64_display_t *)display
+- (instancetype)initWithFrame:(NSRect)frame
+                      display:(emex64_display_t *)display
 {
     NSOpenGLPixelFormatAttribute attrs[] = {
         NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core,

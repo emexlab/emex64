@@ -262,7 +262,8 @@ typedef struct {
     size_t cap;
 } buf_t;
 
-static Boolean buf_reserve(buf_t *b, size_t extra)
+static Boolean buf_reserve(buf_t *b,
+                           size_t extra)
 {
     if(b->len + extra <= b->cap)
     {
@@ -283,7 +284,9 @@ static Boolean buf_reserve(buf_t *b, size_t extra)
     return true;
 }
 
-static Boolean buf_append(buf_t *b, const void *src, size_t n)
+static Boolean buf_append(buf_t *b,
+                          const void *src,
+                          size_t n)
 {
     if(!buf_reserve(b, n))
     {
@@ -294,12 +297,14 @@ static Boolean buf_append(buf_t *b, const void *src, size_t n)
     return true;
 }
 
-static Boolean buf_append_u8(buf_t *b, UInt8 v)
+static Boolean buf_append_u8(buf_t *b,
+                             UInt8 v)
 {
     return buf_append(b, &v, 1);
 }
 
-static Boolean __attribute__((unused)) buf_append_u64(buf_t *b, UInt64 v)
+static Boolean __attribute__((unused)) buf_append_u64(buf_t *b,
+                                                      UInt64 v)
 {
     /* little-endian */
     UInt8 tmp[8];
@@ -310,7 +315,8 @@ static Boolean __attribute__((unused)) buf_append_u64(buf_t *b, UInt64 v)
     return buf_append(b, tmp, 8);
 }
 
-static size_t strtab_intern(buf_t *strtab, const char *s)
+static size_t strtab_intern(buf_t *strtab,
+                            const char *s)
 {
     size_t i = 0;
     while(i < strtab->len)

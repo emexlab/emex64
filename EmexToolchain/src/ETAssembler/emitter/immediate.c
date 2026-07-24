@@ -22,39 +22,43 @@
 #include <EmexToolchain/ETAssembler/emitter/immediate.h>
 #include <EmexToolchain/VM/E64Core.h>
 
+static void assembler_emit_imm_low(ETAssemblerInvocationRef inv,
+                                   E64ParameterCoding coding,
+                                   UInt64 imm,
+                                   UInt8 bits)
+{
+    EFBitWalkerWrite(inv->out_vbitwalker, coding, 4);
+    EFBitWalkerWrite(inv->out_vbitwalker, imm, bits);
+}
+
 void assembler_emit_imm5(ETAssemblerInvocationRef inv,
                          UInt8 imm)
 {
-    EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingImm4, 4);
-    EFBitWalkerWrite(inv->out_vbitwalker, imm, 4);
+    assembler_emit_imm_low(inv, kE64ParameterCodingImm4, (UInt64)imm, 4);
 }
 
 void assembler_emit_imm8(ETAssemblerInvocationRef inv,
                          UInt8 imm)
 {
-    EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingImm8, 4);
-    EFBitWalkerWrite(inv->out_vbitwalker, imm, 8);
+    assembler_emit_imm_low(inv, kE64ParameterCodingImm8, (UInt64)imm, 8);
 }
 
 void assembler_emit_imm16(ETAssemblerInvocationRef inv,
                           UInt16 imm)
 {
-    EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingImm16, 4);
-    EFBitWalkerWrite(inv->out_vbitwalker, imm, 16);
+    assembler_emit_imm_low(inv, kE64ParameterCodingImm16, (UInt64)imm, 16);
 }
 
 void assembler_emit_imm32(ETAssemblerInvocationRef inv,
                           UInt32 imm)
 {
-    EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingImm32, 4);
-    EFBitWalkerWrite(inv->out_vbitwalker, imm, 32);
+    assembler_emit_imm_low(inv, kE64ParameterCodingImm32, (UInt64)imm, 32);
 }
 
 void assembler_emit_imm64(ETAssemblerInvocationRef inv,
                           UInt64 imm)
 {
-    EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingImm64, 4);
-    EFBitWalkerWrite(inv->out_vbitwalker, imm, 64);
+    assembler_emit_imm_low(inv, kE64ParameterCodingImm64, (UInt64)imm, 64);
 }
 
 void assembler_emit_addr64(ETAssemblerInvocationRef inv,

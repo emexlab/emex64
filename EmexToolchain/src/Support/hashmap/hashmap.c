@@ -39,7 +39,7 @@ typedef struct hashmap {
 #define HASHMAP_INIT_CAP    16
 
 static UInt64 hashmap_hash(const void *key,
-                             size_t len)
+                           size_t len)
 {
     const UInt8 *p = (const UInt8 *)key;
     UInt64 h = 0xcbf29ce484222325ULL;
@@ -75,7 +75,7 @@ void hashmap_dealloc(hashmap_t *m)
     {
         return;
     }
-    for (size_t i = 0; i <= m->mask; i++)
+    for(size_t i = 0; i <= m->mask; i++)
     {
         free(m->buckets[i].key);
     }
@@ -95,20 +95,20 @@ void *hashmap_gets(hashmap_t *m,
 }
 
 Boolean hashmap_puts(hashmap_t *m,
-                  const char *k,
-                  void *v)
+                     const char *k,
+                     void *v)
 {
     return hashmap_put(m, k, strlen(k), v);
 }
 
 Boolean hashmap_dels(hashmap_t *m,
-                  const char *k)
+                     const char *k)
 {
     return hashmap_del(m, k, strlen(k));
 }
 
 static Boolean hashmap_resize(hashmap_t *m,
-                           size_t newcap)
+                              size_t newcap)
 {
     hashmap_bucket_t *nb = (hashmap_bucket_t*)calloc(newcap, sizeof *nb);
     if(!nb)
@@ -158,9 +158,9 @@ void *hashmap_get(hashmap_t *m,
 }
 
 Boolean hashmap_put(hashmap_t *m,
-                 const void *key,
-                 size_t klen,
-                 void *val)
+                    const void *key,
+                    size_t klen,
+                    void *val)
 {
     if((m->count + 1) * 4 >= (m->mask + 1) * 3)
     {
@@ -194,8 +194,8 @@ Boolean hashmap_put(hashmap_t *m,
 }
 
 Boolean hashmap_del(hashmap_t *m,
-                 const void *key,
-                 size_t klen)
+                    const void *key,
+                    size_t klen)
 {
     UInt64 h = hashmap_hash(key, klen);
     size_t i = (size_t)h & m->mask;

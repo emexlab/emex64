@@ -84,54 +84,29 @@ E64MMIORegionRef E64MMIORegionCreate(EFAllocatorRef allocatorRef,
 UInt64 E64MMIORegionGetBaseAddress(E64MMIORegionRef MMIORegionRef)
 {
     __E64MMIORegion MMIORegion = (__E64MMIORegion)MMIORegionRef;
-    if(MMIORegion == NULL)
-    {
-        return 0;
-    }
-
-    return MMIORegion->base_addr;
+    return MMIORegion != NULL ? MMIORegion->base_addr : 0;
 }
 
 UInt64 E64MMIORegionGetSize(E64MMIORegionRef MMIORegionRef)
 {
     __E64MMIORegion MMIORegion = (__E64MMIORegion)MMIORegionRef;
-    if(MMIORegion == NULL)
-    {
-        return 0;
-    }
-
-    return MMIORegion->size;
+    return MMIORegion != NULL ? MMIORegion->size : 0;
 }
 
 void *E64MMIORegionGetDevice(E64MMIORegionRef MMIORegionRef)
 {
     __E64MMIORegion MMIORegion = (__E64MMIORegion)MMIORegionRef;
-    if(MMIORegion == NULL)
-    {
-        return NULL;
-    }
-
-    return MMIORegion->device;
+    return MMIORegion != NULL ? MMIORegion->device : NULL;
 }
 
 mmio_read_fn E64MMIORegionGetReadSymbol(E64MMIORegionRef MMIORegionRef)
 {
     __E64MMIORegion MMIORegion = (__E64MMIORegion)MMIORegionRef;
-    if(MMIORegion == NULL)
-    {
-        return emex64_mmio_fallback_read;
-    }
-
-    return MMIORegion->read;
+    return MMIORegion != NULL ? MMIORegion->read : emex64_mmio_fallback_read;
 }
 
 mmio_write_fn E64MMIORegionGetWriteSymbol(E64MMIORegionRef MMIORegionRef)
 {
     __E64MMIORegion MMIORegion = (__E64MMIORegion)MMIORegionRef;
-    if(MMIORegion == NULL)
-    {
-        return emex64_mmio_fallback_write;
-    }
-
-    return MMIORegion->write;
+    return MMIORegion != NULL ? MMIORegion->write : emex64_mmio_fallback_write;
 }

@@ -95,32 +95,17 @@ ETAssemblerJobRef ETAssemblerJobCreate(EFAllocatorRef allocatorRef,
 ETAssemblerJobType ETAssemblerJobGetType(ETAssemblerJobRef jobRef)
 {
     __ETAssemblerJob job = (__ETAssemblerJob)jobRef;
-    if(job == NULL)
-    {
-        return kETAssemblerJobTypeUnknown;
-    }
-
-    return job->type;
+    return job != NULL ? job->type : kETAssemblerJobTypeUnknown;
 }
 
 EFStringRef ETAssemblerJobGetCommand(ETAssemblerJobRef jobRef)
 {
     __ETAssemblerJob job = (__ETAssemblerJob)jobRef;
-    if(job == NULL)
-    {
-        return NULL;
-    }
-
-    return job->command;
+    return job != NULL ? job->command : NULL;
 }
 
 EFArrayRef ETAssemblerJobGetArguments(ETAssemblerJobRef jobRef)
 {
     __ETAssemblerJob job = (__ETAssemblerJob)jobRef;
-    if(job == NULL)
-    {
-        return NULL;
-    }
-
-    return job->arguments;
+    return job != NULL ? job->arguments : NULL;
 }

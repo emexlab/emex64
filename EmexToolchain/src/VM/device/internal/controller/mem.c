@@ -23,9 +23,9 @@
 #include <EmexToolchain/VM/device/internal/controller/mem.h>
 
 UInt64 emex64_mc_read(E64CoreRef core,
-                        void *device,
-                        UInt64 offset,
-                        int size)
+                      void *device,
+                      UInt64 offset,
+                      int size)
 {
     if(offset == EMEX64_MC_REG_SIZE)
     {

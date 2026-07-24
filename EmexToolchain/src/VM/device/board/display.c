@@ -158,7 +158,11 @@ kEmexKeyPhys glfw_key_to_kEmexKeyPhys(int key)
 
 void uart_restore_mode(void);
 
-static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+static void key_callback(GLFWwindow* window,
+                         int key,
+                         int scancode,
+                         int action,
+                         int mods)
 {
     emex64_display_t *display = (emex64_display_t*)glfwGetWindowUserPointer(window);
     if(!display || !display->emex8042)
@@ -189,7 +193,8 @@ static void display_close_callback(GLFWwindow* window)
     exit(0);
 }
 
-static void maximize_callback(GLFWwindow* window, int maximized)
+static void maximize_callback(GLFWwindow* window,
+                              int maximized)
 {
     if(maximized)
     {
@@ -203,7 +208,8 @@ static void die(const char* msg)
     exit(1);
 }
 
-static GLuint compileShader(GLenum type, const char* src)
+static GLuint compileShader(GLenum type,
+                            const char* src)
 {
     GLuint s = glCreateShader(type);
     glShaderSource(s, 1, &src, NULL);
@@ -224,7 +230,8 @@ static GLuint compileShader(GLenum type, const char* src)
     return s;
 }
 
-static GLuint linkProgram(GLuint vs, GLuint fs)
+static GLuint linkProgram(GLuint vs,
+                          GLuint fs)
 {
     GLuint p = glCreateProgram();
     glAttachShader(p, vs);
@@ -557,10 +564,10 @@ UInt64 emex64_fb_read(E64CoreRef core,
 }
 
 void emex64_fb_write(E64CoreRef core,
-                   void *device,
-                   UInt64 offset,
-                   UInt64 value,
-                   int size)
+                     void *device,
+                     UInt64 offset,
+                     UInt64 value,
+                     int size)
 {
     #if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || defined(__APPLE__))
     emex64_display_t *display = (emex64_display_t*)device;

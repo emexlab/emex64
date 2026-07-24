@@ -438,12 +438,7 @@ void E64MemoryCoreAction(E64MemoryRef memoryRef,
                          E64MemoryActionType actionType)
 {
     E64Memory memory = (E64MemoryRef)memoryRef;
-    if(memory == NULL)
-    {
-        return;
-    }
-
-    if(unlikely((core->cr_state.crexc.exception == kE64ExceptionBadAccess || core->cr_state.crexc.exception == kE64ExceptionKTRRViolation) && !core->in_interrupt))
+    if(memory == NULL || unlikely((core->cr_state.crexc.exception == kE64ExceptionBadAccess || core->cr_state.crexc.exception == kE64ExceptionKTRRViolation) && !core->in_interrupt))
     {
         return;
     }

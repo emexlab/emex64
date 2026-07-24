@@ -424,11 +424,7 @@ UInt64 E64CoreGetValueFromRegister(E64CoreRef coreRef,
                                    E64Register reg)
 {
     __E64Core core = (__E64Core)coreRef;
-    if(core == NULL || reg > kE64RegisterMAX)
-    {
-        return 0;
-    }
-    return core->rl[reg];
+    return (core != NULL && reg <= kE64RegisterMAX) ? core->rl[reg] : 0;
 }
 
 void E64CoreSetRegisterWithValue(E64CoreRef coreRef,
@@ -446,9 +442,5 @@ void E64CoreSetRegisterWithValue(E64CoreRef coreRef,
 E64Exception E64CoreGetException(E64CoreRef coreRef)
 {
     __E64Core core = (__E64Core)coreRef;
-    if(core == NULL)
-    {
-        return kE64ExceptionNone;
-    }
-    return core->cr_state.crexc.exception;
+    return core != NULL ? core->cr_state.crexc.exception : kE64ExceptionNone;
 }

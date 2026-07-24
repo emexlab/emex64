@@ -201,10 +201,10 @@ UInt64 emex64_timer_read(E64CoreRef core,
 }
 
 void emex64_timer_write(E64CoreRef core,
-                      void *device,
-                      UInt64 offset,
-                      UInt64 value,
-                      int size)
+                        void *device,
+                        UInt64 offset,
+                        UInt64 value,
+                        int size)
 {
     emex64_timer_t *timer = (emex64_timer_t *)device;
 
