@@ -90,7 +90,7 @@ E64Opcode opcode_from_string(const char *name)
 }
 
 Boolean opcode_arg_accepts_reg_only(const emex64_opfunc_entry_t *opce,
-                                 UInt8 arg)
+                                    UInt8 arg)
 {
     return opce != NULL && (opce->argmask & (1u << (31 - arg))) != 0;
 }

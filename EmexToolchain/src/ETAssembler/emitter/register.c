@@ -25,44 +25,30 @@
 
 static inline E64Register __register_from_string(const char *name)
 {
-    switch(pack_name_until(name, '+'))
+    char opt[2] = { '+','-' };
+    for(UInt8 index = 0; index < 2; index++)
     {
-        case PACK('p','c'): return kE64RegisterPC;
-        case PACK('s','p'): return kE64RegisterSP;
-        case PACK('f','p'): return kE64RegisterFP;
-        case PACK('f','p','c'): return kE64RegisterFPC;
-        case PACK('r','0'): return kE64RegisterR0;
-        case PACK('r','1'): return kE64RegisterR1;
-        case PACK('r','2'): return kE64RegisterR2;
-        case PACK('r','3'): return kE64RegisterR3;
-        case PACK('r','4'): return kE64RegisterR4;
-        case PACK('r','5'): return kE64RegisterR5;
-        case PACK('r','6'): return kE64RegisterR6;
-        case PACK('r','7'): return kE64RegisterR7;
-        case PACK('r','8'): return kE64RegisterR8;
-        case PACK('r','9'): return kE64RegisterR9;
-        case PACK('r','r'): return kE64RegisterRR;
+        switch(pack_name_until(name, opt[index]))
+        {
+            case PACK('p','c'): return kE64RegisterPC;
+            case PACK('s','p'): return kE64RegisterSP;
+            case PACK('f','p'): return kE64RegisterFP;
+            case PACK('f','p','c'): return kE64RegisterFPC;
+            case PACK('r','0'): return kE64RegisterR0;
+            case PACK('r','1'): return kE64RegisterR1;
+            case PACK('r','2'): return kE64RegisterR2;
+            case PACK('r','3'): return kE64RegisterR3;
+            case PACK('r','4'): return kE64RegisterR4;
+            case PACK('r','5'): return kE64RegisterR5;
+            case PACK('r','6'): return kE64RegisterR6;
+            case PACK('r','7'): return kE64RegisterR7;
+            case PACK('r','8'): return kE64RegisterR8;
+            case PACK('r','9'): return kE64RegisterR9;
+            case PACK('r','r'): return kE64RegisterRR;
+            default: return kE64RegisterInvalid;
+        }
     }
-
-    switch(pack_name_until(name, '-'))
-    {
-        case PACK('p','c'): return kE64RegisterPC;
-        case PACK('s','p'): return kE64RegisterSP;
-        case PACK('f','p'): return kE64RegisterFP;
-        case PACK('f','p','c'): return kE64RegisterFPC;
-        case PACK('r','0'): return kE64RegisterR0;
-        case PACK('r','1'): return kE64RegisterR1;
-        case PACK('r','2'): return kE64RegisterR2;
-        case PACK('r','3'): return kE64RegisterR3;
-        case PACK('r','4'): return kE64RegisterR4;
-        case PACK('r','5'): return kE64RegisterR5;
-        case PACK('r','6'): return kE64RegisterR6;
-        case PACK('r','7'): return kE64RegisterR7;
-        case PACK('r','8'): return kE64RegisterR8;
-        case PACK('r','9'): return kE64RegisterR9;
-        case PACK('r','r'): return kE64RegisterRR;
-        default: return kE64RegisterInvalid;
-    }
+    return kE64RegisterInvalid;
 }
 
 static inline E64RegisterExtended __register_extended_from_string(const char *name)
@@ -128,13 +114,9 @@ void assembler_emit_register(ETAssemblerInvocationRef inv,
 {
     assert(reg <= kE64RegisterMAX);
 
-    if(increment && actuallyDecrement)
+    if(increment)
     {
-        EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingRegImmDec, 4);
-    }
-    else if(increment)
-    {
-        EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingRegImmInc, 4);
+        EFBitWalkerWrite(inv->out_vbitwalker, actuallyDecrement ? kE64ParameterCodingRegImmDec : kE64ParameterCodingRegImmInc, 4);
     }
     else
     {
