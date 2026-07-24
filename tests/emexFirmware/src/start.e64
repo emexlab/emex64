@@ -40,10 +40,6 @@
 %endif% ; FW_MINIMAL
 %define% EARLY_STACK_TOP_SUB    (EARLY_STACK_SIZE - 8)
 
-%ifndef% FW_TEST_RBM
-%define% FW_TEST_RBM 1
-%endif% ; FW_TEST_RBM
-
 section .bss
     early_stack db EARLY_STACK_SIZE
 
@@ -141,46 +137,6 @@ main:
 %endif% ; FW_TEST_EXCEPTION
 
     cmov REG_CR0, 1
-
-%if% FW_TEST_RBM
-    ; bootstrapping
-    blw strlen, fw_rbm_msg
-    mov r0, rr
-    push r0
-    blw putbase, r0, 10
-    blw putc, '\n'
-    blw memadd, fw_rbm_msg, 0b00000010, [r0 + 1]    ; as soon as it is bigger than 0b00000001 it breaks
-
-    ; bootstrapping done.. now we need to enable RBM
-    cmov REG_CR6, 0b00000001
-    ;blw putc, '\n'
-    ;blw puts, fw_rbm_msg
-    blw strlen, fw_rbm_msg
-    push rr
-    cmov REG_CR6, 0b00000000
-
-    pop rr
-    blw putbase, rr, 10
-    blw putc, '\n'
-
-    pop r0
-    blw memsub, fw_rbm_msg, 0b00000010, [r0 + 1]
-    blw strlen, fw_rbm_msg
-    blw putbase, rr, 10
-    blw putc, '\n'
-
-    ; needs bootstrap code (firmware needs to first self randomize)
-    ;cmov REG_CR6, 0b00000010
-    ;ldb r0, fw_display_msg
-    ;cmov REG_CR6, 0b00000000
-    ;blw putc, r0
-    ;blw putc, '\n'
-    ;cmovb rr, REG_CR6
-    ;blw putc, '0'
-    ;blw putc, 'b'
-    ;blw putbase, rr, 2
-    ;blw putc, '\n'
-%endif% ; FW_TEST_RBM
     
 .hang:
     ldq r0, meow_cnt
