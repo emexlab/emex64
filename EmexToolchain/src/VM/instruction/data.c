@@ -19,22 +19,17 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/VM/instruction/instruction.h>
 #include <EmexToolchain/VM/instruction/data.h>
 #include <EmexToolchain/VM/E64Machine.h>
 #include <EmexToolchain/VM/E64Memory.h>
 
 void emex64_op_mov(E64CoreRef core)
 {
-    emex64_instr_termcond(core->op.param_cnt != 2);
-
     *(core->op.param[0]) = *(core->op.param[1]);
 }
 
 void emex64_op_swp(E64CoreRef core)
 {
-    emex64_instr_termcond(core->op.param_cnt != 2);
-
     UInt64 param_backup = *(core->op.param[0]);
     *(core->op.param[0]) = *(core->op.param[1]);
     *(core->op.param[1]) = param_backup;
@@ -42,16 +37,12 @@ void emex64_op_swp(E64CoreRef core)
 
 void emex64_op_movz(E64CoreRef core)
 {
-    emex64_instr_termcond(core->op.param_cnt != 2);
-
     *(core->op.param[0]) = *(core->op.param[1]);
     *(core->op.param[1]) = 0;
 }
 
 void emex64_op_push(E64CoreRef core)
 {
-    emex64_instr_termcond(core->op.param_cnt == 0);
-
     for(UInt8 i = 0; i < core->op.param_cnt; i++)
     {
         E64MemoryCoreAction(core->machine->memory, core, core->rl[kE64RegisterSP], sizeof(UInt64), core->op.param[i], kE64MemoryActionTypeWrite);
@@ -61,8 +52,6 @@ void emex64_op_push(E64CoreRef core)
 
 void emex64_op_pop(E64CoreRef core)
 {
-    emex64_instr_termcond(core->op.param_cnt == 0);
-
     for(UInt8 i = 0; i < core->op.param_cnt; i++)
     {
         core->rl[kE64RegisterSP] += 8;
@@ -72,64 +61,46 @@ void emex64_op_pop(E64CoreRef core)
 
 void emex64_op_ldb(E64CoreRef core)
 {
-    emex64_instr_termcond(core->op.param_cnt != 2);
-
     E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), sizeof(UInt8), core->op.param[0], kE64MemoryActionTypeRead);
 }
 
 void emex64_op_ldw(E64CoreRef core)
 {
-    emex64_instr_termcond(core->op.param_cnt != 2);
-
     E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), sizeof(UInt16), core->op.param[0], kE64MemoryActionTypeRead);
 }
 
 void emex64_op_ldd(E64CoreRef core)
 {
-    emex64_instr_termcond(core->op.param_cnt != 2);
-
     E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), sizeof(UInt32), core->op.param[0], kE64MemoryActionTypeRead);
 }
 
 void emex64_op_ldq(E64CoreRef core)
 {
-    emex64_instr_termcond(core->op.param_cnt != 2);
-
     E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), sizeof(UInt64), core->op.param[0], kE64MemoryActionTypeRead);
 }
 
 void emex64_op_stb(E64CoreRef core)
 {
-    emex64_instr_termcond(core->op.param_cnt != 2);
-
     E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[0]), sizeof(UInt8), core->op.param[1], kE64MemoryActionTypeWrite);
 }
 
 void emex64_op_stw(E64CoreRef core)
 {
-    emex64_instr_termcond(core->op.param_cnt != 2);
-
     E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[0]), sizeof(UInt16), core->op.param[1], kE64MemoryActionTypeWrite);
 }
 
 void emex64_op_std(E64CoreRef core)
 {
-    emex64_instr_termcond(core->op.param_cnt != 2);
-
     E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[0]), sizeof(UInt32), core->op.param[1], kE64MemoryActionTypeWrite);
 }
 
 void emex64_op_stq(E64CoreRef core)
 {
-    emex64_instr_termcond(core->op.param_cnt != 2);
-
     E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[0]), sizeof(UInt64), core->op.param[1], kE64MemoryActionTypeWrite);
 }
 
 void emex64_op_clr(E64CoreRef core)
 {
-    emex64_instr_termcond(core->op.param_cnt < 1);
-
     for(UInt8 i = 0; i < core->op.param_cnt; i++)
     {
         *core->op.param[i] = 0;
@@ -138,8 +109,6 @@ void emex64_op_clr(E64CoreRef core)
 
 void emex64_op_cmov(E64CoreRef core)
 {
-    emex64_instr_termcond(core->op.param_cnt != 2);
-
     if(core->cr_state.crel.level < kE64ElevationLevelKernel)
     {
         core->cr_state.crexc.exception = kE64ExceptionPermission;
@@ -182,8 +151,6 @@ void emex64_op_cmov(E64CoreRef core)
 
 void emex64_op_cmovb(E64CoreRef core)
 {
-    emex64_instr_termcond(core->op.param_cnt != 2);
-
     UInt64 *cr_recv = core->op.param[0];
     UInt8 cr_select = *(core->op.param[1]);
 
@@ -223,8 +190,6 @@ void emex64_op_cmovb(E64CoreRef core)
 
 void emex64_op_clar(__E64Core core)
 {
-    emex64_instr_termcond(core->op.param_cnt != 0);
-
     for(UInt8 index = kE64RegisterR0; index < kE64RegisterMAX; index++)
     {
         core->rl[index] = 0;

@@ -313,8 +313,16 @@ escape_from_la:
     core->op.param_cnt = i;
     core->op.ilen = (UInt32)((bb.pos + 7u) >> 3);
 
+    if(unlikely(i < core->op.opce->minargs))
+    {
+        core->cr_state.crexc.exception = kE64ExceptionBadInstruction;
+    }
+    else
+    {
+        core->op.opce->func(core);
+    }
+
     /* the part of executing the instruction */
-    core->op.opce->func(core);
     core->rl[kE64RegisterPC] += core->op.ilen;
 
     return;

@@ -19,7 +19,6 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/VM/instruction/instruction.h>
 #include <EmexToolchain/VM/instruction/alu.h>
 
 #if defined(__x86_64__)
@@ -52,50 +51,36 @@
 
 void emex64_op_add(__E64Core core)
 {
-    emex64_instr_termcond((unsigned)(core->op.param_cnt - 2) > 1);
-
     DEFINE_EMEX64_ARITHMETIC_OP(+);
 }
 
 void emex64_op_sub(__E64Core core)
 {
-    emex64_instr_termcond((unsigned)(core->op.param_cnt - 2) > 1);
-
     DEFINE_EMEX64_ARITHMETIC_OP(-);
 }
 
 void emex64_op_mul(__E64Core core)
 {
-    emex64_instr_termcond((unsigned)(core->op.param_cnt - 2) > 1);
-
     DEFINE_EMEX64_ARITHMETIC_OP(*);
 }
 
 void emex64_op_div(__E64Core core)
 {
-    emex64_instr_termcond((unsigned)(core->op.param_cnt - 2) > 1);
-
     DEFINE_EMEX64_ARITHMETIC_OP_ZERO_BAD(/);
 }
 
 void emex64_op_idiv(__E64Core core)
 {
-    emex64_instr_termcond((unsigned)(core->op.param_cnt - 2) > 1);
-
     DEFINE_EMEX64_SIGNED_ARITHMETIC_OP_ZERO_BAD(/);
 }
 
 void emex64_op_mod(__E64Core core)
 {
-    emex64_instr_termcond((unsigned)(core->op.param_cnt - 2) > 1);
-
     DEFINE_EMEX64_ARITHMETIC_OP_ZERO_BAD(%);
 }
 
 void emex64_op_not(__E64Core core)
 {
-    emex64_instr_termcond(core->op.param_cnt == 0);
-
     for(UInt8 i = 0; i < core->op.param_cnt; i++)
     {
         *(core->op.param[i]) = ~*(core->op.param[i]);
@@ -104,8 +89,6 @@ void emex64_op_not(__E64Core core)
 
 void emex64_op_neg(__E64Core core)
 {
-    emex64_instr_termcond(core->op.param_cnt == 0);
-
     for(UInt8 i = 0; i < core->op.param_cnt; i++)
     {
         *(core->op.param[i]) = -*(core->op.param[i]);
@@ -114,50 +97,36 @@ void emex64_op_neg(__E64Core core)
 
 void emex64_op_and(__E64Core core)
 {
-    emex64_instr_termcond((unsigned)(core->op.param_cnt - 2) > 1);
-
     DEFINE_EMEX64_ARITHMETIC_OP(&);
 }
 
 void emex64_op_or(__E64Core core)
 {
-    emex64_instr_termcond((unsigned)(core->op.param_cnt - 2) > 1);
-
     DEFINE_EMEX64_ARITHMETIC_OP(|);
 }
 
 void emex64_op_xor(__E64Core core)
 {
-    emex64_instr_termcond((unsigned)(core->op.param_cnt - 2) > 1);
-
     DEFINE_EMEX64_ARITHMETIC_OP(^);
 }
 
 void emex64_op_shr(__E64Core core)
 {
-    emex64_instr_termcond((unsigned)(core->op.param_cnt - 2) > 1);
-
     DEFINE_EMEX64_ARITHMETIC_OP(>>);
 }
 
 void emex64_op_shl(__E64Core core)
 {
-    emex64_instr_termcond((unsigned)(core->op.param_cnt - 2) > 1);
-
     DEFINE_EMEX64_ARITHMETIC_OP(<<);
 }
 
 void emex64_op_sar(__E64Core core)
 {
-    emex64_instr_termcond((unsigned)(core->op.param_cnt - 2) > 1);
-
     DEFINE_EMEX64_SIGNED_ARITHMETIC_OP(>>);
 }
 
 void emex64_op_ror(__E64Core core)
 {
-    emex64_instr_termcond(core->op.param_cnt != 1);
-
     UInt64 v = *core->op.param[0];
     UInt64 n = (core->op.param_cnt == 2) ? (*core->op.param[1] & 63) : 1;
     *core->op.param[0] = (v >> n) | (v << (64 - n));
@@ -165,8 +134,6 @@ void emex64_op_ror(__E64Core core)
 
 void emex64_op_rol(__E64Core core)
 {
-    emex64_instr_termcond(core->op.param_cnt != 1);
-
     SInt64 v = *core->op.param[0];
     UInt64 n = (core->op.param_cnt == 2) ? (*core->op.param[1] & 63) : 1;
     *core->op.param[0] = (v << n) | (v >> (64 - n));
@@ -177,8 +144,6 @@ __attribute__((target("bmi2")))
 #endif /*__x86_64__  */
 void emex64_op_pdep(__E64Core core)
 {
-    emex64_instr_termcond((unsigned)(core->op.param_cnt - 2) > 1);
-
     UInt64 *dest = core->op.param[0];
     UInt64 src = *core->op.param[core->op.param_cnt - 2];
     UInt64 mask = *core->op.param[core->op.param_cnt - 1];
@@ -218,8 +183,6 @@ __attribute__((target("bmi2")))
 #endif /*__x86_64__  */
 void emex64_op_pext(__E64Core core)
 {
-    emex64_instr_termcond((unsigned)(core->op.param_cnt - 2) > 1);
-
     UInt64 *dest = core->op.param[0];
     UInt64 src = *core->op.param[core->op.param_cnt - 2];
     UInt64 mask = *core->op.param[core->op.param_cnt - 1];
@@ -256,26 +219,21 @@ void emex64_op_pext(__E64Core core)
 
 void emex64_op_bswapw(__E64Core core)
 {
-    emex64_instr_termcond(core->op.param_cnt != 1);
     *core->op.param[0] = __builtin_bswap16((UInt16)*core->op.param[0]);
 }
 
 void emex64_op_bswapd(__E64Core core)
 {
-    emex64_instr_termcond(core->op.param_cnt != 1);
     *core->op.param[0] = __builtin_bswap32((UInt32)*core->op.param[0]);
 }
 
 void emex64_op_bswapq(__E64Core core)
 {
-    emex64_instr_termcond(core->op.param_cnt != 1);
     *core->op.param[0] = __builtin_bswap64(*core->op.param[0]);
 }
 
 void emex64_op_inc(__E64Core core)
 {
-    emex64_instr_termcond(core->op.param_cnt < 1);
-
     for(UInt8 i = 0; i < core->op.param_cnt; i++)
     {
         (*core->op.param[i])++;
@@ -284,8 +242,6 @@ void emex64_op_inc(__E64Core core)
 
 void emex64_op_dec(__E64Core core)
 {
-    emex64_instr_termcond(core->op.param_cnt < 1);
-
     for(UInt8 i = 0; i < core->op.param_cnt; i++)
     {
         (*core->op.param[i])--;

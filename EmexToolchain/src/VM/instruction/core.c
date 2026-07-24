@@ -19,18 +19,14 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/VM/instruction/instruction.h>
 #include <EmexToolchain/VM/instruction/core.h>
 
 void emex64_op_hlt(__E64Core core)
 {
-    emex64_instr_termcond(core->op.param_cnt != 0);
-
     core->halted = true;
 }
 
 void emex64_op_nop(__E64Core core)
 {
-    emex64_instr_termcond(core->op.param_cnt != 0);
     /* doing nothing */
 }
