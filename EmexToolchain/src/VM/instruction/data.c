@@ -263,3 +263,10 @@ void emex64_op_cmovb(E64CoreRef core)
             return;
     }
 }
+
+void emex64_op_clar(__E64Core core)
+{
+    emex64_instr_termcond(core->op.param_cnt != 0);
+
+    memset(core->rl, 0, sizeof(core->rl));
+}

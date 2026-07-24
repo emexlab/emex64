@@ -108,6 +108,7 @@ const emex64_opfunc_entry_t kE64OpfuncTable[] = {
     [kE64OpcodeCLR] = { .func = emex64_op_clr, .minargs = 1, .maxargs = EMEX64_MAX_ARGS, .argmask = 0b11111111111111111111111111111111 },
     [kE64OpcodeCMOV] = { .func = emex64_op_cmov, .minargs = 2, .maxargs = 2, .argmask = 0b00000000000000000000000000000000 },
     [kE64OpcodeCMOVB] = { .func = emex64_op_cmovb, .minargs = 2, .maxargs = 2, .argmask = 0b10000000000000000000000000000000 },
+    [kE64OpcodeCLAR] = { .func = emex64_op_clar, .minargs = 0, .maxargs = 0, .argmask = 0b00000000000000000000000000000000 },
 
     /* control flow operations v2 */
     [kE64OpcodeBBZ] = { .func = emex64_op_bbz, .minargs = 3, .maxargs = 3, .argmask = 0b10000000000000000000000000000000 },

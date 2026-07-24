@@ -90,10 +90,11 @@ typedef enum: UInt8 {
     kE64OpcodeCLR =     0b00110101,
     kE64OpcodeCMOV =    0b00110110,
     kE64OpcodeCMOVB =   0b00110111,
+    kE64OpcodeCLAR =    0b00111000,
 
     /* control flow operation v2 */
-    kE64OpcodeBBZ =     0b00111000,
-    kE64OpcodeBBNZ =    0b00111001,
+    kE64OpcodeBBZ =     0b00111001,
+    kE64OpcodeBBNZ =    0b00111010,
 
     /*
      * for floating point later (ideas atleast):
