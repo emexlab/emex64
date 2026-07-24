@@ -45,7 +45,12 @@ static inline E64Register __register_from_string(const char *name)
             case PACK('r','8'): return kE64RegisterR8;
             case PACK('r','9'): return kE64RegisterR9;
             case PACK('r','r'): return kE64RegisterRR;
-            default: return kE64RegisterInvalid;
+            default:
+                if(index <= 0)
+                {
+                    continue;
+                }
+                break;
         }
     }
     return kE64RegisterInvalid;
