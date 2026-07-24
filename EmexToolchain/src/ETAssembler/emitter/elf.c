@@ -155,9 +155,7 @@ Boolean assembler_elf_emit(ETAssemblerInvocationRef inv)
     ELF64_Sym sym0 = {0};
     buf_append(&sym_buf, &sym0, sizeof(sym0));
 
-    EFURLRef url = EFFileGetURL(EFArrayGetValueAtIndex(inv->files, 0));
-    EFAUTOREL EFStringRef string = EFURLCopyPath(kEFAllocatorDefault, url);
-    const char *src_fname = (EFArrayGetCount(inv->files) > 0) ? EFStringGetCStringPtr(string, kEFStringEncodingUTF8) : "<unknown>";
+    const char *src_fname = (EFArrayGetCount(inv->files) > 0) ? EFStringGetCStringPtr(EFURLGetPath(EFFileGetURL(EFArrayGetValueAtIndex(inv->files, 0))), kEFStringEncodingUTF8) : "<unknown>";
     const char *base = strrchr(src_fname, '/');
     base = base ? base + 1 : src_fname;
 

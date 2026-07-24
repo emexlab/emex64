@@ -31,8 +31,7 @@ Boolean linker_script_parse(linker_invocation_t *inv,
                             EFFileRef script_file)
 {
     EFAUTOREL EFFileHandleRef d = EFFileCopyFileHandle(EFGetAllocator(script_file), script_file);
-    EFAUTOREL EFStringRef filePathStr = EFURLCopyPath(EFGetAllocator(script_file), EFFileGetURL(script_file));
-    const char *filePathCStr = EFStringGetCStringPtr(filePathStr, kEFStringEncodingUTF8);
+    const char *filePathCStr = EFStringGetCStringPtr(EFURLGetPath(EFFileGetURL(script_file)), kEFStringEncodingUTF8);
     if(d == NULL || filePathCStr == NULL)
     {
         /* couldn't dup descriptor */

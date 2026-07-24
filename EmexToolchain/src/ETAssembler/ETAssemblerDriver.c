@@ -459,8 +459,7 @@ Boolean __ETAssemblerDriverJobgen(__ETAssemblerDriver driver)
     {
         EFFileRef inputFile = EFArrayGetValueAtIndex(driver->inputFiles, index);
         EFURLRef url = EFFileGetURL(inputFile);
-        EFAUTOREL EFStringRef path = EFURLCopyPath(EFGetAllocator(driver), url);
-        const char *input_path = EFStringGetCStringPtr(path, kEFStringEncodingUTF8);
+        const char *input_path = EFStringGetCStringPtr(EFURLGetPath(url), kEFStringEncodingUTF8);
         EFFileType input_type = EFFileGetType(inputFile);
 
         switch(input_type)
@@ -715,8 +714,7 @@ ETAssemblerDriverRef ETAssemblerDriverCreateWithOptions(EFAllocatorRef allocator
             }
             EFFileRef file = EFArrayGetValueAtIndex(driver->inputFiles, index);
             EFURLRef fileURL = EFFileGetURL(file);
-            EFAUTOREL EFStringRef filePath = EFURLCopyPath(EFGetAllocator(driver), fileURL);
-            fprintf(stderr, "%s", EFStringGetCStringPtr(filePath, kEFStringEncodingUTF8));
+            fprintf(stderr, "%s", EFStringGetCStringPtr(EFURLGetPath(fileURL), kEFStringEncodingUTF8));
         }
         fprintf(stderr, " }\n");
 

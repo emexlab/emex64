@@ -87,10 +87,7 @@ static Boolean obj_register_symbols(linker_invocation_t *inv,
             addr = sym->st_value;
         }
 
-        EFURLRef url = EFFileGetURL(o->file);
-        EFAUTOREL EFStringRef pathStr = EFURLCopyPath(kEFAllocatorDefault, url);
-        const char *pathCStr = EFStringGetCStringPtr(pathStr, kEFStringEncodingUTF8);
-        if(!linker_symbol_append_definition(inv, name, pathCStr, addr))
+        if(!linker_symbol_append_definition(inv, name, EFStringGetCStringPtr(EFURLGetPath(EFFileGetURL(o->file)), kEFStringEncodingUTF8), addr))
         {
             return false;
         }
@@ -177,10 +174,7 @@ static UInt64 sym_resolve(linker_invocation_t *inv,
             }
         }
 
-        EFURLRef url = EFFileGetURL(o->file);
-        EFAUTOREL EFStringRef pathStr = EFURLCopyPath(kEFAllocatorDefault, url);
-        const char *pathCStr = EFStringGetCStringPtr(pathStr, kEFStringEncodingUTF8);
-        diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "undefined symbol '%s', needed by '%s'", name, pathCStr);
+        diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "undefined symbol '%s', needed by '%s'", name, EFStringGetCStringPtr(EFURLGetPath(EFFileGetURL(o->file)), kEFStringEncodingUTF8));
         *success = false;
         return 0;
     }
@@ -341,9 +335,7 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
     ELF64_Sym null_sym = {0};
     buf_append(&sym_buf, &null_sym, sizeof(null_sym));
 
-    EFURLRef url = EFFileGetURL(output);
-    EFAUTOREL EFStringRef pathStr = EFURLCopyPath(kEFAllocatorDefault, url);
-    const char *pathCStr = EFStringGetCStringPtr(pathStr, kEFStringEncodingUTF8);
+    const char *pathCStr = EFStringGetCStringPtr(EFURLGetPath(EFFileGetURL(output)), kEFStringEncodingUTF8);
 
     const char *out_name = (output && pathCStr) ? pathCStr : "linked.o";
     const char *slash = strrchr(out_name, '/');
@@ -811,9 +803,7 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
 
     if(inv->options.verbose)
     {
-        EFURLRef url = EFFileGetURL(output);
-        EFAUTOREL EFStringRef pathStr = EFURLCopyPath(kEFAllocatorDefault, url);
-        const char *pathCStr = EFStringGetCStringPtr(pathStr, kEFStringEncodingUTF8);
+        const char *pathCStr = EFStringGetCStringPtr(EFURLGetPath(EFFileGetURL(output)), kEFStringEncodingUTF8);
 
         fprintf(stderr, "emex64ld: linked object(s) → %s\n", pathCStr);
         if(inv->options.emit_mode == kEmitModeFirmware)
@@ -847,10 +837,7 @@ Boolean linker_link(linker_options_t options,
     {
         if(!linker_load_object(inv, input_file[i]))
         {
-            EFURLRef url = EFFileGetURL(input_file[i]);
-            EFAUTOREL EFStringRef pathStr = EFURLCopyPath(kEFAllocatorDefault, url);
-            const char *pathCStr = EFStringGetCStringPtr(pathStr, kEFStringEncodingUTF8);
-            diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "object file \'%s\' couldn't be loaded", pathCStr);
+            diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "object file \'%s\' couldn't be loaded", EFStringGetCStringPtr(EFURLGetPath(EFFileGetURL(input_file[i])), kEFStringEncodingUTF8));
             linker_invocation_dealloc(inv);
             return false;
         }
@@ -861,10 +848,7 @@ Boolean linker_link(linker_options_t options,
     {
         if(!linker_script_parse(inv, linker_script_file[i]))
         {
-            EFURLRef url = EFFileGetURL(input_file[i]);
-            EFAUTOREL EFStringRef pathStr = EFURLCopyPath(kEFAllocatorDefault, url);
-            const char *pathCStr = EFStringGetCStringPtr(pathStr, kEFStringEncodingUTF8);
-            diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "linker script file \'%s\' is problematic", pathCStr);
+            diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "linker script file \'%s\' is problematic", EFStringGetCStringPtr(EFURLGetPath(EFFileGetURL(input_file[i])), kEFStringEncodingUTF8));
             linker_invocation_dealloc(inv);
             return false;
         }
@@ -894,10 +878,7 @@ Boolean linker_link(linker_options_t options,
             success = __linker_link_relocatable(inv, output);
             if(options.verbose && success)
             {
-                EFURLRef url = EFFileGetURL(output);
-                EFAUTOREL EFStringRef pathStr = EFURLCopyPath(kEFAllocatorDefault, url);
-                const char *pathCStr = EFStringGetCStringPtr(pathStr, kEFStringEncodingUTF8);
-                fprintf(stderr, "emex64ld: emitted relocatable object → %s\n", pathCStr);
+                fprintf(stderr, "emex64ld: emitted relocatable object → %s\n", EFStringGetCStringPtr(EFURLGetPath(EFFileGetURL(output)), kEFStringEncodingUTF8));
             }
             break;
         case kEmitModeFirmware:

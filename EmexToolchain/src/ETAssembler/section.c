@@ -162,7 +162,7 @@ Boolean assembler_section_parse(ETAssemblerInvocationRef inv)
                     }
                     else
                     {
-                        EFAUTOREL EFURLRef newUrl = EFURLCreateURLByReplacingLastPathComponent(kEFAllocatorDefault, url, pathComponentStr);
+                        EFAUTOREL EFURLRef newUrl = EFURLCreateByReplacingLastPathComponent(kEFAllocatorDefault, url, pathComponentStr);
                         file = EFFileCreateWithURL(EFGetAllocator(url), EFFilePolicyInData, newUrl);
                     }
                     EFAUTOREL EFFileHandleRef fileHandle = EFFileCopyFileHandle(EFGetAllocator(url), file);

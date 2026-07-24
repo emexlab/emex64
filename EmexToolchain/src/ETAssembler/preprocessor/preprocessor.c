@@ -252,7 +252,6 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
 
                         /* looking for da cat in the file system ^^ */
                         EFURLRef url = EFFileGetURL(EFArrayGetValueAtIndex(inv->files, inv->line[li]->file_idx));
-                        EFAUTOREL EFStringRef path = EFURLCopyPath(EFGetAllocator(url), url);
                         char *hdr_path;
                         if(system_hdr)
                         {
@@ -260,7 +259,7 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
                         }
                         else
                         {
-                            hdr_path = assembler_code_find_header(hdr_token, EFStringGetCStringPtr(path, kEFStringEncodingUTF8));
+                            hdr_path = assembler_code_find_header(hdr_token, EFStringGetCStringPtr(EFURLGetPath(url), kEFStringEncodingUTF8));
                         }
 
                         /* did I catch this cat >:3 */

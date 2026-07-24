@@ -100,8 +100,7 @@ void linker_diagnostic_consumer_emit(linker_diagnostic_consumer_t *consumer)
         diagnostic_t *diagnostic = ctx->diagnostic[i];
         if(diagnostic->location != NULL)
         {
-            EFAUTOREL EFStringRef pathStr = EFURLCopyPath(EFGetAllocator(diagnostic->location->fileURL), diagnostic->location->fileURL);
-            EFFileHandlePrintf(ctx->d, "%s:%llu:%llu: ", EFStringGetCStringPtr(pathStr, kEFStringEncodingUTF8), diagnostic->location->ln, diagnostic->location->col);
+            EFFileHandlePrintf(ctx->d, "%s:%llu:%llu: ", EFStringGetCStringPtr(EFURLGetPath(diagnostic->location->fileURL), kEFStringEncodingUTF8), diagnostic->location->ln, diagnostic->location->col);
         }
 
         /* fallback when no consumer was specified */

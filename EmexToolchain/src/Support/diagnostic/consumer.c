@@ -28,8 +28,7 @@ static void __diagnostic_consumer_consume_diagnostic_fallback_handler(diagnostic
 {
     if(diagnostic->location != NULL)
     {
-        EFAUTOREL EFStringRef path = EFURLCopyPath(kEFAllocatorDefault, diagnostic->location->fileURL);
-        fprintf(stderr, "%s:%" PRIu64 ":%" PRIu64 ":", EFStringGetCStringPtr(path, kEFStringEncodingUTF8), diagnostic->location->ln, diagnostic->location->col);
+        fprintf(stderr, "%s:%" PRIu64 ":%" PRIu64 ":", EFStringGetCStringPtr(EFURLGetPath(diagnostic->location->fileURL), kEFStringEncodingUTF8), diagnostic->location->ln, diagnostic->location->col);
     }
 
     /* fallback when no consumer was specified */

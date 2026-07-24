@@ -309,9 +309,7 @@ Boolean assembler_code_preparse(ETAssemblerInvocationRef inv,
 {
     if(!assembler_code_inject_file(inv, 0, input))
     {
-        EFURLRef url = EFFileGetURL(input);
-        EFAUTOREL EFStringRef path = EFURLCopyPath(EFGetAllocator(url), url);
-        ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("couldn't parse file at '%s'"), EFStringGetCStringPtr(path, kEFStringEncodingUTF8));
+        ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("couldn't parse file at '%@'"), EFURLGetPath(EFFileGetURL(input)));
         return false;
     }
 
