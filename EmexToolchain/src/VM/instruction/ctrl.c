@@ -269,3 +269,25 @@ void emex64_op_ret(__E64Core core)
     core->rl[kE64RegisterPC] = emex64_pop_il(core);
     core->op.ilen = 0;
 }
+
+void emex64_op_bbz(__E64Core core)
+{
+    emex64_instr_termcond(core->op.param_cnt != 3);
+
+    if((*(core->op.param[0]) & *(core->op.param[1])) == 0)
+    {
+        core->op.ilen = 0;
+        core->rl[kE64RegisterPC] = emex64_branch_pc(core->rl[kE64RegisterPC], *(core->op.param[2]), core->op.param_coding[2]);
+    }
+}
+
+void emex64_op_bbnz(__E64Core core)
+{
+    emex64_instr_termcond(core->op.param_cnt != 3);
+
+    if((*(core->op.param[0]) & *(core->op.param[1])) != 0)
+    {
+        core->op.ilen = 0;
+        core->rl[kE64RegisterPC] = emex64_branch_pc(core->rl[kE64RegisterPC], *(core->op.param[2]), core->op.param_coding[2]);
+    }
+}

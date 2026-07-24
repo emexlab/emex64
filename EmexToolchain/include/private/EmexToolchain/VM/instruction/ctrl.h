@@ -59,4 +59,7 @@ static inline UInt64 emex64_pop_il(__E64Core core)
     return value;
 }
 
+void emex64_op_bbz(__E64Core core);
+void emex64_op_bbnz(__E64Core core);
+
 #endif /* EMEX64VM_INSTRUCTION_CTRL_H */

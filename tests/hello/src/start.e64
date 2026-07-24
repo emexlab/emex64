@@ -32,8 +32,7 @@ _start:
     ldb r1, r0++
 .retry:
     ldq r2, [r3 + 8]
-    and r2, EMEX64_UART_STATUS_TX_EMPTY
-    bz r2, .retry
+    bbz r2, EMEX64_UART_STATUS_TX_EMPTY, .retry
     stq r3, r1
     bnz r1, .loop
 .end:

@@ -91,6 +91,10 @@ typedef enum: UInt8 {
     kE64OpcodeCMOV =    0b00110110,
     kE64OpcodeCMOVB =   0b00110111,
 
+    /* control flow operation v2 */
+    kE64OpcodeBBZ =     0b00111000,
+    kE64OpcodeBBNZ =    0b00111001,
+
     /*
      * for floating point later (ideas atleast):
      *
@@ -107,7 +111,7 @@ typedef enum: UInt8 {
      * ... (what not)
      */
 
-    kE64OpcodeMAX = kE64OpcodeCMOVB,
+    kE64OpcodeMAX = kE64OpcodeBBNZ,
 
     kE64OpcodeInvalid =  0b11111111,
 } E64Opcode;
