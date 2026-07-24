@@ -196,23 +196,13 @@ Boolean ETAssemblerInvocationEmit(ETAssemblerInvocationRef invocationRef)
 EFFileRef ETAssemblerInvocationGetInputFile(ETAssemblerInvocationRef invocationRef)
 {
     __ETAssemblerInvocation invocation = (__ETAssemblerInvocation)invocationRef;
-    if(invocation == NULL)
-    {
-        return NULL;
-    }
-
-    return invocation->inputFile;
+    return invocation != NULL ? invocation->inputFile : NULL;
 }
 
 EFFileRef ETAssemblerInvocationGetOutputFile(ETAssemblerInvocationRef invocationRef)
 {
     __ETAssemblerInvocation invocation = (__ETAssemblerInvocation)invocationRef;
-    if(invocation == NULL)
-    {
-        return NULL;
-    }
-
-    return invocation->outputFile;
+    return invocation != NULL ? invocation->outputFile : NULL;
 }
 
 Boolean ETAssemblerInvocationSetInputFile(ETAssemblerInvocationRef invocationRef,
@@ -246,21 +236,11 @@ Boolean ETAssemblerInvocationSetOutputFile(ETAssemblerInvocationRef invocationRe
 Boolean ETAssemblerInvocationHasErrorOccured(ETAssemblerInvocationRef invocationRef)
 {
     __ETAssemblerInvocation invocation = (__ETAssemblerInvocation)invocationRef;
-    if(invocation == NULL)
-    {
-        return true;
-    }
-
-    return invocation->hasErrorOccured;
+    return invocation != NULL ? invocation->hasErrorOccured : false;
 }
 
 Boolean ETAssemblerInvocationHasRan(ETAssemblerInvocationRef invocationRef)
 {
     __ETAssemblerInvocation invocation = (__ETAssemblerInvocation)invocationRef;
-    if(invocation == NULL)
-    {
-        return true;
-    }
-
-    return invocation->hasRan;
+    return invocation != NULL ? invocation->hasRan : false;
 }
