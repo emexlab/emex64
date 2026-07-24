@@ -146,34 +146,14 @@ Boolean ETAssemblerInvocationAddMacroDefinition(ETAssemblerInvocationRef invocat
                                                 assembler_macro_definition_t *macro)
 {
     __ETAssemblerInvocation invocation = (__ETAssemblerInvocation)invocationRef;
-    if(invocation == NULL)
-    {
-        return false;
-    }
-
-    if(!EFArrayAppendValue(invocation->definitions, macro))
-    {
-        return false;
-    }
-
-    return true;
+    return (invocation != NULL && EFArrayAppendValue(invocation->definitions, macro));
 }
 
 Boolean ETAssemblerInvocationAddIncludeSearchPath(ETAssemblerInvocationRef invocationRef,
                                                   EFStringRef includeSearchPath)
 {
     __ETAssemblerInvocation invocation = (__ETAssemblerInvocation)invocationRef;
-    if(invocation == NULL)
-    {
-        return false;
-    }
-
-    if(!EFArrayAppendValue(invocation->includeSearchPaths, includeSearchPath))
-    {
-        return false;
-    }
-
-    return true;
+    return (invocation != NULL && EFArrayAppendValue(invocation->includeSearchPaths, includeSearchPath));
 }
 
 Boolean ETAssemblerInvocationEmit(ETAssemblerInvocationRef invocationRef)
@@ -185,13 +165,13 @@ Boolean ETAssemblerInvocationEmit(ETAssemblerInvocationRef invocationRef)
     }
 
     invocation->hasRan = true;
+    invocation->hasErrorOccured = true;
 
     /* need output */
     invocation->out_vbitwalker = EFFileCopyBitWalker(kEFAllocatorDefault, invocation->outputFile, kEFEndianLittle);
     if(invocation->out_vbitwalker == NULL)
     {
         ETAssemblerDiagnosticConsumerReport(invocation->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("couldn't allocate fdwalker"));
-        invocation->hasErrorOccured = true;
         return false;
     }
 
@@ -205,11 +185,11 @@ Boolean ETAssemblerInvocationEmit(ETAssemblerInvocationRef invocationRef)
        !assembler_elf_emit(invocation))
     {
         EFFileUnlink(invocation->outputFile);
-        invocation->hasErrorOccured = true;
         return false;
     }
 
     invocation->hasErrorOccured = false;
+
     return true;
 }
 
