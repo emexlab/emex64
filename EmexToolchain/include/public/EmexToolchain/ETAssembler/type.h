@@ -49,6 +49,10 @@ typedef enum: UInt8 {
     kETAssemblerTokenTypeDivide,
     kETAssemblerTokenTypeLPack,
     kETAssemblerTokenTypeRPack,
+    kETAssemblerTokenTypeBitwiseOr,
+    kETAssemblerTokenTypeBitwiseAnd,
+    kETAssemblerTokenTypeLogicalOr,
+    kETAssemblerTokenTypeLogicalAnd,
 } ETAssemblerTokenType;
 
 typedef enum: UInt8 {

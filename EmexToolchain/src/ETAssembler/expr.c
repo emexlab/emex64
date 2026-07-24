@@ -134,6 +134,16 @@ SInt64 expr_addsub(assembler_expr_t *e)
             e->pos++;
             v -= expr_term(e);
         }
+        else if(t->type == kETAssemblerTokenTypeBitwiseOr)
+        {
+            e->pos++;
+            v |= expr_term(e);
+        }
+        else if(t->type == kETAssemblerTokenTypeBitwiseAnd)
+        {
+            e->pos++;
+            v &= expr_term(e);
+        }
         else
         {
             break;

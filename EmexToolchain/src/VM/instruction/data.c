@@ -225,5 +225,8 @@ void emex64_op_clar(__E64Core core)
 {
     emex64_instr_termcond(core->op.param_cnt != 0);
 
-    memset(core->rl, 0, sizeof(core->rl));
+    for(UInt8 index = kE64RegisterR0; index < kE64RegisterMAX; index++)
+    {
+        core->rl[index] = 0;
+    }
 }

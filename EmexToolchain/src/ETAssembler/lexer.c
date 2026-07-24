@@ -162,6 +162,8 @@ lextok_token_t assembler_lexer_tok(const char *token)
                     case '*':
                     case '/':
                     case ',':
+                    case '|':
+                    case '&':
                         __lextok_handle_punctuation(&a, &retval);
                         goto break_out;
 
@@ -357,6 +359,12 @@ Boolean assembler_lexer_classify(assembler_token_t *at)
                     case '/':
                         at->type = kETAssemblerTokenTypeDivide;
                         return true;
+                    case '|':
+                        at->type = kETAssemblerTokenTypeBitwiseOr;
+                        return true;
+                    case '&':
+                        at->type = kETAssemblerTokenTypeBitwiseAnd;
+                        return true;
                     default:
                         break;
                 }
@@ -444,6 +452,10 @@ const char *assembler_lexer_str_for_token_type(ETAssemblerTokenType type)
         case kETAssemblerTokenTypeMinus:
         case kETAssemblerTokenTypeMultiply:
         case kETAssemblerTokenTypeDivide:
+        case kETAssemblerTokenTypeBitwiseOr:
+        case kETAssemblerTokenTypeBitwiseAnd:
+        case kETAssemblerTokenTypeLogicalOr:
+        case kETAssemblerTokenTypeLogicalAnd:
             return "binary operation";
         default:
             return "unknown token";
