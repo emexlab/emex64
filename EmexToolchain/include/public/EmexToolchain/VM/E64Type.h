@@ -96,6 +96,15 @@ typedef enum: UInt8 {
     kE64OpcodeBBZ =     0b00111001,
     kE64OpcodeBBNZ =    0b00111010,
 
+    /* PSE - pointer self-entropy (implementation pending) */
+    kE64OpcodePSEAL =   0b00111011,
+    kE64OpcodePSEAUTH = 0b00111100,
+    kE64OpcodePSEDET =  0b00111101,
+    kE64OpcodePSECTX =  0b00111110,
+    kE64OpcodePSESEM =  0b00111111,
+    kE64OpcodePSECAP =  0b01000000,
+    kE64OpcodePSESYNC = 0b01000001,
+
     /*
      * for floating point later (ideas atleast):
      *
