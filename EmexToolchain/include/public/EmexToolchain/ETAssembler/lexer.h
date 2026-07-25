@@ -23,13 +23,14 @@
 #define EMEX64ASM_LEXER_H
 
 #include <stddef.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETAssembler/type.h>
 
 #define LEXTOK_LENGHT_MAX   2048    /* if anyone comes close to that size, bro pls fix your variable naming style O.O */
 
 typedef struct {
     const char *token;
-    size_t column;
+    EFSize column;
     ETAssemblerTokenType type;
 } lextok_token_t;
 

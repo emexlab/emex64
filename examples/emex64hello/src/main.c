@@ -37,7 +37,7 @@ EFFileRef EFFileCreateWithStringAndPath(EFAllocatorRef allocatorRef,
     return EFFileCreateWithString(allocatorRef, policy, fileURL, content);
 }
 
-int main(void)
+SInt32 main(void)
 {
     /*
      * allocating all necessary virtual files to

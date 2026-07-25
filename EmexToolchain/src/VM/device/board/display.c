@@ -26,6 +26,7 @@
 #include <pthread.h>
 #include <stdatomic.h>
 #include <unistd.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
 #include <EmexToolchain/VM/E64Machine.h>
 #include <EmexToolchain/VM/device/board/display.h>
@@ -35,7 +36,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-kEmexKeyPhys glfw_key_to_kEmexKeyPhys(int key)
+kEmexKeyPhys glfw_key_to_kEmexKeyPhys(SInt32 key)
 {
     switch(key)
     {
@@ -159,10 +160,10 @@ kEmexKeyPhys glfw_key_to_kEmexKeyPhys(int key)
 void uart_restore_mode(void);
 
 static void key_callback(GLFWwindow* window,
-                         int key,
-                         int scancode,
-                         int action,
-                         int mods)
+                         SInt32 key,
+                         SInt32 scancode,
+                         SInt32 action,
+                         SInt32 mods)
 {
     emex64_display_t *display = (emex64_display_t*)glfwGetWindowUserPointer(window);
     if(!display || !display->emex8042)
@@ -194,7 +195,7 @@ static void display_close_callback(GLFWwindow* window)
 }
 
 static void maximize_callback(GLFWwindow* window,
-                              int maximized)
+                              SInt32 maximized)
 {
     if(maximized)
     {
@@ -360,7 +361,7 @@ void *display_start(void *arg)
     GLuint pbo[2];
     glGenBuffers(2,pbo);
 
-    for(int i=0;i<2;i++)
+    for(SInt32 i=0;i<2;i++)
     {
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER,pbo[i]);
         glBufferData(GL_PIXEL_UNPACK_BUFFER,display->fb_size,NULL,GL_STREAM_DRAW);
@@ -372,7 +373,7 @@ void *display_start(void *arg)
     glUniform1i(glGetUniformLocation(prog,"uIndexTex"),0);
     glUniform1i(glGetUniformLocation(prog,"uPalette"),1);
 
-    int pboIdx = 0;
+    SInt32 pboIdx = 0;
 
     while(!glfwWindowShouldClose(win))
     {
@@ -389,7 +390,7 @@ void *display_start(void *arg)
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER,0);
         pboIdx ^= 1;
 
-        int ww,wh;
+        SInt32 ww,wh;
         glfwGetFramebufferSize(win,&ww,&wh);
         glViewport(0,0,ww,wh);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -460,7 +461,7 @@ emex64_display_t *emex64_display_alloc(E64MachineRef machine,
     }
 
     /* setting up by default with grayscale */
-    for (int i = 0; i < 256; i++)
+    for(SInt32 i = 0; i < 256; i++)
     {
         UInt8 gray = (UInt8)i;
 
@@ -528,7 +529,7 @@ void emex64_display_dealloc(emex64_display_t *display)
 UInt64 emex64_fb_read(E64CoreRef core,
                       void *device,
                       UInt64 offset,
-                      int size)
+                      EFSize size)
 {
 
     #if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || defined(__APPLE__))
@@ -567,7 +568,7 @@ void emex64_fb_write(E64CoreRef core,
                      void *device,
                      UInt64 offset,
                      UInt64 value,
-                     int size)
+                     EFSize size)
 {
     #if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || defined(__APPLE__))
     emex64_display_t *display = (emex64_display_t*)device;

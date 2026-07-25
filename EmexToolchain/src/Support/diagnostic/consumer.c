@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <inttypes.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/diagnostic/consumer.h>
 
 static void __diagnostic_consumer_consume_diagnostic_fallback_handler(diagnostic_consumer_t *consumer,

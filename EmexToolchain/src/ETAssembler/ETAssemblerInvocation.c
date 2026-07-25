@@ -59,7 +59,7 @@ static void __ETAssemblerInvocationDeinit(EFObjectRef invocationRef)
         free(invocation->line[i]);
     }
 
-    const void *key; size_t klen; assembler_label_t *val;
+    const void *key; EFSize klen; assembler_label_t *val;
     for(hashmap_iter_t it = hashmap_iter_create(invocation->label_hashmap); hashmap_next(&it, &key, &klen, (void**)&val);)
     {
         free(val->name);

@@ -39,18 +39,18 @@
 
 typedef struct {
     UInt8 *data;
-    size_t len;
-    size_t cap;
+    EFSize len;
+    EFSize cap;
 } buf_t;
 
 static Boolean buf_reserve(buf_t *b,
-                           size_t extra)
+                           EFSize extra)
 {
     if(b->len + extra <= b->cap)
     {
         return true;
     }
-    size_t ncap = b->cap ? b->cap * 2 : 64;
+    EFSize ncap = b->cap ? b->cap * 2 : 64;
     while(ncap < b->len + extra)
     {
         ncap *= 2;
@@ -67,7 +67,7 @@ static Boolean buf_reserve(buf_t *b,
 
 static Boolean buf_append(buf_t *b,
                           const void *src,
-                          size_t n)
+                          EFSize n)
 {
     if(!buf_reserve(b, n))
     {
@@ -89,23 +89,23 @@ static Boolean __attribute__((unused)) buf_append_u64(buf_t *b,
 {
     /* little-endian */
     UInt8 tmp[8];
-    for(int i = 0; i < 8; i++)
+    for(SInt32 i = 0; i < 8; i++)
     {
         tmp[i] = v & 0xff; v >>= 8;
     }
     return buf_append(b, tmp, 8);
 }
 
-static size_t strtab_intern(buf_t *strtab,
+static EFSize strtab_intern(buf_t *strtab,
                             const char *s)
 {
-    size_t i = 0;
+    EFSize i = 0;
     while(i < strtab->len)
     {
         if (strcmp((char*)(strtab->data + i), s) == 0) return i;
         i += strlen((char*)(strtab->data + i)) + 1;
     }
-    size_t off = strtab->len;
+    EFSize off = strtab->len;
     buf_append(strtab, s, strlen(s) + 1);
     return off;
 }
@@ -116,7 +116,7 @@ Boolean assembler_elf_emit(ETAssemblerInvocationRef inv)
 
     EFFileHandleRef d = EFBitWalkerGetHandle(inv->out_vbitwalker);
 
-    size_t flat_size = (size_t)EFFileHandleGetLength(d);
+    EFSize flat_size = (EFSize)EFFileHandleGetLength(d);
     UInt8 *flat = malloc(flat_size);
     if(!flat)
     {
@@ -124,20 +124,20 @@ Boolean assembler_elf_emit(ETAssemblerInvocationRef inv)
         return false;
     }
 
-    if(EFFileHandleSeek(d, 0, kEFFileHandleSeekTypeSet) < 0 || EFFileHandleRead(d, flat, (EFIndex)flat_size) != (ssize_t)flat_size)
+    if(EFFileHandleSeek(d, 0, kEFFileHandleSeekTypeSet) < 0 || EFFileHandleRead(d, flat, (EFIndex)flat_size) != (SInt64)flat_size)
     {
         ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("elf_emit: read flat binary failed"));
         free(flat);
         return false;
     }
 
-    size_t data_start = (inv->data_section_start != UINT64_MAX) ? (size_t)inv->data_section_start : flat_size;
-    size_t data_end_raw = (inv->data_section_end != UINT64_MAX) ? (size_t)inv->data_section_end : data_start;
-    size_t bss_size  = (size_t)inv->bss_section_size;
-    size_t bss_start = (inv->bss_section_start != UINT64_MAX) ? (size_t)inv->bss_section_start : flat_size;
-    size_t bss_end = bss_start != flat_size ? bss_start + bss_size : flat_size;
+    EFSize data_start = (inv->data_section_start != UINT64_MAX) ? (EFSize)inv->data_section_start : flat_size;
+    EFSize data_end_raw = (inv->data_section_end != UINT64_MAX) ? (EFSize)inv->data_section_end : data_start;
+    EFSize bss_size  = (EFSize)inv->bss_section_size;
+    EFSize bss_start = (inv->bss_section_start != UINT64_MAX) ? (EFSize)inv->bss_section_start : flat_size;
+    EFSize bss_end = bss_start != flat_size ? bss_start + bss_size : flat_size;
 
-    size_t code_start = 10;
+    EFSize code_start = 10;
     if(inv->data_section_start != UINT64_MAX && data_end_raw > code_start)
     {
         code_start = data_end_raw;
@@ -147,9 +147,9 @@ Boolean assembler_elf_emit(ETAssemblerInvocationRef inv)
         code_start = bss_end;
     }
 
-    size_t text_start = code_start;
-    size_t text_size = flat_size > text_start ? flat_size - text_start : 0;
-    size_t data_size = data_end_raw > data_start && data_start < flat_size ? data_end_raw - data_start : 0;
+    EFSize text_start = code_start;
+    EFSize text_size = flat_size > text_start ? flat_size - text_start : 0;
+    EFSize data_size = data_end_raw > data_start && data_start < flat_size ? data_end_raw - data_start : 0;
 
     const UInt8 *text_bytes = flat + text_start;
     const UInt8 *data_bytes = flat + data_start;
@@ -200,16 +200,16 @@ Boolean assembler_elf_emit(ETAssemblerInvocationRef inv)
         .st_size = 0,
     };
 
-    size_t local_section_text_idx __attribute__((unused)) = sym_buf.len / sizeof(ELF64_Sym);
+    EFSize local_section_text_idx __attribute__((unused)) = sym_buf.len / sizeof(ELF64_Sym);
     buf_append(&sym_buf, &sym_text_sec, sizeof(sym_text_sec));
-    size_t local_section_data_idx __attribute__((unused)) = sym_buf.len / sizeof(ELF64_Sym);
+    EFSize local_section_data_idx __attribute__((unused)) = sym_buf.len / sizeof(ELF64_Sym);
     buf_append(&sym_buf, &sym_data_sec, sizeof(sym_data_sec));
-    size_t local_section_bss_idx __attribute__((unused))  = sym_buf.len / sizeof(ELF64_Sym);
+    EFSize local_section_bss_idx __attribute__((unused))  = sym_buf.len / sizeof(ELF64_Sym);
     buf_append(&sym_buf, &sym_bss_sec,  sizeof(sym_bss_sec));
 
     UInt32 first_global = (UInt32)(sym_buf.len / sizeof(ELF64_Sym));
 
-    const void *key; size_t klen; assembler_label_t *lbl;
+    const void *key; EFSize klen; assembler_label_t *lbl;
     for(hashmap_iter_t it = hashmap_iter_create(inv->label_hashmap); hashmap_next(&it, &key, &klen, (void**)&lbl);)
     {
         if(!lbl->name || !lbl->defined)
@@ -261,9 +261,9 @@ Boolean assembler_elf_emit(ETAssemblerInvocationRef inv)
     {
         UInt32 sym_idx = 0;
         {
-            size_t n = sym_buf.len / sizeof(ELF64_Sym);
+            EFSize n = sym_buf.len / sizeof(ELF64_Sym);
             ELF64_Sym *syms = (ELF64_Sym *)sym_buf.data;
-            for(size_t s = first_global; s < n; s++)
+            for(EFSize s = first_global; s < n; s++)
             {
                 const char *sname = (char*)(strtab_buf.data + syms[s].st_name);
                 if(strcmp(sname, rtbe->name) == 0)
@@ -287,14 +287,14 @@ Boolean assembler_elf_emit(ETAssemblerInvocationRef inv)
             }
         }
 
-        size_t byte_pos = rtbe->byte_pos;
+        EFSize byte_pos = rtbe->byte_pos;
 
         ELF64_Rela rela = {
             .r_info = ELF64_R_INFO(sym_idx, R_EMEX64_ABS64),
             .r_addend = 0,
         };
 
-        if(inv->data_section_start != UINT64_MAX && byte_pos >= (size_t)inv->data_section_start && byte_pos <  (size_t)data_end_raw)
+        if(inv->data_section_start != UINT64_MAX && byte_pos >= (EFSize)inv->data_section_start && byte_pos <  (EFSize)data_end_raw)
         {
             rela.r_offset = byte_pos - inv->data_section_start;
             buf_append(&rela_data_buf, &rela, sizeof(rela));
@@ -321,15 +321,15 @@ Boolean assembler_elf_emit(ETAssemblerInvocationRef inv)
     UInt32 shname_strtab = (UInt32)strtab_intern(&shstrtab_buf, ".strtab");
     UInt32 shname_shstrtab = (UInt32)strtab_intern(&shstrtab_buf, ".shstrtab");
 
-    size_t ehdr_size = sizeof(ELF64_Ehdr);
-    size_t text_off = ehdr_size;
-    size_t data_off = text_off + text_size;
-    size_t rela_text_off = data_off + data_size;
-    size_t rela_data_off = rela_text_off + rela_text_buf.len;
-    size_t sym_off = rela_data_off + rela_data_buf.len;
-    size_t str_off = sym_off + sym_buf.len;
-    size_t shstr_off = str_off + strtab_buf.len;
-    size_t shdr_off = shstr_off + shstrtab_buf.len;
+    EFSize ehdr_size = sizeof(ELF64_Ehdr);
+    EFSize text_off = ehdr_size;
+    EFSize data_off = text_off + text_size;
+    EFSize rela_text_off = data_off + data_size;
+    EFSize rela_data_off = rela_text_off + rela_text_buf.len;
+    EFSize sym_off = rela_data_off + rela_data_buf.len;
+    EFSize str_off = sym_off + sym_buf.len;
+    EFSize shstr_off = str_off + strtab_buf.len;
+    EFSize shdr_off = shstr_off + shstrtab_buf.len;
 
     if(EFFileHandleTruncate(d, 0) != 0)
     {
@@ -343,7 +343,7 @@ Boolean assembler_elf_emit(ETAssemblerInvocationRef inv)
     }
 
 #define WRITE_BUF(buf, len) do { \
-    if(EFFileHandleWrite(d, (const UInt8*)(buf), (len)) != (ssize_t)(len)) \
+    if(EFFileHandleWrite(d, (const UInt8*)(buf), (len)) != (SInt64)(len)) \
     { \
         ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("elf_emit: write failed")); \
         goto done; \

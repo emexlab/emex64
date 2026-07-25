@@ -22,6 +22,7 @@
 #ifndef EMEX64ASM_DIAGNOSTIC_CONSUMER_H
 #define EMEX64ASM_DIAGNOSTIC_CONSUMER_H
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/diagnostic/consumer.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerOptions.h>
 

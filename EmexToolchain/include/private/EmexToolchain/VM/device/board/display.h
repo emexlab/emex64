@@ -22,8 +22,8 @@
 #ifndef EMEX64VM_DEVICE_DISPLAY_H
 #define EMEX64VM_DEVICE_DISPLAY_H
 
-#include <stdint.h>
 #include <pthread.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/device/base.h>
 #include <EmexToolchain/VM/device/board/controller/8042.h>
 
@@ -57,8 +57,8 @@ void emex64_display_dealloc(emex64_display_t *display);
 
 void *display_start(void *arg);
 
-UInt64 emex64_fb_read(E64CoreRef core, void *device, UInt64 offset, int size);
-void emex64_fb_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, int size);
+UInt64 emex64_fb_read(E64CoreRef core, void *device, UInt64 offset, EFSize size);
+void emex64_fb_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, EFSize size);
 
 #endif /* __linux__ | __APPLE__ */
 

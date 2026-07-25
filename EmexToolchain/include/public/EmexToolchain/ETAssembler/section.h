@@ -22,6 +22,7 @@
 #ifndef EMEX64ASM_SECTION_H
 #define EMEX64ASM_SECTION_H
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETAssembler/type.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 

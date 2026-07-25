@@ -20,6 +20,7 @@
  */
 
 #include <pthread.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/E64Core.h>
 #include <EmexToolchain/VM/E64Machine.h>
 #include <EmexToolchain/VM/E64Memory.h>
@@ -29,7 +30,7 @@
 static UInt64 __E64ICMMIORead(E64CoreRef core,
                               void *device,
                               UInt64 offset,
-                              int size)
+                              EFSize size)
 {
     __E64IC ic = (__E64IC)device;
 
@@ -54,7 +55,7 @@ static void __E64ICMMIOWrite(E64CoreRef core,
                              void *device,
                              UInt64 offset,
                              UInt64 value,
-                             int size)
+                             EFSize size)
 {
     __E64IC ic = (__E64IC)device;
 

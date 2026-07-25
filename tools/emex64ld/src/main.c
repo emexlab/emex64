@@ -22,7 +22,7 @@
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETLinker/linker.h>
 
-int main(int argc, const char *argv[])
+SInt32 main(SInt32 argc, const char *argv[])
 {
     linker_driver_t *driver = linker_driver_alloc(argc, argv);
     if(driver == NULL)

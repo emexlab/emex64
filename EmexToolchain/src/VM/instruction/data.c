@@ -19,6 +19,7 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/instruction/data.h>
 #include <EmexToolchain/VM/E64Machine.h>
 #include <EmexToolchain/VM/E64Memory.h>

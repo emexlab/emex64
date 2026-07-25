@@ -20,6 +20,7 @@
  */
 
 #include <strings.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/ratchet/args.h>
 
 Boolean ratchet_args_init(ratchet_args_t *ra)

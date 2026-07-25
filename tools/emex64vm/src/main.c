@@ -30,7 +30,7 @@
 
 #include <EmexToolchain/VM/E64Machine.h>
 
-int main(int argc, char *argv[])
+SInt32 main(SInt32 argc, char *argv[])
 {
     const char *firmware_image_path = NULL;
 
@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 
     /* TODO: we need a driver for the VM later */
     /* parse arguments */
-    for(int i = 1; i < argc; i++)
+    for(SInt32 i = 1; i < argc; i++)
     {
         if(strcmp(argv[i], "--help") == 0)
         {

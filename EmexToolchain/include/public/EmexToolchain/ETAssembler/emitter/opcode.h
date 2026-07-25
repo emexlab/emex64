@@ -22,6 +22,7 @@
 #ifndef EMEX64ASM_EMITTER_OPCODE_H
 #define EMEX64ASM_EMITTER_OPCODE_H
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/E64Core.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 

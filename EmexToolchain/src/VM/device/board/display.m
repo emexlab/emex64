@@ -30,6 +30,7 @@
 #include <pthread.h>
 #include <stdatomic.h>
 #include <CoreGraphics/CoreGraphics.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/device/board/display.h>
 #include <EmexToolchain/VM/E64Core.h>
 
@@ -174,7 +175,7 @@ static GLuint compileShader(GLenum type,
         GLint len = 0;
         glGetShaderiv(s, GL_INFO_LOG_LENGTH, &len);
         GLsizei log_size = (len > 1) ? len : 2;
-        char *log = (char *)malloc((size_t)log_size);
+        char *log = (char *)malloc((EFSize)log_size);
         glGetShaderInfoLog(s, log_size, NULL, log);
         fprintf(stderr, "Shader compile failed:\n%s\n", log);
         free(log);
@@ -198,7 +199,7 @@ static GLuint linkProgram(GLuint vs,
         GLint len = 0;
         glGetProgramiv(p, GL_INFO_LOG_LENGTH, &len);
         GLsizei log_size = (len > 1) ? len : 2;
-        char *log = (char *)malloc((size_t)log_size);
+        char *log = (char *)malloc((EFSize)log_size);
         glGetProgramInfoLog(p, log_size, NULL, log);
         fprintf(stderr, "Program link failed:\n%s\n", log);
         free(log);

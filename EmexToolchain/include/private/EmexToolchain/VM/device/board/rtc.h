@@ -22,7 +22,7 @@
 #ifndef EMEX64VM_DEVICE_RTC_H
 #define EMEX64VM_DEVICE_RTC_H
 
-#include <stdint.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/device/base.h>
 
 #define EMEX64_RTC_SIZE 0x38
@@ -37,6 +37,6 @@
 
 typedef struct __E64Core *E64CoreRef;
 
-UInt64 emex64_rtc_read(E64CoreRef core, void *device, UInt64 offset, int size);
+UInt64 emex64_rtc_read(E64CoreRef core, void *device, UInt64 offset, EFSize size);
 
 #endif /* EMEX64VM_DEVICE_RTC_H */

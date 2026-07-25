@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
 #include <EmexToolchain/ETLinker/linker.h>
 #include <EmexToolchain/ETLinker/script.h>
@@ -39,7 +40,7 @@ Boolean linker_script_parse(linker_invocation_t *inv,
     }
 
     char line[1024];
-    int lineno = 0;
+    SInt32 lineno = 0;
     while(EFFileHandleGets(d, line, sizeof(line)))
     {
         lineno++;
@@ -78,7 +79,7 @@ Boolean linker_script_parse(linker_invocation_t *inv,
             {
                 p++;
             }
-            size_t name_len = (size_t)(p - name_start);
+            EFSize name_len = (EFSize)(p - name_start);
             if(name_len == 0)
             {
                 diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "%s:%d: expected symbol name after PROVIDE", filePathCStr, lineno);
@@ -150,7 +151,7 @@ Boolean linker_script_apply(linker_invocation_t *inv,
                             UInt64 data_start,
                             UInt64 bss_start)
 {
-    for(size_t i = 0; i < inv->script_sym_cnt; i++)
+    for(EFSize i = 0; i < inv->script_sym_cnt; i++)
     {
         const char *expr = inv->script_syms[i].expr;
         UInt64 value = 0;

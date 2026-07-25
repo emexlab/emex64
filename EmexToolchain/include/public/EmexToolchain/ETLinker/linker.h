@@ -22,6 +22,7 @@
 #ifndef EMEX64LD_LINKER_H
 #define EMEX64LD_LINKER_H
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETLinker/type.h>
 #include <EmexToolchain/ETLinker/header.h>
 #include <EmexToolchain/ETLinker/sym.h>
@@ -40,7 +41,7 @@ typedef struct linker_invocation {
     linker_object_t *obj;
 
     script_sym_t *script_syms;
-    size_t script_sym_cnt;
+    EFSize script_sym_cnt;
 
     UInt64 out_text_off;
     UInt64 out_data_off;

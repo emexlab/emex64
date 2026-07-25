@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
 #include <EmexToolchain/Support/parser.h>
 #include <EmexToolchain/Support/pack.h>
@@ -253,8 +254,8 @@ static Boolean __assembly_lexer_validate_identifier(const char *s)
         return false;
     }
 
-    size_t len = strlen(s);
-    size_t end = len;
+    EFSize len = strlen(s);
+    EFSize end = len;
     if(s[end - 1] == ':')
     {
         end--;
@@ -275,7 +276,7 @@ static Boolean __assembly_lexer_validate_identifier(const char *s)
         return false;
     }
 
-    for(size_t i = 1; i < end; i++)
+    for(EFSize i = 1; i < end; i++)
     {
         if(!isalnum((unsigned char)s[i]) && s[i] != '_' && s[i] != '.')
         {
@@ -323,7 +324,7 @@ Boolean assembler_lexer_classify(assembler_token_t *at)
             return false;
         case emexParserValueTypeString:
             /* remains a identifier under certain conditions */
-            size_t len = strlen(at->str);
+            EFSize len = strlen(at->str);
             if(len == 1)
             {
                 /* checking if it is a math op or structural punctation */

@@ -22,7 +22,6 @@
 #ifndef EMEX64LD_TYPE_H
 #define EMEX64LD_TYPE_H
 
-#include <stdbool.h>
 #include <EmexFoundation/EmexFoundation.h>
 
 #define ELF_MAGIC_EMEX64    0x0E64

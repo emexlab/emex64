@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
 #include <EmexToolchain/ETLinker/linker.h>
 
@@ -73,7 +74,7 @@ void linker_invocation_dealloc(linker_invocation_t *inv)
         obj = next;
     }
 
-    for(size_t i = 0; i < inv->script_sym_cnt; i++)
+    for(EFSize i = 0; i < inv->script_sym_cnt; i++)
     {
         free(inv->script_syms[i].script_path);
         free(inv->script_syms[i].name);

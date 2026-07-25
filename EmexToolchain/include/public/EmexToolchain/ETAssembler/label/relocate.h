@@ -22,6 +22,7 @@
 #ifndef EMEX64ASM_LABEL_RELOCATE_H
 #define EMEX64ASM_LABEL_RELOCATE_H
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETAssembler/type.h>
 
 typedef struct __ETAssemblerInvocation *ETAssemblerInvocationRef;
@@ -29,7 +30,7 @@ typedef struct __ETAssemblerInvocation *ETAssemblerInvocationRef;
 typedef struct reloc_table_entry {
     char *name;                         /* resolved label name */
     Boolean local;                      /* must be resolved at assemble time */
-    size_t byte_pos;                    /* position */
+    EFSize byte_pos;                    /* position */
     assembler_token_t *at_link;         /* link to the originator of the entry */
     struct reloc_table_entry *next;     /* pointer to next entry */
 } reloc_table_entry_t;

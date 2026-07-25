@@ -22,6 +22,7 @@
 #ifndef EMEX64LD_SYM_H
 #define EMEX64LD_SYM_H
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETLinker/type.h>
 
 typedef struct {

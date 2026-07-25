@@ -19,6 +19,7 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/bitbolt.h>
 
 UInt64 kMask[65];

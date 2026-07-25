@@ -22,10 +22,11 @@
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
+#include <EmexFoundation/EmexFoundation.h>
+#include <EmexToolchain/Support/likely.h>
 #include <EmexToolchain/VM/E64Machine.h>
 #include <EmexToolchain/VM/device/internal/timer.h>
 #include <EmexToolchain/VM/device/internal/controller/E64IC.h>
-#include <EmexToolchain/Support/likely.h>
 
 UInt64 emex64_get_host_cycles(void)
 {
@@ -179,7 +180,7 @@ void emex64_timer_tick(emex64_timer_t *timer,
 UInt64 emex64_timer_read(E64CoreRef core,
                          void *device,
                          UInt64 offset,
-                         int size)
+                         EFSize size)
 {
     emex64_timer_t *timer = (emex64_timer_t *)device;
 
@@ -204,7 +205,7 @@ void emex64_timer_write(E64CoreRef core,
                         void *device,
                         UInt64 offset,
                         UInt64 value,
-                        int size)
+                        EFSize size)
 {
     emex64_timer_t *timer = (emex64_timer_t *)device;
 

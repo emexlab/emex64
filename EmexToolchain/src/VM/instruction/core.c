@@ -19,6 +19,7 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/instruction/core.h>
 
 void emex64_op_hlt(__E64Core core)

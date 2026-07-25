@@ -38,7 +38,7 @@
 static Boolean __assembler_section_emit_value(ETAssemblerInvocationRef inv,
                                               assembler_token_t **entry,
                                               UInt64 entry_cnt,
-                                              int dbs)
+                                              SInt32 dbs)
 {
     if(entry_cnt == 1 && entry[0]->type == kETAssemblerTokenTypeString)
     {
@@ -83,7 +83,7 @@ static Boolean __assembler_section_emit_value(ETAssemblerInvocationRef inv,
     return true;
 }
 
-static int __assembler_section_dbs_get(const char *str)
+static SInt32 __assembler_section_dbs_get(const char *str)
 {
     switch(pack_name(str))
     {
@@ -138,7 +138,7 @@ Boolean assembler_section_parse(ETAssemblerInvocationRef inv)
                 return false;
             }
 
-            int dbs = __assembler_section_dbs_get(inv->line[i]->token[1]->str);
+            SInt32 dbs = __assembler_section_dbs_get(inv->line[i]->token[1]->str);
             if(dbs == 0)
             {
                 for(unsigned long a = 2; a < inv->line[i]->token_cnt; a++)
@@ -257,7 +257,7 @@ Boolean assembler_section_parse(ETAssemblerInvocationRef inv)
                 return false;
             }
 
-            int dbs = __assembler_section_dbs_get(inv->line[i]->token[1]->str);
+            SInt32 dbs = __assembler_section_dbs_get(inv->line[i]->token[1]->str);
             if(dbs == 128 || dbs == 0)
             {
                 ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[i]->token[1]), EFSTR("invalid data type for .bss section entry '%s'"), inv->line[i]->token[1]->str);

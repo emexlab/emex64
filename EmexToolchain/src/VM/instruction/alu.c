@@ -19,6 +19,7 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/instruction/alu.h>
 
 #if defined(__x86_64__)

@@ -22,6 +22,7 @@
 #ifndef EMEX64VM_INSTRUCTION_DATA_H
 #define EMEX64VM_INSTRUCTION_DATA_H
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/E64Core.h>
 
 void emex64_op_mov(__E64Core core);

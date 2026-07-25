@@ -39,7 +39,7 @@ typedef struct {
     UInt64 linker_script_file_cnt;
 } linker_driver_t;
 
-linker_driver_t *linker_driver_alloc(int argc, const char **argv);
+linker_driver_t *linker_driver_alloc(SInt32 argc, const char **argv);
 void linker_driver_dealloc(linker_driver_t *driver);
 
 Boolean linker_driver_drive_the_fucking_car(linker_driver_t *driver);

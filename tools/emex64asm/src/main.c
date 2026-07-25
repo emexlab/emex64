@@ -21,7 +21,7 @@
 
 #include <EmexToolchain/ETAssembler/ETAssemblerDriver.h>
 
-int main(void)
+SInt32 main(void)
 {
     EFAUTOREL ETAssemblerDriverRef driver = ETAssemblerDriverCreate(kEFAllocatorDefault, EFProcessGetArguments(EFProcessGetCurrentProcess()));
     return ETAssemblerDriverRun(driver) ? 0 : 1;    /* ETAssemblerDriverRun checks if the driver is not null */

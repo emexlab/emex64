@@ -30,7 +30,7 @@
 #include <EmexToolchain/ETLinker/driver.h>
 #include <EmexToolchain/ETLinker/emit.h>
 
-linker_driver_t *linker_driver_alloc(int argc,
+linker_driver_t *linker_driver_alloc(SInt32 argc,
                                      const char **argv)
 {
     /* slightly different from the assembler driver lol */
@@ -57,7 +57,7 @@ linker_driver_t *linker_driver_alloc(int argc,
     driver->linker_script_file = calloc(argc, sizeof(EFFileRef));
     driver->linker_script_file_cnt = 0;
 
-    for(int i = 1; i < argc; i++)
+    for(SInt32 i = 1; i < argc; i++)
     {
         if(strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0)
         {

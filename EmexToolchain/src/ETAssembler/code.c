@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <limits.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
 #include <EmexToolchain/ETAssembler/preprocessor/directive.h>
 #include <EmexToolchain/ETAssembler/code.h>
@@ -32,14 +33,14 @@
 
 typedef struct expand_entry {
     char *code;
-    size_t len;
-    size_t line_num;
+    EFSize len;
+    EFSize line_num;
 } expand_entry_t;
 
 static Boolean __assembler_code_fastline(EFFileRef file,
                                          expand_entry_t **entries,
-                                         size_t *cnt,
-                                         size_t *cap)
+                                         EFSize *cnt,
+                                         EFSize *cap)
 {
     EFAUTOREL EFFileHandleRef fileHandle = EFFileCopyFileHandle(EFGetAllocator(file), file);
     EFAUTOREL EFMappingRef mapping = EFFileHandleCopyMapping(EFGetAllocator(file), fileHandle);
@@ -48,12 +49,12 @@ static Boolean __assembler_code_fastline(EFFileRef file,
         return false;
     }
 
-    EFSize size = (size_t)EFMappingGetSize(mapping);
+    EFSize size = (EFSize)EFMappingGetSize(mapping);
     const char *code = (const char*)EFMappingGetAddress(mapping);
 
-    size_t start = 0;
-    size_t phys_line = 0;
-    for(size_t i = 0; i <= size; i++)
+    EFSize start = 0;
+    EFSize phys_line = 0;
+    for(EFSize i = 0; i <= size; i++)
     {
         if(code[i] != '\n' && i != size)
         {
@@ -62,7 +63,7 @@ static Boolean __assembler_code_fastline(EFFileRef file,
 
         phys_line++;
 
-        size_t line_len = i - start;
+        EFSize line_len = i - start;
         char *line = malloc(line_len + 1);
         memcpy(line, code + start, line_len);
         line[line_len] = '\0';
@@ -99,8 +100,8 @@ char *assembler_code_find_header(const char *name,
     if(source_dir)
     {
         char buf[PATH_MAX];
-        int n = snprintf(buf, sizeof(buf), "%s/%s", source_dir, name);
-        if(n < 0 || (size_t)n >= sizeof(buf))
+        SInt32 n = snprintf(buf, sizeof(buf), "%s/%s", source_dir, name);
+        if(n < 0 || (EFSize)n >= sizeof(buf))
         {
             return NULL;
         }
@@ -131,7 +132,7 @@ char *assembler_code_find_system_header(const char *name,
 
 static inline Boolean __assembler_splice_line(ETAssemblerInvocationRef inv,
                                               UInt64 idx,
-                                              size_t count)
+                                              EFSize count)
 {
     /* bounds check */
     if(idx >= inv->line_cnt)
@@ -140,7 +141,7 @@ static inline Boolean __assembler_splice_line(ETAssemblerInvocationRef inv,
     }
 
     /* realloc */
-    size_t new_cnt = inv->line_cnt - 1 + count;
+    EFSize new_cnt = inv->line_cnt - 1 + count;
     if(new_cnt > inv->line_cnt)
     {
         assembler_line_t **tmp = realloc(inv->line, (new_cnt + 1) * sizeof *tmp);
@@ -168,7 +169,7 @@ static inline Boolean __assembler_splice_line(ETAssemblerInvocationRef inv,
 
     /* shift the tail */
     memmove(&inv->line[idx + count], &inv->line[idx + 1], (inv->line_cnt - idx - 1) * sizeof *inv->line);
-    for(size_t i = 0; i < count; i++)
+    for(EFSize i = 0; i < count; i++)
     {
         inv->line[idx + i] = NULL;
     }
@@ -183,7 +184,7 @@ Boolean assembler_code_inject_file(ETAssemblerInvocationRef inv,
 {
     /* getting code */
     expand_entry_t *entries = NULL;
-    size_t entry_cnt = 0, entry_cap = 0;
+    EFSize entry_cnt = 0, entry_cap = 0;
 
     if(!__assembler_code_fastline(inj_file, &entries, &entry_cnt, &entry_cap))
     {

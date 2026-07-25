@@ -21,6 +21,7 @@
 
 #include <string.h>
 #include <assert.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/parser.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
 #include <EmexToolchain/ETAssembler/preprocessor/preprocessor.h>
@@ -32,7 +33,7 @@ static inline char *__assembler_preprocessor_include_directive_get_token(const c
 {
     assert(token != NULL && system_hdr != NULL);
 
-    size_t len = strlen(token);
+    EFSize len = strlen(token);
     if(len <= 2)
     {
         return NULL;

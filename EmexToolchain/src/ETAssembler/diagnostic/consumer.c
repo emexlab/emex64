@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETAssembler/diagnostic/consumer.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 
@@ -42,22 +43,22 @@ static void __assembler_diagnostic_consumer_show_caret_preview(assembler_diagnos
                                                                diagnostic_t *diagnostic)
 {
     const char *src = diagnostic->location->line;
-    size_t line_num = diagnostic->location->ln;
+    EFSize line_num = diagnostic->location->ln;
 
-    size_t n = line_num;
-    int ndigits = 1;
+    EFSize n = line_num;
+    SInt32 ndigits = 1;
     while(n >= 10)
     {
         n /= 10; ndigits++;
     }
-    int w = ndigits + 3;
+    SInt32 w = ndigits + 3;
 
     char numbuf[32];
-    int nlen = 0;
+    SInt32 nlen = 0;
     {
-        size_t v = line_num;
+        EFSize v = line_num;
         char tmp[32];
-        int t = 0;
+        SInt32 t = 0;
         do {
             tmp[t++] = '0' + (v % 10); v /= 10;
         } while(v);
@@ -65,7 +66,7 @@ static void __assembler_diagnostic_consumer_show_caret_preview(assembler_diagnos
         numbuf[nlen] = '\0';
     }
 
-    for(int i = 0; i < w - nlen; i++)
+    for(SInt32 i = 0; i < w - nlen; i++)
     {
         EFFileHandlePutc(ctx->d, ' ');
     }
@@ -74,13 +75,13 @@ static void __assembler_diagnostic_consumer_show_caret_preview(assembler_diagnos
     EFFileHandlePuts(ctx->d, src);
     EFFileHandlePutc(ctx->d, '\n');
 
-    for(int i = 0; i < w + 1; i++)
+    for(SInt32 i = 0; i < w + 1; i++)
     {
         EFFileHandlePutc(ctx->d, ' ');
     }
     EFFileHandlePuts(ctx->d, "| ");
-    size_t indent = diagnostic->location->range.start_col > 0 ? diagnostic->location->range.start_col - 1 : 0;
-    for(size_t i = 0; i < indent && src[i] != '\0'; i++)
+    EFSize indent = diagnostic->location->range.start_col > 0 ? diagnostic->location->range.start_col - 1 : 0;
+    for(EFSize i = 0; i < indent && src[i] != '\0'; i++)
     {
         EFFileHandlePutc(ctx->d, src[i] == '\t' ? '\t' : ' ');
     }
@@ -88,8 +89,8 @@ static void __assembler_diagnostic_consumer_show_caret_preview(assembler_diagnos
     EFFileHandlePuts(ctx->d, __assembler_diagnostic_color(ctx, C_BOLD));
     EFFileHandlePuts(ctx->d, __assembler_diagnostic_color(ctx, C_CARET));
     EFFileHandlePutc(ctx->d, '^');
-    size_t span = diagnostic->location->range.end_col > diagnostic->location->range.start_col ? diagnostic->location->range.end_col - diagnostic->location->range.start_col : 1;
-    for(size_t i = 1; i < span; i++)
+    EFSize span = diagnostic->location->range.end_col > diagnostic->location->range.start_col ? diagnostic->location->range.end_col - diagnostic->location->range.start_col : 1;
+    for(EFSize i = 1; i < span; i++)
     {
         EFFileHandlePutc(ctx->d, '~');
     }

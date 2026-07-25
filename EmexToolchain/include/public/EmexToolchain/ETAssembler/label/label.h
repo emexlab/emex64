@@ -22,6 +22,7 @@
 #ifndef EMEX64ASM_LABEL_LABEL_H
 #define EMEX64ASM_LABEL_LABEL_H
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETAssembler/type.h>
 
 typedef struct __ETAssemblerInvocation *ETAssemblerInvocationRef;

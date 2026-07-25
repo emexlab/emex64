@@ -22,6 +22,7 @@
 #ifndef EMEX64_DIAGNOSTIC_LOG_H
 #define EMEX64_DIAGNOSTIC_LOG_H
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 #include <EmexToolchain/ETAssembler/type.h>
 #include <EmexToolchain/Support/diagnostic/consumer.h>

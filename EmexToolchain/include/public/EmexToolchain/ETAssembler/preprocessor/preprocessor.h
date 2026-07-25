@@ -22,6 +22,7 @@
 #ifndef EMEX64ASM_PREPROCESSOR_H
 #define EMEX64ASM_PREPROCESSOR_H
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETAssembler/preprocessor/condition.h>
 #include <EmexToolchain/ETAssembler/preprocessor/macro.h>
 #include <EmexToolchain/ETAssembler/preprocessor/directive.h>

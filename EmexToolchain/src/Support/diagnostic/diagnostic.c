@@ -49,7 +49,7 @@ diagnostic_t *diagnostic_allocv(kDiagnosticSeverity severity,
     }
 
     EFIndex length = EFStringGetLength(string);
-    char *newStringBuffer = malloc((size_t)(length + 1));
+    char *newStringBuffer = malloc((EFSize)(length + 1));
     Boolean success = EFStringGetCString(string, newStringBuffer, length + 1, kEFStringEncodingASCII);
     EFRelease(string);
     if(!success)

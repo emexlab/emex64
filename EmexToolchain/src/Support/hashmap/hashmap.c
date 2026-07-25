@@ -19,31 +19,31 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <stdbool.h>
 #include <string.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/hashmap/hashmap.h>
 
 typedef struct hashmap_bucket {
     UInt64 hash;
     void *key;
-    size_t klen;
+    EFSize klen;
     void *val;
 } hashmap_bucket_t;
 
 typedef struct hashmap {
     hashmap_bucket_t *buckets;
-    size_t mask;
-    size_t count;
+    EFSize mask;
+    EFSize count;
 } hashmap_t;
 
 #define HASHMAP_INIT_CAP    16
 
 static UInt64 hashmap_hash(const void *key,
-                           size_t len)
+                           EFSize len)
 {
     const UInt8 *p = (const UInt8 *)key;
     UInt64 h = 0xcbf29ce484222325ULL;
-    for(size_t i = 0; i < len; i++)
+    for(EFSize i = 0; i < len; i++)
     {
         h ^= p[i];
         h *= 0x100000001b3ULL;
@@ -75,7 +75,7 @@ void hashmap_dealloc(hashmap_t *m)
     {
         return;
     }
-    for(size_t i = 0; i <= m->mask; i++)
+    for(EFSize i = 0; i <= m->mask; i++)
     {
         free(m->buckets[i].key);
     }
@@ -83,7 +83,7 @@ void hashmap_dealloc(hashmap_t *m)
     free(m);
 }
 
-size_t hashmap_count(const hashmap_t *m)
+EFSize hashmap_count(const hashmap_t *m)
 {
     return m->count;
 }
@@ -108,22 +108,22 @@ Boolean hashmap_dels(hashmap_t *m,
 }
 
 static Boolean hashmap_resize(hashmap_t *m,
-                              size_t newcap)
+                              EFSize newcap)
 {
     hashmap_bucket_t *nb = (hashmap_bucket_t*)calloc(newcap, sizeof *nb);
     if(!nb)
     {
         return false;
     }
-    size_t nmask = newcap - 1;
-    for(size_t k = 0; k <= m->mask; k++)
+    EFSize nmask = newcap - 1;
+    for(EFSize k = 0; k <= m->mask; k++)
     {
         hashmap_bucket_t b = m->buckets[k];
         if(!b.key)
         {
             continue;
         }
-        size_t i = (size_t)b.hash & nmask;
+        EFSize i = (EFSize)b.hash & nmask;
         while(nb[i].key)
         {
             i = (i + 1) & nmask;
@@ -138,10 +138,10 @@ static Boolean hashmap_resize(hashmap_t *m,
 
 void *hashmap_get(hashmap_t *m,
                   const void *key,
-                  size_t klen)
+                  EFSize klen)
 {
     UInt64 h = hashmap_hash(key, klen);
-    size_t i = (size_t)h & m->mask;
+    EFSize i = (EFSize)h & m->mask;
     for(;;)
     {
         hashmap_bucket_t *b = &m->buckets[i];
@@ -159,7 +159,7 @@ void *hashmap_get(hashmap_t *m,
 
 Boolean hashmap_put(hashmap_t *m,
                     const void *key,
-                    size_t klen,
+                    EFSize klen,
                     void *val)
 {
     if((m->count + 1) * 4 >= (m->mask + 1) * 3)
@@ -168,7 +168,7 @@ Boolean hashmap_put(hashmap_t *m,
     }
  
     UInt64 h = hashmap_hash(key, klen);
-    size_t i = (size_t)h & m->mask;
+    EFSize i = (EFSize)h & m->mask;
     for(;;)
     {
         hashmap_bucket_t *b = &m->buckets[i];
@@ -195,10 +195,10 @@ Boolean hashmap_put(hashmap_t *m,
 
 Boolean hashmap_del(hashmap_t *m,
                     const void *key,
-                    size_t klen)
+                    EFSize klen)
 {
     UInt64 h = hashmap_hash(key, klen);
-    size_t i = (size_t)h & m->mask;
+    EFSize i = (EFSize)h & m->mask;
     for(;;)
     {
         hashmap_bucket_t *b = &m->buckets[i];
@@ -214,8 +214,8 @@ Boolean hashmap_del(hashmap_t *m,
     }
 
     free(m->buckets[i].key);
-    size_t hole = i;
-    size_t j = i;
+    EFSize hole = i;
+    EFSize j = i;
     for(;;)
     {
         m->buckets[hole].key = NULL;
@@ -227,7 +227,7 @@ Boolean hashmap_del(hashmap_t *m,
                 m->count--;
                 return true;
             }
-            size_t home = (size_t)m->buckets[j].hash & m->mask;
+            EFSize home = (EFSize)m->buckets[j].hash & m->mask;
             Boolean can_move = (hole < j) ? (home <= hole || home > j) : (home <= hole && home > j);
             if(can_move)
             {
@@ -247,7 +247,7 @@ hashmap_iter_t hashmap_iter_create(hashmap_t *m)
 
 Boolean hashmap_next(hashmap_iter_t *it,
                      const void **key,
-                     size_t *klen,
+                     EFSize *klen,
                      void **val)
 {
     hashmap_t *m = it->m;

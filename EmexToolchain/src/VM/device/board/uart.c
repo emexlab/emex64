@@ -19,12 +19,13 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <sys/select.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <termios.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <sys/select.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/E64Machine.h>
 #include <EmexToolchain/VM/device/board/uart.h>
 #include <EmexToolchain/VM/device/internal/controller/E64IC.h>
@@ -49,7 +50,7 @@ void uart_restore_mode(void)
 
 static void uart_update_irq(emex64_uart_t *u)
 {
-    int level = ((u->control & UART_CTRL_RX_IRQ_EN) && (u->status & UART_STATUS_RX_READY)) || ((u->control & UART_CTRL_TX_IRQ_EN) && (u->status & UART_STATUS_TX_EMPTY));
+    SInt32 level = ((u->control & UART_CTRL_RX_IRQ_EN) && (u->status & UART_STATUS_RX_READY)) || ((u->control & UART_CTRL_TX_IRQ_EN) && (u->status & UART_STATUS_TX_EMPTY));
     if(level)
     {
         E64ICRaiseInterrupt(u->machine->intc, EMEX64_IRQ_UART);
@@ -76,14 +77,14 @@ static void *uart_input_thread(void *arg)
         tv.tv_sec = 0;
         tv.tv_usec = 100000;
 
-        int ready = select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv);
+        SInt32 ready = select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv);
 
         if(ready <= 0)
         {
             continue;
         }
 
-        ssize_t n = read(STDIN_FILENO, &ch, 1);
+        SInt64 n = read(STDIN_FILENO, &ch, 1);
 
         if(n <= 0)
         {
@@ -184,7 +185,7 @@ void emex64_uart_dealloc(emex64_uart_t *u)
 UInt64 emex64_uart_read(E64CoreRef core,
                         void *device,
                         UInt64 offset,
-                        int size)
+                        EFSize size)
 {
     emex64_uart_t *u = (emex64_uart_t *)device;
 
@@ -224,7 +225,7 @@ void emex64_uart_write(E64CoreRef core,
                        void *device,
                        UInt64 offset,
                        UInt64 value,
-                       int size)
+                       EFSize size)
 {
     emex64_uart_t *u = (emex64_uart_t *)device;
 

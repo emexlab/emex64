@@ -26,6 +26,7 @@
 #include <string.h>
 #include <spawn.h>
 #include <sys/wait.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/version.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
 #include <EmexToolchain/Support/ratchet/args.h>
@@ -410,7 +411,7 @@ static EFStringRef __ETAssemblerDriverTemporaryObjectPathForInputPath(__ETAssemb
     const char *base = strrchr(input_path, '/');
     base = base ? base + 1 : input_path;
     const char *dot = strrchr(base, '.');
-    size_t stem_len = dot ? (size_t)(dot - base) : strlen(base);
+    EFSize stem_len = dot ? (EFSize)(dot - base) : strlen(base);
 
     const char *tmpdir = getenv("TMPDIR");
     if(tmpdir == NULL || tmpdir[0] == '\0')
@@ -418,16 +419,16 @@ static EFStringRef __ETAssemblerDriverTemporaryObjectPathForInputPath(__ETAssemb
         tmpdir = "/tmp";
     }
 
-    size_t len = strlen(tmpdir) + 1 + 7 + stem_len + 1 + 6 + 2 + 1;
+    EFSize len = strlen(tmpdir) + 1 + 7 + stem_len + 1 + 6 + 2 + 1;
     char *path = malloc(len);
     if(path == NULL)
     {
         return NULL;
     }
 
-    snprintf(path, len, "%s/emex64-%.*s-XXXXXX.o", tmpdir, (int)stem_len, base);
+    snprintf(path, len, "%s/emex64-%.*s-XXXXXX.o", tmpdir, (SInt32)stem_len, base);
 
-    int fd = mkstemps(path, 2);
+    SInt32 fd = mkstemps(path, 2);
     if(fd < 0)
     {
         free(path);
@@ -503,7 +504,7 @@ Boolean __ETAssemblerDriverJobgen(__ETAssemblerDriver driver)
                     const char *m = driver->macros[j].match;
                     const char *v = driver->macros[j].value;
 
-                    size_t blen = 2 + strlen(m) + 1 + strlen(v) + 1;
+                    EFSize blen = 2 + strlen(m) + 1 + strlen(v) + 1;
                     char *buf = malloc(blen);
                     if(buf == NULL)
                     {
@@ -871,7 +872,7 @@ Boolean ETAssemblerDriverRun(ETAssemblerDriverRef driverRef)
                 }
 
                 SInt32 processIdentifier = EFProcessGetProcessIdentifier(process);
-                int rstatus = 0;
+                SInt32 rstatus = 0;
                 if(EFProcessWaitPID(process, &rstatus, 0) != processIdentifier)
                 {
                     return false;

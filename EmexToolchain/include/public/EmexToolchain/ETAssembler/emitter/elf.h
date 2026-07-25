@@ -22,6 +22,7 @@
 #ifndef EMEX64ASM_EMITTER_ELF_H
 #define EMEX64ASM_EMITTER_ELF_H
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 
 typedef struct __ETAssemblerInvocation *ETAssemblerInvocationRef;

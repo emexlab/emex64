@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/diagnostic/consumer.h>
 
 typedef diagnostic_consumer_t linker_diagnostic_consumer_t;

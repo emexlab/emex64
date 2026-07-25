@@ -22,15 +22,13 @@
 #ifndef E64MACHINE_H
 #define E64MACHINE_H
 
-#include <stdint.h>
-#include <stdbool.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/E64MachineOptions.h>
 #include <EmexToolchain/VM/E64Core.h>
 #include <EmexToolchain/VM/E64Memory.h>
 #include <EmexToolchain/VM/E64MMIOBus.h>
 #include <EmexToolchain/VM/device/base.h>
 #include <EmexToolchain/VM/device/internal/controller/E64IC.h>
-#include <EmexFoundation/EmexFoundation.h>
 #ifdef ET_PRIVATE
 #include <EmexToolchain/VM/__E64Machine.h>
 #endif /* ET_PRIVATE */

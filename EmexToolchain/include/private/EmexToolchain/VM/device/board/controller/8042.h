@@ -22,6 +22,7 @@
 #ifndef EMEX64VM_DEVICE_8042_H
 #define EMEX64VM_DEVICE_8042_H
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/keyboard.h>
 #include <EmexToolchain/VM/device/base.h>
 
@@ -39,12 +40,12 @@ typedef struct {
     UInt8 last_command;
 
     UInt8 kbd_buf[64];
-    int kbd_head;
-    int kbd_tail;
+    SInt32 kbd_head;
+    SInt32 kbd_tail;
 
     UInt8 mouse_buf[64];
-    int mouse_head;
-    int mouse_tail;
+    SInt32 mouse_head;
+    SInt32 mouse_tail;
 
     Boolean kbd_enabled;
     Boolean mouse_enabled;
@@ -67,7 +68,7 @@ void emex64_8042_send_keyboard_break(emex64_8042_t *dev, kEmexKeyPhys key);
 
 void emex64_8042_send_mouse(emex64_8042_t *dev, UInt8 byte);
 
-UInt64 emex64_8042_read(E64CoreRef core, void *device, UInt64 offset, int size);
-void emex64_8042_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, int size);
+UInt64 emex64_8042_read(E64CoreRef core, void *device, UInt64 offset, EFSize size);
+void emex64_8042_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, EFSize size);
 
 #endif /* EMEX64VM_DEVICE_8042_H */

@@ -23,12 +23,10 @@
 #define E64MEMORY_H
 
 #include <stdlib.h>
-#include <stdint.h>
-#include <stdbool.h>
 #include <stddef.h>
 #include <string.h>
-#include <EmexToolchain/VM/E64Core.h>
 #include <EmexFoundation/EmexFoundation.h>
+#include <EmexToolchain/VM/E64Core.h>
 
 #define EMEX64_PAGE_SIZE 0x2000
 #define EMEX64_PAGE_MASK (EMEX64_PAGE_SIZE - 1)
@@ -97,10 +95,10 @@ Boolean E64MemoryAccessIsWithinBounds(E64MemoryRef memoryRef, UInt64 address, UI
 
 Boolean E64MemoryLoadImage(E64MemoryRef memoryRef, EFFileRef fileRef);
 
-Boolean E64MemoryAction(E64MemoryRef memoryRef, UInt64 addr, size_t size, UInt64 *value, E64MemoryActionType actionType);
+Boolean E64MemoryAction(E64MemoryRef memoryRef, UInt64 addr, EFSize size, UInt64 *value, E64MemoryActionType actionType);
 
 /* API that only the VM shall use */
-void E64MemoryCoreAction(E64MemoryRef memoryRef, E64CoreRef core, UInt64 addr, size_t size, UInt64 *value, E64MemoryActionType actionType);
-Boolean E64MemoryCoreCopyIn(E64MemoryRef memoryRef, E64CoreRef core, UInt8 *dst, UInt64 addr, size_t len, E64MemoryActionType actionType);
+void E64MemoryCoreAction(E64MemoryRef memoryRef, E64CoreRef core, UInt64 addr, EFSize size, UInt64 *value, E64MemoryActionType actionType);
+Boolean E64MemoryCoreCopyIn(E64MemoryRef memoryRef, E64CoreRef core, UInt8 *dst, UInt64 addr, EFSize len, E64MemoryActionType actionType);
 
 #endif /* E64MEMORY_H */

@@ -20,6 +20,7 @@
  */
 
 #include <string.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETAssembler/preprocessor/macro.h>
 
 assembler_macro_t *assembler_macro_alloc(const char *match,
@@ -64,7 +65,7 @@ assembler_macro_storage_t *assembler_macro_storage_alloc()
 
 void assembler_macro_storage_dealloc(assembler_macro_storage_t *storage)
 {
-    const void *key; size_t klen; assembler_macro_t *val;
+    const void *key; EFSize klen; assembler_macro_t *val;
     for(hashmap_iter_t it = hashmap_iter_create(storage->macro_map); hashmap_next(&it, &key, &klen, (void**)&val);)
     {
         assembler_macro_dealloc(val);

@@ -19,13 +19,14 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/E64Machine.h>
 #include <EmexToolchain/VM/device/internal/controller/mem.h>
 
 UInt64 emex64_mc_read(E64CoreRef core,
                       void *device,
                       UInt64 offset,
-                      int size)
+                      EFSize size)
 {
     if(offset == EMEX64_MC_REG_SIZE)
     {
@@ -43,7 +44,7 @@ void emex64_mc_write(E64CoreRef core,
                      void *device,
                      UInt64 offset,
                      UInt64 value,
-                     int size)
+                     EFSize size)
 {
     if(offset == EMEX64_MC_REG_KTRR_SIZE)
     {

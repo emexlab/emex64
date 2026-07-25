@@ -22,10 +22,9 @@
 #ifndef EMEX64VM_DEVICE_UART_H
 #define EMEX64VM_DEVICE_UART_H
 
-#include <stdint.h>
-#include <stdbool.h>
 #include <pthread.h>
 #include <stdatomic.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/device/base.h>
 
 #define UART_BUF_SIZE          64
@@ -63,7 +62,7 @@ typedef struct {
 emex64_uart_t *emex64_uart_alloc(E64MachineRef machine);
 void emex64_uart_dealloc(emex64_uart_t *u);
 
-UInt64 emex64_uart_read(E64CoreRef core, void *device, UInt64 offset, int size);
-void emex64_uart_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, int size);
+UInt64 emex64_uart_read(E64CoreRef core, void *device, UInt64 offset, EFSize size);
+void emex64_uart_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, EFSize size);
 
 #endif /* EMEX64VM_DEVICE_UART_H */

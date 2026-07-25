@@ -29,16 +29,16 @@
 typedef struct hashmap hashmap_t;
 typedef struct hm_iter {
     hashmap_t *m;
-    size_t i;
+    EFSize i;
 } hashmap_iter_t;
 
 hashmap_t *hashmap_alloc(void);
 void hashmap_dealloc(hashmap_t *m);
 
-void *hashmap_get(hashmap_t *m, const void *key, size_t klen);
-Boolean hashmap_put(hashmap_t *m, const void *key, size_t klen, void *val);
-Boolean hashmap_del(hashmap_t *m, const void *key, size_t klen);
-size_t hashmap_count(const hashmap_t *m);
+void *hashmap_get(hashmap_t *m, const void *key, EFSize klen);
+Boolean hashmap_put(hashmap_t *m, const void *key, EFSize klen, void *val);
+Boolean hashmap_del(hashmap_t *m, const void *key, EFSize klen);
+EFSize hashmap_count(const hashmap_t *m);
 
 void *hashmap_gets(hashmap_t *m, const char *k);
 Boolean hashmap_puts(hashmap_t *m, const char *k, void *v);
@@ -46,6 +46,6 @@ Boolean hashmap_dels(hashmap_t *m, const char *k);
 
 hashmap_iter_t hashmap_iter_create(hashmap_t *m);
 
-Boolean hashmap_next(hashmap_iter_t *it, const void **key, size_t *klen, void **val);
+Boolean hashmap_next(hashmap_iter_t *it, const void **key, EFSize *klen, void **val);
 
 #endif /* EMEX64_HASHMAP_HASHMAP_H */

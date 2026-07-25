@@ -22,7 +22,6 @@
 #ifndef EMEX64VM_CORE_H
 #define EMEX64VM_CORE_H
 
-#include <stdbool.h>
 #include <pthread.h>
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/E64Type.h>

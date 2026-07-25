@@ -19,13 +19,14 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <EmexToolchain/VM/device/board/rtc.h>
 #include <time.h>
+#include <EmexFoundation/EmexFoundation.h>
+#include <EmexToolchain/VM/device/board/rtc.h>
 
 UInt64 emex64_rtc_read(E64CoreRef core,
                        void *device,
                        UInt64 offset,
-                       int size)
+                       EFSize size)
 {
     time_t now = time(NULL);
     struct tm *t = localtime(&now);

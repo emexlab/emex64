@@ -20,6 +20,7 @@
  */
 
 #include <stdarg.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETAssembler/diagnostic/ETAssemblerDiagnosticConsumer.h>
 
 typedef struct __ETAssemblerDiagnosticConsumer {

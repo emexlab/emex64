@@ -19,12 +19,13 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <string.h>
+#include <pthread.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/E64Machine.h>
 #include <EmexToolchain/VM/E64Core.h>
 #include <EmexToolchain/VM/device/board/controller/8042.h>
 #include <EmexToolchain/VM/device/internal/controller/E64IC.h>
-#include <string.h>
-#include <pthread.h>
 
 typedef struct {
     UInt8 length;
@@ -218,7 +219,7 @@ void emex64_8042_send_keyboard(emex64_8042_t *dev,
     {
         pthread_mutex_lock(&dev->lock);
 
-        int next = (dev->kbd_tail + 1) % 64;
+        SInt32 next = (dev->kbd_tail + 1) % 64;
 
         if(next == dev->kbd_head)
         {
@@ -286,7 +287,7 @@ void emex64_8042_send_mouse(emex64_8042_t *dev,
     {
         pthread_mutex_lock(&dev->lock);
 
-        int next = (dev->mouse_tail + 1) % 64;
+        SInt32 next = (dev->mouse_tail + 1) % 64;
 
         if(next == dev->mouse_head)
         {
@@ -305,7 +306,7 @@ void emex64_8042_send_mouse(emex64_8042_t *dev,
 UInt64 emex64_8042_read(E64CoreRef core,
                         void *device,
                         UInt64 offset,
-                        int size)
+                        EFSize size)
 {
     emex64_8042_t *dev = device;
     UInt64 val = 0;
@@ -341,7 +342,7 @@ void emex64_8042_write(E64CoreRef core,
                        void *device,
                        UInt64 offset,
                        UInt64 value,
-                       int size)
+                       EFSize size)
 {
     emex64_8042_t *dev = device;
 

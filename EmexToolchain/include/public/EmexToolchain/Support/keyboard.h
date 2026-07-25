@@ -22,7 +22,7 @@
 #ifndef EMEX64_KEYBOARD_H
 #define EMEX64_KEYBOARD_H
 
-#include <stdint.h>
+#include <EmexFoundation/EmexFoundation.h>
 
 typedef enum: UInt8 {
     kEmexKeyPhysEsc,

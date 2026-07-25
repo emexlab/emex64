@@ -22,7 +22,7 @@
 #ifndef EMEX64_DIAGNOSTIC_CONSUMER_H
 #define EMEX64_DIAGNOSTIC_CONSUMER_H
 
-#include <stdint.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/diagnostic/diagnostic.h>
 
 #define C_BOLD "\x1b[1m"

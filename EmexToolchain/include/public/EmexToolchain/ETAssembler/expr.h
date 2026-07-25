@@ -22,6 +22,7 @@
 #ifndef EMEX64ASM_EXPR_H
 #define EMEX64ASM_EXPR_H
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETAssembler/type.h>
 
 typedef struct {

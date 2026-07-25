@@ -22,6 +22,7 @@
 #ifndef EMEX64LD_OPTIONS_H
 #define EMEX64LD_OPTIONS_H
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETLinker/type.h>
 
 typedef struct linker_options {

@@ -19,12 +19,13 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/E64MMIORegion.h>
 
 UInt64 emex64_mmio_fallback_read(E64CoreRef core,
                                  void *device,
                                  UInt64 offset,
-                                 int size)
+                                 EFSize size)
 {
     return 0;
 }
@@ -33,7 +34,7 @@ void emex64_mmio_fallback_write(E64CoreRef core,
                                 void *device,
                                 UInt64 offset,
                                 UInt64 value,
-                                int size)
+                                EFSize size)
 {
     return;
 }

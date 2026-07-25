@@ -21,6 +21,7 @@
 
 #include <stdlib.h>
 #include <assert.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETAssembler/label/relocate.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 

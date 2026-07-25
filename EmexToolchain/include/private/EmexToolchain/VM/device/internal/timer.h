@@ -22,9 +22,9 @@
 #ifndef EMEX64VM_DEVICE_TIMER_H
 #define EMEX64VM_DEVICE_TIMER_H
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/E64Core.h>
 #include <EmexToolchain/VM/device/base.h>
-#include <EmexFoundation/EmexFoundation.h>
 
 #define EMEX64_TIMER_SIZE   0x28
 
@@ -64,7 +64,7 @@ void emex64_timer_dealloc(emex64_timer_t *timer);
 void emex64_timer_tick(emex64_timer_t *timer, UInt64 host_cycles);
 UInt64 emex64_get_host_cycles(void);
 
-UInt64 emex64_timer_read(E64CoreRef core, void *device, UInt64 offset, int size);
-void emex64_timer_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, int size);
+UInt64 emex64_timer_read(E64CoreRef core, void *device, UInt64 offset, EFSize size);
+void emex64_timer_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, EFSize size);
 
 #endif /* EMEX64VM_DEVICE_TIMER_H */

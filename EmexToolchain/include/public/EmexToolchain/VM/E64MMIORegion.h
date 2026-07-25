@@ -29,8 +29,8 @@
 
 typedef struct __E64Core *E64CoreRef;
 
-typedef UInt64 (*mmio_read_fn)(E64CoreRef core, void *device, UInt64 offset, int size);
-typedef void (*mmio_write_fn)(E64CoreRef core, void *device, UInt64 offset, UInt64 value, int size);
+typedef UInt64 (*mmio_read_fn)(E64CoreRef core, void *device, UInt64 offset, EFSize size);
+typedef void (*mmio_write_fn)(E64CoreRef core, void *device, UInt64 offset, UInt64 value, EFSize size);
 
 typedef struct __E64MMIORegion *E64MMIORegionRef;
 

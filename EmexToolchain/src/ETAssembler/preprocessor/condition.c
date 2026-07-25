@@ -21,6 +21,7 @@
 
 #include <stdlib.h>
 #include <strings.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETAssembler/preprocessor/condition.h>
 
 static inline assembler_condition_frame_t *__assembler_condition_frame_alloc()

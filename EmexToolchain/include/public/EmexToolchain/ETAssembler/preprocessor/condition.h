@@ -22,6 +22,7 @@
 #ifndef EMEX64ASM_CONDITION_H
 #define EMEX64ASM_CONDITION_H
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETAssembler/type.h>
 
 typedef struct assembler_directive_condition_frame {

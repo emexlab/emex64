@@ -22,6 +22,7 @@
 #ifndef EMEX64VM_INSTRUCTION_ALU_H
 #define EMEX64VM_INSTRUCTION_ALU_H
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/E64Core.h>
 
 void emex64_op_add(__E64Core core);

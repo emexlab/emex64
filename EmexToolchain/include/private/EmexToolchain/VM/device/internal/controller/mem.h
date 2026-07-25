@@ -22,7 +22,7 @@
 #ifndef EMEX64VM_DEVICE_MC_H
 #define EMEX64VM_DEVICE_MC_H
 
-#include <stdint.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/device/base.h>
 
 #define EMEX64_MC_SIZE              0x18
@@ -33,7 +33,7 @@
 
 typedef struct __E64Core *E64CoreRef;
 
-UInt64 emex64_mc_read(E64CoreRef core, void *device, UInt64 offset, int size);
-void emex64_mc_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, int size);
+UInt64 emex64_mc_read(E64CoreRef core, void *device, UInt64 offset, EFSize size);
+void emex64_mc_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, EFSize size);
 
 #endif /* EMEX64VM_DEVICE_MC_H */

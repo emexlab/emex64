@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
 #include <EmexToolchain/VM/E64Core.h>
 #include <EmexToolchain/ETLinker/emit.h>
@@ -47,10 +48,10 @@ static Boolean obj_register_symbols(linker_invocation_t *inv,
 
     ELF64_Shdr *symsh = &o->shdrs[o->idx_symtab];
     ELF64_Sym *syms = (ELF64_Sym *)(o->content + symsh->sh_offset);
-    size_t nsyms  = symsh->sh_size / sizeof(ELF64_Sym);
+    EFSize nsyms  = symsh->sh_size / sizeof(ELF64_Sym);
     const char *strtab = (o->idx_strtab >= 0) ? (char *)(o->content + o->shdrs[o->idx_strtab].sh_offset) : NULL;
 
-    for(size_t i = 0; i < nsyms; i++)
+    for(EFSize i = 0; i < nsyms; i++)
     {
         ELF64_Sym *sym = &syms[i];
         UInt8 bind = sym->st_info >> 4;
@@ -121,7 +122,7 @@ static UInt64 sym_resolve(linker_invocation_t *inv,
 
     ELF64_Shdr *symsh = &o->shdrs[o->idx_symtab];
     ELF64_Sym *syms = (ELF64_Sym *)(o->content + symsh->sh_offset);
-    size_t nsyms = symsh->sh_size / sizeof(ELF64_Sym);
+    EFSize nsyms = symsh->sh_size / sizeof(ELF64_Sym);
     const char *strtab = (o->idx_strtab >= 0) ? (char *)(o->content + o->shdrs[o->idx_strtab].sh_offset) : NULL;
 
     if(sym_idx >= nsyms)
@@ -189,9 +190,9 @@ static Boolean obj_apply_relocs(linker_invocation_t *inv,
     {
         ELF64_Shdr *rs = &o->shdrs[o->idx_rela_text];
         ELF64_Rela *rela = (ELF64_Rela *)(o->content + rs->sh_offset);
-        size_t cnt = rs->sh_size / sizeof(ELF64_Rela);
+        EFSize cnt = rs->sh_size / sizeof(ELF64_Rela);
 
-        for(size_t i = 0; i < cnt; i++)
+        for(EFSize i = 0; i < cnt; i++)
         {
             UInt32 type = (UInt32)ELF32_R_TYPE(rela[i].r_info);
             UInt32 sym_idx = (UInt32)ELF32_R_SYM(rela[i].r_info);
@@ -222,9 +223,9 @@ static Boolean obj_apply_relocs(linker_invocation_t *inv,
     {
         ELF64_Shdr *rs = &o->shdrs[o->idx_rela_data];
         ELF64_Rela *rela = (ELF64_Rela *)(o->content + rs->sh_offset);
-        size_t cnt = rs->sh_size / sizeof(ELF64_Rela);
+        EFSize cnt = rs->sh_size / sizeof(ELF64_Rela);
 
-        for(size_t i = 0; i < cnt; i++)
+        for(EFSize i = 0; i < cnt; i++)
         {
             UInt32 type = (UInt32)ELF32_R_TYPE(rela[i].r_info);
             UInt32 sym_idx = (UInt32)ELF32_R_SYM(rela[i].r_info);
@@ -258,18 +259,18 @@ static Boolean obj_apply_relocs(linker_invocation_t *inv,
 
 typedef struct {
     UInt8 *data;
-    size_t len;
-    size_t cap;
+    EFSize len;
+    EFSize cap;
 } buf_t;
 
 static Boolean buf_reserve(buf_t *b,
-                           size_t extra)
+                           EFSize extra)
 {
     if(b->len + extra <= b->cap)
     {
         return true;
     }
-    size_t ncap = b->cap ? b->cap * 2 : 64;
+    EFSize ncap = b->cap ? b->cap * 2 : 64;
     while(ncap < b->len + extra)
     {
         ncap *= 2;
@@ -286,7 +287,7 @@ static Boolean buf_reserve(buf_t *b,
 
 static Boolean buf_append(buf_t *b,
                           const void *src,
-                          size_t n)
+                          EFSize n)
 {
     if(!buf_reserve(b, n))
     {
@@ -308,23 +309,23 @@ static Boolean __attribute__((unused)) buf_append_u64(buf_t *b,
 {
     /* little-endian */
     UInt8 tmp[8];
-    for(int i = 0; i < 8; i++)
+    for(SInt32 i = 0; i < 8; i++)
     {
         tmp[i] = v & 0xff; v >>= 8;
     }
     return buf_append(b, tmp, 8);
 }
 
-static size_t strtab_intern(buf_t *strtab,
+static EFSize strtab_intern(buf_t *strtab,
                             const char *s)
 {
-    size_t i = 0;
+    EFSize i = 0;
     while(i < strtab->len)
     {
         if (strcmp((char*)(strtab->data + i), s) == 0) return i;
         i += strlen((char*)(strtab->data + i)) + 1;
     }
-    size_t off = strtab->len;
+    EFSize off = strtab->len;
     buf_append(strtab, s, strlen(s) + 1);
     return off;
 }
@@ -397,10 +398,10 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
 
         ELF64_Shdr *symsh = &o->shdrs[o->idx_symtab];
         ELF64_Sym  *syms  = (ELF64_Sym *)(o->content + symsh->sh_offset);
-        size_t nsyms = symsh->sh_size / sizeof(ELF64_Sym);
+        EFSize nsyms = symsh->sh_size / sizeof(ELF64_Sym);
         const char *strtab = (o->idx_strtab >= 0) ? (char *)(o->content + o->shdrs[o->idx_strtab].sh_offset) : NULL;
 
-        for(size_t i = 0; i < nsyms; i++)
+        for(EFSize i = 0; i < nsyms; i++)
         {
             ELF64_Sym *sym = &syms[i];
             UInt8 bind = sym->st_info >> 4;
@@ -415,10 +416,10 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
             }
 
             /* check if we already have this symbol */
-            size_t n = sym_buf.len / sizeof(ELF64_Sym);
+            EFSize n = sym_buf.len / sizeof(ELF64_Sym);
             ELF64_Sym *out_syms = (ELF64_Sym *)sym_buf.data;
             Boolean already_exists = false;
-            for(size_t s = first_global; s < n; s++)
+            for(EFSize s = first_global; s < n; s++)
             {
                 if(strcmp((char*)(strtab_buf.data + out_syms[s].st_name), name) == 0)
                 {
@@ -483,8 +484,8 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
             { \
                 ELF64_Shdr *rs = &o->shdrs[o->rela_shdr_idx]; \
                 ELF64_Rela *rela = (ELF64_Rela *)(o->content + rs->sh_offset); \
-                size_t cnt = rs->sh_size / sizeof(ELF64_Rela); \
-                for(size_t i = 0; i < cnt; i++) \
+                EFSize cnt = rs->sh_size / sizeof(ELF64_Rela); \
+                for(EFSize i = 0; i < cnt; i++) \
                 { \
                     UInt32 type = ELF32_R_TYPE(rela[i].r_info); \
                     UInt32 in_sym = ELF32_R_SYM(rela[i].r_info); \
@@ -513,10 +514,10 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
                     } \
                     \
                     /* Find or create the matching output symbol (by name) */ \
-                    size_t n = sym_buf.len / sizeof(ELF64_Sym); \
+                    EFSize n = sym_buf.len / sizeof(ELF64_Sym); \
                     ELF64_Sym *out_syms = (ELF64_Sym *)sym_buf.data; \
                     UInt32 out_sym_idx = 0; \
-                    for(size_t s = first_global; s < n; s++) \
+                    for(EFSize s = first_global; s < n; s++) \
                     { \
                         if(strcmp((char*)(strtab_buf.data + out_syms[s].st_name), name) == 0) \
                         { \
@@ -564,15 +565,15 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
     UInt32 shname_shstrtab  = (UInt32)strtab_intern(&shstrtab_buf, ".shstrtab");
 
     /* calculate file layout */
-    size_t ehdr_size = sizeof(ELF64_Ehdr);
-    size_t text_off = ehdr_size;
-    size_t data_off = text_off + text.len;
-    size_t rela_text_off = data_off + data.len;
-    size_t rela_data_off = rela_text_off + rela_text.len;
-    size_t sym_off = rela_data_off + rela_data.len;
-    size_t str_off = sym_off + sym_buf.len;
-    size_t shstr_off = str_off + strtab_buf.len;
-    size_t shdr_off = shstr_off + shstrtab_buf.len;
+    EFSize ehdr_size = sizeof(ELF64_Ehdr);
+    EFSize text_off = ehdr_size;
+    EFSize data_off = text_off + text.len;
+    EFSize rela_text_off = data_off + data.len;
+    EFSize rela_data_off = rela_text_off + rela_text.len;
+    EFSize sym_off = rela_data_off + rela_data.len;
+    EFSize str_off = sym_off + sym_buf.len;
+    EFSize shstr_off = str_off + strtab_buf.len;
+    EFSize shdr_off = shstr_off + shstrtab_buf.len;
 
     /* write relocatable elf file ^^ */
     EFAUTOREL EFBitWalkerRef vb = EFFileCopyBitWalker(EFGetAllocator(output), output, kEFEndianLittle);

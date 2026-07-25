@@ -21,11 +21,11 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
 #include <setjmp.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/parser.h>
 
 static Boolean parse_type_is_buffer(const char *line,
@@ -33,7 +33,7 @@ static Boolean parse_type_is_buffer(const char *line,
                                     UInt64 *blen)
 {
     /* checking if user specified value as character buffer */
-    size_t len = strlen(line);
+    EFSize len = strlen(line);
     if(len < 3 ||
        line[0] != '\"' ||
        line[len - 1] != '\"')
@@ -51,8 +51,8 @@ static Boolean parse_type_is_buffer(const char *line,
     }
 
     /* copying buffer byte for byte */
-    size_t out = 0;
-    for(size_t i = 1; i < len - 1; i++)
+    EFSize out = 0;
+    for(EFSize i = 1; i < len - 1; i++)
     {
         /* getting character at position */
         char c = line[i];

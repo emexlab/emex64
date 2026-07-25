@@ -22,8 +22,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
-#include <EmexToolchain/VM/E64MMIOBus.h>
 #include <EmexFoundation/EmexFoundation.h>
+#include <EmexToolchain/VM/E64MMIOBus.h>
 
 static void __E64MMIOBusDeinit(E64MMIOBusRef MMIOBusRef)
 {

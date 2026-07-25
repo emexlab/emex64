@@ -27,6 +27,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <assert.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
 #include <EmexToolchain/Support/likely.h>
 #include <EmexToolchain/VM/E64Memory.h>
@@ -321,7 +322,7 @@ Boolean E64MemoryLoadImage(E64MemoryRef memoryRef,
      * our selves.
      */
     SInt32 fileDescriptor = EFFileHandleGetFileDescriptor(fileHandle);
-    EFAUTOREL EFMappingRef mapping = EFMappingCreate(EFGetAllocator(memoryRef), memory->memory, (size_t)imageLength, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_FIXED, fileDescriptor, 0);
+    EFAUTOREL EFMappingRef mapping = EFMappingCreate(EFGetAllocator(memoryRef), memory->memory, (EFSize)imageLength, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_FIXED, fileDescriptor, 0);
     if(mapping == NULL)
     {
         diag_error(NULL, "mapping firmware image failed");
@@ -333,7 +334,7 @@ Boolean E64MemoryLoadImage(E64MemoryRef memoryRef,
 }
 
 Boolean E64MemoryAction(E64MemoryRef memoryRef,
-                        UInt64 addr, size_t size,
+                        UInt64 addr, EFSize size,
                         UInt64 *value,
                         E64MemoryActionType actionType)
 {
@@ -433,7 +434,7 @@ Boolean E64MemoryAction(E64MemoryRef memoryRef,
 void E64MemoryCoreAction(E64MemoryRef memoryRef,
                          E64CoreRef core,
                          UInt64 addr,
-                         size_t size,
+                         EFSize size,
                          UInt64 *value,
                          E64MemoryActionType actionType)
 {
@@ -474,11 +475,11 @@ void E64MemoryCoreAction(E64MemoryRef memoryRef,
             {
                 case kE64MemoryActionTypeRead:
                     mmio_read_fn read = E64MMIORegionGetReadSymbol(mmio_region);
-                    *value = read(core, device, offset, (int)size);
+                    *value = read(core, device, offset, size);
                     return;
                 case kE64MemoryActionTypeWrite:
                     mmio_write_fn write = E64MMIORegionGetWriteSymbol(mmio_region);
-                    write(core, device, offset, *value, (int)size);
+                    write(core, device, offset, *value, size);
                     return;
                 default:
                     core->cr_state.crexc.exception = kE64ExceptionBadAccess;
@@ -509,11 +510,11 @@ void E64MemoryCoreAction(E64MemoryRef memoryRef,
     }
 
     UInt64 page_end = (addr & ~EMEX64_PAGE_MASK) + EMEX64_PAGE_SIZE;
-    size_t lo_size = (size_t)(page_end - addr);
+    EFSize lo_size = (EFSize)(page_end - addr);
 
     if(lo_size < size)
     {
-        size_t hi_size = size - lo_size;
+        EFSize hi_size = size - lo_size;
         UInt64 hi_shift = lo_size * 8;
         UInt64 lo_val, hi_val, lo_mask;
 
@@ -628,7 +629,7 @@ Boolean E64MemoryCoreCopyIn(E64MemoryRef memoryRef,
                             E64CoreRef core,
                             UInt8 *dst,
                             UInt64 addr,
-                            size_t len,
+                            EFSize len,
                             E64MemoryActionType actionType)
 {
     E64Memory memory = (E64MemoryRef)memoryRef;
@@ -658,7 +659,7 @@ Boolean E64MemoryCoreCopyIn(E64MemoryRef memoryRef,
     while(len > 0)
     {
         UInt64 paddr = addr;
-        size_t chunk = len;
+        EFSize chunk = len;
 
         if(paging)
         {
@@ -668,7 +669,7 @@ Boolean E64MemoryCoreCopyIn(E64MemoryRef memoryRef,
                 return false;
             }
 
-            size_t page_left = (size_t)(EMEX64_PAGE_SIZE - (addr & EMEX64_PAGE_MASK));
+            EFSize page_left = (EFSize)(EMEX64_PAGE_SIZE - (addr & EMEX64_PAGE_MASK));
             if(chunk > page_left)
             {
                 chunk = page_left;
@@ -691,7 +692,7 @@ Boolean E64MemoryCoreCopyIn(E64MemoryRef memoryRef,
         {
             if(unlikely(core->rl[kE64RegisterCR0] >= kE64ElevationLevelKernel && core->machine->memory->ktrr_locked && core->machine->memory->ktrr_size < (addr + len)))
             {
-                chunk = (size_t)(core->machine->memory->ktrr_size - addr);
+                chunk = (EFSize)(core->machine->memory->ktrr_size - addr);
             }
         }*/
 

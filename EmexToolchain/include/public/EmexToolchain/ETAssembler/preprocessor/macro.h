@@ -22,6 +22,7 @@
 #ifndef EMEX64ASM_MACRO_H
 #define EMEX64ASM_MACRO_H
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/hashmap/hashmap.h>
 #include <EmexToolchain/ETAssembler/type.h>
 

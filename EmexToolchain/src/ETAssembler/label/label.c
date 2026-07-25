@@ -24,6 +24,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
 #include <EmexToolchain/ETAssembler/label/label.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
@@ -65,9 +66,9 @@ Boolean assembler_label_append(assembler_token_t *at)
             }
 
             /* constructing scoped label */
-            size_t label_scope_len = strlen(inv->label_scope);
-            size_t ct_len = strlen(at->str);
-            size_t size = label_scope_len + ct_len + 1;
+            EFSize label_scope_len = strlen(inv->label_scope);
+            EFSize ct_len = strlen(at->str);
+            EFSize size = label_scope_len + ct_len + 1;
             name = malloc(size);
             if(name == NULL)
             {
@@ -83,7 +84,7 @@ Boolean assembler_label_append(assembler_token_t *at)
         case kETAssemblerLineTypeSymbol:
         {
             /* constructing symbol */
-            size_t size = strlen(at->str) + 1;
+            EFSize size = strlen(at->str) + 1;
             name = malloc(size);
             if(name == NULL)
             {
@@ -100,7 +101,7 @@ Boolean assembler_label_append(assembler_token_t *at)
             /* first we need the 2nd token, not the 1st */
             at = at->al->token[1];
 
-            size_t size = strlen(at->str) + 1;
+            EFSize size = strlen(at->str) + 1;
             name = malloc(size);
             if(name == NULL)
             {
@@ -114,7 +115,7 @@ Boolean assembler_label_append(assembler_token_t *at)
         case kETAssemblerLineTypeSectionData:
         {
             /* constructing symbol */
-            size_t size = strlen(at->str) + 1;
+            EFSize size = strlen(at->str) + 1;
             name = malloc(size);
             if(name == NULL)
             {

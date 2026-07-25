@@ -19,16 +19,13 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#if defined(__APPLE__)
-#include <CoreFoundation/CFRunLoop.h>
-#endif /* __APPLE__ */
-
 #include <stdlib.h>
 #include <pthread.h>
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
 #include <unistd.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/E64Core.h>
 #include <EmexToolchain/VM/E64Memory.h>
 #include <EmexToolchain/VM/E64Machine.h>
@@ -41,6 +38,10 @@
 #include <EmexToolchain/VM/device/board/display.h>
 #include <EmexToolchain/Support/bitbolt.h>
 #include <EmexToolchain/Support/likely.h>
+
+#if defined(__APPLE__)
+#include <CoreFoundation/CFRunLoop.h>
+#endif /* __APPLE__ */
 
 const emex64_opfunc_entry_t kE64OpfuncTable[] = {
     /* core operations */

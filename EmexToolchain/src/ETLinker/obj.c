@@ -21,6 +21,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
 #include <EmexToolchain/ETLinker/linker.h>
 #include <EmexToolchain/ETLinker/obj.h>

@@ -22,6 +22,7 @@
 #ifndef EMEX64VM_INSTRUCTION_CORE_H
 #define EMEX64VM_INSTRUCTION_CORE_H
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/E64Core.h>
 
 void emex64_op_hlt(__E64Core core);

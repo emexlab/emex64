@@ -20,6 +20,7 @@
  */
 
 #include <assert.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/pack.h>
 #include <EmexToolchain/ETAssembler/emitter/register.h>
 

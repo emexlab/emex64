@@ -19,6 +19,7 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/pack.h>
 #include <EmexToolchain/ETAssembler/emitter/opcode.h>
 

@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETLinker/diagnostic/consumer.h>
 
 static void __linker_diagnostic_consumer_consume_diagnostic_handler(diagnostic_consumer_t *consumer,
