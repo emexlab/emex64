@@ -1,0 +1,56 @@
+;
+; SPDX-License-Identifier: AGPL-3.0-or-later
+;
+; Copyright (C) 2026 emexlab
+;
+; This file is part of emex64.
+;
+; emex64 is free software: you can redistribute it and/or modify
+; it under the terms of the GNU Affero General Public License as published by
+; the Free Software Foundation, either version 3 of the License, or
+; (at your option) any later version.
+;
+; emex64 is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY; without even the implied warranty of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+; GNU Affero General Public License for more details.
+;
+; You should have received a copy of the GNU Affero General Public License
+; along with emex64. If not, see <https://www.gnu.org/licenses/>.
+;
+
+%include% <emex64.e64inc>
+
+section .bss
+    kbd_state_msg db 256
+
+section .data
+    kbd_8042_msg db "[8042] unrecognized key event: \0"
+    kbd_scancode_msg  db "scancode=0x\0"
+
+kdb_handler:
+    push rr
+    ldq rr, putc_sym
+    push rr
+    stq putc_sym, uart_putc
+
+    ldq r0, EMEX64_8042_REG_STATUS      ; STATUS port
+    and r0, 0x01                        ; OBF (bit 0)?
+    bz r0, .no_data
+    ldq r1, EMEX64_8042_REG_STATUS
+    and r1, 0x20
+    bnz r1, .done
+
+    ldq r0, EMEX64_8042_REG_DATA
+    blw puts, kbd_8042_msg
+    blw puts, kbd_scancode_msg
+    blw putbase, r0, 16
+    blw putc, '\n'
+    b .done
+
+.done:
+.no_data:
+    pop rr
+    stq putc_sym, rr
+    pop rr
+    iret
