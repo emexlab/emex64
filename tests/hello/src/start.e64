@@ -20,7 +20,6 @@
 ;
 
 %include% <arch/uart.e64inc>
-%include% <arch/platform.e64inc>
 
 section .data
     msg db "hello, world!\n"
