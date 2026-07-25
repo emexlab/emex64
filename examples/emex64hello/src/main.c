@@ -49,10 +49,10 @@ SInt32 main(void)
         "    msg db \"hello, world!\\n\\0\"\n"
         "\n"
         "_start:\n"
+        "    clar\n"
         "    mov r3, 0x0020000000008000\n"
-        "    mov r0, msg\n"
         ".loop:\n"
-        "    ldb r1, r0++\n"
+        "    ldb r1, [msg + r0++]\n"
         ".retry:\n"
         "    ldq r2, [r3 + 8]\n"
         "    bbz r2, 0x02, .retry\n"
@@ -78,15 +78,13 @@ SInt32 main(void)
     EFAUTOREL ETAssemblerDiagnosticConsumerRef assemblerDiagnosticConsumer = ETAssemblerDiagnosticConsumerCreate(kEFAllocatorDefault, ETAssemblerDiagnosticOptionsDefault);
     EFAUTOREL ETAssemblerInvocationRef inv = ETAssemblerInvocationCreate(kEFAllocatorDefault, assemblerDiagnosticConsumer);
 
-    if(!ETAssemblerInvocationSetInputFile(inv, unsaved_file) ||
-       !ETAssemblerInvocationSetOutputFile(inv, object_file) ||
-       !ETAssemblerInvocationEmit(inv))
+    Boolean success = ETAssemblerInvocationSetInputFile(inv, unsaved_file) && ETAssemblerInvocationSetOutputFile(inv, object_file) && ETAssemblerInvocationEmit(inv);
+    ETAssemblerDiagnosticConsumerEmit(assemblerDiagnosticConsumer);
+    if(!success)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "ouweee =<");
         return 1;
     }
-
-    ETAssemblerDiagnosticConsumerEmit(assemblerDiagnosticConsumer);
 
     /* now we come to linkage >:3 */
     EFFileRef *input_file = calloc(1, sizeof(EFFileRef));
@@ -116,7 +114,7 @@ SInt32 main(void)
     linker_options_t linkerOptions = linker_options_default;
     linkerOptions.verbose = true;
     linkerOptions.use_old_magic = true;
-    Boolean success = linker_link(linkerOptions, lnkconsumer, input_file, 1, NULL, 0, firmware_file);
+    success = linker_link(linkerOptions, lnkconsumer, input_file, 1, NULL, 0, firmware_file);
     linker_diagnostic_consumer_emit(lnkconsumer);
     linker_diagnostic_consumer_dealloc(lnkconsumer);
     free(input_file);
