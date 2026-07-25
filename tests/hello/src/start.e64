@@ -29,7 +29,7 @@ _start:
     clar                                        ; clearing all registers
     mov r3, EMEX64_UART_REG_DATA
 .loop:
-    ldb r1, [msg + r0++]                        ; reading the next byte
+    ldb r1, [0x3e + r0++]                       ; reading the next byte (emitting the address of msg as 8 bit immediate)
 .retry:
     ldq r2, [r3 + 8]                            ; [r3 + 8] = EMEX64_UART_REG_STATUS
     bbz r2, EMEX64_UART_STATUS_TX_EMPTY, .retry ; testing bit for EMEX64_UART_STATUS_TX_EMPTY
