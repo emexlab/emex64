@@ -96,14 +96,17 @@ typedef enum: UInt8 {
     kE64OpcodeBBZ =     0b00111001,
     kE64OpcodeBBNZ =    0b00111010,
 
+    /* data operations v3 */
+    kE64OpcodeRDRND =   0b00111011,
+
     /* PSE - pointer self-entropy (implementation pending) */
-    kE64OpcodePSEAL =   0b00111011,
-    kE64OpcodePSEAUTH = 0b00111100,
-    kE64OpcodePSEDET =  0b00111101,
-    kE64OpcodePSECTX =  0b00111110,
-    kE64OpcodePSESEM =  0b00111111,
-    kE64OpcodePSECAP =  0b01000000,
-    kE64OpcodePSESYNC = 0b01000001,
+    kE64OpcodePSEAL =   0b00111100,
+    kE64OpcodePSEAUTH = 0b00111101,
+    kE64OpcodePSEDET =  0b00111110,
+    kE64OpcodePSECTX =  0b00111111,
+    kE64OpcodePSESEM =  0b01000000,
+    kE64OpcodePSECAP =  0b01000001,
+    kE64OpcodePSESYNC = 0b01000010,
 
     /*
      * for floating point later (ideas atleast):
@@ -121,7 +124,7 @@ typedef enum: UInt8 {
      * ... (what not)
      */
 
-    kE64OpcodeMAX = kE64OpcodeBBNZ,
+    kE64OpcodeMAX = kE64OpcodeRDRND,
 
     kE64OpcodeInvalid =  0b11111111,
 } E64Opcode;

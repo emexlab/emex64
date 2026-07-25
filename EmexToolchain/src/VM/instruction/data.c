@@ -19,6 +19,10 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <stdlib.h>
+#if defined(__APPLE__)
+#include <sys/random.h>
+#endif
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/instruction/data.h>
 #include <EmexToolchain/VM/E64Machine.h>
@@ -194,5 +198,14 @@ void emex64_op_clar(__E64Core core)
     for(UInt8 index = kE64RegisterR0; index < kE64RegisterMAX; index++)
     {
         core->rl[index] = 0;
+    }
+}
+
+void emex64_op_rdrnd(__E64Core core)
+{
+    if(getentropy(core->op.param[0], sizeof(UInt64)) != 0)
+    {
+        core->cr_state.crexc.exception = kE64ExceptionBadInstruction;
+        return;
     }
 }

@@ -83,6 +83,7 @@ E64Opcode opcode_from_string(const char *name)
         case PACK('b','b','n','z'): return kE64OpcodeBBNZ;
         case PACK('c','l','a','r'): return kE64OpcodeCLAR;
         case PACK('c','m','o','v','b'): return kE64OpcodeCMOVB;
+        case PACK('r','d','r','n','d'): return kE64OpcodeRDRND;
         case PACK('b','s','w','a','p','d'): return kE64OpcodeBSWAPD;
         case PACK('b','s','w','a','p','q'): return kE64OpcodeBSWAPQ;
         case PACK('b','s','w','a','p','w'): return kE64OpcodeBSWAPW;

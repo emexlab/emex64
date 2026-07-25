@@ -56,7 +56,7 @@ section .data
     fw_testpanic_msg db "this is a test panic string\0"
     fw_interrupted_msg db "\r[fw] interrupted: \0"
     fw_interrupted_suffix_msg db " times\0"
-    fw_rbm_msg db "[fw] rbm test\n\0"
+    fw_entropy_msg db "[fw] entropy test: 0x\0"
 
 extern putc_sym
 
@@ -126,6 +126,11 @@ main:
     blw put_mem, r0, r1
     blw putc, '\n'
     blw print_time
+
+    blw puts, fw_entropy_msg
+    rdrnd r0
+    blw putbase, r0, 16
+    blw putc, '\n'
 
 %if% FW_LOCK_KTRR
     blw mc_lock_ktrr
