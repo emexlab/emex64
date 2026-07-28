@@ -150,6 +150,8 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
         return false;
     }
 
+    EFStringRef processCommand = EFProcessGetCommand(EFProcessGetCurrentProcess());
+
     for(EFIndex index = 0; index < argumentsCount; index++)
     {
         EFStringRef argument = EFArrayGetValueAtIndex(driver->arguments, index);
@@ -178,12 +180,12 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
                 "  -Werror                The assembler will treat every warning as a error.\n"
                 "  -Wdeprecated           The assembler will print a warning on every as deprecated marked symbol or internal features.\n"
                 "                         Each warning flag can be reversed by prefixing it with a \"no\" (i.e -Wno-error).\n"
-            ), EFProcessGetCommand(EFProcessGetCurrentProcess())?: EFSTR("emex64asm"));
+            ), processCommand ? processCommand : EFSTR("emex64asm"));
             return false;
         }
         else if(EFEqual(argument, EFSTR("--version")))
         {
-            EFLog(EFSTR("%@ version %d.%d.%d (%s)\n"), EFProcessGetCommand(EFProcessGetCurrentProcess())?: EFSTR("emex64asm"), EMEX64_VERSION_MAJOR, EMEX64_VERSION_MINOR, EMEX64_VERSION_PATCH, EMEX64_VERSION_STRING);
+            EFLog(EFSTR("%@ version %d.%d.%d (%s)\n"), processCommand ? processCommand : EFSTR("emex64asm"), EMEX64_VERSION_MAJOR, EMEX64_VERSION_MINOR, EMEX64_VERSION_PATCH, EMEX64_VERSION_STRING);
             return false;
         }
         else if(EFEqual(argument, EFSTR("-o")) && index + 1 < argumentsCount)
@@ -727,7 +729,8 @@ ETAssemblerDriverRef ETAssemblerDriverCreateWithOptions(EFAllocatorRef allocator
             {
                 fprintf(stderr, ", ");
             }
-            fprintf(stderr, "%s", EFStringGetCStringPtr(EFArrayGetValueAtIndex(driver->includeSearchPaths, index), kEFStringEncodingUTF8)?: "<nil>");
+            const char *includeSearchPathC = EFStringGetCStringPtr(EFArrayGetValueAtIndex(driver->includeSearchPaths, index), kEFStringEncodingUTF8);
+            fprintf(stderr, "%s", includeSearchPathC ? includeSearchPathC : "<nil>");
         }
         fprintf(stderr, " }\n");
 
@@ -752,7 +755,8 @@ ETAssemblerDriverRef ETAssemblerDriverCreateWithOptions(EFAllocatorRef allocator
                 {
                     fprintf(stderr, ", ");
                 }
-                fprintf(stderr, "%s", EFStringGetCStringPtr(EFArrayGetValueAtIndex(driver->linkerFlags, index), kEFStringEncodingUTF8)?: "<nil>");
+                const char *linkerFlagC = EFStringGetCStringPtr(EFArrayGetValueAtIndex(driver->linkerFlags, index), kEFStringEncodingUTF8);
+                fprintf(stderr, "%s", linkerFlagC ? linkerFlagC : "<nil>");
             }
             fprintf(stderr, " }\n");
         }
