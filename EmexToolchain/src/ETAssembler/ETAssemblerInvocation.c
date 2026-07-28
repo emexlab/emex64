@@ -67,8 +67,6 @@ static void __ETAssemblerInvocationDeinit(EFObjectRef invocationRef)
     }
     hashmap_dealloc(invocation->label_hashmap);
 
-    /* definitions and include directories have to be released by who allocated them */
-
     reloc_table_entry_t *rtbe = invocation->rtbe;
     while(rtbe != NULL)
     {

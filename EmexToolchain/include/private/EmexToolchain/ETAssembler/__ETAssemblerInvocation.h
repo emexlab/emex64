@@ -39,7 +39,7 @@ typedef struct __ETAssemblerInvocation {
     EFFileRef outputFile;
 
     EFMutableArrayRef files;
-    EFMutableArrayRef definitions;                          /* borrowed */
+    EFMutableArrayRef definitions;
     EFMutableArrayRef includeSearchPaths;
 
     assembler_line_t **line;
