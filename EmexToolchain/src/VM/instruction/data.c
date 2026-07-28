@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #if defined(__APPLE__)
 #include <sys/random.h>
-#elif defined(__FreeBSD__)
+#elif defined(__FreeBSD__) || defined(__linux__)
 #include <unistd.h>
 #endif
 #include <EmexFoundation/EmexFoundation.h>
