@@ -22,6 +22,8 @@
 #include <stdlib.h>
 #if defined(__APPLE__)
 #include <sys/random.h>
+#elif defined(__FreeBSD__)
+#include <unistd.h>
 #endif
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/instruction/data.h>
