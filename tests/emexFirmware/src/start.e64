@@ -25,12 +25,26 @@
 %define% FW_TEST_EXCEPTION 0
 %endif% ; FW_TEST_EXCEPTION
 
+%ifndef% FW_HOOK_TEST
+%define% FW_HOOK_TEST 1
+%endif% ; FW_HOOK_TEST
+
 %ifndef% FW_LOCK_KTRR
 %define% FW_LOCK_KTRR 0
 %endif% ; FW_LOCK_KTRR
 
+%if% FW_HOOK_TEST
+%undef% FW_LOCK_KTRR
+%define% FW_LOCK_KTRR 0
+%endif% ; FW_HOOK_TEST
+
 %ifndef% FW_MINIMAL
 %define% FW_MINIMAL 0
+%endif% ; FW_MINIMAL
+
+%if% FW_MINIMAL
+%define% FW_HOOK_TEST 0 ; not part of the code
+%define% FW_LOCK_KTRR 0 ; dangerous due to old magic (unaligned pages)
 %endif% ; FW_MINIMAL
 
 %if% FW_MINIMAL
@@ -62,6 +76,14 @@ section .data
     meow_cnt dq (0 - 1) ; underflow so that the hang in main does null it
 
 extern kdb_handler
+extern redirect_symbol
+
+section .data
+    meow_msg db "meow!\0"
+
+putbase_redirect:
+    blw puts, meow_msg
+    wret
 
 main:
     blw interrupt_register_handler, EMEX64_IC_IRQ_EXCEPTION, exception_handler
@@ -109,7 +131,11 @@ main:
 %endif% ; FW_TEST_EXCEPTION
 
     cmov REG_CR0, 1
-    
+
+%if% FW_HOOK_TEST
+    blw redirect_symbol, putbase, putbase_redirect
+%endif% ; FW_HOOK_TEST
+
 .hang:
     ldq r0, meow_cnt
     blw puts, fw_interrupted_msg
