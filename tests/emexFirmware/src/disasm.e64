@@ -122,8 +122,28 @@ section .data
     disasm_reg_r9_msg db "r9\0\0"
     disasm_reg_rr_msg db "rr\0\0"
 
+; extended register string table
+section .data
+    disasm_ereg_er0_msg db "er0\0\0"
+    disasm_ereg_er1_msg db "er1\0\0"
+    disasm_ereg_er2_msg db "er2\0\0"
+    disasm_ereg_er3_msg db "er3\0\0"
+    disasm_ereg_er4_msg db "er4\0\0"
+    disasm_ereg_er5_msg db "er5\0\0"
+    disasm_ereg_er6_msg db "er6\0\0"
+    disasm_ereg_er7_msg db "er7\0\0"
+    disasm_ereg_er8_msg db "er8\0\0"
+    disasm_ereg_er9_msg db "er9\0\0"
+    disasm_ereg_er10_msg db "er10\0"
+    disasm_ereg_er11_msg db "er11\0"
+    disasm_ereg_er12_msg db "er12\0"
+    disasm_ereg_er13_msg db "er13\0"
+    disasm_ereg_er14_msg db "er14\0"
+    disasm_ereg_er15_msg db "er15\0"
+
 %define% disasm_opcode_table disasm_opcode_hlt_msg
 %define% disasm_reg_table disasm_reg_pc_msg
+%define% disasm_ereg_table disasm_ereg_er0_msg
 
 ; jump table for the operand logic
 ; idea for later: %push% BODY disasm_put_operand and later %pop% BODY
@@ -163,19 +183,17 @@ disasm_put_hex:
     wret
 
 disasm_put_operand:
-    blw bitbolt_read, 4
-    mov r0, rr
     cmp r0, EMEX64_CODING_MAX
     ble .is_legal
 .is_not_legal:
     blw puts, disasm_coding_msg
     blw putbase, r0, 16
 .is_legal:
-
     mul r1, r0, 8
     ldq r1, [r1 + disasm_put_operand_jtable]
     b r1
 
+    ; switch
 .end:
     clr rr
     wret
@@ -207,11 +225,47 @@ disasm_put_operand:
     blw disasm_put_hex, rr
     b .get_me_tf_out_of_here
 .regext:
+    blw bitbolt_read, 4
+    mul r0, rr, 5
+    blw puts, [r0 + disasm_ereg_table]
+    b .get_me_tf_out_of_here
 .reginc:
+    blw bitbolt_read, 4
+    mul r0, rr, 4
+    blw puts, [r0 + disasm_reg_table]
+    blw putc, '+'
+    blw putc, '+'
+    b .get_me_tf_out_of_here
 .regdec:
+    blw bitbolt_read, 4
+    mul r0, rr, 4
+    blw puts, [r0 + disasm_reg_table]
+    blw putc, '-'
+    blw putc, '-'
+    b .get_me_tf_out_of_here
 .offsetadd:
+    blw putc, '['
+    blw bitbolt_read, 4
+    blw disasm_put_operand, rr
+    blw putc, ' '
+    blw putc, '+'
+    blw putc, ' '
+    blw bitbolt_read, 4
+    blw disasm_put_operand, rr
+    blw putc, ']'
+    b .get_me_tf_out_of_here
 .offsetsub:
-.get_me_tf_out_of_here:
+    blw putc, '['
+    blw bitbolt_read, 4
+    blw disasm_put_operand, rr
+    blw putc, ' '
+    blw putc, '-'
+    blw putc, ' '
+    blw bitbolt_read, 4
+    blw disasm_put_operand, rr
+    blw putc, ']'
+    b .get_me_tf_out_of_here
+.get_me_tf_out_of_here: ; break
 
     mov rr, 1
     wret
@@ -223,12 +277,15 @@ disasm_instruction:
     mov r0, rr ; caries the number of operands returned by disasm_put_opcode
     clr r1
 .loop:
+    blw bitbolt_read, 4
+    mov r5, rr
+    cmp r5, EMEX64_CODING_END
+    be .loop_end
     bz r1++, .loop_put_operand
     blw putc, ','
     blw putc, ' '
 .loop_put_operand:
-    blw disasm_put_operand
-    ;bz rr, (assembles, without a token comming after, pls fix)
+    blw disasm_put_operand, r5
     bz rr, .loop_end
     cmp r1, r0
     blt .loop
@@ -251,14 +308,11 @@ disasm_sym:
 
     blw bitbolt_init, r0, 0
 
-    ; find out what the first opcode is
-    clr r2  ; the pointer counter
 .loop:
     blw disasm_instruction
+    ;bz rr, .failure ; if disasm_instruction returns zero it means that the disassembling failed
     blw bitbolt_bytes_used
-    add r2, rr
-    bz r2, .failure ; if disasm_instruction returns zero it means that the disassembling failed
-    cmp r2, r1
+    cmp rr, r1
     blt .loop
 .failure:
     wret
