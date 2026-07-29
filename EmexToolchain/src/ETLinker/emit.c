@@ -374,8 +374,10 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
     const UInt64 bss_region_base = inv->out_data_off;
 
     /* copy all data and text sections */
-    for(linker_object_t *o = inv->obj; o; o = o->next)
+    EFIndex objectCount = EFArrayGetCount(inv->objects);
+    for(EFIndex index = 0; index < objectCount; index++)
     {
+        linker_object_t *o = EFArrayGetValueAtIndex(inv->objects, index);
         if(o->idx_text >= 0)
         {
             ELF64_Shdr *sh = &o->shdrs[o->idx_text];
@@ -389,8 +391,9 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
     }
 
     /* add all defined global symbols from the objects */
-    for(linker_object_t *o = inv->obj; o; o = o->next)
+    for(EFIndex index = 0; index < objectCount; index++)
     {
+        linker_object_t *o = EFArrayGetValueAtIndex(inv->objects, index);
         if(o->idx_symtab < 0)
         {
             continue;
@@ -477,8 +480,9 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
     }
 
     /* process relocations */
-    for(linker_object_t *o = inv->obj; o; o = o->next)
+    for(EFIndex index = 0; index < objectCount; index++)
     {
+        linker_object_t *o = EFArrayGetValueAtIndex(inv->objects, index);
         #define PROCESS_RELA_SECTION(rela_shdr_idx, out_buf, base_addr, region_base) do { \
             if(o->rela_shdr_idx >= 0) \
             { \
@@ -716,6 +720,8 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
         return false;
     }
 
+    EFIndex objectCount = EFArrayGetCount(inv->objects);
+
     if(gsym->addr == BOOT_HEADER_SIZE)
     {
         inv->needs_fw_hdr = false;
@@ -732,14 +738,13 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
         }
 
         /* reregister them */
-        linker_object_t *obj = inv->obj;
-        while(obj != NULL)
+        for(EFIndex index = 0; index < objectCount; index++)
         {
-            if(!obj_register_symbols(inv, obj))
+            linker_object_t *o = EFArrayGetValueAtIndex(inv->objects, index);
+            if(!obj_register_symbols(inv, o))
             {
                 return false;
             }
-            obj = obj->next;
         }
     }
 
@@ -750,44 +755,35 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
     }
 
     /* copy .text sections */
-    linker_object_t *obj = inv->obj;
-    while(obj != NULL)
+    for(EFIndex index = 0; index < objectCount; index++)
     {
-        if(obj->idx_text < 0)
-        {
-            obj = obj->next;
-            continue;
-        }
-        ELF64_Shdr *sh = &obj->shdrs[obj->idx_text];
-        EFBitWalkerSeek(vb, obj->base_text, 0);
-        EFBitWalkerWriteBuffer(vb, obj->content + sh->sh_offset, sh->sh_size);
-        obj = obj->next;
+        linker_object_t *o = EFArrayGetValueAtIndex(inv->objects, index);
+        ELF64_Shdr *sh = &o->shdrs[o->idx_text];
+        EFBitWalkerSeek(vb, o->base_text, 0);
+        EFBitWalkerWriteBuffer(vb, o->content + sh->sh_offset, sh->sh_size);
     }
 
     /* copy .data sections */
-    obj = inv->obj;
-    while(obj != NULL)
+    for(EFIndex index = 0; index < objectCount; index++)
     {
-        if(obj->idx_data < 0)
+        linker_object_t *o = EFArrayGetValueAtIndex(inv->objects, index);
+        if(o->idx_data < 0)
         {
-            obj = obj->next;
             continue;
         }
-        ELF64_Shdr *sh = &obj->shdrs[obj->idx_data];
-        EFBitWalkerSeek(vb, obj->base_data, 0);
-        EFBitWalkerWriteBuffer(vb, obj->content + sh->sh_offset, sh->sh_size);
-        obj = obj->next;
+        ELF64_Shdr *sh = &o->shdrs[o->idx_data];
+        EFBitWalkerSeek(vb, o->base_data, 0);
+        EFBitWalkerWriteBuffer(vb, o->content + sh->sh_offset, sh->sh_size);
     }
 
     /* .bss: already zeroed by calloc */
-    obj = inv->obj;
-    while(obj != NULL)
+    for(EFIndex index = 0; index < objectCount; index++)
     {
-        if(!obj_apply_relocs(inv, obj, vb))
+        linker_object_t *o = EFArrayGetValueAtIndex(inv->objects, index);
+        if(!obj_apply_relocs(inv, o, vb))
         {
             return false;
         }
-        obj = obj->next;
     }
 
     UInt64 entry_addr = 0;
@@ -867,15 +863,15 @@ Boolean linker_link(linker_options_t options,
         return false;
     }
 
-    linker_object_t *obj = inv->obj;
-    while(obj != NULL)
+    EFIndex objectCount = EFArrayGetCount(inv->objects);
+    for(EFIndex index = 0; index < objectCount; index++)
     {
-        if(!obj_register_symbols(inv, obj))
+        linker_object_t *o = EFArrayGetValueAtIndex(inv->objects, index);
+        if(!obj_register_symbols(inv, o))
         {
             linker_invocation_dealloc(inv);
             return false;
         }
-        obj = obj->next;
     }
 
     Boolean success = false;

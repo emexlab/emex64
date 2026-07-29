@@ -38,7 +38,7 @@ typedef struct linker_invocation {
     linker_diagnostic_consumer_t *consumer; /* borowwed */
 
     linker_symbol_t *sym;
-    linker_object_t *obj;
+    EFMutableArrayRef objects;
 
     script_sym_t *script_syms;
     EFSize script_sym_cnt;

@@ -56,8 +56,6 @@ typedef struct linker_object {
     UInt64 base_text; /* text base inside final object */
     UInt64 base_data; /* data base inside final object */
     UInt64 base_bss;  /* bss base inside final object */
-
-    struct linker_object *next;
 } linker_object_t;
 
 linker_object_t *linker_object_alloc(EFFileRef object_file);

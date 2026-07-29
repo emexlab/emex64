@@ -40,7 +40,11 @@ linker_invocation_t *linker_invocation_alloc(linker_options_t options,
     inv->consumer = diagnostic_consumer;
 
     inv->sym = NULL;
-    inv->obj = NULL;
+    inv->objects = EFArrayCreateMutable(kEFAllocatorDefault, kEFArrayCallbacksObjectCallbacks, 0);
+    if(inv->objects == NULL)
+    {
+        free(inv);
+    }
     inv->script_syms = NULL;
     inv->script_sym_cnt = 0;
 
@@ -66,13 +70,7 @@ void linker_invocation_dealloc(linker_invocation_t *inv)
         sym = next;
     }
 
-    linker_object_t *obj = inv->obj;
-    while(obj != NULL)
-    {
-        linker_object_t *next = obj->next;
-        linker_object_dealloc(obj);
-        obj = next;
-    }
+    EFRelease(inv->objects);
 
     for(EFSize i = 0; i < inv->script_sym_cnt; i++)
     {

@@ -163,29 +163,8 @@ void linker_object_dealloc(linker_object_t *obj)
 Boolean linker_load_object(linker_invocation_t *inv,
                            EFFileRef object_file)
 {
-    /* load object */
-    linker_object_t *obj = linker_object_alloc(object_file);
-    if(obj == NULL)
-    {
-        return false;
-    }
-
-    /* stiching object into the linked list ^^ */
-    if(inv->obj == NULL)
-    {
-        inv->obj = obj;
-    }
-    else
-    {
-        linker_object_t *tail = inv->obj;
-        while(tail->next)
-        {
-            tail = tail->next;
-        }
-        tail->next = obj;
-    }
-
-    return true;
+    EFAUTOREL linker_object_t *obj = linker_object_alloc(object_file);
+    return obj != NULL && EFArrayAppendValue(inv->objects, obj);
 }
 
 void linker_layout(linker_invocation_t *inv)
@@ -193,8 +172,10 @@ void linker_layout(linker_invocation_t *inv)
     unsigned long cur = inv->needs_fw_hdr ? BOOT_HEADER_SIZE : 0;
 
     /* laying out .text segments */
-    for(linker_object_t *o = inv->obj; o; o = o->next)
+    EFIndex objectCount = EFArrayGetCount(inv->objects);
+    for(EFIndex index = 0; index < objectCount; index++)
     {
+        linker_object_t *o = EFArrayGetValueAtIndex(inv->objects, index);
         cur = align_up(cur, obj_sec_align(o, o->idx_text));
         o->base_text = cur;
         cur += linker_object_text_size(o);
@@ -207,12 +188,14 @@ void linker_layout(linker_invocation_t *inv)
     inv->out_text_off = cur;
 
     /* laying out .data segments */
-    for(linker_object_t *o = inv->obj; o; o = o->next)
+    for(EFIndex index = 0; index < objectCount; index++)
     {
+        linker_object_t *o = EFArrayGetValueAtIndex(inv->objects, index);
         cur = align_up(cur, obj_sec_align(o, o->idx_data));
         o->base_data = cur;
         cur += linker_object_data_size(o);
     }
+
     if(!inv->options.use_old_magic)
     {
         cur = align_up(cur, EMEX64_PAGE_SIZE);
@@ -225,8 +208,9 @@ void linker_layout(linker_invocation_t *inv)
     }
 
     /* laying out .bss segments */
-    for(linker_object_t *o = inv->obj; o; o = o->next)
+    for(EFIndex index = 0; index < objectCount; index++)
     {
+        linker_object_t *o = EFArrayGetValueAtIndex(inv->objects, index);
         cur = align_up(cur, obj_sec_align(o, o->idx_bss));
         o->base_bss = cur;
         cur += linker_object_bss_size(o);
