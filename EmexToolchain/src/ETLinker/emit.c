@@ -815,26 +815,18 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
     return true;
 }
 
-Boolean linker_link(linker_options_t options,
-                    linker_diagnostic_consumer_t *diagnostic_consumer,
+Boolean linker_link(linker_invocation_t *inv,
                     EFFileRef *input_file,
                     UInt64 input_file_cnt,
                     EFFileRef *linker_script_file,
                     UInt64 linker_script_file_cnt,
                     EFFileRef output)
 {
-    linker_invocation_t *inv = linker_invocation_alloc(options, diagnostic_consumer);
-    if(inv == NULL)
-    {
-        return false;
-    }
-
     for(UInt64 i = 0; i < input_file_cnt; i++)
     {
         if(!linker_load_object(inv, input_file[i]))
         {
             diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "object file \'%s\' couldn't be loaded", EFStringGetCStringPtr(EFURLGetPath(EFFileGetURL(input_file[i])), kEFStringEncodingUTF8));
-            linker_invocation_dealloc(inv);
             return false;
         }
     }
@@ -845,14 +837,12 @@ Boolean linker_link(linker_options_t options,
         if(!linker_script_parse(inv, linker_script_file[i]))
         {
             diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "linker script file \'%s\' is problematic", EFStringGetCStringPtr(EFURLGetPath(EFFileGetURL(input_file[i])), kEFStringEncodingUTF8));
-            linker_invocation_dealloc(inv);
             return false;
         }
     }
 
     if(!linker_script_apply(inv, inv->out_bss_off, BOOT_HEADER_SIZE, inv->out_text_off, inv->out_bss_off > inv->out_data_off ? inv->out_data_off : inv->out_bss_off))
     {
-        linker_invocation_dealloc(inv);
         return false;
     }
 
@@ -862,17 +852,16 @@ Boolean linker_link(linker_options_t options,
         linker_object_t *o = EFArrayGetValueAtIndex(inv->objects, index);
         if(!obj_register_symbols(inv, o))
         {
-            linker_invocation_dealloc(inv);
             return false;
         }
     }
 
     Boolean success = false;
-    switch(options.emit_mode)
+    switch(inv->options.emit_mode)
     {
         case kEmitModeRelocatableObject:
             success = __linker_link_relocatable(inv, output);
-            if(options.verbose && success)
+            if(inv->options.verbose && success)
             {
                 fprintf(stderr, "emex64ld: emitted relocatable object → %s\n", EFStringGetCStringPtr(EFURLGetPath(EFFileGetURL(output)), kEFStringEncodingUTF8));
             }
@@ -883,6 +872,5 @@ Boolean linker_link(linker_options_t options,
             break;
     }
 
-    linker_invocation_dealloc(inv);
     return success;
 }

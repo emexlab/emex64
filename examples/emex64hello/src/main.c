@@ -106,7 +106,7 @@ SInt32 main(void)
     linker_diagnostic_consumer_t *lnkconsumer = linker_diagnostic_consumer_alloc();
     if(lnkconsumer == NULL)
     {
-        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate linkers consumer");
+        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate linker's diagnostic consumer");
         free(input_file);
         return 1;
     }
@@ -114,7 +114,16 @@ SInt32 main(void)
     linker_options_t linkerOptions = linker_options_default;
     linkerOptions.verbose = true;
     linkerOptions.use_old_magic = true;
-    success = linker_link(linkerOptions, lnkconsumer, input_file, 1, NULL, 0, firmware_file);
+    linker_invocation_t *lnkinv = linker_invocation_alloc(linkerOptions, lnkconsumer);
+    if(lnkinv == NULL)
+    {
+        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate linker's invocation");
+        free(input_file);
+        return 1;
+    }
+
+    success = linker_link(lnkinv, input_file, 1, NULL, 0, firmware_file);
+    linker_invocation_dealloc(lnkinv);
     linker_diagnostic_consumer_emit(lnkconsumer);
     linker_diagnostic_consumer_dealloc(lnkconsumer);
     free(input_file);

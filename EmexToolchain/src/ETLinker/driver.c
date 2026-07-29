@@ -198,10 +198,19 @@ void linker_driver_dealloc(linker_driver_t *driver)
 
 Boolean linker_driver_drive_the_fucking_car(linker_driver_t *driver)
 {
-    Boolean success = linker_link(driver->options, driver->consumer, driver->input_file, driver->input_file_cnt, driver->linker_script_file, driver->linker_script_file_cnt, driver->output_file);
+    linker_invocation_t *inv = linker_invocation_alloc(driver->options, driver->consumer);
+    if(inv == NULL)
+    {
+        return false;
+    }
+
+    Boolean success = linker_link(inv, driver->input_file, driver->input_file_cnt, driver->linker_script_file, driver->linker_script_file_cnt, driver->output_file);
     if(!success)
     {
+        linker_invocation_dealloc(inv);
         EFFileUnlink(driver->output_file);
     }
+
+    linker_invocation_dealloc(inv);
     return success;
 }
