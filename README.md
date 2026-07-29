@@ -1,7 +1,7 @@
 # emex64
 
 ## Introduction
-emex64 is a 64bit lightweight little endian architecture. It's a mix out of RISC and CISC it is based on no previous architecture.
+emex64 is a 64bit lightweight little endian architecture. It's a mix out of RISC and CISC it is based on no previous architecture, except the ones @mach-port-t(me) created in the past, emex64 evolved from LA8 -> LA816 -> LA16 -> LA32 -> LA64 -> emex64. emex64 is a much better version of LA64.
 
 Outside the SoC, the emulated board additionally integrates support for UART, Audio, and (implementation pending) Graphics.
 

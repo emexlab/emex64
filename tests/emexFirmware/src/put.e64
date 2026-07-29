@@ -29,7 +29,7 @@
 section .data
 %if% PUT_DRAW_LOGO
     putc_uart_logo db "\n         +++++++++++++\n        ++++++++++++++\n       +++++++++++++++\n      ++++++++++++++++\n     +++++      ++++++\n    +++++      ++++++ \n   +++++      ++++++  \n  +++++      ++++++   \n +++++      ++++++    \n+++++      ++++++     \n+++++      +++++      \n +++++      +++       \n  +++++      +        \n   +++++              \n    +++++             \n     +++++            \n      ++++++++++++++++\n       +++++++++++++++\n        ++++++++++++++\n         +++++++++++++\n\0"
-    putc_copyright db "\nemexLabs(c) 2026\n\n\0"
+    putc_copyright db "\nLightweightArchitecture(c) 2024 - 2026\nemexLabs(c) 2026\n\n\0"
     raw_logo df "./logo.raw"
 %endif% ; PUT_DRAW_LOGO
     putc_sym dq gui_putc
