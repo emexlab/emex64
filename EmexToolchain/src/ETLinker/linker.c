@@ -39,9 +39,9 @@ linker_invocation_t *linker_invocation_alloc(linker_options_t options,
 
     inv->consumer = diagnostic_consumer;
 
-    inv->sym = NULL;
+    inv->symbols = EFArrayCreateMutable(kEFAllocatorDefault, kEFArrayCallbacksObjectCallbacks, 0);
     inv->objects = EFArrayCreateMutable(kEFAllocatorDefault, kEFArrayCallbacksObjectCallbacks, 0);
-    if(inv->objects == NULL)
+    if(inv->objects == NULL || inv->symbols == NULL)
     {
         free(inv);
     }
@@ -62,14 +62,7 @@ linker_invocation_t *linker_invocation_alloc(linker_options_t options,
 
 void linker_invocation_dealloc(linker_invocation_t *inv)
 {
-    linker_symbol_t *sym = inv->sym;
-    while(sym != NULL)
-    {
-        linker_symbol_t *next = sym->next;
-        linker_symbol_dealloc(sym);
-        sym = next;
-    }
-
+    EFRelease(inv->symbols);
     EFRelease(inv->objects);
 
     for(EFSize i = 0; i < inv->script_sym_cnt; i++)
@@ -91,27 +84,15 @@ Boolean linker_symbol_append_definition(linker_invocation_t *inv,
     linker_symbol_t *sym = linker_symbol_lookup(inv, name);
     if(sym == NULL)
     {
-        sym = linker_symbol_alloc(name, object_path, addr, true);
-        if(sym == NULL)
-        {
-            return false;
-        }
+        EFAUTOREL linker_symbol_t *sym = linker_symbol_alloc(name, object_path, addr, true);
+        return EFArrayAppendValue(inv->symbols, sym);
     }
+
     if(sym->defined && sym->addr != addr)
     {
         diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "duplicate symbol '%s' in '%s'", name, object_path);
         diagnostic_report(inv->consumer, kDiagnosticSeverityNote, NULL, "symbol '%s' also exists in '%s'", name, sym->object_path);
         return false;
-    }
-
-    if(inv->sym == NULL)
-    {
-        inv->sym = sym;
-    }
-    else
-    {
-        sym->next = inv->sym;
-        inv->sym = sym;
     }
 
     return true;
@@ -120,14 +101,14 @@ Boolean linker_symbol_append_definition(linker_invocation_t *inv,
 linker_symbol_t *linker_symbol_lookup(linker_invocation_t *inv,
                                       const char *name)
 {
-    linker_symbol_t *sym = inv->sym;
-    while(sym != NULL)
+    EFIndex symbolCount = EFArrayGetCount(inv->symbols);
+    for(EFIndex index = 0; index < symbolCount; index++)
     {
+        linker_symbol_t *sym = EFArrayGetValueAtIndex(inv->symbols, index);
         if(strcmp(sym->name, name) == 0)
         {
             return sym;
         }
-        sym = sym->next;
     }
     return NULL;
 }

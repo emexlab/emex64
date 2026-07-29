@@ -47,6 +47,7 @@ static inline unsigned long align_up(unsigned long v,
 static void __linker_object_deinit(EFObjectRef ref)
 {
     linker_object_t *obj = (linker_object_t*)ref;
+    EFReleaseTry(obj->file);
     EFReleaseTry(obj->mapping);
 }
 
@@ -54,6 +55,12 @@ linker_object_t *linker_object_alloc(EFFileRef object_file)
 {
     EFAUTOREL linker_object_t *obj = (linker_object_t*)EFMallocBlockCreateWithDeinitHandler(kEFAllocatorDefault, sizeof(struct linker_object), __linker_object_deinit);
     if(obj == NULL)
+    {
+        return NULL;
+    }
+
+    obj->file = EFRetainTry(object_file);
+    if(obj->file == NULL)
     {
         return NULL;
     }
@@ -66,8 +73,6 @@ linker_object_t *linker_object_alloc(EFFileRef object_file)
     obj->idx_rela_data = -1;
     obj->idx_symtab = -1;
     obj->idx_strtab = -1;
-
-    obj->file = object_file;
 
     EFAUTOREL EFFileHandleRef fileHandle = EFFileCopyFileHandle(EFGetAllocator(object_file), object_file);
     obj->mapping = EFFileHandleCopyMapping(EFGetAllocator(object_file), fileHandle);

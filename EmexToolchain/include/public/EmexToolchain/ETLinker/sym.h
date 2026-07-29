@@ -41,11 +41,11 @@ typedef struct {
 } __attribute__((packed)) ELF64_Rela;
 
 typedef struct linker_symbol {
+    EFMallocBlockPadding padding;
     char *name;
     char *object_path;
     UInt64 addr;
     Boolean defined;
-    struct linker_symbol *next;
 } linker_symbol_t;
 
 linker_symbol_t *linker_symbol_alloc(const char *name, const char *object_path, UInt64 addr, Boolean defined);

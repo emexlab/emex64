@@ -98,14 +98,7 @@ static Boolean obj_register_symbols(linker_invocation_t *inv,
 
 static void obj_unregister_all_symbols(linker_invocation_t *inv)
 {
-    linker_symbol_t *sym = inv->sym;
-    while(sym != NULL)
-    {
-        linker_symbol_t *next = sym->next;
-        linker_symbol_dealloc(sym);
-        sym = next;
-    }
-    inv->sym = NULL;
+    EFArrayRemoveValuesInRange(inv->symbols, EFRangeMake(0, EFArrayGetCount(inv->symbols)));
 }
 
 static UInt64 sym_resolve(linker_invocation_t *inv,

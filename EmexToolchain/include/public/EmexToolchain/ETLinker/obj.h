@@ -35,7 +35,7 @@ typedef struct linker_invocation linker_invocation_t;
 typedef struct linker_object {
     EFMallocBlockPadding padding;
 
-    EFFileRef file;  /* borrowed */
+    EFFileRef file;
     EFMappingRef mapping;
 
     EFSize size;

@@ -24,43 +24,44 @@
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETLinker/sym.h>
 
+static void __linker_symbol_deinit(EFObjectRef ref)
+{
+    linker_symbol_t *sym = (linker_symbol_t*)ref;
+    free(sym->name);
+    free(sym->object_path);
+}
+
 linker_symbol_t *linker_symbol_alloc(const char *name,
                                      const char *object_path,
                                      UInt64 addr,
                                      Boolean defined)
 {
-    linker_symbol_t *sym = malloc(sizeof(linker_symbol_t));
+    if(name == NULL || object_path == NULL)
+    {
+        return NULL;
+    }
+
+    EFAUTOREL linker_symbol_t *sym = (linker_symbol_t*)EFMallocBlockCreateWithDeinitHandler(kEFAllocatorDefault, sizeof(struct linker_symbol), __linker_symbol_deinit);
     if(sym == NULL)
     {
         return NULL;
     }
 
     sym->name = strdup(name);
-    if(sym->name == NULL)
-    {
-        free(sym);
-        return NULL;
-    }
-
     sym->object_path = strdup(object_path);
-    if(sym->object_path == NULL)
+    if(sym->object_path == NULL ||
+       sym->name == NULL)
     {
-        free(sym->name);
-        free(sym);
         return NULL;
     }
 
     sym->addr = addr;
     sym->defined = defined;
 
-    sym->next = NULL;
-
-    return sym;
+    return (linker_symbol_t*)EFAUTOTRANSFER(sym);
 }
 
 void linker_symbol_dealloc(linker_symbol_t *sym)
 {
-    free(sym->name);
-    free(sym->object_path);
-    free(sym);
+    EFReleaseTry((EFObjectRef)sym);
 }
