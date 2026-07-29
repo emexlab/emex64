@@ -19,8 +19,8 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef EMEX64ASM_OPTIONS_H
-#define EMEX64ASM_OPTIONS_H
+#ifndef ETASSEMBLEROPTIONS_H
+#define ETASSEMBLEROPTIONS_H
 
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETLinker/type.h>
@@ -45,4 +45,4 @@ typedef struct {
 extern ETAssemblerDriverOptions ETAssemblerDriverOptionsDefault;
 extern ETAssemblerDiagnosticOptions ETAssemblerDiagnosticOptionsDefault;
 
-#endif /* EMEX64ASM_OPTIONS_H */
+#endif /* ETASSEMBLEROPTIONS_H */
