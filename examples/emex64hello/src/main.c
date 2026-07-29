@@ -79,9 +79,9 @@ SInt32 main(void)
 
             /* we need the invocation to assemble */
             EFAUTOREL ETAssemblerDiagnosticConsumerRef diagnosticConsumer = ETAssemblerDiagnosticConsumerCreate(kEFAllocatorDefault, ETAssemblerDiagnosticOptionsDefault);
-            EFAUTOREL ETAssemblerInvocationRef inv = ETAssemblerInvocationCreate(kEFAllocatorDefault, diagnosticConsumer);
+            EFAUTOREL ETAssemblerInvocationRef invocation = ETAssemblerInvocationCreate(kEFAllocatorDefault, diagnosticConsumer);
 
-            Boolean success = ETAssemblerInvocationSetInputFile(inv, unsavedFile) && ETAssemblerInvocationSetOutputFile(inv, objectFile) && ETAssemblerInvocationEmit(inv);
+            Boolean success = ETAssemblerInvocationSetInputFile(invocation, unsavedFile) && ETAssemblerInvocationSetOutputFile(invocation, objectFile) && ETAssemblerInvocationEmit(invocation);
             ETAssemblerDiagnosticConsumerEmit(diagnosticConsumer);
             if(!success)
             {
@@ -109,15 +109,15 @@ SInt32 main(void)
             linker_options_t linkerOptions = linker_options_default;
             linkerOptions.verbose = true;
             linkerOptions.use_old_magic = true;
-            linker_invocation_t *inv = linker_invocation_alloc(linkerOptions, diagnosticConsumer);
-            if(inv == NULL)
+            linker_invocation_t *invocation = linker_invocation_alloc(linkerOptions, diagnosticConsumer);
+            if(invocation == NULL)
             {
                 diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate linker's invocation");
                 return 1;
             }
 
-            Boolean success = linker_link(inv, inputFiles, NULL, firmwareFile);
-            linker_invocation_dealloc(inv);
+            Boolean success = linker_link(invocation, inputFiles, NULL, firmwareFile);
+            linker_invocation_dealloc(invocation);
             linker_diagnostic_consumer_emit(diagnosticConsumer);
             linker_diagnostic_consumer_dealloc(diagnosticConsumer);
             if(!success)
