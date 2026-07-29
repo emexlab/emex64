@@ -19,24 +19,20 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef EMEX64ASM_LABEL_LABEL_H
-#define EMEX64ASM_LABEL_LABEL_H
+#ifndef EMEX64ASM_CODE_H
+#define EMEX64ASM_CODE_H
 
+#include <stdlib.h>
 #include <EmexFoundation/EmexFoundation.h>
-#include <EmexToolchain/ETAssembler/type.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerType.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 
-typedef struct __ETAssemblerInvocation *ETAssemblerInvocationRef;
+char *assembler_code_find_header(const char *name, const char *source_file);
+char *assembler_code_find_system_header(const char *name, EFArrayRef includeSearchPaths);
 
-typedef struct {
-    char *name;                             /* name of resolved label */
-    Boolean defined;                        /* label definitions are defined */
-    Boolean global;                         /* if marked as global it will be available for other objects */
-    UInt64 addr;                            /* address of resolved label */
-    assembler_token_t *at_link;             /* link to the originator of the label */
-} assembler_label_t;
+Boolean assembler_code_inject_file(ETAssemblerInvocationRef inv, UInt64 at_line_index, EFFileRef inj_file);
 
-Boolean assembler_label_append(assembler_token_t *at);
+Boolean assembler_code_preparse(ETAssemblerInvocationRef inv, EFFileRef input);
+Boolean assembler_code_postparse(ETAssemblerInvocationRef inv);
 
-assembler_label_t *assembler_label_lookup(ETAssemblerInvocationRef inv, const char *name);
-
-#endif /* EMEX64ASM_LABEL_LABEL_H */
+#endif /* EMEX64ASM_CODE_H */

@@ -24,10 +24,10 @@
 
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/hashmap/hashmap.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerType.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerDiagnosticConsumer.h>
 #include <EmexToolchain/ETAssembler/label/label.h>
 #include <EmexToolchain/ETAssembler/label/relocate.h>
-#include <EmexToolchain/ETAssembler/type.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerOptions.h>
 
 typedef struct __ETAssemblerInvocation {

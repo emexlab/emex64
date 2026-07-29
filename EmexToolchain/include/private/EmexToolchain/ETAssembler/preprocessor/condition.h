@@ -23,7 +23,7 @@
 #define EMEX64ASM_CONDITION_H
 
 #include <EmexFoundation/EmexFoundation.h>
-#include <EmexToolchain/ETAssembler/type.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerType.h>
 
 typedef struct assembler_directive_condition_frame {
     Boolean in_a_condition;

@@ -23,9 +23,9 @@
 #define EMEX64_DIAGNOSTIC_LOG_H
 
 #include <EmexFoundation/EmexFoundation.h>
-#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
-#include <EmexToolchain/ETAssembler/type.h>
 #include <EmexToolchain/Support/diagnostic/consumer.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerType.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 
 /* legacy wrapper */
 #define diag_log_legacy(severity, at, msg, ...) \

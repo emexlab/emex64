@@ -19,22 +19,24 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef EMEX64ASM_LABEL_RELOCATE_H
-#define EMEX64ASM_LABEL_RELOCATE_H
+#ifndef EMEX64ASM_LABEL_LABEL_H
+#define EMEX64ASM_LABEL_LABEL_H
 
 #include <EmexFoundation/EmexFoundation.h>
-#include <EmexToolchain/ETAssembler/type.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerType.h>
 
 typedef struct __ETAssemblerInvocation *ETAssemblerInvocationRef;
 
-typedef struct reloc_table_entry {
-    char *name;                         /* resolved label name */
-    Boolean local;                      /* must be resolved at assemble time */
-    EFSize byte_pos;                    /* position */
-    assembler_token_t *at_link;         /* link to the originator of the entry */
-    struct reloc_table_entry *next;     /* pointer to next entry */
-} reloc_table_entry_t;
+typedef struct {
+    char *name;                             /* name of resolved label */
+    Boolean defined;                        /* label definitions are defined */
+    Boolean global;                         /* if marked as global it will be available for other objects */
+    UInt64 addr;                            /* address of resolved label */
+    assembler_token_t *at_link;             /* link to the originator of the label */
+} assembler_label_t;
 
-Boolean assembler_label_relocate_append(ETAssemblerInvocationRef inv, char *label_str, Boolean local, assembler_token_t *at_link);
+Boolean assembler_label_append(assembler_token_t *at);
 
-#endif /* EMEX64ASM_LABEL_RELOCATE_H */
+assembler_label_t *assembler_label_lookup(ETAssemblerInvocationRef inv, const char *name);
+
+#endif /* EMEX64ASM_LABEL_LABEL_H */

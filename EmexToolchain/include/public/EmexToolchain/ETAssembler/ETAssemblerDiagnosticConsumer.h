@@ -23,7 +23,13 @@
 #define ETASSEMBLERDIAGNOSTICCONSUMER_H
 
 #include <EmexFoundation/EmexFoundation.h>
+#include <EmexToolchain/Support/diagnostic/diagnostic.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerOptions.h>
+#if ET_PRIVATE
 #include <EmexToolchain/ETAssembler/diagnostic/consumer.h>
+#else
+typedef struct assembler_diagnostic_consumer *assembler_diagnostic_consumer_t;
+#endif /* ET_PRIVATE */
 
 typedef struct __ETAssemblerDiagnosticConsumer *ETAssemblerDiagnosticConsumerRef;
 

@@ -19,23 +19,13 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef EMEX64ASM_LEXER_H
-#define EMEX64ASM_LEXER_H
+#ifndef EMEX64ASM_SECTION_H
+#define EMEX64ASM_SECTION_H
 
-#include <stddef.h>
 #include <EmexFoundation/EmexFoundation.h>
-#include <EmexToolchain/ETAssembler/type.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerType.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 
-#define LEXTOK_LENGHT_MAX   2048    /* if anyone comes close to that size, bro pls fix your variable naming style O.O */
+Boolean assembler_section_parse(ETAssemblerInvocationRef inv);
 
-typedef struct {
-    const char *token;
-    EFSize column;
-    ETAssemblerTokenType type;
-} lextok_token_t;
-
-lextok_token_t assembler_lexer_tok(const char *token);
-Boolean assembler_lexer_classify(assembler_token_t *at);
-const char *assembler_lexer_str_for_token_type(ETAssemblerTokenType type);
-
-#endif /* EMEX64ASM_LEXER_H */
+#endif /* EMEX64ASM_SECTION_H */

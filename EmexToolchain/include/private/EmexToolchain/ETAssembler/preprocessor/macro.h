@@ -24,7 +24,7 @@
 
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/hashmap/hashmap.h>
-#include <EmexToolchain/ETAssembler/type.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerType.h>
 
 typedef struct assembler_macro {
     const char **inject_token;  /* borrowed */

@@ -19,20 +19,22 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef EMEX64ASM_CODE_H
-#define EMEX64ASM_CODE_H
+#ifndef EMEX64ASM_LABEL_RELOCATE_H
+#define EMEX64ASM_LABEL_RELOCATE_H
 
-#include <stdlib.h>
 #include <EmexFoundation/EmexFoundation.h>
-#include <EmexToolchain/ETAssembler/type.h>
-#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerType.h>
 
-char *assembler_code_find_header(const char *name, const char *source_file);
-char *assembler_code_find_system_header(const char *name, EFArrayRef includeSearchPaths);
+typedef struct __ETAssemblerInvocation *ETAssemblerInvocationRef;
 
-Boolean assembler_code_inject_file(ETAssemblerInvocationRef inv, UInt64 at_line_index, EFFileRef inj_file);
+typedef struct reloc_table_entry {
+    char *name;                         /* resolved label name */
+    Boolean local;                      /* must be resolved at assemble time */
+    EFSize byte_pos;                    /* position */
+    assembler_token_t *at_link;         /* link to the originator of the entry */
+    struct reloc_table_entry *next;     /* pointer to next entry */
+} reloc_table_entry_t;
 
-Boolean assembler_code_preparse(ETAssemblerInvocationRef inv, EFFileRef input);
-Boolean assembler_code_postparse(ETAssemblerInvocationRef inv);
+Boolean assembler_label_relocate_append(ETAssemblerInvocationRef inv, char *label_str, Boolean local, assembler_token_t *at_link);
 
-#endif /* EMEX64ASM_CODE_H */
+#endif /* EMEX64ASM_LABEL_RELOCATE_H */

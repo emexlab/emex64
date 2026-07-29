@@ -19,13 +19,25 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef EMEX64ASM_SECTION_H
-#define EMEX64ASM_SECTION_H
+#ifndef EMEX64ASM_EXPR_H
+#define EMEX64ASM_EXPR_H
 
 #include <EmexFoundation/EmexFoundation.h>
-#include <EmexToolchain/ETAssembler/type.h>
-#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerType.h>
 
-Boolean assembler_section_parse(ETAssemblerInvocationRef inv);
+typedef struct {
+    assembler_token_t **tok;
+    UInt64 count;
+    UInt64 pos;
+    Boolean error;
+    assembler_token_t *blame;
+    const char *why;
+} assembler_expr_t;
 
-#endif /* EMEX64ASM_SECTION_H */
+assembler_token_t *expr_peek(assembler_expr_t *e);
+SInt64 expr_primary(assembler_expr_t *e);
+SInt64 expr_term(assembler_expr_t *e);
+SInt64 expr_addsub(assembler_expr_t *e);
+Boolean assembler_eval_const(assembler_token_t **tok, UInt64 count, SInt64 *out);
+
+#endif /* EMEX64ASM_EXPR_H */

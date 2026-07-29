@@ -19,25 +19,19 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef EMEX64ASM_EXPR_H
-#define EMEX64ASM_EXPR_H
+#ifndef EMEX64ASM_EMITTER_EMITTER_H
+#define EMEX64ASM_EMITTER_EMITTER_H
 
 #include <EmexFoundation/EmexFoundation.h>
-#include <EmexToolchain/ETAssembler/type.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerType.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
+#include <EmexToolchain/ETAssembler/emitter/opcode.h>
+#include <EmexToolchain/ETAssembler/emitter/register.h>
+#include <EmexToolchain/ETAssembler/emitter/immediate.h>
 
-typedef struct {
-    assembler_token_t **tok;
-    UInt64 count;
-    UInt64 pos;
-    Boolean error;
-    assembler_token_t *blame;
-    const char *why;
-} assembler_expr_t;
+void assembler_emit_end(ETAssemblerInvocationRef inv);
 
-assembler_token_t *expr_peek(assembler_expr_t *e);
-SInt64 expr_primary(assembler_expr_t *e);
-SInt64 expr_term(assembler_expr_t *e);
-SInt64 expr_addsub(assembler_expr_t *e);
-Boolean assembler_eval_const(assembler_token_t **tok, UInt64 count, SInt64 *out);
+Boolean assembler_emit_instruction(assembler_line_t *al);
+Boolean assembler_emit(ETAssemblerInvocationRef inv);
 
-#endif /* EMEX64ASM_EXPR_H */
+#endif /* EMEX64ASM_EMITTER_EMITTER_H */
