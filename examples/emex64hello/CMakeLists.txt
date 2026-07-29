@@ -16,3 +16,9 @@ install(TARGETS emex64hello
     RUNTIME DESTINATION bin
     COMPONENT Tools
 )
+
+if(UNIX AND NOT APPLE)
+set_target_properties(emex64hello PROPERTIES
+  INSTALL_RPATH "$ORIGIN/../lib"
+)
+endif()

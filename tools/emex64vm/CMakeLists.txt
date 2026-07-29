@@ -26,3 +26,9 @@ option(EMEX64VM_DEVICE_DISPLAY "Enable display device support" ON)
 target_compile_definitions(emex64vm PRIVATE
     EMEX64VM_DEVICE_DISPLAY=$<BOOL:${EMEX64VM_DEVICE_DISPLAY}>
 )
+
+if(UNIX AND NOT APPLE)
+set_target_properties(emex64vm PROPERTIES
+  INSTALL_RPATH "$ORIGIN/../lib"
+)
+endif()

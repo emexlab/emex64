@@ -26,3 +26,9 @@ install(TARGETS emex64ld
     RUNTIME DESTINATION bin
     COMPONENT emex64ld
 )
+
+if(UNIX AND NOT APPLE)
+set_target_properties(emex64ld PROPERTIES
+  INSTALL_RPATH "$ORIGIN/../lib"
+)
+endif()
