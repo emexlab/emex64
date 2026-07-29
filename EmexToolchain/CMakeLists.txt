@@ -103,6 +103,7 @@ add_library(EmexToolchain ${LIB_TYPE}
     src/ETAssembler/ETAssemblerJob.c
     src/ETAssembler/ETAssemblerDriver.c
     src/ETAssembler/ETAssemblerInvocation.c
+    src/ETAssembler/ETAssemblerDiagnosticConsumer.c
     src/ETAssembler/lexer.c
     src/ETAssembler/expr.c
     src/ETAssembler/code.c
@@ -110,7 +111,6 @@ add_library(EmexToolchain ${LIB_TYPE}
 
         ## Diagnostic API (Errors, Warnings, Notes, etc ^^)
         src/ETAssembler/diagnostic/consumer.c
-        src/ETAssembler/diagnostic/ETAssemblerDiagnosticConsumer.c
 
         ## Preprocessor API
         src/ETAssembler/preprocessor/directive.c

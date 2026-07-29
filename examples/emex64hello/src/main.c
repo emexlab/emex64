@@ -23,7 +23,7 @@
 #include <fcntl.h>
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
-#include <EmexToolchain/ETAssembler/diagnostic/ETAssemblerDiagnosticConsumer.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerDiagnosticConsumer.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 #include <EmexToolchain/ETLinker/linker.h>
 #include <EmexToolchain/VM/E64Machine.h>

@@ -21,7 +21,7 @@
 
 #include <stdarg.h>
 #include <EmexFoundation/EmexFoundation.h>
-#include <EmexToolchain/ETAssembler/diagnostic/ETAssemblerDiagnosticConsumer.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerDiagnosticConsumer.h>
 
 typedef struct __ETAssemblerDiagnosticConsumer {
     EFObject header;

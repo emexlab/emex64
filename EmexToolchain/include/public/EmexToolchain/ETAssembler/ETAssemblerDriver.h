@@ -26,7 +26,7 @@
 #include <EmexToolchain/ETAssembler/ETAssemblerJob.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 #include <EmexToolchain/ETLinker/type.h>
-#include <EmexToolchain/ETAssembler/diagnostic/ETAssemblerDiagnosticConsumer.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerDiagnosticConsumer.h>
 
 typedef struct __ETAssemblerDriver *ETAssemblerDriverRef;
 
