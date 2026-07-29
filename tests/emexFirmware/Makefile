@@ -1,6 +1,6 @@
 # Makefile
 VM_DISPLAY ?= on
-VM_MEMORY ?= 48
+VM_MEMORY ?= 512
 
 all: FILES ?= src/exc.e64 src/gui.e64 src/interrupt.e64 src/mc.e64 src/put.e64 src/slab.e64 src/string.e64 src/font.e64 src/hang.e64 src/pmm.e64 src/rtc.e64 src/start.e64 src/uart.e64 src/keyboard.e64 src/hook.e64 src/bitbolt.e64 src/disasm.e64
 all: FLAGS ?= -DPUT_DRAW_LOGO -DFW_LOCK_KTRR -DFW_DISASSEMBLY_TEST -Wl,--nmagic,-v
