@@ -39,93 +39,93 @@ EFFileRef EFFileCreateWithStringAndPath(EFAllocatorRef allocatorRef,
 
 SInt32 main(void)
 {
-    /*
-     * allocating all necessary virtual files to
-     * assemble to a virtual object file we can
-     * then link.
-     */
-    EFAUTOREL EFFileRef unsaved_file = EFFileCreateWithStringAndPath(kEFAllocatorDefault, EFFilePolicyInData, EFSTR("test.e64"), EFSTR(
-        "section .data\n"
-        "    msg db \"hello, world!\\n\\0\"\n"
-        "\n"
-        "_start:\n"
-        "    clar\n"
-        "    mov r3, 0x0020000000008000\n"
-        ".loop:\n"
-        "    ldb r1, [msg + r0++]\n"
-        ".retry:\n"
-        "    ldq r2, [r3 + 8]\n"
-        "    bbz r2, 0x02, .retry\n"
-        "    stq r3, r1\n"
-        "    bnz r1, .loop\n"
-        ".end:\n"
-        "    stq [r3 + 0x4000], 0\n"
-    ));
-    if(unsaved_file == NULL)
-    {
-        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate virtual assembly file");
-        return 1;
-    }
+    /* virtual ELF object file */
+    EFAUTOREL EFFileRef firmwareFile = EFFileCreateWithStringAndPath(kEFAllocatorDefault, EFFilePolicyOutData, EFSTR("test.img"), EFSTR(""));
 
-    EFAUTOREL EFFileRef object_file = EFFileCreateWithStringAndPath(kEFAllocatorDefault, EFFilePolicyOutData, EFSTR("test.o"), EFSTR(""));
-    if(object_file == NULL)
+    /* building pipeline */
     {
-        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate virtual object file");
-        return 1;
-    }
+        /* ELF object file shall be available during assembling and linking */
+        EFAUTOREL EFFileRef objectFile = EFFileCreateWithStringAndPath(kEFAllocatorDefault, EFFilePolicyOutData, EFSTR("test.o"), EFSTR(""));
 
-    /* we need the invocation to assemble */
-    EFAUTOREL ETAssemblerDiagnosticConsumerRef assemblerDiagnosticConsumer = ETAssemblerDiagnosticConsumerCreate(kEFAllocatorDefault, ETAssemblerDiagnosticOptionsDefault);
-    EFAUTOREL ETAssemblerInvocationRef inv = ETAssemblerInvocationCreate(kEFAllocatorDefault, assemblerDiagnosticConsumer);
+        /* assembling */
+        {
+            /*
+             * allocating all necessary virtual files to
+             * assemble to a virtual object file we can
+             * then link.
+             */
+            EFAUTOREL EFFileRef unsavedFile = EFFileCreateWithStringAndPath(kEFAllocatorDefault, EFFilePolicyInData, EFSTR("test.e64"), EFSTR(
+                "section .data\n"
+                "    msg db \"hello, world!\\n\\0\"\n"
+                "\n"
+                "_start:\n"
+                "    clar\n"
+                "    mov r3, 0x0020000000008000\n"
+                ".loop:\n"
+                "    ldb r1, [msg + r0++]\n"
+                ".retry:\n"
+                "    ldq r2, [r3 + 8]\n"
+                "    bbz r2, 0x02, .retry\n"
+                "    stq r3, r1\n"
+                "    bnz r1, .loop\n"
+                ".end:\n"
+                "    stq [r3 + 0x4000], 0\n"
+            ));
+            if(objectFile == NULL || firmwareFile == NULL || unsavedFile == NULL)
+            {
+                diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate virtual files");
+                return 1;
+            }
 
-    Boolean success = ETAssemblerInvocationSetInputFile(inv, unsaved_file) && ETAssemblerInvocationSetOutputFile(inv, object_file) && ETAssemblerInvocationEmit(inv);
-    ETAssemblerDiagnosticConsumerEmit(assemblerDiagnosticConsumer);
-    if(!success)
-    {
-        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "ouweee =<");
-        return 1;
-    }
+            /* we need the invocation to assemble */
+            EFAUTOREL ETAssemblerDiagnosticConsumerRef diagnosticConsumer = ETAssemblerDiagnosticConsumerCreate(kEFAllocatorDefault, ETAssemblerDiagnosticOptionsDefault);
+            EFAUTOREL ETAssemblerInvocationRef inv = ETAssemblerInvocationCreate(kEFAllocatorDefault, diagnosticConsumer);
 
-    /* now we come to linkage >:3 */
-    EFAUTOREL EFMutableArrayRef inputFiles = EFArrayCreateMutable(kEFAllocatorDefault, kEFArrayCallbacksObjectCallbacks, 1);
-    if(!EFArrayAppendValue(inputFiles, object_file))
-    {
-        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "couldn't allocate input files array for the linker");
-        return 1;
-    }
+            Boolean success = ETAssemblerInvocationSetInputFile(inv, unsavedFile) && ETAssemblerInvocationSetOutputFile(inv, objectFile) && ETAssemblerInvocationEmit(inv);
+            ETAssemblerDiagnosticConsumerEmit(diagnosticConsumer);
+            if(!success)
+            {
+                diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "ouweee =<");
+                return 1;
+            }
+        }
 
-    EFAUTOREL EFFileRef firmware_file = EFFileCreateWithStringAndPath(kEFAllocatorDefault, EFFilePolicyOutData, EFSTR("test.img"), EFSTR(""));
-    if(firmware_file == NULL)
-    {
-        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate virtual firmware file");
-        return 1;
-    }
+        /* linking */
+        {
+            EFAUTOREL EFMutableArrayRef inputFiles = EFArrayCreateMutable(kEFAllocatorDefault, kEFArrayCallbacksObjectCallbacks, 1);
+            if(!EFArrayAppendValue(inputFiles, objectFile))
+            {
+                diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "couldn't allocate input files array for the linker");
+                return 1;
+            }
 
-    linker_diagnostic_consumer_t *lnkconsumer = linker_diagnostic_consumer_alloc();
-    if(lnkconsumer == NULL)
-    {
-        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate linker's diagnostic consumer");
-        return 1;
-    }
+            linker_diagnostic_consumer_t *diagnosticConsumer = linker_diagnostic_consumer_alloc();
+            if(diagnosticConsumer == NULL)
+            {
+                diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate linker's diagnostic consumer");
+                return 1;
+            }
 
-    linker_options_t linkerOptions = linker_options_default;
-    linkerOptions.verbose = true;
-    linkerOptions.use_old_magic = true;
-    linker_invocation_t *lnkinv = linker_invocation_alloc(linkerOptions, lnkconsumer);
-    if(lnkinv == NULL)
-    {
-        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate linker's invocation");
-        return 1;
-    }
+            linker_options_t linkerOptions = linker_options_default;
+            linkerOptions.verbose = true;
+            linkerOptions.use_old_magic = true;
+            linker_invocation_t *inv = linker_invocation_alloc(linkerOptions, diagnosticConsumer);
+            if(inv == NULL)
+            {
+                diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate linker's invocation");
+                return 1;
+            }
 
-    success = linker_link(lnkinv, inputFiles, NULL, firmware_file);
-    linker_invocation_dealloc(lnkinv);
-    linker_diagnostic_consumer_emit(lnkconsumer);
-    linker_diagnostic_consumer_dealloc(lnkconsumer);
-    if(!success)
-    {
-        diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to link virtual object file into virtual firmware file");
-        return 1;
+            Boolean success = linker_link(inv, inputFiles, NULL, firmwareFile);
+            linker_invocation_dealloc(inv);
+            linker_diagnostic_consumer_emit(diagnosticConsumer);
+            linker_diagnostic_consumer_dealloc(diagnosticConsumer);
+            if(!success)
+            {
+                diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to link virtual object file into virtual firmware file");
+                return 1;
+            }
+        }
     }
 
     /* let the core spin >:3 */
@@ -136,7 +136,7 @@ SInt32 main(void)
         return 1;
     }
 
-    if(!E64MemoryLoadImage(E64MachineGetMemory(machine), firmware_file))
+    if(!E64MemoryLoadImage(E64MachineGetMemory(machine), firmwareFile))
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to load virtual firmware file into virtual machine");
         return 1;
