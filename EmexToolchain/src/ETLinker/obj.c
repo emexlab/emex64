@@ -52,7 +52,7 @@ static void __linker_object_deinit(EFObjectRef ref)
 
 linker_object_t *linker_object_alloc(EFFileRef object_file)
 {
-    linker_object_t *obj = (linker_object_t*)EFMallocBlockCreateWithDeinitHandler(kEFAllocatorDefault, sizeof(struct linker_object), __linker_object_deinit);
+    EFAUTOREL linker_object_t *obj = (linker_object_t*)EFMallocBlockCreateWithDeinitHandler(kEFAllocatorDefault, sizeof(struct linker_object), __linker_object_deinit);
     if(obj == NULL)
     {
         return NULL;
@@ -73,7 +73,6 @@ linker_object_t *linker_object_alloc(EFFileRef object_file)
     obj->mapping = EFFileHandleCopyMapping(EFGetAllocator(object_file), fileHandle);
     if(obj->mapping == NULL)
     {
-        free(obj);
         return NULL;
     }
 
@@ -81,8 +80,6 @@ linker_object_t *linker_object_alloc(EFFileRef object_file)
     obj->size = EFMappingGetSize(obj->mapping);
     if(obj->size < sizeof(ELF64_Shdr))
     {
-        //diag_error(NULL, "%s: too small to be ELF\n", obj->file->path);
-        free(obj);
         return NULL;
     }
 
@@ -93,22 +90,16 @@ linker_object_t *linker_object_alloc(EFFileRef object_file)
        obj->ehdr->e_ident[2] != ELF_MAGIC_2 ||
        obj->ehdr->e_ident[3] != ELF_MAGIC_3)
     {
-        //diag_error(NULL, "%s: not an ELF file\n", obj->file->path);
-        free(obj);
         return NULL;
     }
 
     if(obj->ehdr->e_machine != ELF_MAGIC_EMEX64)
     {
-        //diag_error(NULL, "%s: not an emex64 object (e_machine=0x%x)\n", obj->file->path, obj->ehdr->e_machine);
-        free(obj);
         return NULL;
     }
 
     if(obj->ehdr->e_type != kELFTypeRel)
     {
-        //diag_error(NULL, "%s: not a relocatable object\n", obj->file->path);
-        free(obj);
         return NULL;
     }
 
@@ -161,7 +152,7 @@ linker_object_t *linker_object_alloc(EFFileRef object_file)
         obj->idx_strtab = (SInt32)obj->shdrs[obj->idx_symtab].sh_link;
     }
 
-    return obj;
+    return (linker_object_t*)EFAUTOTRANSFER(obj);
 }
 
 void linker_object_dealloc(linker_object_t *obj)
