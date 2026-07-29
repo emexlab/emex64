@@ -247,3 +247,7 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/public/
     FILES_MATCHING
         PATTERN "*.h"
 )
+
+set_target_properties(EmexToolchain PROPERTIES
+    INSTALL_NAME_DIR "/usr/local/lib"
+)

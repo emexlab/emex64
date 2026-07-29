@@ -23,35 +23,6 @@ if(EMEX64_BUILD_EXAMPLES)
     add_subdirectory(examples/emex64hello)
 endif()
 
-if(NOT EMEX64LIB_STATIC)
-    if(APPLE)
-        set(CMAKE_MACOSX_RPATH TRUE)
-        set(CMAKE_INSTALL_RPATH "@loader_path/../lib")
-
-        if(EMEX64_BUILD_TOOLS)
-            set_target_properties(emex64asm PROPERTIES INSTALL_RPATH "@loader_path/../lib")
-            set_target_properties(emex64vm PROPERTIES INSTALL_RPATH "@loader_path/../lib")
-            set_target_properties(emex64ld PROPERTIES INSTALL_RPATH "@loader_path/../lib")
-        endif()
-
-        if(EMEX64_BUILD_EXAMPLES)
-            set_target_properties(emex64hello PROPERTIES INSTALL_RPATH "@loader_path/../lib")
-        endif()
-    elseif(UNIX)
-        set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
-
-        if(EMEX64_BUILD_TOOLS)
-            set_target_properties(emex64asm PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
-            set_target_properties(emex64vm PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
-            set_target_properties(emex64ld PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
-        endif()
-
-        if(EMEX64_BUILD_EXAMPLES)
-            set_target_properties(emex64hello PROPERTIES INSTALL_RPATH "$ORIGIN/../lib")
-        endif()
-    endif()
-endif()
-
 if(MSVC)
     # Fuck MSVC nobody likes you
     message(FATAL_ERROR "MSVC is not supported. Switch to Linux moron, microslop sheep!")
