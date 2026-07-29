@@ -30,7 +30,8 @@ section .data
 %if% PUT_DRAW_LOGO
     putc_uart_logo db "\n         +++++++++++++\n        ++++++++++++++\n       +++++++++++++++\n      ++++++++++++++++\n     +++++      ++++++\n    +++++      ++++++ \n   +++++      ++++++  \n  +++++      ++++++   \n +++++      ++++++    \n+++++      ++++++     \n+++++      +++++      \n +++++      +++       \n  +++++      +        \n   +++++              \n    +++++             \n     +++++            \n      ++++++++++++++++\n       +++++++++++++++\n        ++++++++++++++\n         +++++++++++++\n\0"
     putc_copyright db "\nLightweightArchitecture(c) 2024 - 2026\nemexLabs(c) 2026\n\n\0"
-    raw_logo df "./logo.raw"
+    la_logo df "lightweight-arch-logo.raw"
+    emex_logo df "logo.raw"
 %endif% ; PUT_DRAW_LOGO
     putc_sym dq gui_putc
 
@@ -53,6 +54,7 @@ draw_scaled_logo:
     wret
 
 _draw_scaled_logo:
+    mov er9, r3
     ldw r4, EMEX64_FB_REG_WIDTH
     ldw r5, EMEX64_FB_REG_HEIGHT
     mov r6, 0
@@ -60,7 +62,7 @@ _draw_scaled_logo:
     cmp r6, 20
     bge .done
     mul r7, r6, 22
-    add r7, raw_logo
+    add r7, er9
     mov r9, 0
 .x_loop:
     cmp r9, 22
@@ -126,7 +128,8 @@ put_init:
     ret
 .end_gui:
 %if% PUT_DRAW_LOGO
-    blw draw_scaled_logo, 6, 15, 15    
+    blw draw_scaled_logo, 6, 15, 15, la_logo
+    blw draw_scaled_logo, 5, 150, 20, emex_logo
     stw gui_line, 14
     blw puts, putc_copyright
 %endif% ; PUT_DRAW_LOGO
