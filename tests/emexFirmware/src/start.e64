@@ -136,7 +136,9 @@ main:
     blw redirect_symbol, putbase, putbase_redirect
 %endif% ; FW_HOOK_TEST
 
-    blw disasm_sym, _start, [_start.poweroff - _start]
+    blw putc, '\n'
+    blw disasm_sym, main, [.end - main]
+    blw putc, '\n'
 
 .hang:
     ldq r0, meow_cnt
@@ -147,6 +149,7 @@ main:
     stq meow_cnt, r0
     hlt
     b .hang
+.end:
 
 _start:
     ; will just shutdown for now
@@ -188,5 +191,4 @@ _start:
     bl interrupt_init                               ; initilizing interrupt controller
     bl main                                         ; branching to main symbol
 .poweroff:
-    stq EMEX64_PLATFORM_REG_PWR, 0                  ; telling platform device to turn off
-    
+    stq EMEX64_PLATFORM_REG_PWR, 0                  ; telling platform device to turn off    

@@ -21,7 +21,7 @@
 
 %include% <emex64.e64inc>
 
-%define% EMEX64_OPCODE_MAX  0b00110111
+%define% EMEX64_OPCODE_MAX  0b00111011
 
 %define% EMEX64_CODING_END          0b0000
 %define% EMEX64_CODING_REG          0b0001
@@ -102,6 +102,10 @@ section .data
     disasm_opcode_clr_msg db "clr\0\0\0\0", 16
     disasm_opcode_cmov_msg db "cmov\0\0\0", 2
     disasm_opcode_cmovb_msg db "cmovb\0\0", 2
+    disasm_opcode_clar_msg db "clar\0\0\0", 16
+    disasm_opcode_bbz_msg db "bbz\0\0\0\0", 3
+    disasm_opcode_bbnz_msg db "bbnz\0\0\0", 3
+    disasm_opcode_rdrnd_msg db "rdrnd\0\0", 1
 
 ; register string table
 section .data
@@ -157,6 +161,7 @@ extern bitbolt_init
 extern bitbolt_read
 extern bitbolt_align
 extern bitbolt_bytes_used
+extern bitbolt_get_addr
 
 disasm_put_opcode:
     blw bitbolt_read, 8
@@ -220,6 +225,17 @@ disasm_put_operand:
     b .get_me_tf_out_of_here
 .addr64:
     blw bitbolt_align
+    blw bitbolt_read, 64
+    blw putc, 'A'
+    blw putc, 'd'
+    blw putc, 'd'
+    blw putc, 'r'
+    blw putc, '6'
+    blw putc, '4'
+    blw putc, '('
+    blw disasm_put_hex, rr
+    blw putc, ')'
+    b .get_me_tf_out_of_here
 .imm64:
     blw bitbolt_read, 64
     blw disasm_put_hex, rr
@@ -275,6 +291,7 @@ disasm_instruction:
     blw disasm_put_opcode
 
     mov r0, rr ; caries the number of operands returned by disasm_put_opcode
+    bz r0, .loop_end
     clr r1
 .loop:
     blw bitbolt_read, 4
@@ -309,6 +326,14 @@ disasm_sym:
     blw bitbolt_init, r0, 0
 
 .loop:
+    blw putc, '<'
+    blw putc, '0'
+    blw putc, 'x'
+    blw bitbolt_get_addr
+    blw putbase, rr, 16
+    blw putc, '>'
+    blw putc, ':'
+    blw putc, ' '
     blw disasm_instruction
     ;bz rr, .failure ; if disasm_instruction returns zero it means that the disassembling failed
     blw bitbolt_bytes_used

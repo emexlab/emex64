@@ -15,7 +15,7 @@ compile:
 	emex64asm $(FILES) -o firmware.img -Iinc -Wl,-T,emex64.e64ld -DUSES_FW_LDSCRIPT -DUSES_FW_CODE $(FLAGS)
 
 execute:
-	emex64vm --display $(VM_DISPLAY) -f firmware.img -m:kb $(VM_MEMORY)
+	emex64vm --display $(VM_DISPLAY) --display:resolution 1280 800 -f firmware.img -m:kb $(VM_MEMORY)
 
 clean:
 	rm firmware.img

@@ -93,3 +93,9 @@ bitbolt_bytes_used:
     add rr, 7
     shr rr, 3
     wret
+
+bitbolt_get_addr:
+    blw bitbolt_bytes_used
+    ldq r0, bitbolt_buf
+    add rr, r0
+    wret
