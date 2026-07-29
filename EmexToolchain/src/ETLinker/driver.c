@@ -204,12 +204,10 @@ Boolean linker_driver_drive_the_fucking_car(linker_driver_t *driver)
     }
 
     Boolean success = linker_link(inv, driver->inputFiles, driver->linkerScriptFiles, driver->output_file);
+    linker_invocation_dealloc(inv);
     if(!success)
     {
-        linker_invocation_dealloc(inv);
         EFFileUnlink(driver->output_file);
     }
-
-    linker_invocation_dealloc(inv);
     return success;
 }
