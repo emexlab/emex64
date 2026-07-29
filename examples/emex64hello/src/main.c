@@ -39,7 +39,7 @@ EFFileRef EFFileCreateWithStringAndPath(EFAllocatorRef allocatorRef,
 
 SInt32 main(void)
 {
-    /* virtual ELF object file */
+    /* firmware file shall be available till execution happened */
     EFAUTOREL EFFileRef firmwareFile = EFFileCreateWithStringAndPath(kEFAllocatorDefault, EFFilePolicyOutData, EFSTR("test.img"), EFSTR(""));
 
     /* building pipeline */
