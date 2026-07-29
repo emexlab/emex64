@@ -51,11 +51,22 @@ linker_driver_t *linker_driver_alloc(SInt32 argc,
 
     driver->output_file = NULL;
 
-    driver->input_file = calloc(argc, sizeof(EFFileRef));
-    driver->input_file_cnt = 0;
+    driver->inputFiles = EFArrayCreateMutable(kEFAllocatorDefault, kEFArrayCallbacksObjectCallbacks, (EFIndex)argc);
+    if(driver->inputFiles == NULL)
+    {
+        linker_diagnostic_consumer_dealloc(driver->consumer);
+        free(driver);
+        return NULL;
+    }
 
-    driver->linker_script_file = calloc(argc, sizeof(EFFileRef));
-    driver->linker_script_file_cnt = 0;
+    driver->linkerScriptFiles = EFArrayCreateMutable(kEFAllocatorDefault, kEFArrayCallbacksObjectCallbacks, (EFIndex)argc);
+    if(driver->linkerScriptFiles == NULL)
+    {
+        EFRelease(driver->inputFiles);
+        linker_diagnostic_consumer_dealloc(driver->consumer);
+        free(driver);
+        return NULL;
+    }
 
     for(SInt32 i = 1; i < argc; i++)
     {
@@ -100,24 +111,22 @@ linker_driver_t *linker_driver_alloc(SInt32 argc,
         else if((strcmp(argv[i], "-T") == 0 || strcmp(argv[i], "--script") == 0) && i + 1 < argc)
         {
             EFAUTOREL EFStringRef pathStr = EFStringCreateWithCString(kEFAllocatorDefault, argv[++i], kEFStringEncodingUTF8);
-            EFFileRef script_file = EFFileCreateWithPath(kEFAllocatorDefault, EFFilePolicyInData, pathStr);
-            if(script_file == NULL)
+            EFAUTOREL EFFileRef scriptFile = EFFileCreateWithPath(kEFAllocatorDefault, EFFilePolicyInData, pathStr);
+            if(!EFArrayAppendValue(driver->linkerScriptFiles, scriptFile))
             {
                 diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "unknown or non existing script file '%s'", argv[i]);
                 goto failure;
             }
-            driver->linker_script_file[driver->linker_script_file_cnt++] = script_file;
         }
         else if (strncmp(argv[i], "-T", 2) == 0 && argv[i][2])
         {
             EFAUTOREL EFStringRef pathStr = EFStringCreateWithCString(kEFAllocatorDefault, argv[i] + 2, kEFStringEncodingUTF8);
-            EFFileRef script_file = EFFileCreateWithPath(kEFAllocatorDefault, EFFilePolicyInData, pathStr);
-            if(script_file == NULL)
+            EFAUTOREL EFFileRef scriptFile = EFFileCreateWithPath(kEFAllocatorDefault, EFFilePolicyInData, pathStr);
+            if(!EFArrayAppendValue(driver->linkerScriptFiles, scriptFile))
             {
-                diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "unknown or non existing script file '%s'", argv[i] + 2);
+                diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "unknown or non existing script file '%s'", argv[i]);
                 goto failure;
             }
-            driver->linker_script_file[driver->linker_script_file_cnt++] = script_file;
         }
         else if(strcmp(argv[i], "-v") == 0)
         {
@@ -138,13 +147,12 @@ linker_driver_t *linker_driver_alloc(SInt32 argc,
         else if (argv[i][0] != '-')
         {
             EFAUTOREL EFStringRef pathStr = EFStringCreateWithCString(kEFAllocatorDefault, argv[i], kEFStringEncodingUTF8);
-            EFFileRef input_file = EFFileCreateWithPath(kEFAllocatorDefault, EFFilePolicyInData, pathStr);
-            if(input_file == NULL)
+            EFAUTOREL EFFileRef inputFile = EFFileCreateWithPath(kEFAllocatorDefault, EFFilePolicyInData, pathStr);
+            if(!EFArrayAppendValue(driver->inputFiles, inputFile))
             {
                 diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "unknown or non existing input file '%s'", argv[i]);
                 goto failure;
             }
-            driver->input_file[driver->input_file_cnt++] = input_file;
         }
         else
         {
@@ -153,7 +161,7 @@ linker_driver_t *linker_driver_alloc(SInt32 argc,
         }
     }
 
-    if(driver->input_file_cnt <= 0)
+    if(EFArrayGetCount(driver->inputFiles) <= 0)
     {
         diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "no input files");
         goto failure;
@@ -179,17 +187,8 @@ failure:
 
 void linker_driver_dealloc(linker_driver_t *driver)
 {
-    for(UInt64 i = 0; i < driver->input_file_cnt; i++)
-    {
-        EFRelease(driver->input_file[i]);
-    }
-    free(driver->input_file);
-
-    for(UInt64 i = 0; i < driver->linker_script_file_cnt; i++)
-    {
-        EFRelease(driver->linker_script_file[i]);
-    }
-    free(driver->linker_script_file);
+    EFRelease(driver->linkerScriptFiles);
+    EFRelease(driver->inputFiles);
     EFReleaseTry(driver->output_file);
     linker_diagnostic_consumer_emit(driver->consumer);
     linker_diagnostic_consumer_dealloc(driver->consumer);
@@ -204,7 +203,7 @@ Boolean linker_driver_drive_the_fucking_car(linker_driver_t *driver)
         return false;
     }
 
-    Boolean success = linker_link(inv, driver->input_file, driver->input_file_cnt, driver->linker_script_file, driver->linker_script_file_cnt, driver->output_file);
+    Boolean success = linker_link(inv, driver->inputFiles, driver->linkerScriptFiles, driver->output_file);
     if(!success)
     {
         linker_invocation_dealloc(inv);

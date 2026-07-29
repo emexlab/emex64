@@ -29,6 +29,6 @@
 
 typedef struct linker_invocation linker_invocation_t;
 
-Boolean linker_link(linker_invocation_t *inv, EFFileRef *input_file, UInt64 input_file_cnt, EFFileRef *linker_script_file, UInt64 linker_script_file_cnt, EFFileRef output);
+Boolean linker_link(linker_invocation_t *inv, EFArrayRef inputFiles, EFArrayRef linkerScriptFiles, EFFileRef output);
 
 #endif /* EMEX64LD_EMIT_H */

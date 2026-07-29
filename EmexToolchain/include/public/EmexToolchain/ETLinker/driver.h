@@ -28,15 +28,11 @@
 
 typedef struct {
     linker_options_t options;
-    linker_diagnostic_consumer_t *consumer; /* owned */
+    linker_diagnostic_consumer_t *consumer;
 
     EFFileRef output_file;
-
-    EFFileRef *input_file;               /* borrowed */
-    UInt64 input_file_cnt;
-
-    EFFileRef *linker_script_file;       /* borrowed */
-    UInt64 linker_script_file_cnt;
+    EFMutableArrayRef inputFiles;
+    EFMutableArrayRef linkerScriptFiles;
 } linker_driver_t;
 
 linker_driver_t *linker_driver_alloc(SInt32 argc, const char **argv);

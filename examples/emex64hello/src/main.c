@@ -87,19 +87,17 @@ SInt32 main(void)
     }
 
     /* now we come to linkage >:3 */
-    EFFileRef *input_file = calloc(1, sizeof(EFFileRef));
-    if(input_file == NULL)
+    EFAUTOREL EFMutableArrayRef inputFiles = EFArrayCreateMutable(kEFAllocatorDefault, kEFArrayCallbacksObjectCallbacks, 1);
+    if(!EFArrayAppendValue(inputFiles, object_file))
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "couldn't allocate input files array for the linker");
         return 1;
     }
-    input_file[0] = object_file;
 
     EFAUTOREL EFFileRef firmware_file = EFFileCreateWithStringAndPath(kEFAllocatorDefault, EFFilePolicyOutData, EFSTR("test.img"), EFSTR(""));
     if(firmware_file == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate virtual firmware file");
-        free(input_file);
         return 1;
     }
 
@@ -107,7 +105,6 @@ SInt32 main(void)
     if(lnkconsumer == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate linker's diagnostic consumer");
-        free(input_file);
         return 1;
     }
 
@@ -118,15 +115,13 @@ SInt32 main(void)
     if(lnkinv == NULL)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to allocate linker's invocation");
-        free(input_file);
         return 1;
     }
 
-    success = linker_link(lnkinv, input_file, 1, NULL, 0, firmware_file);
+    success = linker_link(lnkinv, inputFiles, NULL, firmware_file);
     linker_invocation_dealloc(lnkinv);
     linker_diagnostic_consumer_emit(lnkconsumer);
     linker_diagnostic_consumer_dealloc(lnkconsumer);
-    free(input_file);
     if(!success)
     {
         diagnostic_report(NULL, kDiagnosticSeverityFatal, NULL, "failed to link virtual object file into virtual firmware file");

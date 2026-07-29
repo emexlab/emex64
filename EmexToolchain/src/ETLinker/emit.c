@@ -816,27 +816,29 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
 }
 
 Boolean linker_link(linker_invocation_t *inv,
-                    EFFileRef *input_file,
-                    UInt64 input_file_cnt,
-                    EFFileRef *linker_script_file,
-                    UInt64 linker_script_file_cnt,
+                    EFArrayRef inputFiles,
+                    EFArrayRef linkerScriptFiles,
                     EFFileRef output)
 {
-    for(UInt64 i = 0; i < input_file_cnt; i++)
+    EFIndex inputFileCount = EFArrayGetCount(inputFiles);
+    for(EFIndex index = 0; index < inputFileCount; index++)
     {
-        if(!linker_load_object(inv, input_file[i]))
+        EFFileRef file = EFArrayGetValueAtIndex(inputFiles, index);
+        if(!linker_load_object(inv, file))
         {
-            diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "object file \'%s\' couldn't be loaded", EFStringGetCStringPtr(EFURLGetPath(EFFileGetURL(input_file[i])), kEFStringEncodingUTF8));
+            diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "object file \'%s\' couldn't be loaded", EFStringGetCStringPtr(EFURLGetPath(EFFileGetURL(file)), kEFStringEncodingUTF8));
             return false;
         }
     }
     linker_layout(inv);
 
-    for(UInt64 i = 0; i < linker_script_file_cnt; i++)
+    EFIndex linkerScriptFileCount = EFArrayGetCount(linkerScriptFiles);
+    for(EFIndex index = 0; index < linkerScriptFileCount; index++)
     {
-        if(!linker_script_parse(inv, linker_script_file[i]))
+        EFFileRef file = EFArrayGetValueAtIndex(linkerScriptFiles, index);
+        if(!linker_script_parse(inv, file))
         {
-            diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "linker script file \'%s\' is problematic", EFStringGetCStringPtr(EFURLGetPath(EFFileGetURL(input_file[i])), kEFStringEncodingUTF8));
+            diagnostic_report(inv->consumer, kDiagnosticSeverityError, NULL, "linker script file \'%s\' is problematic", EFStringGetCStringPtr(EFURLGetPath(EFFileGetURL(file)), kEFStringEncodingUTF8));
             return false;
         }
     }
