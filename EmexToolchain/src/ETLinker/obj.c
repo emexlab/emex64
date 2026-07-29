@@ -44,9 +44,19 @@ static inline unsigned long align_up(unsigned long v,
     return (v + a - 1) & ~(a - 1);
 }
 
+static void __linker_object_deinit(EFObjectRef ref)
+{
+    linker_object_t *obj = (linker_object_t*)ref;
+    EFReleaseTry(obj->mapping);
+}
+
 linker_object_t *linker_object_alloc(EFFileRef object_file)
 {
-    linker_object_t *obj = calloc(1, sizeof(linker_object_t));
+    linker_object_t *obj = (linker_object_t*)EFMallocBlockCreateWithDeinitHandler(kEFAllocatorDefault, sizeof(struct linker_object), __linker_object_deinit);
+    if(obj == NULL)
+    {
+        return NULL;
+    }
 
     /* setting to -1 as a sentinel */
     obj->idx_text = -1;
@@ -156,8 +166,7 @@ linker_object_t *linker_object_alloc(EFFileRef object_file)
 
 void linker_object_dealloc(linker_object_t *obj)
 {
-    EFReleaseTry(obj->mapping);
-    free(obj);
+    EFReleaseTry((EFObjectRef)obj);
 }
 
 Boolean linker_load_object(linker_invocation_t *inv,
