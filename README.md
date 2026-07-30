@@ -3,7 +3,9 @@
 ## Introduction
 emex64 is a 64bit lightweight little endian architecture. It's a mix out of RISC and CISC it is based on no previous architecture, except the ones @mach-port-t(me) created in the past, emex64 evolved from LA8 -> LA816 -> LA16 -> LA32 -> LA64 -> emex64. emex64 is a much better version of LA64.
 
-Outside the SoC, the emulated board additionally integrates support for UART, Audio, and (implementation pending) Graphics.
+Outside the SoC, the emulated board additionally integrates support for UART, (Re-Implementation pending (a vibecoder contributed audio before and was cought vibecoding)) Audio, and (implementation pending) Graphics.
+
+Besides that there is a proper polymorphic toolchain called `EmexToolchain` which can be used to assemble, link and execute emex64 code. The assembler spits out ELF relocatable objects, which the linker can either link all of them together to a firmware image which is something like emex64's BIOS or to a merged ELF relocatable object. ELF is the only thing that I didn't do from scratch, I originally wanted to use the LO(LightweightObject) format made by me, but thought then that this will be nightmares to implement.
 
 ## Setup and Installation of the emex64 toolchain
 Bulding the toolchain and installing it is as simple as the following:
@@ -151,3 +153,7 @@ As only 10 general purpose registers is not much we created a extended register 
 | `clr`       | `0b00110101` | Clears operands. *(2) |
 | `cmov`      | `0b00110110` | Moves a value of a register or immediate into a control register of the core.  |
 | `cmovb`     | `0b00110111` | Moves a value from a control register into a register. |
+| `clar`      | `0b00111000` | Clears all registers in the normal and the extended register file. |
+| `bbz`       | `0b00111001` | Tests for a bit and if set it branches. |
+| `bbnz`      | `0b00111010` | Tests for a bit and if not set it branches. |
+| `rdrnd`     | `0b00111011` | Sets operand to a random number by entropy. |

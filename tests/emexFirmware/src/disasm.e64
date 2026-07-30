@@ -102,7 +102,7 @@ section .data
     disasm_opcode_clr_msg db "clr\0\0\0\0", 16
     disasm_opcode_cmov_msg db "cmov\0\0\0", 2
     disasm_opcode_cmovb_msg db "cmovb\0\0", 2
-    disasm_opcode_clar_msg db "clar\0\0\0", 16
+    disasm_opcode_clar_msg db "clar\0\0\0", 0
     disasm_opcode_bbz_msg db "bbz\0\0\0\0", 3
     disasm_opcode_bbnz_msg db "bbnz\0\0\0", 3
     disasm_opcode_rdrnd_msg db "rdrnd\0\0", 1
