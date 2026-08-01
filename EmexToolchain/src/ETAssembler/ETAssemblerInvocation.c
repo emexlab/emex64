@@ -86,9 +86,13 @@ static void __ETAssemblerInvocationDeinit(EFObjectRef invocationRef)
     EFReleaseTry(invocation->outputFile);
 }
 
-EFClass ETAssemblerInvocationClass = {
+static EFClassDefinitionV2 ETAssemblerInvocationClass = {
+    .header = {
+        .version = 2,
+        .typeID = kEFTypeIDNone,
+        .name = NULL,
+    },
     .name = "ETAssemblerInvocation",
-    .typeID = kEFNotATypeID,
     .init = NULL,
     .deinit = __ETAssemblerInvocationDeinit,
     .equal = NULL,
@@ -105,7 +109,7 @@ EFTypeID ETAssemblerInvocationGetTypeID(void)
 {
     static pthread_once_t once = PTHREAD_ONCE_INIT;
     pthread_once(&once, ETAssemblerInvocationRegisterClass);
-    return ETAssemblerInvocationClass.typeID;
+    return ETAssemblerInvocationClass.header.typeID;
 }
 
 ETAssemblerInvocationRef ETAssemblerInvocationCreate(EFAllocatorRef allocatorRef,

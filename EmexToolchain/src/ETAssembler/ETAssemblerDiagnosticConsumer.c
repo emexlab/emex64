@@ -20,6 +20,7 @@
  */
 
 #include <stdarg.h>
+#include <pthread.h>
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerDiagnosticConsumer.h>
 
@@ -34,9 +35,13 @@ static void __ETAssemblerDiagnosticConsumerDeinit(EFObjectRef consumerRef)
     assembler_diagnostic_consumer_dealloc(consumer->consumer);
 }
 
-static EFClass ETAssemblerDiagnosticConsumerClass = {
+static EFClassDefinitionV2 ETAssemblerDiagnosticConsumerClass = {
+    .header = {
+        .version = 2,
+        .typeID = kEFTypeIDNone,
+        .name = NULL,
+    },
     .name = "ETAssemblerDiagnosticConsumer",
-    .typeID = kEFNotATypeID,
     .init = NULL,
     .deinit = __ETAssemblerDiagnosticConsumerDeinit,
     .equal = NULL,
@@ -52,7 +57,7 @@ EFTypeID ETAssemblerDiagnosticConsumerGetTypeID(void)
 {
     static pthread_once_t once = PTHREAD_ONCE_INIT;
     pthread_once(&once, ETAssemblerDiagnosticConsumerRegisterClass);
-    return ETAssemblerDiagnosticConsumerClass.typeID;
+    return ETAssemblerDiagnosticConsumerClass.header.typeID;
 }
 
 ETAssemblerDiagnosticConsumerRef ETAssemblerDiagnosticConsumerCreate(EFAllocatorRef allocatorRef,

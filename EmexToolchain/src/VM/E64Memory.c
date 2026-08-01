@@ -52,9 +52,13 @@ static void __E64MemoryDeinit(E64MemoryRef memoryRef)
     }
 }
 
-static EFClass E64MemoryClass = {
+static EFClassDefinitionV2 E64MemoryClass = {
+    .header = {
+        .version = 2,
+        .typeID = kEFTypeIDNone,
+        .name = NULL,
+    },
     .name = "E64Memory",
-    .typeID = kEFNotATypeID,
     .init = NULL,
     .deinit = __E64MemoryDeinit,
     .equal = NULL,
@@ -75,7 +79,7 @@ EFTypeID E64MemoryGetTypeID(void)
 {
     static pthread_once_t once = PTHREAD_ONCE_INIT;
     pthread_once(&once, E64MemoryRegisterClass);
-    return E64MemoryClass.typeID;
+    return E64MemoryClass.header.typeID;
 }
 
 E64MemoryRef E64MemoryCreate(EFAllocatorRef allocatorRef,

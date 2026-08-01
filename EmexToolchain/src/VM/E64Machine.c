@@ -55,9 +55,13 @@ static void __E64MachineDeinit(EFObjectRef machineRef)
     }
 }
 
-static EFClass E64MachineClass = {
+static EFClassDefinitionV2 E64MachineClass = {
+    .header = {
+        .version = 2,
+        .typeID = kEFTypeIDNone,
+        .name = NULL,
+    },
     .name = "E64Machine",
-    .typeID = kEFNotATypeID,
     .init = NULL,
     .deinit = __E64MachineDeinit,
     .equal = NULL,
@@ -73,7 +77,7 @@ EFTypeID E64MachineGetTypeID(void)
 {
     static pthread_once_t once = PTHREAD_ONCE_INIT;
     pthread_once(&once, E64MachineRegisterClass);
-    return E64MachineClass.typeID;
+    return E64MachineClass.header.typeID;
 }
 
 E64MachineRef E64MachineCreate(EFAllocatorRef allocatorRef)

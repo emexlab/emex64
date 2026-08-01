@@ -103,9 +103,13 @@ static EFIndex __E64ICFindPendingInterrupt(__E64IC ic)
     return -1;
 }
 
-static EFClass E64ICClass = {
+static EFClassDefinitionV2 E64ICClass = {
+    .header = {
+        .version = 2,
+        .typeID = kEFTypeIDNone,
+        .name = NULL,
+    },
     .name = "E64IC",
-    .typeID = kEFNotATypeID,
     .init = NULL,
     .deinit = NULL,
     .equal = NULL,
@@ -120,7 +124,7 @@ EFTypeID E64ICGetTypeID(void)
 {
     static pthread_once_t once = PTHREAD_ONCE_INIT;
     pthread_once(&once, E64ICRegisterClass);
-    return E64ICClass.typeID;
+    return E64ICClass.header.typeID;
 }
 
 E64ICRef E64ICCreate(EFAllocatorRef allocatorRef)

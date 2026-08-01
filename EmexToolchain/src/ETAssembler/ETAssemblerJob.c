@@ -42,9 +42,13 @@ static EFStringRef __ETAssemblerJobCopyDescription(EFObjectRef jobRef)
     return EFStringCreateWithFormat(EFGetAllocator(jobRef), EFSTR("<ETAssemblerJob %p>{command = %@, arguments = %@}"), jobRef, job->command, job->arguments);
 }
 
-static EFClass ETAssemblerJobClass = {
+static EFClassDefinitionV2 ETAssemblerJobClass = {
+    .header = {
+        .version = 2,
+        .typeID = kEFTypeIDNone,
+        .name = NULL,
+    },
     .name = "ETAssemblerJob",
-    .typeID = kEFNotATypeID,
     .init = NULL,
     .deinit = __ETAssemblerJobDeinit,
     .equal = NULL,
@@ -60,7 +64,7 @@ EFTypeID ETAssemblerJobGetTypeID(void)
 {
     static pthread_once_t once = PTHREAD_ONCE_INIT;
     pthread_once(&once, ETAssemblerJobRegisterClass);
-    return ETAssemblerJobClass.typeID;
+    return ETAssemblerJobClass.header.typeID;
 }
 
 ETAssemblerJobRef ETAssemblerJobCreate(EFAllocatorRef allocatorRef,

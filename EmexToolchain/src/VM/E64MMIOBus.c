@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <pthread.h>
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/E64MMIOBus.h>
 
@@ -34,9 +35,13 @@ static void __E64MMIOBusDeinit(E64MMIOBusRef MMIOBusRef)
     }
 }
 
-static EFClass E64MMIOBusClass = {
+static EFClassDefinitionV2 E64MMIOBusClass = {
+    .header = {
+        .version = 2,
+        .typeID = kEFTypeIDNone,
+        .name = NULL,
+    },
     .name = "E64MMIOBus",
-    .typeID = kEFNotATypeID,
     .init = NULL,
     .deinit = __E64MMIOBusDeinit,
     .equal = NULL,
@@ -51,7 +56,7 @@ EFTypeID E64MMIOBusGetTypeID(void)
 {
     static pthread_once_t once = PTHREAD_ONCE_INIT;
     pthread_once(&once, E64MMIOBusRegisterClass);
-    return E64MMIOBusClass.typeID;
+    return E64MMIOBusClass.header.typeID;
 }
 
 E64MMIOBusRef E64MMIOBusCreate(EFAllocatorRef allocatorRef)

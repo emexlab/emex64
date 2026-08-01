@@ -128,9 +128,13 @@ static const UInt8 kImmBits[] = {
     [kE64ParameterCodingAddr64] = 64,
 };
 
-static EFClass E64CoreClass = {
+static EFClassDefinitionV2 E64CoreClass = {
+    .header = {
+        .version = 2,
+        .typeID = kEFTypeIDNone,
+        .name = NULL,
+    },
     .name = "E64Core",
-    .typeID = kEFNotATypeID,
     .init = NULL,
     .deinit = NULL,
     .equal = NULL,
@@ -146,7 +150,7 @@ EFTypeID E64CoreGetTypeID(void)
 {
     static pthread_once_t once = PTHREAD_ONCE_INIT;
     pthread_once(&once, E64CoreRegisterClass);
-    return E64CoreClass.typeID;
+    return E64CoreClass.header.typeID;
 }
 
 E64CoreRef E64CoreCreateWithMachine(EFAllocatorRef allocatorRef,

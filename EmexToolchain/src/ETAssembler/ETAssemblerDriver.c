@@ -92,9 +92,13 @@ static EFStringRef __ETAssemblerDriverCopyDescription(EFObjectRef driverRef)
     return EFStringCreateWithFormat(EFGetAllocator(driverRef), EFSTR("<ETAssemblerDriver %p>{arguments = %@, diagnosticConsumer = %@, inputFiles = %@, outputPath = %@, includeSearchPaths = %@, temporaryOutputPaths = %@, linkerFlags = %@, jobs = %@}"), driverRef, driver->arguments, driver->diagnosticConsumer, driver->inputFiles, driver->outputPath, driver->includeSearchPaths, driver->temporaryOutputPaths, driver->linkerFlags, driver->jobs);
 }
 
-EFClass ETAssemblerDriverClass = {
+static EFClassDefinitionV2 ETAssemblerDriverClass = {
+    .header = {
+        .version = 2,
+        .typeID = kEFTypeIDNone,
+        .name = NULL,
+    },
     .name = "ETAssemblerDriver",
-    .typeID = kEFNotATypeID,
     .init = NULL,
     .deinit = __ETAssemblerDriverDeinit,
     .equal = NULL,
@@ -111,7 +115,7 @@ EFTypeID ETAssemblerDriverGetTypeID(void)
 {
     pthread_once_t once = PTHREAD_ONCE_INIT;
     pthread_once(&once, ETAssemblerDriverRefisterClass);
-    return ETAssemblerDriverClass.typeID;
+    return ETAssemblerDriverClass.header.typeID;
 }
 
 Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)

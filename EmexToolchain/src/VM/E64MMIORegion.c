@@ -19,6 +19,7 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <pthread.h>
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/E64MMIORegion.h>
 
@@ -39,9 +40,13 @@ void emex64_mmio_fallback_write(E64CoreRef core,
     return;
 }
 
-static EFClass E64MMIORegionClass = {
+static EFClassDefinitionV2 E64MMIORegionClass = {
+    .header = {
+        .version = 2,
+        .typeID = kEFTypeIDNone,
+        .name = NULL,
+    },
     .name = "E64MMIORegion",
-    .typeID = kEFNotATypeID,
     .init = NULL,
     .deinit = NULL,
     .equal = NULL,
@@ -57,7 +62,7 @@ EFTypeID E64MMIORegionGetTypeID(void)
 {
     static pthread_once_t once = PTHREAD_ONCE_INIT;
     pthread_once(&once, E64MMIORegionRegisterClass);
-    return E64MMIORegionClass.typeID;
+    return E64MMIORegionClass.header.typeID;
 }
 
 E64MMIORegionRef E64MMIORegionCreate(EFAllocatorRef allocatorRef,
