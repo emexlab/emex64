@@ -168,6 +168,7 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
                 "  --help                 Shows this help menu.\n"
                 "  --version              Prints version.\n"
                 "  --in-process           All jobs are executed within the same process.\n"
+                "  --target               Sets the target the assembly files will be assembled for (i.e la64-generic or la64-generic-v15).\n"
                 "\n"
                 "  -o <output path>       Sets the output file path, is set to \"a.out\" when not passed.\n"
                 "  -c                     Assemble the source file, but do not link.\n"
