@@ -196,7 +196,7 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
         {
             driver->outputPath = EFArrayGetValueAtIndex(driver->arguments, ++index);
         }
-        else if(EFStringEqualRange(argument, EFSTR("-f"), EFRangeMake(0, 2)))
+        else if(EFStringHasPrefix(argument, EFSTR("-f")))
         {
             EFIndex length = EFStringGetLength(argument);
             if(length <= 2)
@@ -234,7 +234,7 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
                 return false;
             }
         }
-        else if(EFStringEqualRange(argument, EFSTR("-Wl,"), EFRangeMake(0, 4)))
+        else if(EFStringHasPrefix(argument, EFSTR("-Wl,")))
         {
             EFIndex length = EFStringGetLength(argument);
             if(length <= 4)
@@ -262,7 +262,7 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
                 }
             }
         }
-        else if(EFStringEqualRange(argument, EFSTR("-W"), EFRangeMake(0, 2)))
+        else if(EFStringHasPrefix(argument, EFSTR("-W")))
         {
             EFIndex length = EFStringGetLength(argument);
             if(length <= 2)
@@ -295,7 +295,7 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
                 return false;
             }
         }
-        else if(EFStringEqualRange(argument, EFSTR("-D"), EFRangeMake(0, 2)))
+        else if(EFStringHasPrefix(argument, EFSTR("-D")))
         {
             EFIndex length = EFStringGetLength(argument);
             if(length <= 2)
@@ -331,7 +331,7 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
             driver->macros[macroSlot].match = strdup(EFStringGetCStringPtr(macro, kEFStringEncodingUTF8));
             driver->macros[macroSlot].value = strdup(EFStringGetCStringPtr(value, kEFStringEncodingUTF8));
         }
-        else if(EFStringEqualRange(argument, EFSTR("-I"), EFRangeMake(0, 2)))
+        else if(EFStringHasPrefix(argument, EFSTR("-I")))
         {
             EFAUTOREL EFStringRef flagArgument = NULL;
             EFIndex length = EFStringGetLength(argument);
