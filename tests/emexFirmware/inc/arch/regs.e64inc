@@ -39,6 +39,23 @@
 %define% REG_R9     0b1110
 %define% REG_RR     0b1111
 
+%define% REG_ER0    0b0000
+%define% REG_ER1    0b0001
+%define% REG_ER2    0b0010
+%define% REG_ER3    0b0011
+%define% REG_ER4    0b0100
+%define% REG_ER5    0b0101
+%define% REG_ER6    0b0110
+%define% REG_ER7    0b0111
+%define% REG_ER8    0b1000
+%define% REG_ER9    0b1001
+%define% REG_ER10   0b1010
+%define% REG_ER11   0b1011
+%define% REG_ER12   0b1100
+%define% REG_ER13   0b1101
+%define% REG_ER14   0b1110
+%define% REG_ER15   0b1111
+
 %define% REG_CREL   0b0000
 %define% REG_CRKSP  0b0001
 %define% REG_CREXC  0b0010
