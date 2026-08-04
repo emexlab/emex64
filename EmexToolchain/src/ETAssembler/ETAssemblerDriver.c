@@ -414,8 +414,7 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
                 UInt16 isa;
                 if(!EFNumberGetValue(versionNumber, kEFNumberTypeUInt16, &isa))
                 {
-                    ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("target '%@' is not supported by this version of EmexToolchain"), targetStr);
-                    return false;
+                    goto invalid_target;
                 }
 
                 switch(isa)
@@ -439,10 +438,11 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
                         driver->driverOptions.isa = 15;
                         goto valid_target;
                     default:
-                        break;
+                        goto invalid_target;
                 }
             }
 
+        invalid_target:
             ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("target '%@' is not supported by this version of EmexToolchain"), targetStr);
             return false;
 
