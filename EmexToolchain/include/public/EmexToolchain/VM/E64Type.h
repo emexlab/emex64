@@ -31,8 +31,8 @@ typedef enum: UInt8 {
 
     /* data operations */
     kE64OpcodeMOV =     0b00000010,
-    kE64OpcodeSWP =     0b00000011,
-    kE64OpcodeMOVZ =    0b00000100,
+    kE64OpcodeMOVZ =    0b00000011,
+    kE64OpcodeSWP =     0b00000100,
     kE64OpcodePUSH =    0b00000101,
     kE64OpcodePOP =     0b00000110,
     kE64OpcodeLDB =     0b00000111,

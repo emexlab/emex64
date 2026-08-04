@@ -30,6 +30,7 @@ typedef struct {
     Boolean verbose;        /* default: false */
     Boolean inProcess;      /* default: false */
     kEmitMode emitMode;     /* default: kEmitModeFirmware */
+    UInt16 isa;             /* default: 15 */
 } ETAssemblerDriverOptions;
 
 typedef struct {

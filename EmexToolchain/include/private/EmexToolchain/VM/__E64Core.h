@@ -152,6 +152,7 @@ typedef struct emex64_opfunc_entry {
     UInt8 minargs;
     UInt8 maxargs;
     UInt32 argmask;
+    UInt16 isa;
 } emex64_opfunc_entry_t;
 
 extern const emex64_opfunc_entry_t kE64OpfuncTable[];

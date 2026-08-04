@@ -387,6 +387,67 @@ Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
                 return false;
             }
         }
+        else if(EFEqual(argument, EFSTR("--target")))
+        {
+            if(index >= (argumentsCount - 1))
+            {
+                ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '--target'"));
+                return false;
+            }
+
+            EFStringRef targetStr = EFRetainTry(EFArrayGetValueAtIndex(driver->arguments, ++index));
+
+            if(EFEqual(targetStr, EFSTR("la64-generic")))
+            {
+                driver->driverOptions.isa = 15;
+                goto valid_target;
+            }
+
+            if(EFStringHasPrefix(targetStr, EFSTR("la64-generic-v")))
+            {
+                EFIndex suffixLength = EFStringGetLength(targetStr) - 14;
+                EFRange suffixRange = EFRangeMake(14, suffixLength);
+                EFAUTOREL EFStringRef suffix = EFStringCreateCopyWithRange(EFGetAllocator(driver), targetStr, suffixRange);
+                EFAUTOREL EFNumberRef versionNumber = EFStringCopyNumber(EFGetAllocator(driver), suffix);
+
+                UInt16 isa;
+                if(!EFNumberGetValue(versionNumber, kEFNumberTypeUInt16, &isa))
+                {
+                    ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("target '%@' is not supported by this version of EmexToolchain"), targetStr);
+                    return false;
+                }
+
+                switch(isa)
+                {
+                    case 0:
+                    case 1:
+                    case 2:
+                    case 3:
+                    case 4:
+                    case 5:
+                    case 6:
+                    case 7:
+                    case 8:
+                    case 9:
+                    case 10:
+                    case 11:
+                    case 12:
+                    case 13:
+                    case 14:
+                    case 15:
+                        driver->driverOptions.isa = 15;
+                        goto valid_target;
+                    default:
+                        break;
+                }
+            }
+
+            ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("target '%@' is not supported by this version of EmexToolchain"), targetStr);
+            return false;
+
+        valid_target:
+            continue;
+        }
         else
         {
             ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown option '%@'"), argument);
