@@ -127,7 +127,7 @@ void emex64_op_cmov(E64CoreRef core)
 
     switch(cr_select)
     {
-        case kE64ControlRegisterCR0: /* elevation level */
+        case kE64ControlRegisterCREL:
             if(kE64ElevationLevelSecureMonitor < cr_value)
             {
                 core->cr_state.crexc.exception = kE64ExceptionBadInstruction;
@@ -140,13 +140,13 @@ void emex64_op_cmov(E64CoreRef core)
             }
             core->cr_state.crel.level = cr_value;
             break;
-        case kE64ControlRegisterCR1: /* kernel stack pointer */
+        case kE64ControlRegisterCRKSP:
             core->cr_state.crksp.address = cr_value;
             break;
-        case kE64ControlRegisterCR2: /* exception  */
+        case kE64ControlRegisterCREXC:
             core->cr_state.crexc.exception = (UInt8)cr_value;
             break;
-        case kE64ControlRegisterCR4: /* page table */
+        case kE64ControlRegisterCRPTB:
             core->cr_state.crptb.enabled = (cr_value & EMEX64_MEMORY_MMU_MASK_FLAGS) & kE64MMUPTPresent;
             core->cr_state.crptb.pgd_addr = ((cr_value & EMEX64_MEMORY_MMU_MASK_PFN) >> 8) << 13;
             break;
@@ -163,10 +163,10 @@ void emex64_op_cmovb(E64CoreRef core)
 
     switch(cr_select)
     {
-        case kE64ControlRegisterCR0: /* elevation level */
+        case kE64ControlRegisterCREL:
             *cr_recv = core->cr_state.crel.level;
             break;
-        case kE64ControlRegisterCR1: /* kernel stack pointer */
+        case kE64ControlRegisterCRKSP:
             if(core->cr_state.crel.level < kE64ElevationLevelKernel)
             {
                 core->cr_state.crexc.exception = kE64ExceptionPermission;
@@ -175,10 +175,10 @@ void emex64_op_cmovb(E64CoreRef core)
 
             *cr_recv = core->cr_state.crksp.address;
             break;
-        case kE64ControlRegisterCR2: /* exception  */
+        case kE64ControlRegisterCREXC:
             *cr_recv = core->cr_state.crexc.exception;
             break;
-        case kE64ControlRegisterCR4: /* page table */
+        case kE64ControlRegisterCRPTB:
             if(core->cr_state.crel.level < kE64ElevationLevelKernel)
             {
                 core->cr_state.crexc.exception = kE64ExceptionPermission;

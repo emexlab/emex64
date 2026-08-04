@@ -271,13 +271,13 @@ typedef enum: UInt8 {
 } E64RegisterExtended;
 
 typedef enum: UInt8 {
-    kE64ControlRegisterCR0 = 0b0000,    /* CREL:    elevation control register */
-    kE64ControlRegisterCR1 = 0b0001,    /* CRKSP:   kernel stack pointer (the stack pointer the interrupt controller will use when receiving interrupt) */
-    kE64ControlRegisterCR2 = 0b0010,    /* CREXC:   exception register (first 3bits for the exception) */
-    kE64ControlRegisterCR3 = 0b0011,    /* CRVEC:   cpu vector table */
-    kE64ControlRegisterCR4 = 0b0100,    /* CRPTB:   page table pointer (first 8bits are the flags and the rest is the physical address where the page table is) */
-    kE64ControlRegisterCR5 = 0b0101,    /* CRFPC:   kernel only floating point control register */
-    kE64ControlRegisterMAX = kE64ControlRegisterCR5
+    kE64ControlRegisterCREL =   0b0000,                     /* CREL:    elevation control register */
+    kE64ControlRegisterCRKSP =  0b0001,                     /* CRKSP:   kernel stack pointer (the stack pointer the interrupt controller will use when receiving interrupt) */
+    kE64ControlRegisterCREXC =  0b0010,                     /* CREXC:   exception register (first 3bits for the exception) */
+    kE64ControlRegisterCRVEC =  0b0011,                     /* CRVEC:   cpu vector table */
+    kE64ControlRegisterCRPTB =  0b0100,                     /* CRPTB:   page table pointer (first 8bits are the flags and the rest is the physical address where the page table is) */
+    kE64ControlRegisterCRFPC =  0b0101,                     /* CRFPC:   kernel only floating point control register */
+    kE64ControlRegisterMAX =    kE64ControlRegisterCRFPC
 } E64ControlRegister;
 
 typedef enum: UInt8 {
