@@ -145,7 +145,7 @@ void ETAssemblerDiagnosticConsumerReport(ETAssemblerDiagnosticConsumerRef consum
         return;
     }
 
-    diagnostic_report(consumer->consumer, severity, location, cptr);
+    diagnostic_report(consumer->consumer, severity, location, "%s", cptr);
     EFRelease(result);
 }
 
