@@ -39,21 +39,11 @@
 %define% REG_R9     0b1110
 %define% REG_RR     0b1111
 
-%define% REG_CR0    0b0000
-%define% REG_CR1    0b0001
-%define% REG_CR2    0b0010
-%define% REG_CR3    0b0011
-%define% REG_CR4    0b0100
-%define% REG_CR5    0b0101
-%define% REG_CR6    0b0110
-%define% REG_CR7    0b0111
-%define% REG_CR8    0b1000
-%define% REG_CR9    0b1001
-%define% REG_CR10   0b1010
-%define% REG_CR11   0b1011
-%define% REG_CR12   0b1100
-%define% REG_CR13   0b1101
-%define% REG_CR14   0b1110
-%define% REG_CR15   0b1111
+%define% REG_CREL   0b0000
+%define% REG_CRKSP  0b0001
+%define% REG_CREXC  0b0010
+%define% REG_CRVEC  0b0011
+%define% REG_CRPTB  0b0100
+%define% REG_CRFPC  0b0101
 
 %endif% ; ARCH_REGS_E64INC

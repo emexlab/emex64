@@ -130,7 +130,7 @@ main:
     blw panic, fw_testpanic_msg
 %endif% ; FW_TEST_EXCEPTION
 
-    cmov REG_CR0, 1
+    cmov REG_CREL, 1
 
 %if% FW_HOOK_TEST
     blw redirect_symbol, putbase, putbase_redirect

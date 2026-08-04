@@ -43,13 +43,13 @@ section .data
 interrupt_init:
 %if% FW_MINIMAL
     add rr, kernel_stack, BSS_KERNEL_STACK_TOP_SUB
-    cmov REG_CR1, rr
+    cmov REG_CRKSP, rr
 %else%
     ; allocate kernel stack for the interrupt handlers
     blw pmm_alloc
     bz rr, .failed
     add rr, (EMEX64_PAGE_SIZE - 8)
-    cmov REG_CR1, rr
+    cmov REG_CRKSP, rr
 %endif% ; FW_MINIMAL
 
     ; setting up vector table onto interrupt controller
