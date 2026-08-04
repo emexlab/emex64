@@ -42,6 +42,11 @@ typedef enum: UInt8 {
     kAssemblerPreprocessorDirectiveTypeElseIf,
     kAssemblerPreprocessorDirectiveTypeElse,
     kAssemblerPreprocessorDirectiveTypeEndIf,
+
+    /* diagnostics */
+    kAssemblerPreprocessorDirectiveTypeNote,
+    kAssemblerPreprocessorDirectiveTypeWarning,
+    kAssemblerPreprocessorDirectiveTypeError,
 } kAssemblerPreprocessorDirectiveType;
 
 kAssemblerPreprocessorDirectiveType assembler_directive_type_for_str(const char *str);

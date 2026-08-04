@@ -27,6 +27,7 @@
 #include <EmexToolchain/ETAssembler/preprocessor/preprocessor.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 #include <EmexToolchain/ETAssembler/code.h>
+#include <EmexToolchain/ETAssembler/lexer.h>
 
 static inline char *__assembler_preprocessor_include_directive_get_token(const char *token,
                                                                          Boolean *system_hdr)
@@ -430,6 +431,90 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
                         }
                         assembler_condition_state_pop(&state);
                         break;
+                    case kAssemblerPreprocessorDirectiveTypeNote:
+                        if(inv->line[li]->token_cnt <= 1)
+                        {
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[0]), EFSTR("missing string after %%note%% preprocessor directive"));
+                            goto failure;
+                        } else if(inv->line[li]->token_cnt > 2)
+                        {
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[2]), EFSTR("unknown token '%s' after argument of %%note%% preprocessor directive"), inv->line[li]->token[2]->str);
+                            goto failure;
+                        }
+
+                        if(!assembler_lexer_classify(inv->line[li]->token[1]))
+                        {
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[1]), EFSTR("unknown token '%s' after %%note%% preprocessor directive"), inv->line[li]->token[1]->str);
+                            goto failure;
+                        }
+
+                        if(inv->line[li]->token[1]->type != kETAssemblerTokenTypeString)
+                        {
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[1]), EFSTR("unknown %s '%s' after %%note%% preprocessor directive"), assembler_lexer_str_for_token_type(inv->line[li]->token[1]->type), inv->line[li]->token[1]->str);
+                            goto failure;
+                        }
+
+                        ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityNote, AT_TO_DLOC(inv->line[li]->token[0]), EFSTR("%s"), inv->line[li]->token[1]->string_literal.buf);
+                        free(inv->line[li]->token[1]->string_literal.buf);
+                        inv->line[li]->token[1]->string_literal.buf = NULL;
+                        inv->line[li]->token[1]->type = kETAssemblerTokenTypeIdentifier;
+                        break;
+                    case kAssemblerPreprocessorDirectiveTypeWarning:
+                        if(inv->line[li]->token_cnt <= 1)
+                        {
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[0]), EFSTR("missing string after %%warning%% preprocessor directive"));
+                            goto failure;
+                        } else if(inv->line[li]->token_cnt > 2)
+                        {
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[2]), EFSTR("unknown token '%s' after argument of %%warning%% preprocessor directive"), inv->line[li]->token[2]->str);
+                            goto failure;
+                        }
+
+                        if(!assembler_lexer_classify(inv->line[li]->token[1]))
+                        {
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[1]), EFSTR("unknown token '%s' after %%warning%% preprocessor directive"), inv->line[li]->token[1]->str);
+                            goto failure;
+                        }
+
+                        if(inv->line[li]->token[1]->type != kETAssemblerTokenTypeString)
+                        {
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[1]), EFSTR("unknown %s '%s' after %%warning%% preprocessor directive"), assembler_lexer_str_for_token_type(inv->line[li]->token[1]->type), inv->line[li]->token[1]->str);
+                            goto failure;
+                        }
+
+                        ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityWarning, AT_TO_DLOC(inv->line[li]->token[0]), EFSTR("%s"), inv->line[li]->token[1]->string_literal.buf);
+                        free(inv->line[li]->token[1]->string_literal.buf);
+                        inv->line[li]->token[1]->string_literal.buf = NULL;
+                        inv->line[li]->token[1]->type = kETAssemblerTokenTypeIdentifier;
+                        break;
+                    case kAssemblerPreprocessorDirectiveTypeError:
+                        if(inv->line[li]->token_cnt <= 1)
+                        {
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[0]), EFSTR("missing string after %%error%% preprocessor directive"));
+                            goto failure;
+                        } else if(inv->line[li]->token_cnt > 2)
+                        {
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[2]), EFSTR("unknown token '%s' after argument of %%error%% preprocessor directive"), inv->line[li]->token[2]->str);
+                            goto failure;
+                        }
+
+                        if(!assembler_lexer_classify(inv->line[li]->token[1]))
+                        {
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[1]), EFSTR("unknown token '%s' after %%error%% preprocessor directive"), inv->line[li]->token[1]->str);
+                            goto failure;
+                        }
+
+                        if(inv->line[li]->token[1]->type != kETAssemblerTokenTypeString)
+                        {
+                            ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[1]), EFSTR("unknown %s '%s' after %%error%% preprocessor directive"), assembler_lexer_str_for_token_type(inv->line[li]->token[1]->type), inv->line[li]->token[1]->str);
+                            goto failure;
+                        }
+
+                        ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[0]), EFSTR("%s"), inv->line[li]->token[1]->string_literal.buf);
+                        free(inv->line[li]->token[1]->string_literal.buf);
+                        inv->line[li]->token[1]->string_literal.buf = NULL;
+                        inv->line[li]->token[1]->type = kETAssemblerTokenTypeIdentifier;
+                        goto failure;
                     default:
                         break;
                 }
