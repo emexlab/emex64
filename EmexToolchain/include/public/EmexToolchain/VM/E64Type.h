@@ -277,6 +277,7 @@ typedef enum: UInt8 {
     kE64ControlRegisterCRVEC =  0b0011,                     /* CRVEC:   cpu vector table */
     kE64ControlRegisterCRPTB =  0b0100,                     /* CRPTB:   page table pointer (first 8bits are the flags and the rest is the physical address where the page table is) */
     kE64ControlRegisterCRFPC =  0b0101,                     /* CRFPC:   kernel only floating point control register */
+    kE64ControlRegisterCRISA =  0b0110,                     /* CRISA:   instruction set architecture configuration */
     kE64ControlRegisterMAX =    kE64ControlRegisterCRFPC
 } E64ControlRegister;
 

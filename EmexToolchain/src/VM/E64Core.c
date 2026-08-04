@@ -179,6 +179,12 @@ E64CoreRef E64CoreCreateWithMachine(EFAllocatorRef allocatorRef,
      */
     core->cr_state.crel.level = kE64ElevationLevelSecureMonitor;
 
+    /*
+     * setting it to the latest ISA version the SoC
+     * supports running.
+     */
+    core->cr_state.crisa.activeIsa = E64VM_ISA_MAX_VERSION;
+
     return core;
 }
 

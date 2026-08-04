@@ -127,6 +127,10 @@ typedef struct __E64Core {
          *
          * } crfpc;
         */
+
+        struct {
+            UInt16 activeIsa;
+        } crisa;
     } cr_state;
 
     /*

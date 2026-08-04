@@ -21,6 +21,10 @@
 
 %include% <emex64.e64inc>
 
+%ifndef% FW_TEST_DISASSEMBLY
+%define% FW_TEST_DISASSEMBLY 0
+%endif% ; FW_TEST_DISASSEMBLY
+
 %ifndef% FW_TEST_EXCEPTION
 %define% FW_TEST_EXCEPTION 0
 %endif% ; FW_TEST_EXCEPTION
@@ -33,19 +37,19 @@
 %define% FW_LOCK_KTRR 0
 %endif% ; FW_LOCK_KTRR
 
-%if% FW_HOOK_TEST
-%undef% FW_LOCK_KTRR
-%define% FW_LOCK_KTRR 0
-%endif% ; FW_HOOK_TEST
-
 %ifndef% FW_MINIMAL
 %define% FW_MINIMAL 0
 %endif% ; FW_MINIMAL
 
 %if% FW_MINIMAL
-%define% FW_HOOK_TEST 0 ; not part of the code
-%define% FW_LOCK_KTRR 0 ; dangerous due to old magic (unaligned pages)
+%define% FW_HOOK_TEST 0         ; not part of the code
+%define% FW_LOCK_KTRR 0         ; dangerous due to old magic (unaligned pages)
+%define% FW_TEST_DISASSEMBLY 0  ; disabled in this condition
 %endif% ; FW_MINIMAL
+
+%if% FW_LOCK_KTRR
+%define% FW_HOOK_TEST 0 ; cannot hook when KTRR is locked because of obvious reasons
+%endif% ; FW_LOCK_KTRR
 
 %if% FW_MINIMAL
 %define% EARLY_STACK_SIZE       (EMEX64_PAGE_SIZE / 10)
@@ -71,6 +75,11 @@ section .data
     fw_interrupted_msg db "\r[fw] interrupted: \0"
     fw_interrupted_suffix_msg db " times\0"
     fw_entropy_msg db "[fw] entropy test: 0x\0"
+    fw_isa_msg db "[fw] isa: LA64-v\0"
+    fw_isa_sfx_msg db "-ISA\n\0"
+    fw_match_msg db " match? \0"
+    fw_no_msg db "no\0"
+    fw_yes_msg db "yes\0"
 
 section .data
     meow_cnt dq (0 - 1) ; underflow so that the hang in main does null it
@@ -89,19 +98,15 @@ main:
     blw interrupt_register_handler, EMEX64_IC_IRQ_EXCEPTION, exception_handler
     blw interrupt_register_handler, EMEX64_IC_IRQ_8042, kdb_handler
 
-    blw puts, fw_display_msg
-    ldw r0, EMEX64_FB_REG_HEIGHT
-    ldw r1, EMEX64_FB_REG_WIDTH
-    bz r0, .dsp_not_installed
-    blw putbase, r1, 10
-    blw puts, fw_display_x_msg
+    ; printing information about the ISA
+    blw puts, fw_isa_msg
+    cmovb r0, REG_CRISA
+    shr r0, 16
+    and r0, 0xFFFF
     blw putbase, r0, 10
-    blw putc, '\n'
-    b .dsp_installed
-.dsp_not_installed:
-    blw puts, fw_display_unavailable
-.dsp_installed:
+    blw puts, fw_isa_sfx_msg
 
+    ; printing information about memory
     blw pmm_get_count
     mul r1, rr, EMEX64_PAGE_SIZE
     blw pmm_get_free_count
@@ -116,10 +121,43 @@ main:
     blw putc, '\n'
     blw print_time
 
+    ; entropy test
+.retry_entropy:
     blw puts, fw_entropy_msg
     rdrnd r0
+    rdrnd r1
     blw putbase, r0, 16
+    blw putc, ' '
+    blw putc, 'v'
+    blw putc, 's'
+    blw putc, ' '
+    blw putc, '0'
+    blw putc, 'x'
+    blw putbase, r1, 16
+    blw putc, ','
+    blw puts, fw_match_msg
+    cmp r0, r1
+    bne .no_match
+    blw puts, fw_yes_msg
     blw putc, '\n'
+    b .retry_entropy
+.no_match:
+    blw puts, fw_no_msg
+    blw putc, '\n'
+
+    ; printing information about the display
+    blw puts, fw_display_msg
+    ldw r0, EMEX64_FB_REG_HEIGHT
+    ldw r1, EMEX64_FB_REG_WIDTH
+    bz r0, .dsp_not_installed
+    blw putbase, r1, 10
+    blw puts, fw_display_x_msg
+    blw putbase, r0, 10
+    blw putc, '\n'
+    b .dsp_installed
+.dsp_not_installed:
+    blw puts, fw_display_unavailable
+.dsp_installed:
 
 %if% FW_LOCK_KTRR
     blw mc_lock_ktrr
@@ -136,9 +174,11 @@ main:
     blw redirect_symbol, putbase, putbase_redirect
 %endif% ; FW_HOOK_TEST
 
+%if% FW_TEST_DISASSEMBLY
     blw putc, '\n'
     blw disasm_sym, main, [.end - main]
     blw putc, '\n'
+%endif% ; FW_TEST_DISASSEMBLY
 
 .hang:
     ldq r0, meow_cnt

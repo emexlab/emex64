@@ -29,7 +29,7 @@
 #include <EmexToolchain/VM/__E64Core.h>
 #endif /* ET_PRIVATE */
 
-#define E64VM_ISA_MIN_VERSION 15    /* note that if you use this it will cause a panic on further attempts to read/write crisa after writing 15 into the active field */
+#define E64VM_ISA_MIN_VERSION 0
 #define E64VM_ISA_MAX_VERSION 15
 
 typedef struct __E64Core *E64CoreRef;

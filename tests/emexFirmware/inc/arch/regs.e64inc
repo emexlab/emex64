@@ -62,5 +62,6 @@
 %define% REG_CRVEC  0b0011
 %define% REG_CRPTB  0b0100
 %define% REG_CRFPC  0b0101
+%define% REG_CRISA  0b0110
 
 %endif% ; ARCH_REGS_E64INC

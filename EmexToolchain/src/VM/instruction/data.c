@@ -150,6 +150,16 @@ void emex64_op_cmov(E64CoreRef core)
             core->cr_state.crptb.enabled = (cr_value & EMEX64_MEMORY_MMU_MASK_FLAGS) & kE64MMUPTPresent;
             core->cr_state.crptb.pgd_addr = ((cr_value & EMEX64_MEMORY_MMU_MASK_PFN) >> 8) << 13;
             break;
+        case kE64ControlRegisterCRISA:
+            UInt16 requestedIsa = cr_value & 0xFFFF;
+            if(requestedIsa > E64VM_ISA_MAX_VERSION || requestedIsa < E64VM_ISA_MIN_VERSION)
+            {
+                core->cr_state.crexc.exception = kE64ExceptionBadInstruction;
+                return;
+            }
+
+            core->cr_state.crisa.activeIsa = requestedIsa;
+            break;
         default:
             core->cr_state.crexc.exception = kE64ExceptionBadInstruction;
             return;
@@ -188,6 +198,10 @@ void emex64_op_cmovb(E64CoreRef core)
             *cr_recv = 0;
             *cr_recv |= ((core->cr_state.crptb.pgd_addr >> 13) << 8) & EMEX64_MEMORY_MMU_MASK_PFN;
             *cr_recv |= -(UInt64)core->cr_state.crptb.enabled & kE64MMUPTPresent;
+            break;
+        case kE64ControlRegisterCRISA:
+            *cr_recv = core->cr_state.crisa.activeIsa;
+            *cr_recv |= E64VM_ISA_MAX_VERSION << 16;
             break;
         default:
             core->cr_state.crexc.exception = kE64ExceptionBadInstruction;
