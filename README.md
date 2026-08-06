@@ -1,7 +1,15 @@
 # emex64
 
-<img src="chip.png" width="300">
-<img src="sticker.png" width="160">
+<table>
+  <tr>
+    <th>Chip Marking</th>
+    <th>Case Sticker</th>
+  </tr>
+  <tr>
+    <td><img src="chip.png" width="300" alt="Chip Marking"></td>
+    <td><img src="sticker.png" width="160" alt="Case Sticker"></td>
+  </tr>
+</table>
 
 ## Introduction
 emex64 is a 64bit lightweight little endian architecture. It's a mix out of RISC and CISC it is based on no previous architecture, except the ones @mach-port-t(me) created in the past, emex64 evolved from LA8 -> LA816 -> LA16 -> LA32 -> LA64 -> emex64. emex64 is a much better version of LA64.
