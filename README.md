@@ -91,7 +91,7 @@ As only 10 general purpose registers is not much we created a extended register 
 | `crvec`   | **C**ontrol **R**egister **V**ector                         | `0b0011`     | No-Op |
 | `crptb`   | **C**ontrol **P**egister **P**age **T**able **B**ase        | `0b0100`     | Is treated by the MMU as the 5th level page table entry. |
 | `crfpc`   | **C**ontrol **R**egister **F**loating **P**oint **C**ontrol | `0b0101`     | No-Op |
-| `crisa`   | **C**ontrol **R**egister **I**SA | `0b0110`     | Used to get the ISA version and select older ISA version on-demand if firmware or kernel was intended for running on older ISA. |
+| `crisa`   | **C**ontrol **R**egister **I**SA                            | `0b0110`     | Used to get the ISA version and select older ISA version on-demand if firmware or kernel was intended for running on older ISA. |
 
 ### Opcode Set
 (1) Applies mathematical operation either on two or one operand together and stores the result into the source, the source must always be a register and can also be a operand.
