@@ -14,20 +14,28 @@
 ## Introduction
 emex64 is a 64bit lightweight little endian architecture. It's a mix out of RISC and CISC it is based on no previous architecture, except the ones @mach-port-t(me) created in the past, emex64 evolved from this path LA8 -> LA816 -> LA16 -> LA32/LA64 -> emex64. emex64 is a much better version of LA64. LA stands for LightweightArchitecture, it is the original ISA, the idea of the ISA is to not hold baggage from decades ago and not bend for the industry giving the best result currently possible to the consumer.
 
-Outside the SoC, the emulated board additionally integrates support for UART, (Re-Implementation pending (a vibecoder contributed audio before and was cought vibecoding)) Audio, and (implementation pending) Graphics.
+Outside the SoC, the emulated board additionally integrates support for UART, (Re-Implementation pending (a vibecoder contributed audio before and was cought vibecoding which resulted in his code being removed)) Audio, and (implementation pending) Graphics.
 
-Besides that there is a proper polymorphic toolchain called `EmexToolchain` which can be used to assemble, link and execute emex64 code. The assembler spits out ELF relocatable objects, which the linker can either link all of them together to a firmware image which is something like emex64's BIOS or to a merged ELF relocatable object. ELF is the only thing that I didn't do from scratch, I originally wanted to use the LO(LightweightObject) format made by me, but thought then that this will be nightmares to implement.
+Besides that there is a proper polymorphic toolchain called `EmexToolchain` which can be used to assemble, link and execute emex64 code all in the same process with proper memory management lavering `EmexFoundation`. The assembler spits out ELF relocatable objects, which the linker can either link all of them together to a firmware image which is something like emex64's BIOS or to a merged ELF relocatable object. ELF is the only thing that I didn't do from scratch, I originally wanted to use the LO(LightweightObject) format made by me, but thought then that this will be nightmares to implement.
 
 ## Setup and Installation of the emex64 toolchain
 Bulding the toolchain and installing it is as simple as the following:
 
 ```bash
-make && make install
+make full
 ```
 
 This will install emex64's toolchain and VM to `/usr/local`, and will prompt for a superuser password to do so.
 
 emex64vm will additionally require GLFW/GLEW if using the virtual display.
+
+If you wanna test it quickly you can run this.
+
+```bash
+make full CMAKE_FLAGS="-DEMEX64_BUILD_EXAMPLES=1" && emex64hello
+```
+
+`emex64hello` is a example of a utility entirely in memory assembling and linking a hello world test firmware and executing it with the virtual machine.
 
 ## Using the Virtual Machine (VM)
 The VM can be invoked to run firmware with `emex64vm -f <image path>`. Test programs and the current testing firmware can be found in `./tests/`.
@@ -83,6 +91,7 @@ As only 10 general purpose registers is not much we created a extended register 
 | `crvec`   | **C**ontrol **R**egister **V**ector                         | `0b0011`     | No-Op |
 | `crptb`   | **C**ontrol **P**egister **P**age **T**able **B**ase        | `0b0100`     | Is treated by the MMU as the 5th level page table entry. |
 | `crfpc`   | **C**ontrol **R**egister **F**loating **P**oint **C**ontrol | `0b0101`     | No-Op |
+| `crisa`   | **C**ontrol **R**egister **I**SA | `0b0110`     | Used to get the ISA version and select older ISA version on-demand if firmware or kernel was intended for running on older ISA. |
 
 ### Opcode Set
 (1) Applies mathematical operation either on two or one operand together and stores the result into the source, the source must always be a register and can also be a operand.
