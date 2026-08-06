@@ -12,7 +12,7 @@
 </table>
 
 ## Introduction
-emex64 is a 64bit lightweight little endian architecture. It's a mix out of RISC and CISC it is based on no previous architecture, except the ones @mach-port-t(me) created in the past, emex64 evolved from LA8 -> LA816 -> LA16 -> LA32 -> LA64 -> emex64. emex64 is a much better version of LA64.
+emex64 is a 64bit lightweight little endian architecture. It's a mix out of RISC and CISC it is based on no previous architecture, except the ones @mach-port-t(me) created in the past, emex64 evolved from this path LA8 -> LA816 -> LA16 -> LA32/LA64 -> emex64. emex64 is a much better version of LA64. LA stands for LightweightArchitecture, it is the original ISA, the idea of the ISA is to not hold baggage from decades ago and not bend for the industry giving the best result currently possible to the consumer.
 
 Outside the SoC, the emulated board additionally integrates support for UART, (Re-Implementation pending (a vibecoder contributed audio before and was cought vibecoding)) Audio, and (implementation pending) Graphics.
 
