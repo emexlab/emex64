@@ -48,8 +48,9 @@
 %endif% ; FW_MINIMAL
 
 %if% FW_LOCK_KTRR
+%if% FW_HOOK_TEST
 %error% "you can impossibly hook something with Kernel Text Read-Only Region(KTRR) enabled"
-%define% FW_HOOK_TEST 0 ; cannot hook when KTRR is locked because of obvious reasons
+%endif% ; FW_HOOK_TEST
 %endif% ; FW_LOCK_KTRR
 
 %if% FW_MINIMAL

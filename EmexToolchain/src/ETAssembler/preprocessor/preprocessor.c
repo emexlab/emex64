@@ -432,6 +432,11 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
                         assembler_condition_state_pop(&state);
                         break;
                     case kAssemblerPreprocessorDirectiveTypeNote:
+                        if(state.in_a_condition && !state.condition_met)
+                        {
+                            break;
+                        }
+
                         if(inv->line[li]->token_cnt <= 1)
                         {
                             ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[0]), EFSTR("missing string after %%note%% preprocessor directive"));
@@ -460,6 +465,11 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
                         inv->line[li]->token[1]->type = kETAssemblerTokenTypeIdentifier;
                         break;
                     case kAssemblerPreprocessorDirectiveTypeWarning:
+                        if(state.in_a_condition && !state.condition_met)
+                        {
+                            break;
+                        }
+
                         if(inv->line[li]->token_cnt <= 1)
                         {
                             ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[0]), EFSTR("missing string after %%warning%% preprocessor directive"));
@@ -488,6 +498,11 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
                         inv->line[li]->token[1]->type = kETAssemblerTokenTypeIdentifier;
                         break;
                     case kAssemblerPreprocessorDirectiveTypeError:
+                        if(state.in_a_condition && !state.condition_met)
+                        {
+                            break;
+                        }
+
                         if(inv->line[li]->token_cnt <= 1)
                         {
                             ETAssemblerDiagnosticConsumerReport(inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(inv->line[li]->token[0]), EFSTR("missing string after %%error%% preprocessor directive"));
