@@ -19,26 +19,27 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef ETASSEMBLERJOB_H
-#define ETASSEMBLERJOB_H
+#ifndef ETCOMPILERJOB_H
+#define ETCOMPILERJOB_H
 
 #include <EmexFoundation/EmexFoundation.h>
 
 typedef enum: UInt8 {
-    kETAssemblerJobTypeUnknown,
-    kETAssemblerJobTypeAssembler,
-    kETAssemblerJobTypeDriver,
-    kETAssemblerJobTypeLinker
-} ETAssemblerJobType;
+    kETCompilerJobTypeUnknown,
+    kETCompilerJobTypeAssembler,
+    kETCompilerJobTypeDriver,
+    kETCompilerJobTypeLinker,
+    kETCompilerJobTypeCompiler,
+} ETCompilerJobType;
 
-typedef struct __ETAssemblerJob *ETAssemblerJobRef;
+typedef struct __ETCompilerJob *ETCompilerJobRef;
 
-EFTypeID ETAssemblerJobGetTypeID(void);
+EFTypeID ETCompilerJobGetTypeID(void);
 
-ETAssemblerJobRef ETAssemblerJobCreate(EFAllocatorRef allocatorRef, ETAssemblerJobType type, EFStringRef command, EFArrayRef arguments);
+ETCompilerJobRef ETCompilerJobCreate(EFAllocatorRef allocatorRef, ETCompilerJobType type, EFStringRef command, EFArrayRef arguments);
 
-ETAssemblerJobType ETAssemblerJobGetType(ETAssemblerJobRef jobRef);
-EFStringRef ETAssemblerJobGetCommand(ETAssemblerJobRef jobRef);
-EFArrayRef ETAssemblerJobGetArguments(ETAssemblerJobRef jobRef);
+ETCompilerJobType ETCompilerJobGetType(ETCompilerJobRef jobRef);
+EFStringRef ETCompilerJobGetCommand(ETCompilerJobRef jobRef);
+EFArrayRef ETCompilerJobGetArguments(ETCompilerJobRef jobRef);
 
-#endif /* ETASSEMBLERJOB_H */
+#endif /* ETCOMPILERJOB_H */

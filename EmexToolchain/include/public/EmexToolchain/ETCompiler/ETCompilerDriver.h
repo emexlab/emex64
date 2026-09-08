@@ -23,6 +23,7 @@
 #define ETCOMPILERDRIVER_H
 
 #include <EmexFoundation/EmexFoundation.h>
+#include <EmexToolchain/ETCompiler/ETCompilerJob.h>
 #include <EmexToolchain/ETCompiler/ETCompilerOptions.h>
 #include <EmexToolchain/ETCompiler/ETCompilerDiagnosticConsumer.h>
 

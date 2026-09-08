@@ -20,9 +20,20 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <spawn.h>
 #include <pthread.h>
+#include <sys/wait.h>
+#include <EmexToolchain/Support/ratchet/args.h>
 #include <EmexToolchain/Support/version.h>
 #include <EmexToolchain/ETCompiler/ETCompilerDriver.h>
+#include <EmexToolchain/ETLinker/driver.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerDriver.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
 
 typedef struct __ETCompilerDriver {
     EFObject header;
@@ -36,9 +47,15 @@ typedef struct __ETCompilerDriver {
 
     EFMutableArrayRef inputFiles;
     EFStringRef outputPath;
+    EFMutableArrayRef temporaryOutputPaths;
 
     EFMutableArrayRef includeSearchPaths;
     EFMutableArrayRef linkerFlags;
+
+    EFMutableArrayRef jobs;
+
+    EFIndex macroCount;
+    assembler_macro_definition_t *macros;
 } *__ETCompilerDriver;
 
 static void __ETCompilerDriverDeinit(EFObjectRef driverRef)
@@ -52,6 +69,7 @@ static void __ETCompilerDriverDeinit(EFObjectRef driverRef)
     EFReleaseTry(driver->outputPath);
     EFReleaseTry(driver->includeSearchPaths);
     EFReleaseTry(driver->linkerFlags);
+    EFReleaseTry(driver->jobs);
 }
 
 static EFClassDefinitionV2 ETCompilerDriverClass = {
@@ -83,6 +101,12 @@ static Boolean __ETCompilerDriverPredrive(__ETCompilerDriver driver)
 
     driver->includeSearchPaths = EFArrayCreateMutable(EFGetAllocator(driver), kEFArrayCallbacksObjectCallbacks, argumentsCount);
     if(driver->includeSearchPaths == NULL)
+    {
+        return false;
+    }
+
+    driver->temporaryOutputPaths = EFArrayCreateMutable(EFGetAllocator(driver), kEFArrayCallbacksObjectCallbacks, argumentsCount);
+    if(driver->temporaryOutputPaths == NULL)
     {
         return false;
     }
@@ -258,7 +282,7 @@ static Boolean __ETCompilerDriverPredrive(__ETCompilerDriver driver)
             EFRange valueRange = (EFArrayGetCount(components) > 1) ? EFRangeMake(macroRange.length + 1, EFStringGetLength(flagArgument) - (macroRange.length + 1)) : EFRangeZero;
             EFAUTOREL EFStringRef value = EFRangeIsEqual(valueRange, EFRangeZero) ? EFSTR("1") : EFStringCreateCopyWithRange(kEFAllocatorDefault, flagArgument, valueRange);
 
-            /*EFIndex macroSlot = driver->macroCount++;
+            EFIndex macroSlot = driver->macroCount++;
             if(driver->macros == NULL)
             {
                 driver->macros = calloc(driver->macroCount, sizeof(assembler_macro_definition_t));
@@ -269,7 +293,7 @@ static Boolean __ETCompilerDriverPredrive(__ETCompilerDriver driver)
             }
 
             driver->macros[macroSlot].match = strdup(EFStringGetCStringPtr(macro, kEFStringEncodingUTF8));
-            driver->macros[macroSlot].value = strdup(EFStringGetCStringPtr(value, kEFStringEncodingUTF8));*/
+            driver->macros[macroSlot].value = strdup(EFStringGetCStringPtr(value, kEFStringEncodingUTF8));
         }
         else if(EFStringHasPrefix(argument, EFSTR("-I")))
         {
@@ -412,6 +436,310 @@ static Boolean __ETCompilerDriverPredrive(__ETCompilerDriver driver)
     return true;
 }
 
+static EFStringRef __ETCompilerDriverTemporaryObjectPathForInputPath(__ETCompilerDriver driver,
+                                                                     const char *input_path)
+{
+    const char *base = strrchr(input_path, '/');
+    base = base ? base + 1 : input_path;
+    const char *dot = strrchr(base, '.');
+    EFSize stem_len = dot ? (EFSize)(dot - base) : strlen(base);
+
+    const char *tmpdir = getenv("TMPDIR");
+    if(tmpdir == NULL || tmpdir[0] == '\0')
+    {
+        tmpdir = "/tmp";
+    }
+
+    EFSize len = strlen(tmpdir) + 1 + 7 + stem_len + 1 + 6 + 2 + 1;
+    char *path = malloc(len);
+    if(path == NULL)
+    {
+        return NULL;
+    }
+
+    snprintf(path, len, "%s/emex64-%.*s-XXXXXX.o", tmpdir, (SInt32)stem_len, base);
+
+    SInt32 fd = mkstemps(path, 2);
+    if(fd < 0)
+    {
+        free(path);
+        return NULL;
+    }
+    close(fd);
+
+    EFAUTOREL EFStringRef temporaryOutputPath = EFStringCreateWithCString(EFGetAllocator(driver), path, kEFStringEncodingUTF8);
+    free(path);
+    if(!EFArrayAppendValue(driver->temporaryOutputPaths, temporaryOutputPath))
+    {
+        return NULL;
+    }
+    return EFAUTOTRANSFER(temporaryOutputPath);
+}
+
+Boolean __ETCompilerDriverJobgen(__ETCompilerDriver driver)
+{
+    /* -c is only meant to assemble one assembly file to a object file */
+    EFIndex inputFileCount = EFArrayGetCount(driver->inputFiles);
+    if(driver->driverOptions.compileOnly && inputFileCount > 1)
+    {
+        ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("multiple input files were passed in object emit mode"));
+        return false;
+    }
+
+    /* creating assembler jobs */
+    for(EFIndex index = 0; index < inputFileCount; index++)
+    {
+        EFFileRef inputFile = EFArrayGetValueAtIndex(driver->inputFiles, index);
+        EFURLRef url = EFFileGetURL(inputFile);
+        const char *input_path = EFStringGetCStringPtr(EFURLGetPath(url), kEFStringEncodingUTF8);
+        EFFileType input_type = EFFileGetType(inputFile);
+
+        switch(input_type)
+        {
+            case kEFFileTypeC:
+            {
+                ratchet_args_t ra;
+                if(!ratchet_args_init(&ra))
+                {
+                    ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate arguments array for assembler job"));
+                    ratchet_args_deinit(&ra);
+                    return false;
+                }
+
+                if(driver->driverOptions.verbose)
+                {
+                    ratchet_args_append(&ra, "-v");
+                }
+                ratchet_args_append(&ra, "-c");
+                ratchet_args_append(&ra, "-o");
+                ratchet_args_efappend(&ra, __ETCompilerDriverTemporaryObjectPathForInputPath(driver, input_path));
+                ratchet_args_append(&ra, input_path);
+
+                /* feature flags */
+                ratchet_args_append(&ra, driver->diagnosticOptions.caret_diagnostics ? "-fcaret-diagnostics" : "-fno-caret-diagnostics");
+                ratchet_args_append(&ra, driver->diagnosticOptions.color_diagnostics ? "-fcolor-diagnostics" : "-fno-color-diagnostics");
+
+                /* warning flags */
+                ratchet_args_append(&ra, driver->diagnosticOptions.warning_error ? "-Werror" : "-Wno-error");
+                ratchet_args_append(&ra, driver->diagnosticOptions.warning_deprecated ? "-Wdeprecated" : "-Wno-deprecated");
+
+                EFIndex includeSearchCount = EFArrayGetCount(driver->includeSearchPaths);
+                for(EFIndex j = 0; j < includeSearchCount; j++)
+                {
+                    EFAUTOREL EFStringRef includeSearchArgument = EFStringCreateWithFormat(kEFAllocatorDefault, EFSTR("-I%@"), EFArrayGetValueAtIndex(driver->includeSearchPaths, j));
+                    ratchet_args_efappend(&ra, includeSearchArgument);
+                }
+                for(EFIndex j = 0; j < driver->macroCount; j++)
+                {
+                    const char *m = driver->macros[j].match;
+                    const char *v = driver->macros[j].value;
+
+                    EFSize blen = 2 + strlen(m) + 1 + strlen(v) + 1;
+                    char *buf = malloc(blen);
+                    if(buf == NULL)
+                    {
+                        ratchet_args_deinit(&ra);
+                        return false;
+                    }
+                    snprintf(buf, blen, "-D%s=%s", m, v);
+                    ratchet_args_append(&ra, buf);
+                    free(buf);
+                }
+
+                if(ra.failed)
+                {
+                    ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate arguments array for assembler job"));
+                    ratchet_args_deinit(&ra);
+                    return false;
+                }
+
+                EFAUTOREL ETCompilerJobRef job = ETCompilerJobCreate(kEFAllocatorDefault, (driver->driverOptions.compileOnly) ? kETCompilerJobTypeCompiler : kETCompilerJobTypeDriver, EFSTR("emex64cc"), ra.array);
+                ratchet_args_deinit(&ra);
+                if(job == NULL)
+                {
+                    ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate assembler job"));
+                    return false;
+                }
+
+                if(!EFArrayAppendValue(driver->jobs, job))
+                {
+                    ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate assembler job"));
+                    return false;
+                }
+                break;
+            }
+            case kEFFileTypeAssembly:
+            case kEFFileTypeAssemblyIncludations:
+            {
+                ratchet_args_t ra;
+                if(!ratchet_args_init(&ra))
+                {
+                    ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate arguments array for assembler job"));
+                    ratchet_args_deinit(&ra);
+                    return false;
+                }
+
+                if(driver->driverOptions.verbose)
+                {
+                    ratchet_args_append(&ra, "-v");
+                }
+                ratchet_args_append(&ra, "-c");
+                ratchet_args_append(&ra, "-o");
+                ratchet_args_efappend(&ra, __ETCompilerDriverTemporaryObjectPathForInputPath(driver, input_path));
+                ratchet_args_append(&ra, input_path);
+
+                /* feature flags */
+                ratchet_args_append(&ra, driver->diagnosticOptions.caret_diagnostics ? "-fcaret-diagnostics" : "-fno-caret-diagnostics");
+                ratchet_args_append(&ra, driver->diagnosticOptions.color_diagnostics ? "-fcolor-diagnostics" : "-fno-color-diagnostics");
+
+                /* warning flags */
+                ratchet_args_append(&ra, driver->diagnosticOptions.warning_error ? "-Werror" : "-Wno-error");
+                ratchet_args_append(&ra, driver->diagnosticOptions.warning_deprecated ? "-Wdeprecated" : "-Wno-deprecated");
+
+                EFIndex includeSearchCount = EFArrayGetCount(driver->includeSearchPaths);
+                for(EFIndex j = 0; j < includeSearchCount; j++)
+                {
+                    EFAUTOREL EFStringRef includeSearchArgument = EFStringCreateWithFormat(kEFAllocatorDefault, EFSTR("-I%@"), EFArrayGetValueAtIndex(driver->includeSearchPaths, j));
+                    ratchet_args_efappend(&ra, includeSearchArgument);
+                }
+                for(EFIndex j = 0; j < driver->macroCount; j++)
+                {
+                    const char *m = driver->macros[j].match;
+                    const char *v = driver->macros[j].value;
+
+                    EFSize blen = 2 + strlen(m) + 1 + strlen(v) + 1;
+                    char *buf = malloc(blen);
+                    if(buf == NULL)
+                    {
+                        ratchet_args_deinit(&ra);
+                        return false;
+                    }
+                    snprintf(buf, blen, "-D%s=%s", m, v);
+                    ratchet_args_append(&ra, buf);
+                    free(buf);
+                }
+
+                if(ra.failed)
+                {
+                    ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate arguments array for assembler job"));
+                    ratchet_args_deinit(&ra);
+                    return false;
+                }
+
+                EFAUTOREL ETCompilerJobRef job = ETCompilerJobCreate(kEFAllocatorDefault, (driver->driverOptions.compileOnly) ? kETCompilerJobTypeAssembler : kETCompilerJobTypeDriver, EFSTR("emex64asm"), ra.array);
+                ratchet_args_deinit(&ra);
+                if(job == NULL)
+                {
+                    ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate assembler job"));
+                    return false;
+                }
+
+                if(!EFArrayAppendValue(driver->jobs, job))
+                {
+                    ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate assembler job"));
+                    return false;
+                }
+                break;
+            }
+            case kEFFileTypeObject:
+                if(!EFArrayAppendValue(driver->linkerFlags, EFStringCreateWithCString(EFGetAllocator(driver), input_path, kEFStringEncodingUTF8)))
+                {
+                    ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't append object input path to linker flags"));
+                    return false;
+                }
+                break;
+            default:
+                return false;
+        }
+    }
+
+    /* we only need a linker job when we got objects to link */
+    EFIndex temporaryOutputPathCount = EFArrayGetCount(driver->temporaryOutputPaths);
+    if(!driver->driverOptions.compileOnly && temporaryOutputPathCount > 0)
+    {
+        ratchet_args_t ra;
+        if(!ratchet_args_init(&ra))
+        {
+            ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate arguments array for linker job"));
+            ratchet_args_deinit(&ra);
+            return false;
+        }
+
+        if(driver->driverOptions.verbose)
+        {
+            ratchet_args_append(&ra, "-v");
+        }
+        if(driver->driverOptions.emitMode == kEmitModeRelocatableObject)
+        {
+            ratchet_args_append(&ra, "-r");
+        }
+        ratchet_args_append(&ra, "-o");
+        ratchet_args_efappend(&ra, driver->outputPath);
+        for(EFIndex index = 0; index < temporaryOutputPathCount; index++)
+        {
+            ratchet_args_efappend(&ra, EFArrayGetValueAtIndex(driver->temporaryOutputPaths, index));
+        }
+        EFIndex linkerFlagCount = EFArrayGetCount(driver->linkerFlags);
+        for(EFIndex index = 0; index < linkerFlagCount; index++)
+        {
+            ratchet_args_efappend(&ra, EFArrayGetValueAtIndex(driver->linkerFlags, index));
+        }
+
+        if(ra.failed)
+        {
+            ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate arguments array for linker job"));
+            ratchet_args_deinit(&ra);
+            return false;
+        }
+
+        EFAUTOREL ETCompilerJobRef job = ETCompilerJobCreate(kEFAllocatorDefault, kETCompilerJobTypeLinker, EFSTR("emex64ld"), ra.array);
+        ratchet_args_deinit(&ra);
+        if(job == NULL)
+        {
+            ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate assembler job"));
+            return false;
+        }
+
+        if(!EFArrayAppendValue(driver->jobs, job))
+        {
+            ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't allocate assembler job"));
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static const char *compiler_job_string_for_type(ETCompilerJobType type)
+{
+    switch(type)
+    {
+        case kETCompilerJobTypeAssembler:
+            return "assembler";
+        case kETCompilerJobTypeLinker:
+            return "linker";
+        case kETCompilerJobTypeDriver:
+            return "driver";
+        case kETCompilerJobTypeCompiler:
+            return "compiler";
+        default:
+            return "unknown";
+    }
+}
+
+static const char *compiler_emit_mode_string_for_mode(kEmitMode mode)
+{
+    switch(mode)
+    {
+        case kEmitModeFirmware:
+            return "firmware image";
+        case kEmitModeRelocatableObject:
+            return "ELF";
+        default:
+            return "unknown";
+    }
+}
+
 static void ETCompilerDriverRefisterClass(void)
 {
     EFClassRegister(&ETCompilerDriverClass);
@@ -441,11 +769,11 @@ ETCompilerDriverRef ETCompilerDriverCreateWithOptions(EFAllocatorRef allocatorRe
         return NULL;
     }
 
-    /*driver->jobs = EFArrayCreateMutable(allocatorRef, kEFArrayCallbacksObjectCallbacks, 0);
+    driver->jobs = EFArrayCreateMutable(allocatorRef, kEFArrayCallbacksObjectCallbacks, 0);
     if(driver->jobs == NULL)
     {
         return NULL;
-    }*/
+    }
 
     driver->arguments = EFArrayCreateCopy(allocatorRef, arguments);
     if(driver->arguments == NULL)
@@ -461,13 +789,8 @@ ETCompilerDriverRef ETCompilerDriverCreateWithOptions(EFAllocatorRef allocatorRe
         return NULL;
     }
 
-    /*if(!__ETAssemblerDriverPredrive(driver) ||
-       !__ETAssemblerDriverJobgen(driver))
-    {
-        return NULL;
-    }*/
-
-    if(!__ETCompilerDriverPredrive(driver))
+    if(!__ETCompilerDriverPredrive(driver) ||
+       !__ETCompilerDriverJobgen(driver))
     {
         return NULL;
     }
@@ -478,7 +801,7 @@ ETCompilerDriverRef ETCompilerDriverCreateWithOptions(EFAllocatorRef allocatorRe
         command = EFSTR("emex64asm");
     }
 
-    /*if(driver->driverOptions.verbose)
+    if(driver->driverOptions.verbose)
     {
         fprintf(stderr, "%s driver version %d.%d.%d (%s)\n", EFStringGetCStringPtr(command, kEFStringEncodingUTF8), EMEX64_VERSION_MAJOR, EMEX64_VERSION_MINOR, EMEX64_VERSION_PATCH, EMEX64_VERSION_STRING);
         fprintf(stderr, "pid: %d\n", getpid());
@@ -486,10 +809,10 @@ ETCompilerDriverRef ETCompilerDriverCreateWithOptions(EFAllocatorRef allocatorRe
         fprintf(stderr, "uid: %d\n", getuid());
         fprintf(stderr, "gid: %d\n", getgid());
         fprintf(stderr, "driverOptions: {\n");
-        fprintf(stderr, "    assembleOnly: %d,\n", driver->driverOptions.assembleOnly);
+        fprintf(stderr, "    compileOnly: %d,\n", driver->driverOptions.compileOnly);
         fprintf(stderr, "    verbose: %d,\n", driver->driverOptions.verbose);
-        fprintf(stderr, "    inProcess: %d,\n", driver->driverOptions.inProcess || driver->driverOptions.assembleOnly);
-        fprintf(stderr, "    emitMode: %s,\n", assembler_emit_mode_string_for_mode(driver->driverOptions.emitMode));
+        fprintf(stderr, "    inProcess: %d,\n", driver->driverOptions.inProcess || driver->driverOptions.compileOnly);
+        fprintf(stderr, "    emitMode: %s,\n", compiler_emit_mode_string_for_mode(driver->driverOptions.emitMode));
         fprintf(stderr, "}\n");
         fprintf(stderr, "diagnosticOptions: {\n");
         fprintf(stderr, "    caret_diagnostics: %d,\n", driver->diagnosticOptions.caret_diagnostics);
@@ -537,7 +860,7 @@ ETCompilerDriverRef ETCompilerDriverCreateWithOptions(EFAllocatorRef allocatorRe
         }
         fprintf(stderr, " }\n");
 
-        if(!driver->driverOptions.assembleOnly)
+        if(!driver->driverOptions.compileOnly)
         {
             EFIndex linkerFlagCount = EFArrayGetCount(driver->linkerFlags);
             fprintf(stderr, "linkerFlags[%ld]: { ", linkerFlagCount);
@@ -553,13 +876,119 @@ ETCompilerDriverRef ETCompilerDriverCreateWithOptions(EFAllocatorRef allocatorRe
             fprintf(stderr, " }\n");
         }
         fprintf(stderr, "\n");
-    }*/
+    }
 
     return (ETCompilerDriverRef)EFAUTOTRANSFER(driver);
 }
 
 Boolean ETCompilerDriverRun(ETCompilerDriverRef driverRef)
 {
-    /* not even the driver is finished yet */
+    __ETCompilerDriver driver = (__ETCompilerDriver)driverRef;
+    if(driver == NULL)
+    {
+        return false;
+    }
+
+    ETCompilerDiagnosticConsumerEmit(driver->diagnosticConsumer);
+
+    if(driver->driverOptions.compileOnly)
+    {
+        ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("C compilation is not supported yet"));
+        return false;
+    }
+    else
+    {
+        EFIndex count = EFArrayGetCount(driver->jobs);
+        for(EFIndex index = 0; index < count; index++)
+        {
+            ETCompilerJobRef job = EFArrayGetValueAtIndex(driver->jobs, index);
+            ETCompilerJobType jobType = ETCompilerJobGetType(job);
+            EFArrayRef jobArguments = ETCompilerJobGetArguments(job);
+            EFStringRef jobCommand = ETCompilerJobGetCommand(job);
+
+            if(jobType == kETCompilerJobTypeAssembler && driver->driverOptions.inProcess)
+            {
+                EFAUTOREL ETAssemblerDriverRef subDriver = ETAssemblerDriverCreate(EFGetAllocator(driverRef), jobArguments);
+                if(subDriver == NULL || !ETAssemblerDriverRun(subDriver))
+                {
+                    return false;
+                }
+            }
+            if(jobType == kETCompilerJobTypeDriver && driver->driverOptions.inProcess)
+            {
+                EFAUTOREL ETCompilerDriverRef subDriver = ETCompilerDriverCreate(EFGetAllocator(driverRef), jobArguments);
+                if(subDriver == NULL || !ETCompilerDriverRun(subDriver))
+                {
+                    return false;
+                }
+            }
+            else if(jobType == kETCompilerJobTypeLinker && driver->driverOptions.inProcess)
+            {
+                const char *commandPtr = EFStringGetCStringPtr(jobCommand, kEFStringEncodingASCII);
+                if(commandPtr == NULL)
+                {
+                    return false;
+                }
+                EFIndex argumentsCount = EFArrayGetCount(jobArguments) + 1;
+                const char *argv[argumentsCount + 1];
+                argv[0] = commandPtr;
+                for(EFIndex argumentsIndex = 0; argumentsIndex < (argumentsCount - 1); argumentsIndex++)
+                {
+                    const char *cptr = EFStringGetCStringPtr(EFArrayGetValueAtIndex(jobArguments, argumentsIndex), kEFStringEncodingASCII);
+                    if(cptr == NULL)
+                    {
+                        return false;
+                    }
+                    argv[argumentsIndex + 1] = cptr;
+                }
+                argv[argumentsCount] = NULL;
+
+                linker_driver_t *subdriver = linker_driver_alloc(argumentsCount, (const char**)argv);
+                if(subdriver == NULL)
+                {
+                    return false;
+                }
+
+                Boolean success = linker_driver_drive_the_fucking_car(subdriver);
+                linker_driver_dealloc(subdriver);
+                if(!success)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                EFAUTOREL EFProcessRef process = EFProcessCreateWithCommand(EFGetAllocator(driver), jobCommand, jobArguments);
+                if(process == NULL)
+                {
+                    ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("couldn't spawn job: %s"), strerror(errno));
+                    return false;
+                }
+
+                SInt32 processIdentifier = EFProcessGetProcessIdentifier(process);
+                SInt32 rstatus = 0;
+                if(EFProcessWaitPID(process, &rstatus, 0) != processIdentifier)
+                {
+                    return false;
+                }
+
+                if(WIFEXITED(rstatus))
+                {
+                    if(WEXITSTATUS(rstatus) != 0)
+                    {
+                        return false;
+                    }
+                }
+                else if(WIFSIGNALED(rstatus))
+                {
+                    ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("job (command='%@' | pid=%d) terminated by signal %d"), jobCommand, processIdentifier, WTERMSIG(rstatus));
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     return false;
 }

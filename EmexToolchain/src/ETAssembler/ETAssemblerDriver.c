@@ -832,8 +832,6 @@ ETAssemblerDriverRef ETAssemblerDriverCreateWithOptions(EFAllocatorRef allocator
     return (ETAssemblerDriverRef)EFAUTOTRANSFER(driver);
 }
 
-extern char **environ;
-
 Boolean ETAssemblerDriverRun(ETAssemblerDriverRef driverRef)
 {
     __ETAssemblerDriver driver = (__ETAssemblerDriver)driverRef;

@@ -19,6 +19,7 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <pthread.h>
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerJob.h>
 
