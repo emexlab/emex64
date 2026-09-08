@@ -27,6 +27,11 @@
 typedef struct __ETCompilerDriver {
     EFObject header;
 
+    ETCompilerDriverOptions driverOptions;
+    ETCompilerDiagnosticOptions diagnosticOptions;
+
+    ETCompilerDiagnosticConsumerRef diagnosticConsumer;
+
     EFArrayRef arguments;
 
     EFMutableArrayRef inputFiles;
@@ -39,7 +44,14 @@ typedef struct __ETCompilerDriver {
 static void __ETCompilerDriverDeinit(EFObjectRef driverRef)
 {
     __ETCompilerDriver driver = (__ETCompilerDriver)driverRef;
+
+    ETCompilerDiagnosticConsumerEmit(driver->diagnosticConsumer);
+    EFReleaseTry(driver->diagnosticConsumer);
     EFReleaseTry(driver->arguments);
+    EFReleaseTry(driver->inputFiles);
+    EFReleaseTry(driver->outputPath);
+    EFReleaseTry(driver->includeSearchPaths);
+    EFReleaseTry(driver->linkerFlags);
 }
 
 static EFClassDefinitionV2 ETCompilerDriverClass = {
@@ -129,7 +141,7 @@ static Boolean __ETCompilerDriverPredrive(__ETCompilerDriver driver)
             EFIndex length = EFStringGetLength(argument);
             if(length <= 2)
             {
-                //ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-f'"));
+                ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-f'"));
                 return false;
             }
             EFRange flagArgumentRange = EFRangeMake(2, length - 2);
@@ -137,28 +149,28 @@ static Boolean __ETCompilerDriverPredrive(__ETCompilerDriver driver)
             if(EFStringEqualRange(argument, EFSTR("page-align"), flagArgumentRange) || EFStringEqualRange(argument, EFSTR("no-page-align"), flagArgumentRange))
             {
                 EFAUTOREL EFStringRef flagArgument = EFStringCreateCopyWithRange(kEFAllocatorDefault, argument, flagArgumentRange);
-                //ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityWarning, NULL, EFSTR("feature flag '%@' is deprecated, please you equivalents if available"), flagArgument);
+                ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityWarning, NULL, EFSTR("feature flag '%@' is deprecated, please you equivalents if available"), flagArgument);
             }
             else if(EFStringEqualRange(argument, EFSTR("caret-diagnostics"), flagArgumentRange))
             {
-                //driver->diagnosticOptions.caret_diagnostics = true;
+                driver->diagnosticOptions.caret_diagnostics = true;
             }
             else if(EFStringEqualRange(argument, EFSTR("no-caret-diagnostics"), flagArgumentRange))
             {
-                //driver->diagnosticOptions.caret_diagnostics = false;
+                driver->diagnosticOptions.caret_diagnostics = false;
             }
             else if(EFStringEqualRange(argument, EFSTR("color-diagnostics"), flagArgumentRange))
             {
-                //driver->diagnosticOptions.color_diagnostics = true;
+                driver->diagnosticOptions.color_diagnostics = true;
             }
             else if(EFStringEqualRange(argument, EFSTR("no-color-diagnostics"), flagArgumentRange))
             {
-                //driver->diagnosticOptions.color_diagnostics = false;
+                driver->diagnosticOptions.color_diagnostics = false;
             }
             else
             {
                 EFAUTOREL EFStringRef flagArgument = EFStringCreateCopyWithRange(kEFAllocatorDefault, argument, flagArgumentRange);
-                //ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown feature flag '%@'"), flagArgument);
+                ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown feature flag '%@'"), flagArgument);
                 return false;
             }
         }
@@ -167,7 +179,7 @@ static Boolean __ETCompilerDriverPredrive(__ETCompilerDriver driver)
             EFIndex length = EFStringGetLength(argument);
             if(length <= 4)
             {
-                //ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-Wl,'"));
+                ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-Wl,'"));
                 return false;
             }
             EFRange flagArgumentRange = EFRangeMake(4, length - 4);
@@ -176,7 +188,7 @@ static Boolean __ETCompilerDriverPredrive(__ETCompilerDriver driver)
             EFAUTOREL EFArrayRef components = EFStringComponentsSplitBySeparator(flagArgument, EFSTR(","));
             if(components == NULL)
             {
-                //ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't extract arguments from '-Wl,' argument"));
+                ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't extract arguments from '-Wl,' argument"));
                 return false;
             }
 
@@ -185,7 +197,7 @@ static Boolean __ETCompilerDriverPredrive(__ETCompilerDriver driver)
             {
                 if(!EFArrayAppendValue(driver->linkerFlags, EFArrayGetValueAtIndex(components, index)))
                 {
-                    //ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't extract arguments from '-Wl,' argument"));
+                    ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't extract arguments from '-Wl,' argument"));
                     return false;
                 }
             }
@@ -195,31 +207,31 @@ static Boolean __ETCompilerDriverPredrive(__ETCompilerDriver driver)
             EFIndex length = EFStringGetLength(argument);
             if(length <= 2)
             {
-                //ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-W'"));
+                ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-W'"));
                 return false;
             }
             EFRange flagArgumentRange = EFRangeMake(2, length - 2);
 
             if(EFStringEqualRange(argument, EFSTR("error"), flagArgumentRange))
             {
-                //driver->diagnosticOptions.warning_error = true;
+                driver->diagnosticOptions.warning_error = true;
             }
             else if(EFStringEqualRange(argument, EFSTR("no-error"), flagArgumentRange))
             {
-                //driver->diagnosticOptions.warning_error = false;
+                driver->diagnosticOptions.warning_error = false;
             }
             else if(EFStringEqualRange(argument, EFSTR("deprecated"), flagArgumentRange))
             {
-                //driver->diagnosticOptions.warning_deprecated = true;
+                driver->diagnosticOptions.warning_deprecated = true;
             }
             else if(EFStringEqualRange(argument, EFSTR("no-deprecated"), flagArgumentRange))
             {
-                //driver->diagnosticOptions.warning_deprecated = false;
+                driver->diagnosticOptions.warning_deprecated = false;
             }
             else
             {
                 EFAUTOREL EFStringRef flagArgument = EFStringCreateCopyWithRange(kEFAllocatorDefault, argument, flagArgumentRange);
-                //ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown warning flag '%@'"), flagArgument);
+                ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown warning flag '%@'"), flagArgument);
                 return false;
             }
         }
@@ -228,7 +240,7 @@ static Boolean __ETCompilerDriverPredrive(__ETCompilerDriver driver)
             EFIndex length = EFStringGetLength(argument);
             if(length <= 2)
             {
-                //ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-D'"));
+                ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-D'"));
                 return false;
             }
             EFRange flagArgumentRange = EFRangeMake(2, length - 2);
@@ -237,7 +249,7 @@ static Boolean __ETCompilerDriverPredrive(__ETCompilerDriver driver)
             EFAUTOREL EFArrayRef components = EFStringComponentsSplitBySeparator(flagArgument, EFSTR("="));
             if(components == NULL || EFArrayGetCount(components) < 1)
             {
-                //ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't extract arguments from '-D'"));
+                ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't extract arguments from '-D'"));
                 return false;
             }
 
@@ -273,45 +285,45 @@ static Boolean __ETCompilerDriverPredrive(__ETCompilerDriver driver)
             }
             else
             {
-                //ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-I'"));
+                ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '-I'"));
                 return false;
             }
 
             if(!EFArrayAppendValue(driver->includeSearchPaths, flagArgument))
             {
-                //ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't extract arguments from '-I'"));
+                ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, can't extract arguments from '-I'"));
                 return false;
             }
         }
         else if(EFEqual(argument, EFSTR("-c")))
         {
-            //driver->driverOptions.assembleOnly = true;
+            driver->driverOptions.compileOnly = true;
         }
         else if(EFEqual(argument, EFSTR("-v")))
         {
-            //driver->driverOptions.verbose = true;
+            driver->driverOptions.verbose = true;
         }
         else if(EFEqual(argument, EFSTR("--in-process")))
         {
-            //driver->driverOptions.inProcess = true;
+            driver->driverOptions.inProcess = true;
         }
         else if(EFEqual(argument, EFSTR("-r")))
         {
-            //driver->driverOptions.emitMode = kEmitModeRelocatableObject;
+            driver->driverOptions.emitMode = kEmitModeRelocatableObject;
         }
         else if(argument != NULL && !EFStringEqualRange(argument, EFSTR("-"), EFRangeMake(0, 1)))
         {
             EFAUTOREL EFFileRef file = EFFileCreateWithPath(EFGetAllocator(driver), EFFilePolicyInData, argument);
             EFFileType fileType = EFFileGetType(file);
-            if(file == NULL || !(fileType == kEFFileTypeAssembly || fileType == kEFFileTypeAssemblyIncludations || fileType == kEFFileTypeObject))
+            if(file == NULL || !(fileType == kEFFileTypeC || fileType == kEFFileTypeAssembly || fileType == kEFFileTypeAssemblyIncludations || fileType == kEFFileTypeObject))
             {
-                //ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown or non existing input file '%@'"), argument);
+                ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown or non existing input file '%@'"), argument);
                 return false;
             }
 
             if(!EFArrayAppendValue(driver->inputFiles, file))
             {
-                //ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, couldn't append file to input files"));
+                ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("out of memory, couldn't append file to input files"));
                 return false;
             }
         }
@@ -319,7 +331,7 @@ static Boolean __ETCompilerDriverPredrive(__ETCompilerDriver driver)
         {
             if(index >= (argumentsCount - 1))
             {
-                //ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '--target'"));
+                ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("missing argument to '--target'"));
                 return false;
             }
 
@@ -327,7 +339,7 @@ static Boolean __ETCompilerDriverPredrive(__ETCompilerDriver driver)
 
             if(EFEqual(targetStr, EFSTR("la64-generic")))
             {
-                //driver->driverOptions.isa = 15;
+                driver->driverOptions.isa = 15;
                 goto valid_target;
             }
 
@@ -362,7 +374,7 @@ static Boolean __ETCompilerDriverPredrive(__ETCompilerDriver driver)
                     case 13:
                     case 14:
                     case 15:
-                        //driver->driverOptions.isa = 15;
+                        driver->driverOptions.isa = 15;
                         goto valid_target;
                     default:
                         goto invalid_target;
@@ -370,7 +382,7 @@ static Boolean __ETCompilerDriverPredrive(__ETCompilerDriver driver)
             }
 
         invalid_target:
-            //ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("target '%@' is not supported by this version of EmexToolchain"), targetStr);
+            ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("target '%@' is not supported by this version of EmexToolchain"), targetStr);
             return false;
 
         valid_target:
@@ -378,22 +390,22 @@ static Boolean __ETCompilerDriverPredrive(__ETCompilerDriver driver)
         }
         else
         {
-            //ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown option '%@'"), argument);
+            ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("unknown option '%@'"), argument);
             return false;
         }
     }
 
-    //ETAssemblerDiagnosticConsumerSetDiagnosticOptions(driver->diagnosticConsumer, driver->diagnosticOptions);
+    ETCompilerDiagnosticConsumerSetDiagnosticOptions(driver->diagnosticConsumer, driver->diagnosticOptions);
 
     if(EFArrayGetCount(driver->inputFiles) <= 0)
     {
-        //ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("no input files"));
+        ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("no input files"));
         return false;
     }
 
     if(driver->outputPath == NULL)
     {
-        //ETAssemblerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityWarning, NULL, EFSTR("no output path provided, falling back to 'a.out'"));
+        ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityWarning, NULL, EFSTR("no output path provided, falling back to 'a.out'"));
         driver->outputPath = EFSTR("a.out");
     }
 
@@ -415,6 +427,14 @@ EFTypeID ETCompilerDriverGetTypeID(void)
 ETCompilerDriverRef ETCompilerDriverCreate(EFAllocatorRef allocatorRef,
                                            EFArrayRef arguments)
 {
+    return ETCompilerDriverCreateWithOptions(allocatorRef, arguments, ETCompilerDriverOptionsDefault, ETCompilerDiagnosticOptionsDefault);
+}
+
+ETCompilerDriverRef ETCompilerDriverCreateWithOptions(EFAllocatorRef allocatorRef,
+                                                      EFArrayRef arguments,
+                                                      ETCompilerDriverOptions driverOptions,
+                                                      ETCompilerDiagnosticOptions diagnosticOptions)
+{
     EFAUTOREL __ETCompilerDriver driver = (__ETCompilerDriver)EFObjectCreate(allocatorRef, ETCompilerDriverGetTypeID(), (EFIndex)sizeof(struct __ETCompilerDriver));
     if(driver == NULL)
     {
@@ -433,15 +453,15 @@ ETCompilerDriverRef ETCompilerDriverCreate(EFAllocatorRef allocatorRef,
         return NULL;
     }
 
-    /*driver->driverOptions = driverOptions;
+    driver->driverOptions = driverOptions;
     driver->diagnosticOptions = diagnosticOptions;
-    driver->diagnosticConsumer = ETAssemblerDiagnosticConsumerCreate(kEFAllocatorDefault, driver->diagnosticOptions);
+    driver->diagnosticConsumer = ETCompilerDiagnosticConsumerCreate(kEFAllocatorDefault, driver->diagnosticOptions);
     if(driver->diagnosticConsumer == NULL)
     {
         return NULL;
     }
 
-    if(!__ETAssemblerDriverPredrive(driver) ||
+    /*if(!__ETAssemblerDriverPredrive(driver) ||
        !__ETAssemblerDriverJobgen(driver))
     {
         return NULL;

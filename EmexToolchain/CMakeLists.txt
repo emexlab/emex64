@@ -143,6 +143,8 @@ add_library(EmexToolchain ${LIB_TYPE}
     
     # Compiler API
     src/ETCompiler/ETCompilerDriver.c
+    src/ETCompiler/ETCompilerOptions.c
+    src/ETCompiler/ETCompilerDiagnosticConsumer.c
 )
 
 target_compile_definitions(EmexToolchain PRIVATE

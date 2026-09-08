@@ -19,20 +19,20 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef ETCOMPILERDRIVER_H
-#define ETCOMPILERDRIVER_H
-
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETCompiler/ETCompilerOptions.h>
-#include <EmexToolchain/ETCompiler/ETCompilerDiagnosticConsumer.h>
 
-typedef struct __ETCompilerDriver *ETCompilerDriverRef;
+ETCompilerDriverOptions ETCompilerDriverOptionsDefault = {
+    .compileOnly = false,
+    .verbose = false,
+    .inProcess = false,
+    .emitMode = kEmitModeFirmware,
+    .isa = 15,
+};
 
-EFTypeID ETCompilerDriverGetTypeID(void);
-
-ETCompilerDriverRef ETCompilerDriverCreate(EFAllocatorRef allocatorRef, EFArrayRef arguments);
-ETCompilerDriverRef ETCompilerDriverCreateWithOptions(EFAllocatorRef allocatorRef, EFArrayRef arguments, ETCompilerDriverOptions driverOptions, ETCompilerDiagnosticOptions diagnosticOptions);
-
-Boolean ETCompilerDriverRun(ETCompilerDriverRef driverRef);
-
-#endif /* ETCOMPILERDRIVER_H */
+ETCompilerDiagnosticOptions ETCompilerDiagnosticOptionsDefault = {
+    .warning_error = false,
+    .warning_deprecated = true,
+    .caret_diagnostics = true,
+    .color_diagnostics = true,
+};

@@ -1,3 +1,4 @@
+
 /*
  * SPDX-License-Identifier: AGPL-3.0-or-later
  *
@@ -19,20 +20,21 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef ETCOMPILERDRIVER_H
-#define ETCOMPILERDRIVER_H
+#ifndef ETCOMPILERDIAGNOSTICCONSUMER_H
+#define ETCOMPILERDIAGNOSTICCONSUMER_H
 
 #include <EmexFoundation/EmexFoundation.h>
+#include <EmexToolchain/Support/diagnostic/diagnostic.h>
 #include <EmexToolchain/ETCompiler/ETCompilerOptions.h>
-#include <EmexToolchain/ETCompiler/ETCompilerDiagnosticConsumer.h>
 
-typedef struct __ETCompilerDriver *ETCompilerDriverRef;
+typedef struct __ETCompilerDiagnosticConsumer *ETCompilerDiagnosticConsumerRef;
 
-EFTypeID ETCompilerDriverGetTypeID(void);
+EFTypeID ETCompilerDiagnosticConsumerGetTypeID(void);
 
-ETCompilerDriverRef ETCompilerDriverCreate(EFAllocatorRef allocatorRef, EFArrayRef arguments);
-ETCompilerDriverRef ETCompilerDriverCreateWithOptions(EFAllocatorRef allocatorRef, EFArrayRef arguments, ETCompilerDriverOptions driverOptions, ETCompilerDiagnosticOptions diagnosticOptions);
+ETCompilerDiagnosticConsumerRef ETCompilerDiagnosticConsumerCreate(EFAllocatorRef allocatorRef, ETCompilerDiagnosticOptions diagnosticOptions);
 
-Boolean ETCompilerDriverRun(ETCompilerDriverRef driverRef);
+void ETCompilerDiagnosticConsumerSetDiagnosticOptions(ETCompilerDiagnosticConsumerRef consumerRef, ETCompilerDiagnosticOptions diagnosticOptions);
+void ETCompilerDiagnosticConsumerReport(ETCompilerDiagnosticConsumerRef consumerRef, kDiagnosticSeverity severity, diagnostic_location_t *location, EFStringRef format, ...);
+void ETCompilerDiagnosticConsumerEmit(ETCompilerDiagnosticConsumerRef consumerRef);
 
-#endif /* ETCOMPILERDRIVER_H */
+#endif /* ETCOMPILERDIAGNOSTICCONSUMER_H */
