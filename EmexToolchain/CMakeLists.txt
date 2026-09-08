@@ -140,6 +140,9 @@ add_library(EmexToolchain ${LIB_TYPE}
 
         ## Diagnostic API (Errors, Warnings, Notes, etc ^^)
         src/ETLinker/diagnostic/consumer.c
+    
+    # Compiler API
+    src/ETCompiler/ETCompilerDriver.c
 )
 
 target_compile_definitions(EmexToolchain PRIVATE

@@ -17,6 +17,7 @@ if(EMEX64_BUILD_TOOLS)
     add_subdirectory(tools/emex64vm)
     add_subdirectory(tools/emex64asm)
     add_subdirectory(tools/emex64ld)
+    add_subdirectory(tools/emex64cc)
 endif()
 
 if(EMEX64_BUILD_EXAMPLES)

@@ -19,8 +19,8 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef ETCOMPILER_ETTYPE_H
-#define ETCOMPILER_ETTYPE_H
+#ifndef ETCOMPILERTYPE_H
+#define ETCOMPILERTYPE_H
 
 typedef enum {
     TY_VOID, TY_BOOL, TY_CHAR, TY_SHORT, TY_INT, TY_LONG,
@@ -89,4 +89,4 @@ typedef struct Obj {
     Obj *next;
 } Obj;
 
-#endif /* ETCOMPILER_ETTYPE_H */
+#endif /* ETCOMPILERTYPE_H */

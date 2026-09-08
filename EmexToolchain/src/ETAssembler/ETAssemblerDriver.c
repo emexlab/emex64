@@ -118,7 +118,7 @@ EFTypeID ETAssemblerDriverGetTypeID(void)
     return ETAssemblerDriverClass.header.typeID;
 }
 
-Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
+static Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
 {
     /* better starting with the default assembler options ^^ */
     driver->diagnosticOptions = ETAssemblerDiagnosticOptionsDefault;
