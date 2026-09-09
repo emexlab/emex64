@@ -34,6 +34,7 @@ static inline E64Register __register_from_string(const char *name)
             case PACK('p','c'): return kE64RegisterPC;
             case PACK('s','p'): return kE64RegisterSP;
             case PACK('f','p'): return kE64RegisterFP;
+            case PACK('c','f'): return kE64RegisterCF;
             case PACK('f','p','c'): return kE64RegisterFPC;
             case PACK('r','0'): return kE64RegisterR0;
             case PACK('r','1'): return kE64RegisterR1;
