@@ -100,7 +100,7 @@ putbase_redirect:
 alloca:
     ; fake ret
     mov sp, fp      ; impersonating the caller literally
-    pop fp, er0     ; callers frame pointer and program counter TODO: restore previous er0
+    pop fp, cf      ; callers frame pointer and program counter
 
     ; now we allocate by using the stack pointer
     ; basically messing with the caller cause
@@ -108,14 +108,14 @@ alloca:
     sub sp, r0
     mov rr, sp
     sub sp, 8
-    push er1        ; backing er1 up
-    mov er1, sp
-    mod er1, 8
-    pop er1         ; restoring er1 before overriding sp
+    push er0        ; backing er0 up
+    mov er0, sp
+    mod er0, 8
+    pop er0         ; restoring er0 before overriding sp
     sub sp, er1
 
     ; returning to caller (already returned, but completing the return)
-    b er0           ; branching to the return address
+    b cf            ; branching to the return address
 
 stack_print:
     mov r3, r0      ; preserve source string
