@@ -82,6 +82,7 @@ section .data
     fw_match_msg db " match? \0"
     fw_no_msg db "no\0"
     fw_yes_msg db "yes\0"
+    fw_alloca_msg db "[fw] testing stack allocator\n\0"
 
 section .data
     meow_cnt dq (0 - 1) ; underflow so that the hang in main does null it
@@ -96,9 +97,55 @@ putbase_redirect:
     blw puts, meow_msg
     wret
 
+alloca:
+    push r2     ; going to use r2
+
+    ; fake ret
+    swp fp, sp  ; impersonating the caller literally
+    pop er0     ; callers frame pointer
+    pop er1     ; callers program counter
+    swp sp, fp  ; swapping back so we are we again
+
+    ; now we allocate by using the frame pointer
+    ; basically messing with fp means messing with
+    ; the callers sp :3
+    sub fp, r0
+    mov rr, fp
+    sub fp, 8
+    mov r2, fp
+    mod r2, 8
+    sub fp, r2
+
+    ; fake bl
+    swp fp, sp  ; impersonating the caller literally
+    push er1    ; callers program counter
+    push er0    ; callers frame pointer
+    swp sp, fp
+
+    pop r2
+    ret
+
+stack_print:
+    mov r3, r0      ; preserve source string
+
+    blw strlen, r0
+    inc rr          ; include '\0'
+    mov r4, rr      ; preserve copy/allocation size
+    
+    mov r0, r4
+    bl alloca
+    mov r1, rr          ; allocated destination
+
+    blw memcpy, r1, r3, r4
+    blw puts, r1
+
+    wret
+
 main:
     blw interrupt_register_handler, EMEX64_IC_IRQ_EXCEPTION, exception_handler
     blw interrupt_register_handler, EMEX64_IC_IRQ_8042, kdb_handler
+
+    blw stack_print, fw_alloca_msg
 
     ; printing information about the ISA
     blw puts, fw_isa_msg
