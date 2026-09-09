@@ -116,7 +116,7 @@ alloca:
     sub sp, r2
 
     ; returning to caller (already returned, but completing the return)
-    swp r2, fp
+    mov r2, fp
     mov fp, er0
     b er1           ; branching to the return address
 
