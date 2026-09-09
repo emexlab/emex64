@@ -101,9 +101,8 @@ alloca:
     ; TODO: do all of this, but without destroying values stored on the extended registers file
 
     ; fake ret
-    mov sp, fp  ; impersonating the caller literally
-    pop er0     ; callers frame pointer
-    pop er1     ; callers program counter
+    mov sp, fp      ; impersonating the caller literally
+    pop er0, er1    ; callers frame pointer and program counter
 
     ; now we allocate by using the stack pointer
     ; basically messing with the caller cause
@@ -111,7 +110,7 @@ alloca:
     sub sp, r0
     mov rr, sp
     sub sp, 8
-    mov fp, r2  ; lets just use fp as r2's backup since it is meaningless to us by now
+    mov fp, r2      ; lets just use fp as r2's backup since it is meaningless to us by now
     mov r2, sp
     mod r2, 8
     sub sp, r2
@@ -119,18 +118,18 @@ alloca:
     ; returning to caller (already returned, but completing the return)
     swp r2, fp
     mov fp, er0
-    b er1       ; branching to the return address
+    b er1           ; branching to the return address
 
 stack_print:
-    mov r3, r0  ; preserve source string
+    mov r3, r0      ; preserve source string
 
     blw strlen, r0
-    inc rr      ; include '\0'
-    mov r4, rr  ; preserve copy/allocation size
+    inc rr          ; include '\0'
+    mov r4, rr      ; preserve copy/allocation size
     
     mov r0, r4
     bl alloca
-    mov r1, rr  ; allocated destination
+    mov r1, rr      ; allocated destination
 
     blw memcpy, r1, r3, r4
     blw puts, r1
