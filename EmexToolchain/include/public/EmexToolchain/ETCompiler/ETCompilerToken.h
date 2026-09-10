@@ -25,10 +25,18 @@
 #include <EmexFoundation/EmexFoundation.h>
 
 typedef enum: UInt8 {
+    /* statements */
     kETCompilerTokenTypeIdentifier,
     kETCompilerTokenTypeKeyword,
     kETCompilerTokenTypeBaseType,
     kETCompilerTokenTypeNumber,
+
+    /* binary operations */
+    kETCompilerTokenTypeAddition,
+    kETCompilerTokenTypeSubtraction,
+    kETCompilerTokenTypeMultiplication,
+    kETCompilerTokenTypeDivision,
+    kETCompilerTokenTypeAssign,
 
     /* punctuation */
     kETCompilerTokenTypeSemicolon,

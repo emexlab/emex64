@@ -38,9 +38,9 @@ static Boolean __ETCompilerLexerAppendToken(EFMutableArrayRef tokens,
         case PACK('u','6','4'):
             type = kETCompilerTokenTypeBaseType;
             goto skip_to_creation;
-        /*case PACK('i','f'):
+        case PACK('i','f'):
         case PACK('e','l','s','e'):
-        case PACK('s','w','i','t','c','h'):*/
+        case PACK('s','w','i','t','c','h'):
         case PACK('r','e','t','u','r','n'):
         /*case PACK('t','y','p','e','d','e','f'):
         case PACK('s','t','r','u','c','t'):*/
@@ -122,12 +122,13 @@ EFMutableArrayRef ETCompilerLexerCreateTokenArrayWithFile(EFFileRef inputFile,
                                 cStringPtr = (const char*)((EFAddr)cString + (EFAddr)loopLocation);
                                 if(cStringPtr[0] == '*' && cStringPtr[1] == '/')
                                 {
+                                    loopLocation++;
                                     goto block_comment_end;
                                 }
                             }
                         block_comment_end:
                             range.length = 0;
-                            range.location = loopLocation + 1;
+                            range.location = loopLocation + 2;
                             goto continue_lexer_loop;
                         }
                         case '/':   /* normal comment */
@@ -149,8 +150,23 @@ EFMutableArrayRef ETCompilerLexerCreateTokenArrayWithFile(EFFileRef inputFile,
                 }
 
                 /* math division operation */
-                [[fallthrough]];
+                mtype = kETCompilerTokenTypeDivision;
+                goto handle_punctuation;
             }
+
+            /* binary operation */
+            case '+':
+                mtype = kETCompilerTokenTypeAddition;
+                goto handle_punctuation;
+            case '-':
+                mtype = kETCompilerTokenTypeSubtraction;
+                goto handle_punctuation;
+            case '*':
+                mtype = kETCompilerTokenTypeMultiplication;
+                goto handle_punctuation;
+            case '=':
+                mtype = kETCompilerTokenTypeAssign;
+                goto handle_punctuation;
 
             /* punctuation bay */
             case ';':

@@ -61,6 +61,16 @@ EFStringRef __ETCompilerTokenTypeStringForType(ETCompilerTokenType type)
             return EFSTR("RPACK");
         case kETCompilerTokenTypeLPack:
             return EFSTR("LPACK");
+        case kETCompilerTokenTypeAddition:
+            return EFSTR("ADDITION");
+        case kETCompilerTokenTypeSubtraction:
+            return EFSTR("SUBTRACTION");
+        case kETCompilerTokenTypeMultiplication:
+            return EFSTR("MULTIPLY");
+        case kETCompilerTokenTypeDivision:
+            return EFSTR("DIVISION");
+        case kETCompilerTokenTypeAssign:
+            return EFSTR("ASSIGN");
         default:
             return EFSTR("UNKNOWN");
     }
