@@ -31,6 +31,7 @@
 #include <EmexToolchain/Support/ratchet/args.h>
 #include <EmexToolchain/Support/version.h>
 #include <EmexToolchain/ETCompiler/ETCompilerDriver.h>
+#include <EmexToolchain/ETCompiler/ETCompilerLexer.h>
 #include <EmexToolchain/ETLinker/driver.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerDriver.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
@@ -893,6 +894,25 @@ Boolean ETCompilerDriverRun(ETCompilerDriverRef driverRef)
 
     if(driver->driverOptions.compileOnly)
     {
+        EFAUTOREL EFMutableArrayRef tokens = ETCompilerLexerCreateTokenArrayWithFile(EFArrayGetValueAtIndex(driver->inputFiles, 0), driver->diagnosticConsumer);
+        EFAUTOREL EFMutableStringRef tokenSummary = EFStringCreateMutableCopy(kEFAllocatorDefault, EFSTR(""));
+        if(tokenSummary == NULL)
+        {
+            ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("C compilation is not supported yet"));
+            return false;
+        }
+
+        EFIndex tokenCount = EFArrayGetCount(tokens);
+        for(EFIndex index = 0; index < tokenCount; index++)
+        {
+            if(!EFStringAppendFormat(tokenSummary, EFSTR("\n[%d] %@"), index, EFArrayGetValueAtIndex(tokens, index)))
+            {
+                ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("C compilation is not supported yet"));
+                return false;
+            }
+        }
+
+        ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityNote, NULL, EFSTR("lexical output: %@"), tokenSummary);
         ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("C compilation is not supported yet"));
         return false;
     }

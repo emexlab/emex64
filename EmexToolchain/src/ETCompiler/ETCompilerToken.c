@@ -90,7 +90,7 @@ EFClassDefinitionV4 ETCompilerTokenClass = {
     .deinit = __ETCompilerTokenDeinit,
     .equal = NULL,
     .hash = NULL,
-    .copyDescription = NULL, //__ETCompilerTokenCopyDescription,
+    .copyDescription = __ETCompilerTokenCopyDescription,
     .copyDebugDescription = __ETCompilerTokenCopyDebugDescription,
 };
 
