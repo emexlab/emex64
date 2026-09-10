@@ -38,12 +38,12 @@ static Boolean __ETCompilerLexerAppendToken(EFMutableArrayRef tokens,
         case PACK('u','6','4'):
             type = kETCompilerTokenTypeBaseType;
             goto skip_to_creation;
-        case PACK('i','f'):
+        /*case PACK('i','f'):
         case PACK('e','l','s','e'):
-        case PACK('s','w','i','t','c','h'):
+        case PACK('s','w','i','t','c','h'):*/
         case PACK('r','e','t','u','r','n'):
-        case PACK('t','y','p','e','d','e','f'):
-        case PACK('s','t','r','u','c','t'):
+        /*case PACK('t','y','p','e','d','e','f'):
+        case PACK('s','t','r','u','c','t'):*/
             type = kETCompilerTokenTypeKeyword;
             goto skip_to_creation;
         default:
