@@ -35,12 +35,7 @@ static Boolean __ETCompilerLexerAppendToken(EFMutableArrayRef tokens,
     switch(pack_name(EFStringGetCStringPtr(token, kEFStringEncodingUTF8)))
     {
         case PACK('v','o','i','d'):
-        case PACK('i','n','t'):
-        case PACK('l','o','n','g'):
-        case PACK('s','h','o','r','t'):
-        case PACK('c','h','a','r'):
-        case PACK('s','i','n','g','e','d'):
-        case PACK('u','n','s','i','n','g','e','d'):
+        case PACK('u','6','4'):
             type = kETCompilerTokenTypeBaseType;
             goto skip_to_creation;
         case PACK('i','f'):
