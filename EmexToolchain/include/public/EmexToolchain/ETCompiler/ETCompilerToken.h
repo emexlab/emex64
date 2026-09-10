@@ -53,6 +53,7 @@ typedef struct __ETCompilerToken *ETCompilerTokenRef;
 ETCompilerTokenRef ETCompilerTokenCreate(EFAllocatorRef allocator, EFStringRef tokenString, EFRange range, ETCompilerTokenType type);
 
 EFStringRef ETCompilerTokenGetString(ETCompilerTokenRef token);
+EFNumberRef ETCompilerTokenGetNumber(ETCompilerTokenRef token);
 EFRange ETCompilerTokenGetRange(ETCompilerTokenRef token);
 ETCompilerTokenType ETCompilerTokenGetType(ETCompilerTokenRef token);
 

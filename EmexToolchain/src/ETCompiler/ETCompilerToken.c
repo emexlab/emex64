@@ -25,6 +25,7 @@
 typedef struct __ETCompilerToken {
     EFObject super;
     EFStringRef tokenString;    /* token it self */
+    EFNumberRef tokenNumber;    /* token it self aswell */
     EFRange range;              /* range inside of the source */
     ETCompilerTokenType type;
 } *__ETCompilerToken;
@@ -33,6 +34,7 @@ void __ETCompilerTokenDeinit(EFObjectRef compilerTokenRef)
 {
     ETCompilerTokenRef compilerToken = (ETCompilerTokenRef)compilerTokenRef;
     EFReleaseTry(compilerToken->tokenString);
+    EFReleaseTry(compilerToken->tokenNumber);
 }
 
 EFStringRef __ETCompilerTokenTypeStringForType(ETCompilerTokenType type)
@@ -80,14 +82,21 @@ EFStringRef __ETCompilerTokenCopyDescription(EFObjectRef compilerTokenRef)
 {
     ETCompilerTokenRef compilerToken = (ETCompilerTokenRef)compilerTokenRef;
     EFStringRef typeString = __ETCompilerTokenTypeStringForType(compilerToken->type);
-    return EFStringCreateWithFormat(EFGetAllocator(compilerTokenRef), EFSTR("%@(\"%@\")"), typeString, compilerToken->tokenString);
+    if(compilerToken->type != kETCompilerTokenTypeNumber)
+    {
+        return EFStringCreateWithFormat(EFGetAllocator(compilerTokenRef), EFSTR("%@(\"%@\")"), typeString, compilerToken->tokenString);
+    }
+    else
+    {
+        return EFStringCreateWithFormat(EFGetAllocator(compilerTokenRef), EFSTR("%@(%@)"), typeString, compilerToken->tokenNumber);
+    }
 }
 
 EFStringRef __ETCompilerTokenCopyDebugDescription(EFObjectRef compilerTokenRef)
 {
     ETCompilerTokenRef compilerToken = (ETCompilerTokenRef)compilerTokenRef;
     EFStringRef typeString = __ETCompilerTokenTypeStringForType(compilerToken->type);
-    return EFStringCreateWithFormat(EFGetAllocator(compilerTokenRef), EFSTR("<ETCompilerToken %p>{tokenString = \"%@\", range = {location = %d, length = %d}, type = %@}"), compilerToken, compilerToken->tokenString, compilerToken->range.location, compilerToken->range.length, typeString);
+    return EFStringCreateWithFormat(EFGetAllocator(compilerTokenRef), EFSTR("<ETCompilerToken %p>{tokenString = \"%@\", tokenNumber = %@, range = {location = %d, length = %d}, type = %@}"), compilerToken, compilerToken->tokenString, compilerToken->tokenNumber, compilerToken->range.location, compilerToken->range.length, typeString);
 }
 
 EFClassDefinitionV4 ETCompilerTokenClass = {
@@ -139,6 +148,16 @@ ETCompilerTokenRef ETCompilerTokenCreate(EFAllocatorRef allocator,
         return NULL;
     }
 
+    if(type == kETCompilerTokenTypeNumber)
+    {
+        compilerToken->tokenNumber = EFStringCopyNumber(allocator, tokenString);
+        if(compilerToken->tokenNumber == NULL)
+        {
+            EFRelease(compilerToken);
+            return NULL;
+        }
+    }
+
     compilerToken->range = range;
     compilerToken->type = type;
 
@@ -153,6 +172,16 @@ EFStringRef ETCompilerTokenGetString(ETCompilerTokenRef token)
     }
 
     return token->tokenString;
+}
+
+EFNumberRef ETCompilerTokenGetNumber(ETCompilerTokenRef token)
+{
+    if(token == NULL)
+    {
+        return NULL;
+    }
+
+    return token->tokenNumber;
 }
 
 EFRange ETCompilerTokenGetRange(ETCompilerTokenRef token)
@@ -174,3 +203,4 @@ ETCompilerTokenType ETCompilerTokenGetType(ETCompilerTokenRef token)
 
     return token->type;
 }
+
