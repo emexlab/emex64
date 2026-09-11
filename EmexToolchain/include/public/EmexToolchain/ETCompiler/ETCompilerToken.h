@@ -39,6 +39,7 @@ typedef enum: UInt8 {
     kETCompilerTokenTypeAssign,
 
     /* punctuation */
+    kETCompilerTokenTypeComma,
     kETCompilerTokenTypeSemicolon,
     kETCompilerTokenTypeRBrace,
     kETCompilerTokenTypeLBrace,

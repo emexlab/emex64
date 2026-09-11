@@ -41,6 +41,8 @@ EFStringRef __ETCompilerTokenTypeStringForType(ETCompilerTokenType type)
 {
     switch(type)
     {
+        case kETCompilerTokenTypeComma:
+            return EFSTR("COMMA");
         case kETCompilerTokenTypeIdentifier:
             return EFSTR("IDENTIFIER");
         case kETCompilerTokenTypeKeyword:

@@ -169,6 +169,9 @@ EFMutableArrayRef ETCompilerLexerCreateTokenArrayWithFile(EFFileRef inputFile,
                 goto handle_punctuation;
 
             /* punctuation bay */
+            case ',':
+                mtype = kETCompilerTokenTypeComma;
+                goto handle_punctuation;
             case ';':
                 mtype = kETCompilerTokenTypeSemicolon;
                 goto handle_punctuation;
