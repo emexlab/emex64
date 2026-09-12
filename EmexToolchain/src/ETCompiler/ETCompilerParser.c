@@ -217,10 +217,12 @@ static ETCompilerASTNodeRef ParsePrimary(__ETCompilerParser parser)
     return NULL;
 }
 
+static ETCompilerASTNodeRef ParsePostfix(__ETCompilerParser parser);
+
 static ETCompilerASTNodeRef ParseExpression(__ETCompilerParser parser,
                                             int minPrecedence)
 {
-    ETCompilerASTNodeRef lhs = ParsePrimary(parser);
+    ETCompilerASTNodeRef lhs = ParsePostfix(parser);
     if(lhs == NULL)
     {
         return NULL;
@@ -519,6 +521,86 @@ static void SynchronizeToNextDeclaration(__ETCompilerParser parser)
         }
         Advance(parser);
     }
+}
+
+#pragma mark - function calling
+
+static ETCompilerASTNodeRef ParseArgList(__ETCompilerParser parser)
+{
+    ETCompilerASTNodeRef list = ETCompilerASTNodeCreate(parser->allocator, kETCompilerASTNodeKindArgList, Peek(parser));
+    if(list == NULL)
+    {
+        return NULL;
+    }
+
+    if(Check(parser, kETCompilerTokenTypeRParen))
+    {
+        return list;
+    }
+
+    do
+    {
+        ETCompilerASTNodeRef argument = ParseExpression(parser, 0);
+        if(argument == NULL)
+        {
+            EFRelease(list);
+            return NULL;
+        }
+
+        ETCompilerASTNodeAppendChild(list, argument);
+        EFRelease(argument);
+    } while(Match(parser, kETCompilerTokenTypeComma));
+
+    return list;
+}
+
+static ETCompilerASTNodeRef ParsePostfix(__ETCompilerParser parser)
+{
+    ETCompilerASTNodeRef expression = ParsePrimary(parser);
+    if(expression == NULL)
+    {
+        return NULL;
+    }
+
+    while(Match(parser, kETCompilerTokenTypeLParen))
+    {
+        if(ETCompilerASTNodeGetKind(expression) != kETCompilerASTNodeKindVarRef)
+        {
+            ETCompilerDiagnosticConsumerReport(parser->diagnosticConsumer, kDiagnosticSeverityError, NULL, EFSTR("called object is not a function"));
+            EFRelease(expression);
+            return NULL;
+        }
+
+        ETCompilerASTNodeRef arguments = ParseArgList(parser);
+        if(arguments == NULL)
+        {
+            EFRelease(expression);
+            return NULL;
+        }
+
+        if(Expect(parser, kETCompilerTokenTypeRParen, "')'") == NULL)
+        {
+            EFRelease(expression);
+            EFRelease(arguments);
+            return NULL;
+        }
+
+        ETCompilerASTNodeRef call = ETCompilerASTNodeCreate(parser->allocator, kETCompilerASTNodeKindCall, ETCompilerASTNodeGetToken(expression));
+        if(call == NULL)
+        {
+            EFRelease(expression);
+            EFRelease(arguments);
+            return NULL;
+        }
+
+        ETCompilerASTNodeAppendChild(call, arguments);
+        EFRelease(arguments);
+        EFRelease(expression);
+
+        expression = call;
+    }
+
+    return expression;
 }
 
 #pragma mark - entry point

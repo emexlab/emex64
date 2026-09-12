@@ -67,6 +67,10 @@ static EFStringRef __ETCompilerASTNodeKindToString(ETCompilerASTNodeKind kind)
             return EFSTR("TypeReference");
         case kETCompilerASTNodeKindParamList:
             return EFSTR("ParameterList");
+        case kETCompilerASTNodeKindCall:
+            return EFSTR("Call");
+        case kETCompilerASTNodeKindArgList:
+            return EFSTR("ArgumentList");
         default:
             return EFSTR("Unknown");
     }

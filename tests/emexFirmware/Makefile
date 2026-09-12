@@ -12,7 +12,7 @@ all-minimal: FLAGS ?= -Wl,--omagic,-v -DFW_MINIMAL
 all-minimal: compile execute clean
 
 compile:
-	emex64cc $(FILES) -o firmware.img -Iinc -Wl,-T,emex64.e64ld -DUSES_FW_LDSCRIPT -DUSES_FW_CODE $(FLAGS)
+	emex64cc $(FILES) src/*.c -o firmware.img -Iinc -Wl,-T,emex64.e64ld -DUSES_FW_LDSCRIPT -DUSES_FW_CODE $(FLAGS)
 
 execute:
 	emex64vm --display $(VM_DISPLAY) --display:resolution 1280 800 -f firmware.img -m:kb $(VM_MEMORY)

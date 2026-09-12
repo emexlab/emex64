@@ -37,6 +37,7 @@
 #include <EmexToolchain/ETLinker/driver.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerDriver.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
+#include <EmexToolchain/ETAssembler/ETAssemblerDiagnosticConsumer.h>
 
 typedef struct __ETCompilerDriver {
     EFObject header;
@@ -920,8 +921,25 @@ Boolean ETCompilerDriverRun(ETCompilerDriverRef driverRef)
         }
         ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityNote, NULL, EFSTR("asmSource:\n%@"), asmSource);
 
-        ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("C compilation is not supported yet"));
-        return false;
+        EFFileRef unsavedFile = EFFileCreateWithString(kEFAllocatorDefault, EFFilePolicyOutData, EFURLCreateWithString(kEFAllocatorDefault, EFSTR("./random.e64")), asmSource);
+
+        EFAUTOREL ETAssemblerDiagnosticConsumerRef diagnosticConsumerASM = ETAssemblerDiagnosticConsumerCreate(kEFAllocatorDefault, ETAssemblerDiagnosticOptionsDefault);
+        EFAUTOREL ETAssemblerInvocationRef invocation = ETAssemblerInvocationCreate(kEFAllocatorDefault, diagnosticConsumerASM);
+        if(invocation == NULL)
+        {
+            return false;
+        }
+
+        {
+            EFAUTOREL EFFileRef outputFile = EFFileCreateWithPath(EFGetAllocator(driver), EFFilePolicyOutData, driver->outputPath);
+            if(!ETAssemblerInvocationSetInputFile(invocation, unsavedFile) ||
+               !ETAssemblerInvocationSetOutputFile(invocation, outputFile))
+            {
+                return false;
+            }
+        }
+
+        return ETAssemblerInvocationEmit(invocation);
     }
     else
     {
