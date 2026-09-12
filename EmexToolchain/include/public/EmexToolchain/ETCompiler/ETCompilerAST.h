@@ -37,6 +37,8 @@ typedef enum: UInt8 {
     kETCompilerASTNodeKindBinaryOp,
     kETCompilerASTNodeKindIntLiteral,
     kETCompilerASTNodeKindVarRef,
+    kETCompilerASTNodeKindTypeRef,
+    kETCompilerASTNodeKindParamList,
 } ETCompilerASTNodeKind;
 
 typedef struct __ETCompilerASTNode *ETCompilerASTNodeRef;

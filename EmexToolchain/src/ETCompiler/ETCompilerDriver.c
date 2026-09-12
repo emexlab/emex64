@@ -32,6 +32,8 @@
 #include <EmexToolchain/Support/version.h>
 #include <EmexToolchain/ETCompiler/ETCompilerDriver.h>
 #include <EmexToolchain/ETCompiler/ETCompilerLexer.h>
+#include <EmexToolchain/ETCompiler/ETCompilerParser.h>
+#include <EmexToolchain/ETCompiler/ETCompilerCodegen.h>
 #include <EmexToolchain/ETLinker/driver.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerDriver.h>
 #include <EmexToolchain/ETAssembler/ETAssemblerInvocation.h>
@@ -895,24 +897,29 @@ Boolean ETCompilerDriverRun(ETCompilerDriverRef driverRef)
     if(driver->driverOptions.compileOnly)
     {
         EFAUTOREL EFMutableArrayRef tokens = ETCompilerLexerCreateTokenArrayWithFile(EFArrayGetValueAtIndex(driver->inputFiles, 0), driver->diagnosticConsumer);
-        EFAUTOREL EFMutableStringRef tokenSummary = EFStringCreateMutableCopy(kEFAllocatorDefault, EFSTR(""));
-        if(tokenSummary == NULL)
+        if(tokens == NULL)
         {
             ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("C compilation is not supported yet"));
             return false;
         }
+        ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityNote, NULL, EFSTR("tokens: %@"), tokens);
 
-        EFIndex tokenCount = EFArrayGetCount(tokens);
-        for(EFIndex index = 0; index < tokenCount; index++)
+        EFAUTOREL ETCompilerASTNodeRef translationUnit = ETCompilerParserCopyTranslationUnitForTokenArray(kEFAllocatorDefault, tokens, driver->diagnosticConsumer);
+        if(translationUnit == NULL)
         {
-            if(!EFStringAppendFormat(tokenSummary, EFSTR("\n[%d] %@"), index, EFArrayGetValueAtIndex(tokens, index)))
-            {
-                ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("C compilation is not supported yet"));
-                return false;
-            }
+            ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("C compilation is not supported yet"));
+            return false;
         }
+        ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityNote, NULL, EFSTR("translationUnit:\n%@"), translationUnit);
 
-        ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityNote, NULL, EFSTR("lexical output: %@"), tokenSummary);
+        EFAUTOREL EFStringRef asmSource = ETCompilerCodegenCreateASMSourceWithAST(translationUnit);
+        if(asmSource == NULL)
+        {
+            ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("C compilation is not supported yet"));
+            return false;
+        }
+        ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityNote, NULL, EFSTR("asmSource:\n%@"), asmSource);
+
         ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("C compilation is not supported yet"));
         return false;
     }

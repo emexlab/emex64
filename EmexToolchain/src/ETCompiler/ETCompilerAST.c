@@ -21,6 +21,7 @@
 
 #include <EmexToolchain/ETCompiler/ETCompilerAST.h>
 #include <pthread.h>
+#include <stdarg.h>
 
 typedef struct __ETCompilerASTNode {
     EFObject super;
@@ -29,11 +30,113 @@ typedef struct __ETCompilerASTNode {
     EFMutableArrayRef children;
 } *__ETCompilerASTNode;
 
-void __ETCompilerASTNodeDeinit(EFObjectRef ref)
+static void __ETCompilerASTNodeDeinit(EFObjectRef ref)
 {
     ETCompilerASTNodeRef node = (ETCompilerASTNodeRef)ref;
     EFReleaseTry(node->token);
     EFReleaseTry(node->children);
+}
+
+static EFStringRef __ETCompilerASTNodeKindToString(ETCompilerASTNodeKind kind)
+{
+    switch(kind)
+    {
+        case kETCompilerASTNodeKindTranslationUnit:
+            return EFSTR("TranslationUnit");
+        case kETCompilerASTNodeKindFunctionDef:
+            return EFSTR("FunctionDefinition");
+        case kETCompilerASTNodeKindFunctionDecl:
+            return EFSTR("FunctionDeclaration");
+        case kETCompilerASTNodeKindParamDecl:
+            return EFSTR("ParameterDeclaration");
+        case kETCompilerASTNodeKindVarDecl:
+            return EFSTR("VariableDeclaration");
+        case kETCompilerASTNodeKindBlock:
+            return EFSTR("Block");
+        case kETCompilerASTNodeKindReturn:
+            return EFSTR("Return");
+        case kETCompilerASTNodeKindExprStmt:
+            return EFSTR("ExpressionStatement");
+        case kETCompilerASTNodeKindBinaryOp:
+            return EFSTR("BinaryOperation");
+        case kETCompilerASTNodeKindIntLiteral:
+            return EFSTR("IntegerLiteral");
+        case kETCompilerASTNodeKindVarRef:
+            return EFSTR("VariableReference");
+        case kETCompilerASTNodeKindTypeRef:
+            return EFSTR("TypeReference");
+        case kETCompilerASTNodeKindParamList:
+            return EFSTR("ParameterList");
+        default:
+            return EFSTR("Unknown");
+    }
+}
+
+static void __ETCompilerASTNodeLevelFormatAppend(EFMutableStringRef description,
+                                                 EFIndex level,
+                                                 EFStringRef format,
+                                                 ...)
+{
+    for(EFIndex index = 0; index < level; index++)
+    {
+        EFStringAppendString(description, EFSTR("  "));
+    }
+    
+    va_list arguments;
+    va_start(arguments, format);
+    EFAUTOREL EFStringRef resultRef = EFStringCreateWithFormatAndArguments(NULL, format, arguments);
+    va_end(arguments);
+
+    EFStringAppendString(description, resultRef);
+}
+
+static void __ETCompilerASTNodeDescriptionAppend(EFMutableStringRef description,
+                                                 ETCompilerASTNodeRef node,
+                                                 EFIndex level)
+{
+    EFStringRef kindString = __ETCompilerASTNodeKindToString(node->kind);
+    __ETCompilerASTNodeLevelFormatAppend(description, level, EFSTR("%@\n"), kindString);
+    level++;
+
+    if(node->token != NULL)
+    {
+        __ETCompilerASTNodeLevelFormatAppend(description, level, EFSTR("token: %@\n"), node->token);
+    }
+
+    if(EFArrayGetCount(node->children) > 0)
+    {
+        __ETCompilerASTNodeLevelFormatAppend(description, level, EFSTR("children:\n"));
+
+        level++;
+        for(EFIndex index = 0; index < EFArrayGetCount(node->children); index++)
+        {
+            ETCompilerASTNodeRef child = EFArrayGetValueAtIndex(node->children, index);
+            __ETCompilerASTNodeDescriptionAppend(description, child, level);
+        }
+        level--;
+    }
+
+    level--;
+}
+
+static EFStringRef __ETCompilerASTNodeCopyDescription(EFObjectRef ref)
+{
+    ETCompilerASTNodeRef node = (ETCompilerASTNodeRef)ref;
+
+    EFAUTOREL EFMutableStringRef description = EFStringCreateMutableCopy(kEFAllocatorDefault, EFSTR(""));
+    if(description == NULL)
+    {
+        return NULL;
+    }
+
+    __ETCompilerASTNodeDescriptionAppend(description, node, 0);
+
+    if(EFStringHasSuffix(description, EFSTR("\n")))
+    {
+        EFStringDelete(description, EFRangeMake(EFStringGetLength(description) - 1, 1));
+    }
+
+    return EFAUTOTRANSFER(description);
 }
 
 EFClassDefinitionV4 ETCompilerASTNodeClass = {
@@ -46,7 +149,7 @@ EFClassDefinitionV4 ETCompilerASTNodeClass = {
     .deinit = __ETCompilerASTNodeDeinit,
     .equal = NULL,
     .hash = NULL,
-    .copyDescription = NULL,
+    .copyDescription = __ETCompilerASTNodeCopyDescription,
     .copyDebugDescription = NULL,
 };
 

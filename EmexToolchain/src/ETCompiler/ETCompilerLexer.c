@@ -245,5 +245,7 @@ EFMutableArrayRef ETCompilerLexerCreateTokenArrayWithFile(EFFileRef inputFile,
         continue;
     }
 
+    EFArrayAppendValue(tokens, ETCompilerTokenCreate(allocator, EFSTR(""), EFRangeZero, kETCompilerTokenTypeEOF));
+
     return EFAUTOTRANSFER(tokens);
 }

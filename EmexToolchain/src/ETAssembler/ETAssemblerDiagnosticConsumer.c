@@ -138,14 +138,7 @@ void ETAssemblerDiagnosticConsumerReport(ETAssemblerDiagnosticConsumerRef consum
         return;
     }
 
-    const char *cptr = EFStringGetCStringPtr(result, kEFStringEncodingASCII);
-    if(cptr == NULL)
-    {
-        EFRelease(result);
-        return;
-    }
-
-    diagnostic_report(consumer->consumer, severity, location, "%s", cptr);
+    diagnostic_report(consumer->consumer, severity, location, "%@", result);
     EFRelease(result);
 }
 

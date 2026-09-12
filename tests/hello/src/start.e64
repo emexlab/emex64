@@ -36,3 +36,6 @@ _start:
     bnz r1, .loop                               ; looping till we read all bytes
 .end:
     stq [r3 + 0x4000], 0                        ; [r3 + 0x4000] = EMEX64_PLATFORM_REG_PWR
+
+
+rej

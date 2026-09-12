@@ -47,6 +47,9 @@ typedef enum: UInt8 {
     kETCompilerTokenTypeLParen,
     kETCompilerTokenTypeRPack,
     kETCompilerTokenTypeLPack,
+
+    /* end of file */
+    kETCompilerTokenTypeEOF,
 } ETCompilerTokenType;
 
 typedef struct __ETCompilerToken *ETCompilerTokenRef;
@@ -57,5 +60,8 @@ EFStringRef ETCompilerTokenGetString(ETCompilerTokenRef token);
 EFNumberRef ETCompilerTokenGetNumber(ETCompilerTokenRef token);
 EFRange ETCompilerTokenGetRange(ETCompilerTokenRef token);
 ETCompilerTokenType ETCompilerTokenGetType(ETCompilerTokenRef token);
+
+Boolean ETCompilerTokenIsVoid(ETCompilerTokenRef token);
+Boolean ETCompilerTokenIsReturn(ETCompilerTokenRef token);
 
 #endif /* ETCOMPILERTOKEN_H */

@@ -149,6 +149,8 @@ add_library(EmexToolchain ${LIB_TYPE}
     src/ETCompiler/ETCompilerToken.c
     src/ETCompiler/ETCompilerLexer.c
     src/ETCompiler/ETCompilerAST.c
+    src/ETCompiler/ETCompilerParser.c
+    src/ETCompiler/ETCompilerCodegen.c
 )
 
 target_compile_definitions(EmexToolchain PRIVATE

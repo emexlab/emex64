@@ -30,7 +30,7 @@ typedef struct __ETCompilerToken {
     ETCompilerTokenType type;
 } *__ETCompilerToken;
 
-void __ETCompilerTokenDeinit(EFObjectRef compilerTokenRef)
+static void __ETCompilerTokenDeinit(EFObjectRef compilerTokenRef)
 {
     ETCompilerTokenRef compilerToken = (ETCompilerTokenRef)compilerTokenRef;
     EFReleaseTry(compilerToken->tokenString);
@@ -75,6 +75,8 @@ EFStringRef __ETCompilerTokenTypeStringForType(ETCompilerTokenType type)
             return EFSTR("DIVISION");
         case kETCompilerTokenTypeAssign:
             return EFSTR("ASSIGN");
+        case kETCompilerTokenTypeEOF:
+            return EFSTR("EOF");
         default:
             return EFSTR("UNKNOWN");
     }
@@ -206,3 +208,24 @@ ETCompilerTokenType ETCompilerTokenGetType(ETCompilerTokenRef token)
     return token->type;
 }
 
+Boolean ETCompilerTokenIsVoid(ETCompilerTokenRef token)
+{
+    if(token == NULL ||
+       token->type != kETCompilerTokenTypeBaseType ||
+       !EFEqual(token->tokenString, EFSTR("void")))
+    {
+        return false;
+    }
+    return true;
+}
+
+Boolean ETCompilerTokenIsReturn(ETCompilerTokenRef token)
+{
+    if(token == NULL ||
+       token->type != kETCompilerTokenTypeKeyword ||
+       !EFEqual(token->tokenString, EFSTR("return")))
+    {
+        return false;
+    }
+    return true;
+}
