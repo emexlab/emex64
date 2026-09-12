@@ -52,17 +52,18 @@ static void __E64MemoryDeinit(E64MemoryRef memoryRef)
     }
 }
 
-static EFClassDefinitionV2 E64MemoryClass = {
+static EFClassDefinitionV4 E64MemoryClass = {
     .header = {
-        .version = 2,
+        .version = 4,
         .typeID = kEFTypeIDNone,
-        .name = NULL,
+        .name = EFSTR_FILESCOPE("E64Memory"),
     },
-    .name = "E64Memory",
     .init = NULL,
     .deinit = __E64MemoryDeinit,
     .equal = NULL,
+    .hash = NULL,
     .copyDescription = NULL,
+    .copyDebugDescription = NULL,
 };
 
 typedef struct emex64_mmu_entry_lookup {

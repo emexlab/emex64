@@ -37,23 +37,24 @@ static void __ETCompilerJobDeinit(EFObjectRef jobRef)
     EFRelease(job->arguments);
 }
 
-static EFStringRef __ETCompilerJobCopyDescription(EFObjectRef jobRef)
+static EFStringRef __ETCompilerJobCopyDebugDescription(EFObjectRef jobRef)
 {
     __ETCompilerJob job = (__ETCompilerJob)jobRef;
     return EFStringCreateWithFormat(EFGetAllocator(jobRef), EFSTR("<ETCompilerJob %p>{command = %@, arguments = %@}"), jobRef, job->command, job->arguments);
 }
 
-static EFClassDefinitionV2 ETCompilerJobClass = {
+static EFClassDefinitionV4 ETCompilerJobClass = {
     .header = {
-        .version = 2,
+        .version = 4,
         .typeID = kEFTypeIDNone,
-        .name = NULL,
+        .name = EFSTR_FILESCOPE("ETCompilerJob"),
     },
-    .name = "ETCompilerJob",
     .init = NULL,
     .deinit = __ETCompilerJobDeinit,
     .equal = NULL,
-    .copyDescription = __ETCompilerJobCopyDescription,
+    .hash = NULL,
+    .copyDescription = NULL,
+    .copyDebugDescription = __ETCompilerJobCopyDebugDescription,
 };
 
 static void ETCompilerJobRegisterClass(void)

@@ -40,17 +40,18 @@ void emex64_mmio_fallback_write(E64CoreRef core,
     return;
 }
 
-static EFClassDefinitionV2 E64MMIORegionClass = {
+static EFClassDefinitionV4 E64MMIORegionClass = {
     .header = {
-        .version = 2,
+        .version = 4,
         .typeID = kEFTypeIDNone,
-        .name = NULL,
+        .name = EFSTR_FILESCOPE("E64MMIORegion"),
     },
-    .name = "E64MMIORegion",
     .init = NULL,
     .deinit = NULL,
     .equal = NULL,
+    .hash = NULL,
     .copyDescription = NULL,
+    .copyDebugDescription = NULL,
 };
 
 static void E64MMIORegionRegisterClass(void)

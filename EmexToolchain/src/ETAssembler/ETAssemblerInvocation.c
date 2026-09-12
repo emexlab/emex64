@@ -86,18 +86,18 @@ static void __ETAssemblerInvocationDeinit(EFObjectRef invocationRef)
     EFReleaseTry(invocation->outputFile);
 }
 
-static EFClassDefinitionV2 ETAssemblerInvocationClass = {
+static EFClassDefinitionV4 ETAssemblerInvocationClass = {
     .header = {
-        .version = 2,
+        .version = 4,
         .typeID = kEFTypeIDNone,
-        .name = NULL,
+        .name = EFSTR_FILESCOPE("ETAssemblerInvocation"),
     },
-    .name = "ETAssemblerInvocation",
     .init = NULL,
     .deinit = __ETAssemblerInvocationDeinit,
     .equal = NULL,
-    .copyDescription = NULL,
     .hash = NULL,
+    .copyDescription = NULL,
+    .copyDebugDescription = NULL,
 };
 
 void ETAssemblerInvocationRegisterClass(void)

@@ -35,16 +35,18 @@ static void __E64MMIOBusDeinit(E64MMIOBusRef MMIOBusRef)
     }
 }
 
-static EFClassDefinitionV2 E64MMIOBusClass = {
+static EFClassDefinitionV4 E64MMIOBusClass = {
     .header = {
-        .version = 2,
+        .version = 4,
         .typeID = kEFTypeIDNone,
-        .name = NULL,
+        .name = EFSTR_FILESCOPE("E64MMIOBus"),
     },
-    .name = "E64MMIOBus",
     .init = NULL,
     .deinit = __E64MMIOBusDeinit,
     .equal = NULL,
+    .hash = NULL,
+    .copyDescription = NULL,
+    .copyDebugDescription = NULL,
 };
 
 static void E64MMIOBusRegisterClass(void)

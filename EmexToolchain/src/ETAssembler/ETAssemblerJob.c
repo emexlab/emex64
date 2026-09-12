@@ -37,23 +37,24 @@ static void __ETAssemblerJobDeinit(EFObjectRef jobRef)
     EFRelease(job->arguments);
 }
 
-static EFStringRef __ETAssemblerJobCopyDescription(EFObjectRef jobRef)
+static EFStringRef __ETAssemblerJobCopyDebugDescription(EFObjectRef jobRef)
 {
     __ETAssemblerJob job = (__ETAssemblerJob)jobRef;
     return EFStringCreateWithFormat(EFGetAllocator(jobRef), EFSTR("<ETAssemblerJob %p>{command = %@, arguments = %@}"), jobRef, job->command, job->arguments);
 }
 
-static EFClassDefinitionV2 ETAssemblerJobClass = {
+static EFClassDefinitionV4 ETAssemblerJobClass = {
     .header = {
-        .version = 2,
+        .version = 4,
         .typeID = kEFTypeIDNone,
-        .name = NULL,
+        .name = EFSTR_FILESCOPE("ETAssemblerJob"),
     },
-    .name = "ETAssemblerJob",
     .init = NULL,
     .deinit = __ETAssemblerJobDeinit,
     .equal = NULL,
-    .copyDescription = __ETAssemblerJobCopyDescription,
+    .hash = NULL,
+    .copyDescription = NULL,
+    .copyDebugDescription = __ETAssemblerJobCopyDebugDescription,
 };
 
 static void ETAssemblerJobRegisterClass(void)

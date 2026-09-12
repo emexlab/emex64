@@ -251,17 +251,18 @@ static void __ETCompilerDiagnosticConsumerDeinit(EFObjectRef consumerRef)
     compiler_diagnostic_consumer_dealloc(consumer->consumer);
 }
 
-static EFClassDefinitionV2 ETCompilerDiagnosticConsumerClass = {
+static EFClassDefinitionV4 ETCompilerDiagnosticConsumerClass = {
     .header = {
-        .version = 2,
+        .version = 4,
         .typeID = kEFTypeIDNone,
-        .name = NULL,
+        .name = EFSTR_FILESCOPE("ETCompilerDiagnosticConsumer"),
     },
-    .name = "ETCompilerDiagnosticConsumer",
     .init = NULL,
     .deinit = __ETCompilerDiagnosticConsumerDeinit,
     .equal = NULL,
+    .hash = NULL,
     .copyDescription = NULL,
+    .copyDebugDescription = NULL,
 };
 
 static void ETCompilerDiagnosticConsumerRegisterClass(void)

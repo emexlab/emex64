@@ -76,18 +76,18 @@ static void __ETCompilerDriverDeinit(EFObjectRef driverRef)
     EFReleaseTry(driver->jobs);
 }
 
-static EFClassDefinitionV2 ETCompilerDriverClass = {
+static EFClassDefinitionV4 ETCompilerDriverClass = {
     .header = {
-        .version = 2,
+        .version = 4,
         .typeID = kEFTypeIDNone,
-        .name = NULL,
+        .name = EFSTR_FILESCOPE("ETCompilerDriver"),
     },
-    .name = "ETCompilerDriver",
     .init = NULL,
     .deinit = __ETCompilerDriverDeinit,
     .equal = NULL,
-    .copyDescription = NULL,
     .hash = NULL,
+    .copyDescription = NULL,
+    .copyDebugDescription = NULL,
 };
 
 static Boolean __ETCompilerDriverPredrive(__ETCompilerDriver driver)

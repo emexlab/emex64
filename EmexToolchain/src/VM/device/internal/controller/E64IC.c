@@ -103,16 +103,18 @@ static EFIndex __E64ICFindPendingInterrupt(__E64IC ic)
     return -1;
 }
 
-static EFClassDefinitionV2 E64ICClass = {
+static EFClassDefinitionV4 E64ICClass = {
     .header = {
-        .version = 2,
+        .version = 4,
         .typeID = kEFTypeIDNone,
-        .name = NULL,
+        .name = EFSTR_FILESCOPE("E64IC"),
     },
-    .name = "E64IC",
     .init = NULL,
     .deinit = NULL,
     .equal = NULL,
+    .hash = NULL,
+    .copyDescription = NULL,
+    .copyDebugDescription = NULL,
 };
 
 static void E64ICRegisterClass(void)

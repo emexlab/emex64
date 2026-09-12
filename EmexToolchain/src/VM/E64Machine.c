@@ -55,17 +55,18 @@ static void __E64MachineDeinit(EFObjectRef machineRef)
     }
 }
 
-static EFClassDefinitionV2 E64MachineClass = {
+static EFClassDefinitionV4 E64MachineClass = {
     .header = {
-        .version = 2,
+        .version = 4,
         .typeID = kEFTypeIDNone,
-        .name = NULL,
+        .name = EFSTR_FILESCOPE("E64Machine"),
     },
-    .name = "E64Machine",
     .init = NULL,
     .deinit = __E64MachineDeinit,
     .equal = NULL,
+    .hash = NULL,
     .copyDescription = NULL,
+    .copyDebugDescription = NULL,
 };
 
 static void E64MachineRegisterClass(void)

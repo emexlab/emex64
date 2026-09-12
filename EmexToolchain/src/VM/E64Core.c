@@ -128,17 +128,18 @@ static const UInt8 kImmBits[] = {
     [kE64ParameterCodingAddr64] = 64,
 };
 
-static EFClassDefinitionV2 E64CoreClass = {
+static EFClassDefinitionV4 E64CoreClass = {
     .header = {
-        .version = 2,
+        .version = 4,
         .typeID = kEFTypeIDNone,
-        .name = NULL,
+        .name = EFSTR_FILESCOPE("E64Core"),
     },
-    .name = "E64Core",
     .init = NULL,
     .deinit = NULL,
     .equal = NULL,
+    .hash = NULL,
     .copyDescription = NULL,
+    .copyDebugDescription = NULL,
 };
 
 static void E64CoreRegisterClass(void)

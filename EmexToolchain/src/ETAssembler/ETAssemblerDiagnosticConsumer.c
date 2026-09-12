@@ -35,17 +35,18 @@ static void __ETAssemblerDiagnosticConsumerDeinit(EFObjectRef consumerRef)
     assembler_diagnostic_consumer_dealloc(consumer->consumer);
 }
 
-static EFClassDefinitionV2 ETAssemblerDiagnosticConsumerClass = {
+static EFClassDefinitionV4 ETAssemblerDiagnosticConsumerClass = {
     .header = {
-        .version = 2,
+        .version = 4,
         .typeID = kEFTypeIDNone,
-        .name = NULL,
+        .name = EFSTR_FILESCOPE("ETAssemblerDiagnosticConsumer"),
     },
-    .name = "ETAssemblerDiagnosticConsumer",
     .init = NULL,
     .deinit = __ETAssemblerDiagnosticConsumerDeinit,
     .equal = NULL,
+    .hash = NULL,
     .copyDescription = NULL,
+    .copyDebugDescription = NULL,
 };
 
 static void ETAssemblerDiagnosticConsumerRegisterClass(void)

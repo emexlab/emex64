@@ -86,24 +86,24 @@ static void __ETAssemblerDriverDeinit(EFObjectRef driverRef)
     EFReleaseTry(driver->temporaryOutputPaths);
 }
 
-static EFStringRef __ETAssemblerDriverCopyDescription(EFObjectRef driverRef)
+static EFStringRef __ETAssemblerDriverCopyDebugDescription(EFObjectRef driverRef)
 {
     __ETAssemblerDriver driver = (__ETAssemblerDriver)driverRef;
     return EFStringCreateWithFormat(EFGetAllocator(driverRef), EFSTR("<ETAssemblerDriver %p>{arguments = %@, diagnosticConsumer = %@, inputFiles = %@, outputPath = %@, includeSearchPaths = %@, temporaryOutputPaths = %@, linkerFlags = %@, jobs = %@}"), driverRef, driver->arguments, driver->diagnosticConsumer, driver->inputFiles, driver->outputPath, driver->includeSearchPaths, driver->temporaryOutputPaths, driver->linkerFlags, driver->jobs);
 }
 
-static EFClassDefinitionV2 ETAssemblerDriverClass = {
+static EFClassDefinitionV4 ETAssemblerDriverClass = {
     .header = {
-        .version = 2,
+        .version = 4,
         .typeID = kEFTypeIDNone,
-        .name = NULL,
+        .name = EFSTR_FILESCOPE("ETAssemblerDriver"),
     },
-    .name = "ETAssemblerDriver",
     .init = NULL,
     .deinit = __ETAssemblerDriverDeinit,
     .equal = NULL,
-    .copyDescription = __ETAssemblerDriverCopyDescription,
     .hash = NULL,
+    .copyDescription = NULL,
+    .copyDebugDescription = __ETAssemblerDriverCopyDebugDescription,
 };
 
 static void ETAssemblerDriverRefisterClass(void)
