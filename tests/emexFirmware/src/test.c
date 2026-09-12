@@ -1,4 +1,7 @@
 u64 __sometest(void)
 {
-    return 27;
+    u64 a = 5;
+    u64 b = 5;
+    b = (a + b) * b;
+    return b;
 }
