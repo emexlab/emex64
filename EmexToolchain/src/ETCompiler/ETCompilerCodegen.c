@@ -51,7 +51,7 @@ EFStringRef ETCompilerCodegenCreateASMSourceWithAST(ETCompilerASTNodeRef node)
             {
                 EFAUTOREL EFArrayRef declaration = ETCompilerASTNodeCopyChildren(kEFAllocatorDefault, child);
 
-                //ETCompilerASTNodeRef typeRef = EFArrayGetValueAtIndex(declaration, 0); /* MARK: will later become important */
+                ETCompilerASTNodeRef typeRef = EFArrayGetValueAtIndex(declaration, 0); /* MARK: will later become important */
                 ETCompilerASTNodeRef integerLiteralRef = EFArrayGetValueAtIndex(declaration, 1);
 
                 if(integerLiteralRef == NULL)
@@ -65,7 +65,42 @@ EFStringRef ETCompilerCodegenCreateASMSourceWithAST(ETCompilerASTNodeRef node)
             }
         }
 
-        EFStringAppendFormat(asmSource, EFSTR("%@\n%@"), dataSectionSource, bssSectionSource);
+        EFStringAppendFormat(asmSource, EFSTR("%@\n%@\n"), dataSectionSource, bssSectionSource);
+    }
+
+    /* handle functions */
+    {
+        EFAUTOREL EFArrayRef children = ETCompilerASTNodeCopyChildren(kEFAllocatorDefault, node);
+        for(EFIndex index = 0; index < EFArrayGetCount(children); index++)
+        {
+            ETCompilerASTNodeRef child = EFArrayGetValueAtIndex(children, index);
+            if(ETCompilerASTNodeGetKind(child) == kETCompilerASTNodeKindFunctionDef)
+            {
+                EFStringAppendFormat(asmSource, EFSTR("%@:\n"), ETCompilerTokenGetString(ETCompilerASTNodeGetToken(child)));
+
+                EFAUTOREL EFArrayRef functionBody = ETCompilerASTNodeCopyChildren(kEFAllocatorDefault, child);
+
+                ETCompilerASTNodeRef typeRef = EFArrayGetValueAtIndex(functionBody, 0);             /* MARK: will later become important */
+                ETCompilerASTNodeRef parameterListRef = EFArrayGetValueAtIndex(functionBody, 1);    /* MARK: will later become important */
+                ETCompilerASTNodeRef blockRef = EFArrayGetValueAtIndex(functionBody, 2);
+
+                EFAUTOREL EFArrayRef blockBody = ETCompilerASTNodeCopyChildren(kEFAllocatorDefault, blockRef);
+                for(EFIndex index = 0; index < EFArrayGetCount(blockBody); index++)
+                {
+                    ETCompilerASTNodeRef child = EFArrayGetValueAtIndex(blockBody, index);
+
+                    switch(ETCompilerASTNodeGetKind(child))
+                    {
+                        case kETCompilerASTNodeKindReturn:
+                            EFStringAppendFormat(asmSource, EFSTR("    wret\n"));
+                            break;
+                        default:
+                            /* not supported yet */
+                            break;
+                    }
+                }
+            }
+        }
     }
 
     return EFAUTOTRANSFER(asmSource);
