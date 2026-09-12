@@ -120,7 +120,7 @@ parser_return_t parse_value_from_string(const char *str)
 
     if(EFStringIsNumber(stringRef))
     {
-        EFNumberRef numberRef = EFStringCopyNumber(kEFAllocatorDefault, stringRef);
+        EFNumberRef numberRef = EFStringCreateNumber(kEFAllocatorDefault, stringRef);
         EFRelease(stringRef);
         if(numberRef == NULL)
         {

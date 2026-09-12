@@ -573,7 +573,7 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
     EFSize shdr_off = shstr_off + shstrtab_buf.len;
 
     /* write relocatable elf file ^^ */
-    EFAUTOREL EFBitWalkerRef vb = EFFileCopyBitWalker(EFGetAllocator(output), output, kEFEndianLittle);
+    EFAUTOREL EFBitWalkerRef vb = EFFileCreateBitWalker(EFGetAllocator(output), output, kEFEndianLittle);
     if(!vb)
     {
         free(text.data);
@@ -741,7 +741,7 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
         }
     }
 
-    EFAUTOREL EFBitWalkerRef vb = EFFileCopyBitWalker(EFGetAllocator(output), output, kEFEndianLittle);
+    EFAUTOREL EFBitWalkerRef vb = EFFileCreateBitWalker(EFGetAllocator(output), output, kEFEndianLittle);
     if(vb == NULL)
     {
         return false;

@@ -154,7 +154,7 @@ ETCompilerTokenRef ETCompilerTokenCreate(EFAllocatorRef allocator,
 
     if(type == kETCompilerTokenTypeNumber)
     {
-        compilerToken->tokenNumber = EFStringCopyNumber(allocator, tokenString);
+        compilerToken->tokenNumber = EFStringCreateNumber(allocator, tokenString);
         if(compilerToken->tokenNumber == NULL)
         {
             EFRelease(compilerToken);

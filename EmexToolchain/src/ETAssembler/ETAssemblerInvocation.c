@@ -170,7 +170,7 @@ Boolean ETAssemblerInvocationEmit(ETAssemblerInvocationRef invocationRef)
     invocation->hasErrorOccured = true;
 
     /* need output */
-    invocation->out_vbitwalker = EFFileCopyBitWalker(kEFAllocatorDefault, invocation->outputFile, kEFEndianLittle);
+    invocation->out_vbitwalker = EFFileCreateBitWalker(kEFAllocatorDefault, invocation->outputFile, kEFEndianLittle);
     if(invocation->out_vbitwalker == NULL)
     {
         ETAssemblerDiagnosticConsumerReport(invocation->diagnosticConsumer, kDiagnosticSeverityFatal, NULL, EFSTR("couldn't allocate fdwalker"));

@@ -78,7 +78,7 @@ EFMutableArrayRef ETCompilerLexerCreateTokenArrayWithFile(EFFileRef inputFile,
     EFAllocatorRef allocator = EFGetAllocator(inputFile);
 
     /* need that string */
-    EFAUTOREL EFDataRef inputFileData = EFFileCopyData(allocator, inputFile);
+    EFAUTOREL EFDataRef inputFileData = EFFileCreateData(allocator, inputFile);
     EFAUTOREL EFStringRef inputFileString = EFStringCreateFromExternalRepresentation(allocator, inputFileData, kEFStringEncodingUTF8);
     const char *cString = EFStringGetCStringPtr(inputFileString, kEFStringEncodingUTF8);
     if(cString == NULL)

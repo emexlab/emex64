@@ -376,7 +376,7 @@ static Boolean __ETCompilerDriverPredrive(__ETCompilerDriver driver)
                 EFIndex suffixLength = EFStringGetLength(targetStr) - 14;
                 EFRange suffixRange = EFRangeMake(14, suffixLength);
                 EFAUTOREL EFStringRef suffix = EFStringCreateCopyWithRange(EFGetAllocator(driver), targetStr, suffixRange);
-                EFAUTOREL EFNumberRef versionNumber = EFStringCopyNumber(EFGetAllocator(driver), suffix);
+                EFAUTOREL EFNumberRef versionNumber = EFStringCreateNumber(EFGetAllocator(driver), suffix);
 
                 UInt16 isa;
                 if(!EFNumberGetValue(versionNumber, kEFNumberTypeUInt16, &isa))
