@@ -21,8 +21,7 @@
 
 #include <EmexToolchain/ETCompiler/ETCompilerCodegen.h>
 
-#define kETCodegenMaxRegister   8
-#define kETCodegenAddressReg    9
+#define kETCodegenMaxRegister   9
 #define kETCodegenMaxSymbols    64
 #define kETCodegenMaxScopeDepth 16
 #define kETCodegenMaxFunctions  64
@@ -164,11 +163,6 @@ static EFStringRef TryImmediate(ETCompilerASTNodeRef node)
     return NodeTokenNumber(node);
 }
 
-static void EmitLocalAddress(EFMutableStringRef asmSource, EFIndex slot)
-{
-    EFStringAppendFormat(asmSource, EFSTR("  sub r%ld, fp, %ld\n"), (long)kETCodegenAddressReg, (long)(slot * 8));
-}
-
 static void EmitLoadSymbol(EFMutableStringRef asmSource,
                            const ETCodegenSymbol *symbol,
                            EFIndex reg)
@@ -179,8 +173,7 @@ static void EmitLoadSymbol(EFMutableStringRef asmSource,
     }
     else
     {
-        EmitLocalAddress(asmSource, symbol->slot);
-        EFStringAppendFormat(asmSource, EFSTR("  ldq r%ld, r%ld\n"), (long)reg, (long)kETCodegenAddressReg);
+        EFStringAppendFormat(asmSource, EFSTR("  ldq r%ld, [fp - %ld]\n"), (long)reg, (long)(symbol->slot * 8));
     }
 }
 
@@ -194,9 +187,7 @@ static void EmitStoreSymbol(EFMutableStringRef asmSource,
     }
     else
     {
-        EmitLocalAddress(asmSource, symbol->slot);
-        EFStringAppendFormat(asmSource, EFSTR("  stq r%ld, r%ld\n"),
-            (long)kETCodegenAddressReg, (long)reg);
+        EFStringAppendFormat(asmSource, EFSTR("  stq [fp - %ld], r%ld\n"), (long)(symbol->slot * 8), (long)reg);
     }
 }
 
