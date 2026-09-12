@@ -137,7 +137,7 @@ static EFStringRef __ETCompilerASTNodeCopyDescription(EFObjectRef ref)
 
     if(EFStringHasSuffix(description, EFSTR("\n")))
     {
-        EFStringDelete(description, EFRangeMake(EFStringGetLength(description) - 1, 1));
+        EFStringDeleteRange(description, EFRangeMake(EFStringGetLength(description) - 1, 1));
     }
 
     return EFAUTOTRANSFER(description);

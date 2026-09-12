@@ -28,24 +28,24 @@
 #include <EmexToolchain/ETLinker/linker.h>
 #include <EmexToolchain/VM/E64Machine.h>
 
-EFFileRef EFFileCreateWithStringAndPath(EFAllocatorRef allocatorRef,
-                                        EFFilePolicy policy,
-                                        EFStringRef path,
-                                        EFStringRef content)
+EFFileRef EFFileCreateUnsavedWithStringAndPath(EFAllocatorRef allocatorRef,
+                                               EFFilePolicy policy,
+                                               EFStringRef path,
+                                               EFStringRef content)
 {
     EFAUTOREL EFURLRef fileURL = EFURLCreateWithString(allocatorRef, path);
-    return EFFileCreateWithString(allocatorRef, policy, fileURL, content);
+    return EFFileCreateUnsavedWithString(allocatorRef, policy, fileURL, content);
 }
 
 SInt32 main(void)
 {
     /* firmware file shall be available till execution happened */
-    EFAUTOREL EFFileRef firmwareFile = EFFileCreateWithStringAndPath(kEFAllocatorDefault, EFFilePolicyOutData, EFSTR("test.img"), EFSTR(""));
+    EFAUTOREL EFFileRef firmwareFile = EFFileCreateUnsavedWithStringAndPath(kEFAllocatorDefault, EFFilePolicyOutData, EFSTR("test.img"), EFSTR(""));
 
     /* building pipeline */
     {
         /* ELF object file shall be available during assembling and linking */
-        EFAUTOREL EFFileRef objectFile = EFFileCreateWithStringAndPath(kEFAllocatorDefault, EFFilePolicyOutData, EFSTR("test.o"), EFSTR(""));
+        EFAUTOREL EFFileRef objectFile = EFFileCreateUnsavedWithStringAndPath(kEFAllocatorDefault, EFFilePolicyOutData, EFSTR("test.o"), EFSTR(""));
 
         /* assembling */
         {
@@ -54,7 +54,7 @@ SInt32 main(void)
              * assemble to a virtual object file we can
              * then link.
              */
-            EFAUTOREL EFFileRef unsavedFile = EFFileCreateWithStringAndPath(kEFAllocatorDefault, EFFilePolicyInData, EFSTR("test.e64"), EFSTR(
+            EFAUTOREL EFFileRef unsavedFile = EFFileCreateUnsavedWithStringAndPath(kEFAllocatorDefault, EFFilePolicyInData, EFSTR("test.e64"), EFSTR(
                 "section .data\n"
                 "    msg db \"hello, world!\\n\\0\"\n"
                 "\n"

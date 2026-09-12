@@ -921,7 +921,7 @@ Boolean ETCompilerDriverRun(ETCompilerDriverRef driverRef)
         }
         ETCompilerDiagnosticConsumerReport(driver->diagnosticConsumer, kDiagnosticSeverityNote, NULL, EFSTR("asmSource:\n%@"), asmSource);
 
-        EFFileRef unsavedFile = EFFileCreateWithString(kEFAllocatorDefault, EFFilePolicyOutData, EFURLCreateWithString(kEFAllocatorDefault, EFSTR("./random.e64")), asmSource);
+        EFFileRef unsavedFile = EFFileCreateUnsavedWithString(kEFAllocatorDefault, EFFilePolicyOutData, EFURLCreateWithString(kEFAllocatorDefault, EFSTR("./random.e64")), asmSource);
 
         EFAUTOREL ETAssemblerDiagnosticConsumerRef diagnosticConsumerASM = ETAssemblerDiagnosticConsumerCreate(kEFAllocatorDefault, ETAssemblerDiagnosticOptionsDefault);
         EFAUTOREL ETAssemblerInvocationRef invocation = ETAssemblerInvocationCreate(kEFAllocatorDefault, diagnosticConsumerASM);

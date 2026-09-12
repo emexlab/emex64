@@ -131,7 +131,7 @@ static EFStringRef NodeTokenString(ETCompilerASTNodeRef node)
     return ETCompilerTokenGetString(ETCompilerASTNodeGetToken(node));
 }
 
-static EFStringRef NodeTokenNumber(ETCompilerASTNodeRef node)
+static EFNumberRef NodeTokenNumber(ETCompilerASTNodeRef node)
 {
     return ETCompilerTokenGetNumber(ETCompilerASTNodeGetToken(node));
 }
@@ -153,7 +153,7 @@ static Boolean IsCommutative(ETCompilerTokenType type)
     return type == kETCompilerTokenTypeAddition || type == kETCompilerTokenTypeMultiplication;
 }
 
-static EFStringRef TryImmediate(ETCompilerASTNodeRef node)
+static EFNumberRef TryImmediate(ETCompilerASTNodeRef node)
 {
     if(node == NULL) return NULL;
     if(ETCompilerASTNodeGetKind(node) != kETCompilerASTNodeKindIntLiteral)
@@ -259,8 +259,8 @@ static Boolean EmitExpression(EFMutableStringRef asmSource,
                 return false;
             }
 
-            EFStringRef lhsImm = TryImmediate(lhs);
-            EFStringRef rhsImm = TryImmediate(rhs);
+            EFNumberRef lhsImm = TryImmediate(lhs);
+            EFNumberRef rhsImm = TryImmediate(rhs);
 
             if(lhsImm != NULL && rhsImm != NULL)
             {
@@ -360,7 +360,7 @@ static Boolean EmitExpression(EFMutableStringRef asmSource,
             for(EFIndex i = 0; i < argumentCount; i++)
             {
                 ETCompilerASTNodeRef argument = EFArrayGetValueAtIndex(arguments, i);
-                EFStringRef immediate = TryImmediate(argument);
+                EFNumberRef immediate = TryImmediate(argument);
 
                 if(immediate != NULL)
                 {
