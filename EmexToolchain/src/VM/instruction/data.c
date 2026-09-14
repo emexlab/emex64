@@ -20,11 +20,7 @@
  */
 
 #include <stdlib.h>
-#if defined(__APPLE__)
-#include <sys/random.h>
-#elif defined(__FreeBSD__) || defined(__linux__)
 #include <unistd.h>
-#endif
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/instruction/data.h>
 #include <EmexToolchain/VM/E64Machine.h>
@@ -219,9 +215,7 @@ void emex64_op_clar(__E64Core core)
 
 void emex64_op_rdrnd(__E64Core core)
 {
-    if(getentropy(core->op.param[0], sizeof(UInt64)) != 0)
-    {
-        core->cr_state.crexc.exception = kE64ExceptionBadInstruction;
-        return;
-    }
+    UInt32 *cursor = (UInt32*)(core->op.param[0]);
+    cursor[0] = arc4random();
+    cursor[1] = arc4random();
 }
