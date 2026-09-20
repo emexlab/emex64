@@ -130,7 +130,7 @@ typedef enum: UInt8 {
      * ... (what not)
      */
 
-    kE64OpcodeMAX = kE64OpcodeSETM,
+    kE64OpcodeMAX = kE64OpcodeSVC,
 
     kE64OpcodeInvalid =  0b11111111,
 } E64Opcode;

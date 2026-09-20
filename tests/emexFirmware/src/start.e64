@@ -133,9 +133,18 @@ stack_print:
 
     wret
 
+svc_handler:
+    mov rr, 999
+    iret
+
 main:
     blw interrupt_register_handler, EMEX64_IC_IRQ_EXCEPTION, exception_handler
     blw interrupt_register_handler, EMEX64_IC_IRQ_8042, kdb_handler
+    blw interrupt_register_handler, EMEX64_IC_IRQ_SOFTWARE, svc_handler
+
+    svc
+    blw putbase, rr, 10
+    blw putc, '\n'
 
     blw stack_print, fw_alloca_msg
 
