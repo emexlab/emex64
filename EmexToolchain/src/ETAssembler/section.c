@@ -120,9 +120,10 @@ Boolean assembler_section_parse(ETAssemblerInvocationRef inv)
         }
 
         i++;
-        for(; i < inv->line_cnt && (inv->line[i]->type == kETAssemblerLineTypeSectionData || inv->line[i]->type == kETAssemblerLineTypeIgnore); i++)
+        for(; i < inv->line_cnt && (inv->line[i]->type == kETAssemblerLineTypeSectionData || inv->line[i]->type == kETAssemblerLineTypeIgnore || inv->line[i]->type == kETAssemblerLineTypeNone); i++)
         {
-            if(inv->line[i]->type == kETAssemblerLineTypeIgnore)
+            if(inv->line[i]->type == kETAssemblerLineTypeIgnore ||
+               inv->line[i]->type == kETAssemblerLineTypeNone)
             {
                 continue;
             }
@@ -239,9 +240,10 @@ Boolean assembler_section_parse(ETAssemblerInvocationRef inv)
         }
 
         i++;
-        for(; i < inv->line_cnt && (inv->line[i]->type == kETAssemblerLineTypeSectionData || inv->line[i]->type == kETAssemblerLineTypeIgnore); i++)
+        for(; i < inv->line_cnt && (inv->line[i]->type == kETAssemblerLineTypeSectionData || inv->line[i]->type == kETAssemblerLineTypeIgnore || inv->line[i]->type == kETAssemblerLineTypeNone); i++)
         {
-            if(inv->line[i]->type == kETAssemblerLineTypeIgnore)
+            if(inv->line[i]->type == kETAssemblerLineTypeIgnore ||
+               inv->line[i]->type == kETAssemblerLineTypeNone)
             {
                 continue;
             }
