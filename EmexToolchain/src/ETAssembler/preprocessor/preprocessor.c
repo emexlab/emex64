@@ -290,7 +290,6 @@ Boolean assembler_preprocessor_run(ETAssemblerInvocationRef inv)
                             goto failure;
                         }
                         free(hdr_path);
-                        EFAUTOTRANSFER(file);   /* transferred at injection */
 
                         li--; /* file was inseted at this location */
                         break;

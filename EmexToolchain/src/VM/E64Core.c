@@ -117,6 +117,9 @@ const emex64_opfunc_entry_t kE64OpfuncTable[] = {
 
     /* data operations v3 */
     [kE64OpcodeRDRND] = { .func = emex64_op_rdrnd, .minargs = 1, .maxargs = 1, .argmask = 0b10000000000000000000000000000000, .isa = 15 },
+    [kE64OpcodeMOVM] = { .func = emex64_op_movm, .minargs = 3, .maxargs = 3, .argmask = 0b00000000000000000000000000000000, .isa = 15 },
+    [kE64OpcodeCPYM] = { .func = emex64_op_cpym, .minargs = 3, .maxargs = 3, .argmask = 0b00000000000000000000000000000000, .isa = 15 },
+    [kE64OpcodeSETM] = { .func = emex64_op_setm, .minargs = 3, .maxargs = 3, .argmask = 0b00000000000000000000000000000000, .isa = 15 },
 };
 
 static const UInt8 kImmBits[] = {

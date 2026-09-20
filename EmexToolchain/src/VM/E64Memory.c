@@ -710,3 +710,142 @@ Boolean E64MemoryCoreCopyIn(E64MemoryRef memoryRef,
 
     return true;
 }
+
+void *E64MemoryCoreMap(E64MemoryRef memoryRef,
+                       E64CoreRef core,
+                       UInt64 addr,
+                       EFSize size,
+                       E64MemoryActionType actionType)
+{
+    E64Memory memory = (E64Memory)memoryRef;
+    if(memory == NULL || core == NULL || size == 0)
+    {
+        return NULL;
+    }
+
+    UInt64 last_addr = addr + (UInt64)size - 1;
+    if(last_addr < addr)
+    {
+        return NULL;
+    }
+    
+    /* MMIO */
+    if((addr >> 53) || (last_addr >> 53))
+    {
+        if(!(addr >> 53) || !(last_addr >> 53))
+        {
+            return NULL;
+        }
+
+        if(core->cr_state.crptb.enabled && !core->in_interrupt)
+        {
+            return NULL;
+        }
+
+        E64MMIORegionRef region = E64MMIOBusGetRegionForAddress(core->machine->mmio_bus, addr);
+        if(region == NULL)
+        {
+            return NULL;
+        }
+
+        UInt64 base = E64MMIORegionGetBaseAddress(region);
+        UInt64 region_size = E64MMIORegionGetSize(region);
+        UInt64 offset = addr - base;
+        if(offset > region_size || size > region_size - offset)
+        {
+            return NULL;
+        }
+
+        if(base != EMEX64_FB_BASE)
+        {
+            return NULL;
+        }
+
+        if(offset < EMEX64_FB_FRAMEBUFFER)
+        {
+            return NULL;
+        }
+
+        emex64_display_t *display = (emex64_display_t *)E64MMIORegionGetDevice(region);
+        if(display == NULL || !display->enabled || display->fb == NULL)
+        {
+            return NULL;
+        }
+
+        UInt64 fb_offset = offset - EMEX64_FB_FRAMEBUFFER;
+        if(fb_offset > display->fb_size || size > display->fb_size - fb_offset)
+        {
+            return NULL;
+        }
+
+        return display->fb + fb_offset;
+    }
+
+    /* paging disabled */
+    if(!core->cr_state.crptb.enabled || core->in_interrupt)
+    {
+        if(!E64MemoryAccessIsWithinBounds(memoryRef, addr, size))
+        {
+            return NULL;
+        }
+
+        if(actionType == kE64MemoryActionTypeWrite && memory->ktrr_size > addr)
+        {
+            return NULL;
+        }
+
+        return memory->memory + addr;
+    }
+
+    /* paging enabled */
+    UInt64 vaddr = addr;
+    UInt64 remaining = size;
+    UInt64 consumed = 0;
+
+    UInt64 first_paddr = 0;
+
+    while(remaining > 0)
+    {
+        UInt64 paddr;
+        if(!emex64_mmu_translate(memory, core, vaddr, actionType, &paddr))
+        {
+            return NULL;
+        }
+
+        UInt64 page_left = EMEX64_PAGE_SIZE - (vaddr & EMEX64_PAGE_MASK);
+        UInt64 chunk = remaining;
+        if(chunk > page_left)
+        {
+            chunk = page_left;
+        }
+
+        if(!E64MemoryAccessIsWithinBounds(memoryRef, paddr, chunk))
+        {
+            return NULL;
+        }
+
+        if(actionType == kE64MemoryActionTypeWrite && memory->ktrr_size > paddr)
+        {
+            return NULL;
+        }
+
+        if(consumed == 0)
+        {
+            first_paddr = paddr;
+        }
+        else
+        {
+            UInt64 expected_paddr = first_paddr + consumed;
+            if(paddr != expected_paddr)
+            {
+                return NULL;
+            }
+        }
+
+        vaddr += chunk;
+        consumed += chunk;
+        remaining -= chunk;
+    }
+
+    return memory->memory + first_paddr;
+}

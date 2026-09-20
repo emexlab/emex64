@@ -228,12 +228,6 @@ main:
 %endif% ; FW_TEST_DISASSEMBLY
 
 .hang:
-    ldq r0, meow_cnt
-    blw puts, fw_interrupted_msg
-    inc r0
-    blw putbase, r0, 10
-    blw puts, fw_interrupted_suffix_msg
-    stq meow_cnt, r0
     hlt
     b .hang
 .end:

@@ -101,4 +101,6 @@ Boolean E64MemoryAction(E64MemoryRef memoryRef, UInt64 addr, EFSize size, UInt64
 void E64MemoryCoreAction(E64MemoryRef memoryRef, E64CoreRef core, UInt64 addr, EFSize size, UInt64 *value, E64MemoryActionType actionType);
 Boolean E64MemoryCoreCopyIn(E64MemoryRef memoryRef, E64CoreRef core, UInt8 *dst, UInt64 addr, EFSize len, E64MemoryActionType actionType);
 
+void *E64MemoryCoreMap(E64MemoryRef memoryRef, E64CoreRef core, UInt64 addr, EFSize size, E64MemoryActionType actionType);
+
 #endif /* E64MEMORY_H */

@@ -30,9 +30,6 @@ section .data
 
 kdb_handler:
     push rr
-    ldq rr, putc_sym
-    push rr
-    stq putc_sym, uart_putc
 
     ldq r0, EMEX64_8042_REG_STATUS      ; STATUS port
     and r0, 0x01                        ; OBF (bit 0)?
@@ -50,7 +47,5 @@ kdb_handler:
 
 .done:
 .no_data:
-    pop rr
-    stq putc_sym, rr
     pop rr
     iret

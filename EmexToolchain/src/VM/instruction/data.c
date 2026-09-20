@@ -219,3 +219,100 @@ void emex64_op_rdrnd(__E64Core core)
     cursor[0] = arc4random();
     cursor[1] = arc4random();
 }
+
+void emex64_op_movm(__E64Core core)
+{
+    UInt64 dst = *(core->op.param[0]);
+    UInt64 src = *(core->op.param[1]);
+    UInt64 len = *(core->op.param[2]);
+    if(len == 0 || dst == src)
+    {
+        return;
+    }
+
+    void *dptr = E64MemoryCoreMap(core->machine->memory, core, dst, len, kE64MemoryActionTypeWrite);
+    void *sptr = E64MemoryCoreMap(core->machine->memory, core, src, len, kE64MemoryActionTypeRead);
+    if(dptr != NULL && sptr != NULL)
+    {
+        memmove(dptr, sptr, len);
+        return;
+    }
+    
+    if(dst < src)
+    {
+        while(len--)
+        {
+            UInt64 value = 0;
+            E64MemoryCoreAction(core->machine->memory, core, src, 1, &value, kE64MemoryActionTypeRead);
+            E64MemoryCoreAction(core->machine->memory, core, dst, 1, &value, kE64MemoryActionTypeWrite);
+            src++;
+            dst++;
+        }
+    }
+    else
+    {
+        src += len;
+        dst += len;
+        while(len--)
+        {
+            UInt64 value = 0;
+            src--;
+            dst--;
+            E64MemoryCoreAction(core->machine->memory, core, src, 1, &value, kE64MemoryActionTypeRead);
+            E64MemoryCoreAction(core->machine->memory, core, dst, 1, &value, kE64MemoryActionTypeWrite);
+        }
+    }
+}
+
+void emex64_op_cpym(__E64Core core)
+{
+    UInt64 dst = *(core->op.param[0]);
+    UInt64 src = *(core->op.param[1]);
+    UInt64 len = *(core->op.param[2]);
+    if(len == 0)
+    {
+        return;
+    }
+
+    void *dptr = E64MemoryCoreMap(core->machine->memory, core, dst, len, kE64MemoryActionTypeWrite);
+    void *sptr = E64MemoryCoreMap(core->machine->memory, core, src, len, kE64MemoryActionTypeRead);
+    if(dptr != NULL && sptr != NULL)
+    {
+        memcpy(dptr, sptr, len);
+        return;
+    }
+
+    while(len--)
+    {
+        UInt64 value = 0;
+        E64MemoryCoreAction(core->machine->memory, core, src, 1, &value, kE64MemoryActionTypeRead);
+        E64MemoryCoreAction(core->machine->memory, core, dst, 1, &value, kE64MemoryActionTypeWrite);
+        src++;
+        dst++;
+    }
+}
+
+void emex64_op_setm(__E64Core core)
+{
+    UInt64 dst = *(core->op.param[0]);
+    UInt8 value = *(core->op.param[1]) & 0xFF;
+    UInt64 len = *(core->op.param[2]);
+    if(len == 0)
+    {
+        return;
+    }
+
+    void *ptr = E64MemoryCoreMap(core->machine->memory, core, dst, len, kE64MemoryActionTypeWrite);
+    if(ptr != NULL)
+    {
+        memset(ptr, (int)value, len);
+        return;
+    }
+
+    while(len--)
+    {
+        UInt64 byte = value;
+        E64MemoryCoreAction(core->machine->memory, core, dst, 1, &byte, kE64MemoryActionTypeWrite);
+        dst++;
+    }
+}

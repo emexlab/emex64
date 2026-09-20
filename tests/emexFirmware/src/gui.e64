@@ -142,101 +142,14 @@ _gui_putc:
 
 scroll_up:
     bz r0, .end
-
-    ldw r1, EMEX64_FB_REG_HEIGHT
-    ldw r2, EMEX64_FB_REG_WIDTH
-    mov r3, EMEX64_FB_FRAMEBUFFER
-
-    clr r4
-
-    mov er2, r0
-    mul er2, r2
-
-.row_loop:
-    mov r5, r1
-    sub r5, r0
-    cmp r4, r5
-    bge .clear_bottom
-    
-    mov er3, r4
-    mul er3, r2
-    add r9, r3, er3
-
-    mov er4, r4
-    add er4, r0
-    mul er4, r2
-    add er0, r3, er4
-
-    mov er1, r2
-    shr r6, er1, 3
-
-.copy_qloop:
-    bz r6, .copy_remainder
-
-    ldq r7, er0
-    stq r9, r7
-    
-    add er0, 8
-    add r9, 8
-
-    dec r6
-    b .copy_qloop
-
-.copy_remainder:
-    and er1, 7
-
-.rem_loop:
-    bz er1, .next_row
-    ldb r7, er0
-    stb r9, r7
-    inc er0
-    inc r9
-    dec er1
-    b .rem_loop
-
-.next_row:
-    inc r4
-    b .row_loop
-
-
-.clear_bottom:
-    mov r4, r1
-    sub r4, r0
-
-.clear_loop:
-    cmp r4, r1
-    bge .end
-
-    mul r7, r4, r2
-    add r9, r3, r7
-
-    mov er1, r2
-
-.clear_qloop:
-    shr r6, er1, 3
-    bz r6, .clear_remainder
-
-.clear_q:
-    bz r6, .clear_remainder
-    stq r9, 0
-
-    add r9, r9, 8
-    dec r6
-    b .clear_q
-
-.clear_remainder:
-    and er1, er1, 7
-
-.clear_byte:
-    bz er1, .next_clear
-    stb r9, 0
-    inc r9
-    dec er1
-    b .clear_byte
-
-.next_clear:
-    inc r4
-    b .clear_loop
-
+    ldw r1, EMEX64_FB_REG_WIDTH
+    ldw r2, EMEX64_FB_REG_HEIGHT
+    mul r3, r0, r1
+    sub r4, r2, r0
+    mul r4, r1
+    add r5, EMEX64_FB_FRAMEBUFFER, r3
+    movm EMEX64_FB_FRAMEBUFFER, r5, r4
+    add r5, EMEX64_FB_FRAMEBUFFER, r4
+    setm r5, 0, r3
 .end:
     ret

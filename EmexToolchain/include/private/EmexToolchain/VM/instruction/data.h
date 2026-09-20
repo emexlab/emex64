@@ -46,4 +46,8 @@ void emex64_op_clar(__E64Core core);
 
 void emex64_op_rdrnd(__E64Core core);
 
+void emex64_op_movm(__E64Core core);
+void emex64_op_cpym(__E64Core core);
+void emex64_op_setm(__E64Core core);
+
 #endif /* EMEX64VM_INSTRUCTION_DATA_H */
