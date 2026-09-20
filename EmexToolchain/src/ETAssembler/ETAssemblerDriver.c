@@ -400,7 +400,7 @@ static Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
 
             if(EFEqual(targetStr, EFSTR("la64-generic")))
             {
-                driver->driverOptions.isa = 15;
+                driver->driverOptions.isa = 16;
                 goto valid_target;
             }
 
@@ -436,6 +436,9 @@ static Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
                     case 14:
                     case 15:
                         driver->driverOptions.isa = 15;
+                        goto valid_target;
+                    case 16:
+                        driver->driverOptions.isa = 16;
                         goto valid_target;
                     default:
                         goto invalid_target;
@@ -552,6 +555,10 @@ Boolean __ETAssemblerDriverJobgen(__ETAssemblerDriver driver)
                 ratchet_args_append(&ra, "-o");
                 ratchet_args_efappend(&ra, __ETAssemblerDriverTemporaryObjectPathForInputPath(driver, input_path));
                 ratchet_args_append(&ra, input_path);
+
+                ratchet_args_append(&ra, "--target");
+                EFAUTOREL EFStringRef targetStr = EFStringCreateWithFormat(kEFAllocatorDefault, EFSTR("la64-generic-v%d"), driver->driverOptions.isa);
+                ratchet_args_efappend(&ra, targetStr);
 
                 /* feature flags */
                 ratchet_args_append(&ra, driver->diagnosticOptions.caret_diagnostics ? "-fcaret-diagnostics" : "-fno-caret-diagnostics");
@@ -764,6 +771,7 @@ ETAssemblerDriverRef ETAssemblerDriverCreateWithOptions(EFAllocatorRef allocator
         fprintf(stderr, "    verbose: %d,\n", driver->driverOptions.verbose);
         fprintf(stderr, "    inProcess: %d,\n", driver->driverOptions.inProcess || driver->driverOptions.assembleOnly);
         fprintf(stderr, "    emitMode: %s,\n", assembler_emit_mode_string_for_mode(driver->driverOptions.emitMode));
+        fprintf(stderr, "    isa: %d,\n", driver->driverOptions.isa);
         fprintf(stderr, "}\n");
         fprintf(stderr, "diagnosticOptions: {\n");
         fprintf(stderr, "    caret_diagnostics: %d,\n", driver->diagnosticOptions.caret_diagnostics);
@@ -849,6 +857,8 @@ Boolean ETAssemblerDriverRun(ETAssemblerDriverRef driverRef)
         {
             return false;
         }
+
+        invocation->isa = driver->driverOptions.isa;
 
         for(EFIndex index = 0; index < driver->macroCount; index++)
         {

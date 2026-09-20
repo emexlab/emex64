@@ -121,6 +121,12 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
     const E64Opcode opcode = al->token[0]->instruction_identifier.v;
     const emex64_opfunc_entry_t *entry = &kE64OpfuncTable[opcode];
 
+    if(al->inv->isa < entry->isa)
+    {
+        ETAssemblerDiagnosticConsumerReport(al->inv->diagnosticConsumer, kDiagnosticSeverityError, AT_TO_DLOC(al->token[0]), EFSTR("'%s' instruction needs isa v%d, but available isa is v%d"), al->token[0]->str, entry->isa, al->inv->isa);
+        return false;
+    }
+
     UInt64 operand_total = 0;
     ETAssemblerTokenType ptype = kETAssemblerTokenTypeInvalid;
     if(al->token_cnt > 1)

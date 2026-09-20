@@ -29,8 +29,8 @@
 #include <EmexToolchain/VM/__E64Core.h>
 #endif /* ET_PRIVATE */
 
-#define E64VM_ISA_MIN_VERSION 0
-#define E64VM_ISA_MAX_VERSION 15
+#define E64VM_ISA_MIN_VERSION 15
+#define E64VM_ISA_MAX_VERSION 16
 
 typedef struct __E64Core *E64CoreRef;
 typedef struct __E64Machine *E64MachineRef;

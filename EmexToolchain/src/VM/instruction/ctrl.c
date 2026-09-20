@@ -257,3 +257,15 @@ void emex64_op_bbnz(__E64Core core)
         core->rl[kE64RegisterPC] = emex64_branch_pc(core->rl[kE64RegisterPC], *(core->op.param[2]), core->op.param_coding[2]);
     }
 }
+
+Boolean E64EnterInterruptPrivate(__E64IC ic, __E64Core core, EFIndex irq, UInt64 return_pc);
+
+void emex64_op_svc(__E64Core core)
+{
+    __E64IC ic = (__E64IC)core->machine->intc;
+
+    UInt64 return_pc = core->rl[kE64RegisterPC] + core->op.ilen;
+    E64EnterInterruptPrivate(ic, core, EMEX64_IRQ_SOFTWARE, return_pc);
+
+    core->op.ilen = 0;
+}

@@ -367,7 +367,7 @@ static Boolean __ETCompilerDriverPredrive(__ETCompilerDriver driver)
 
             if(EFEqual(targetStr, EFSTR("la64-generic")))
             {
-                driver->driverOptions.isa = 15;
+                driver->driverOptions.isa = 16;
                 goto valid_target;
             }
 
@@ -403,6 +403,9 @@ static Boolean __ETCompilerDriverPredrive(__ETCompilerDriver driver)
                     case 14:
                     case 15:
                         driver->driverOptions.isa = 15;
+                        goto valid_target;
+                    case 16:
+                        driver->driverOptions.isa = 16;
                         goto valid_target;
                     default:
                         goto invalid_target;

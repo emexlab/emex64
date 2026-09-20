@@ -102,6 +102,9 @@ typedef enum: UInt8 {
     kE64OpcodeCPYM =    0b00111101,
     kE64OpcodeSETM =    0b00111110,
 
+    /* control flow operations v3 */
+    kE64OpcodeSVC =     0b00111111,
+
     /* PSE - pointer self-entropy (implementation pending) */
     /*kE64OpcodePSEAL =   0b00111100,
     kE64OpcodePSEAUTH = 0b00111101,

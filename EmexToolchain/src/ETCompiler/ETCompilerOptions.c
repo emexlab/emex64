@@ -27,7 +27,7 @@ ETCompilerDriverOptions ETCompilerDriverOptionsDefault = {
     .verbose = false,
     .inProcess = false,
     .emitMode = kEmitModeFirmware,
-    .isa = 15,
+    .isa = 16,
 };
 
 ETCompilerDiagnosticOptions ETCompilerDiagnosticOptionsDefault = {

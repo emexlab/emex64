@@ -33,6 +33,7 @@
 typedef struct __ETAssemblerInvocation {
     EFObject header;
 
+    UInt16 isa;
     ETAssemblerDiagnosticConsumerRef diagnosticConsumer;
 
     EFFileRef inputFile;

@@ -294,3 +294,59 @@ Boolean __E64ServeInterruptIfNeeded(E64ICRef icRef,
 
     return true;
 }
+
+EF_HIDDEN Boolean E64EnterInterruptPrivate(__E64IC ic,
+                                           __E64Core core,
+                                           EFIndex irq,
+                                           UInt64 return_pc)
+{
+    if(core->in_interrupt)
+    {
+        return false;
+    }
+
+    __E64Machine machine = (__E64Machine)core->machine;
+
+    UInt64 vector_addr = ic->vector_base + (irq * sizeof(UInt64));
+    UInt64 handler_addr;
+
+    if(!E64MemoryAction(machine->memory, vector_addr, 8, &handler_addr, kE64MemoryActionTypeRead))
+    {
+        return false;
+    }
+
+    handler_addr = TO_HOST64(handler_addr);
+    UInt64 oldsp = core->rl[kE64RegisterSP];
+    UInt64 oldel = core->cr_state.crel.level;
+
+    core->cr_state.crel.level = kE64ElevationLevelKernel;
+    core->rl[kE64RegisterSP] = core->cr_state.crksp.address;
+
+    emex64_push_il(core, oldel);
+    emex64_push_il(core, return_pc);
+    emex64_push_il(core, oldsp);
+    emex64_push_il(core, core->rl[kE64RegisterFP]);
+    emex64_push_il(core, core->rl[kE64RegisterCF]);
+    emex64_push_il(core, core->rl[kE64RegisterFPC]);
+    emex64_push_il(core, core->rl[kE64RegisterR0]);
+    emex64_push_il(core, core->rl[kE64RegisterR1]);
+    emex64_push_il(core, core->rl[kE64RegisterR2]);
+    emex64_push_il(core, core->rl[kE64RegisterR3]);
+    emex64_push_il(core, core->rl[kE64RegisterR4]);
+    emex64_push_il(core, core->rl[kE64RegisterR5]);
+    emex64_push_il(core, core->rl[kE64RegisterR6]);
+    emex64_push_il(core, core->rl[kE64RegisterR7]);
+    emex64_push_il(core, core->rl[kE64RegisterR8]);
+    emex64_push_il(core, core->rl[kE64RegisterR9]);
+
+    core->rl[kE64RegisterFP] = core->rl[kE64RegisterSP];
+    ic->current_irq = irq;
+
+    core->rl[kE64RegisterPC] = handler_addr;
+    core->op.ilen = 0;
+
+    core->in_interrupt = true;
+    core->halted = false;
+
+    return true;
+}
