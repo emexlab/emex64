@@ -21,7 +21,7 @@
 
 %include% <emex64.e64inc>
 
-%define% EMEX64_OPCODE_MAX  0b00111011
+%define% EMEX64_OPCODE_MAX  0b00111111
 
 %define% EMEX64_CODING_END          0b0000
 %define% EMEX64_CODING_REG          0b0001
@@ -106,6 +106,10 @@ section .data
     disasm_opcode_bbz_msg db "bbz\0\0\0\0", 3
     disasm_opcode_bbnz_msg db "bbnz\0\0\0", 3
     disasm_opcode_rdrnd_msg db "rdrnd\0\0", 1
+    disasm_opcode_movm_msg db "movm\0\0\0", 3
+    disasm_opcode_cpym_msg db "cpym\0\0\0", 3
+    disasm_opcode_setm_msg db "setm\0\0\0", 3
+    disasm_opcode_svc_msg db "svc\0\0\0\0", 0
 
 ; register string table
 section .data
