@@ -36,6 +36,10 @@ UInt64 emex64_mc_read(E64CoreRef core,
     {
         return E64MemoryGetKTRRSize(core->machine->memory);
     }
+    else if(offset == EMEX64_MC_REG_KTRR_BASE)
+    {
+        return E64MemoryGetKTRRBase(core->machine->memory);
+    }
 
     return E64MemoryIsKTRRLocked(core->machine->memory);
 }
@@ -49,6 +53,14 @@ void emex64_mc_write(E64CoreRef core,
     if(offset == EMEX64_MC_REG_KTRR_SIZE)
     {
         if(!E64MemorySetKTRRSize(core->machine->memory, value))
+        {
+            core->cr_state.crexc.exception = kE64ExceptionKTRRViolation;
+            return;
+        }
+    }
+    else if(offset == EMEX64_MC_REG_KTRR_BASE)
+    {
+        if(!E64MemorySetKTRRBase(core->machine->memory, value))
         {
             core->cr_state.crexc.exception = kE64ExceptionKTRRViolation;
             return;

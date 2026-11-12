@@ -19,13 +19,26 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef ETCOMPILERLEXER_H
-#define ETCOMPILERLEXER_H
+#ifndef EMEX64VM_DEVICE_CPUID_H
+#define EMEX64VM_DEVICE_CPUID_H
 
 #include <EmexFoundation/EmexFoundation.h>
-#include <EmexToolchain/ETCompiler/ETCompilerToken.h>
-#include <EmexToolchain/ETCompiler/ETCompilerDiagnosticConsumer.h>
+#include <EmexToolchain/VM/device/base.h>
+#include <EmexToolchain/VM/E64Core.h>
 
-EFMutableArrayRef ETCompilerLexerCreateTokenArrayWithFile(EFFileRef inputFile, ETCompilerDiagnosticConsumerRef diagnosticConsumer);
+#define EMEX64_CPUID_SIZE       0x80
 
-#endif /* ETCOMPILERLEXER_H */
+#define CPUID_REG_VENDOR        0x00
+#define CPUID_REG_MODEL         0x08
+#define CPUID_REG_ISA           0x10
+#define CPUID_REG_FEATURES      0x18
+#define CPUID_FEATURE_PAC       (1ULL << 0)
+#define CPUID_REG_BRAND         0x40
+#define CPUID_BRAND_SIZE        64
+
+#define EMEX64_CPU_VENDOR       "emexLabs"
+#define EMEX64_CPU_BRAND        "emex64e-2050"
+
+UInt64 emex64_cpuid_read(E64CoreRef core, void *device, UInt64 offset, EFSize size);
+
+#endif /* EMEX64VM_DEVICE_CPUID_H */

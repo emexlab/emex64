@@ -174,7 +174,9 @@ Boolean linker_load_object(linker_invocation_t *inv,
 
 void linker_layout(linker_invocation_t *inv)
 {
-    unsigned long cur = inv->needs_fw_hdr ? BOOT_HEADER_SIZE : 0;
+    /* relocatable objects are always laid out from 0 */
+    unsigned long base = inv->options.emit_mode == kEmitModeRelocatableObject ? 0 : inv->options.image_base;
+    unsigned long cur = base + (inv->needs_fw_hdr ? BOOT_HEADER_SIZE : 0);
 
     /* laying out .text segments */
     EFIndex objectCount = EFArrayGetCount(inv->objects);

@@ -129,6 +129,7 @@ typedef enum: UInt8 {
     kEmexKeyPhysPrintScreen,
     kEmexKeyPhysScrollLock,
     kEmexKeyPhysPause,
+    kEmexKeyPhysNonUSBackslash,
     kEmexKeyPhysUnknown
 } kEmexKeyPhys;
 

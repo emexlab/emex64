@@ -400,7 +400,27 @@ static Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
 
             if(EFEqual(targetStr, EFSTR("la64-generic")))
             {
-                driver->driverOptions.isa = 16;
+                driver->driverOptions.isa = 20;
+                goto valid_target;
+            }
+            if(EFEqual(targetStr, EFSTR("la64-v17")))
+            {
+                driver->driverOptions.isa = 17;
+                goto valid_target;
+            }
+            if(EFEqual(targetStr, EFSTR("la64-v18")))
+            {
+                driver->driverOptions.isa = 18;
+                goto valid_target;
+            }
+            if(EFEqual(targetStr, EFSTR("la64-v19")) || EFEqual(targetStr, EFSTR("la64e-v19")))
+            {
+                driver->driverOptions.isa = 19;
+                goto valid_target;
+            }
+            if(EFEqual(targetStr, EFSTR("la64-v20")) || EFEqual(targetStr, EFSTR("la64e-v20")))
+            {
+                driver->driverOptions.isa = 20;
                 goto valid_target;
             }
 
@@ -439,6 +459,18 @@ static Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
                         goto valid_target;
                     case 16:
                         driver->driverOptions.isa = 16;
+                        goto valid_target;
+                    case 17:
+                        driver->driverOptions.isa = 17;
+                        goto valid_target;
+                    case 18:
+                        driver->driverOptions.isa = 18;
+                        goto valid_target;
+                    case 19:
+                        driver->driverOptions.isa = 19;
+                        goto valid_target;
+                    case 20:
+                        driver->driverOptions.isa = 20;
                         goto valid_target;
                     default:
                         goto invalid_target;

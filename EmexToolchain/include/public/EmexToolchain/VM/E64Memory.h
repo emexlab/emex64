@@ -39,18 +39,18 @@
 
 #define EMEX64_MEMORY_WRITE_HELPER(mapping, offset, size, value)        \
     {                                                                   \
-        UInt64 mask = (size == 8) ? ~0ULL : (1ULL << (size * 8)) - 1; \
-        void *ptr = ((UInt8*)mapping) + offset;                       \
-        UInt64 raw = *(UInt64 *)ptr;                                \
+        UInt64 mask = (size == 8) ? ~0ULL : (1ULL << (size * 8)) - 1;   \
+        void *ptr = ((UInt8*)mapping) + offset;                         \
+        UInt64 raw = *(UInt64 *)ptr;                                    \
         raw = (raw & ~mask) | (value & mask);                           \
-        *(UInt64 *)ptr = raw;                                         \
+        *(UInt64 *)ptr = raw;                                           \
     }
 
 #define EMEX64_MEMORY_READ_HELPER(mapping, offset, size, out_value)     \
     {                                                                   \
-        void *ptr = ((UInt8*)mapping) + offset;                       \
-        UInt64 raw = *(UInt64 *)ptr;                                \
-        UInt64 mask = (size == 8) ? ~0ULL : (1ULL << (size * 8)) - 1; \
+        void *ptr = ((UInt8*)mapping) + offset;                         \
+        UInt64 raw = *(UInt64 *)ptr;                                    \
+        UInt64 mask = (size == 8) ? ~0ULL : (1ULL << (size * 8)) - 1;   \
         out_value = raw & mask;                                         \
     }
 
@@ -87,6 +87,9 @@ E64MemoryRef E64MemoryCreateCopy(EVAllocator *allocator, E64MemoryRef memoryRef)
 
 void E64MemoryLockKTRR(E64MemoryRef memoryRef);
 Boolean E64MemoryIsKTRRLocked(E64MemoryRef memoryRef);
+
+UInt64 E64MemoryGetKTRRBase(E64MemoryRef memoryRef);
+Boolean E64MemorySetKTRRBase(E64MemoryRef memoryRef, UInt64 base);
 UInt64 E64MemoryGetKTRRSize(E64MemoryRef memoryRef);
 Boolean E64MemorySetKTRRSize(E64MemoryRef memoryRef, UInt64 size);
 
@@ -94,7 +97,9 @@ UInt64 E64MemoryGetSize(E64MemoryRef memoryRef);
 Boolean E64MemoryAccessIsWithinBounds(E64MemoryRef memoryRef, UInt64 address, UInt64 size);
 
 Boolean E64MemoryLoadImage(E64MemoryRef memoryRef, EFFileRef fileRef);
+void E64MemoryReset(E64MemoryRef memoryRef);
 
+void *E64MemoryMapPhysical(E64MemoryRef memoryRef, UInt64 paddr, UInt64 len, Boolean forWrite);
 Boolean E64MemoryAction(E64MemoryRef memoryRef, UInt64 addr, EFSize size, UInt64 *value, E64MemoryActionType actionType);
 
 /* API that only the VM shall use */
@@ -102,5 +107,8 @@ void E64MemoryCoreAction(E64MemoryRef memoryRef, E64CoreRef core, UInt64 addr, E
 Boolean E64MemoryCoreCopyIn(E64MemoryRef memoryRef, E64CoreRef core, UInt8 *dst, UInt64 addr, EFSize len, E64MemoryActionType actionType);
 
 void *E64MemoryCoreMap(E64MemoryRef memoryRef, E64CoreRef core, UInt64 addr, EFSize size, E64MemoryActionType actionType);
+struct emex64_snoop *E64MemoryGetSnoop(E64MemoryRef memoryRef);
+UInt8 *E64MemoryGetRAM(E64MemoryRef memoryRef);
+Boolean E64MemoryCoreTranslate(E64MemoryRef memoryRef, E64CoreRef core, UInt64 vaddr, E64MemoryActionType actionType, UInt64 *paddr);
 
 #endif /* E64MEMORY_H */

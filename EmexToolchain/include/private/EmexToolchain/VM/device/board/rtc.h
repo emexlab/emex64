@@ -25,18 +25,32 @@
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/device/base.h>
 
-#define EMEX64_RTC_SIZE 0x38
+#define EMEX64_RTC_SIZE         0x38
 
-#define RTC_REG_SECONDS 0x00
-#define RTC_REG_MINUTES 0x08
-#define RTC_REG_HOURS   0x10
-#define RTC_REG_DAY     0x18
-#define RTC_REG_MONTH   0x20
-#define RTC_REG_YEAR    0x28
-#define RTC_REG_WEEKDAY 0x30
+#define RTC_REG_SECONDS         0x00
+#define RTC_REG_MINUTES         0x08
+#define RTC_REG_HOURS           0x10
+#define RTC_REG_DAY             0x18
+#define RTC_REG_MONTH           0x20
+#define RTC_REG_YEAR            0x28
+#define RTC_REG_WEEKDAY         0x30
+
+#define EMEX64_NVRAM_BYTES      0x1000
+#define NVRAM_REG_SIZE          0x1000
+#define EMEX64_NVRAM_SIZE       0x1008
+
+typedef struct emex64_nvram {
+    UInt8 data[EMEX64_NVRAM_BYTES];
+    int fd;
+} emex64_nvram_t;
 
 typedef struct __E64Core *E64CoreRef;
 
 UInt64 emex64_rtc_read(E64CoreRef core, void *device, UInt64 offset, EFSize size);
+
+emex64_nvram_t *emex64_nvram_alloc(const char *path);
+void emex64_nvram_dealloc(emex64_nvram_t *nvram);
+UInt64 emex64_nvram_read(E64CoreRef core, void *device, UInt64 offset, EFSize size);
+void emex64_nvram_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, EFSize size);
 
 #endif /* EMEX64VM_DEVICE_RTC_H */

@@ -25,11 +25,12 @@
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/device/base.h>
 
-#define EMEX64_MC_SIZE              0x18
+#define EMEX64_MC_SIZE              0x20
 
 #define EMEX64_MC_REG_SIZE          0x00
 #define EMEX64_MC_REG_KTRR_SIZE     0x08
 #define EMEX64_MC_REG_KTRR_LOCKED   0x10
+#define EMEX64_MC_REG_KTRR_BASE     0x18
 
 typedef struct __E64Core *E64CoreRef;
 

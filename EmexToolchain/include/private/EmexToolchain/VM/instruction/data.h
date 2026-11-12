@@ -42,6 +42,9 @@ void emex64_op_stq(__E64Core core);
 void emex64_op_clr(__E64Core core);
 void emex64_op_cmov(__E64Core core);
 void emex64_op_cmovb(__E64Core core);
+void emex64_op_cswp(__E64Core core);
+void emex64_op_xchg(__E64Core core);
+void emex64_op_cas(__E64Core core);
 void emex64_op_clar(__E64Core core);
 
 void emex64_op_rdrnd(__E64Core core);
@@ -49,5 +52,20 @@ void emex64_op_rdrnd(__E64Core core);
 void emex64_op_movm(__E64Core core);
 void emex64_op_cpym(__E64Core core);
 void emex64_op_setm(__E64Core core);
+
+void emex64_op_rdtime(__E64Core core);
+void emex64_op_ldsb(__E64Core core);
+void emex64_op_ldsw(__E64Core core);
+void emex64_op_ldsd(__E64Core core);
+void emex64_op_ldadd(__E64Core core);
+void emex64_op_ldand(__E64Core core);
+void emex64_op_ldor(__E64Core core);
+void emex64_op_ldxor(__E64Core core);
+void emex64_op_swpadd(__E64Core core);
+void emex64_op_ldaddd(__E64Core core);
+void emex64_op_ldandd(__E64Core core);
+void emex64_op_ldord(__E64Core core);
+void emex64_op_ldxord(__E64Core core);
+void emex64_op_swpaddd(__E64Core core);
 
 #endif /* EMEX64VM_INSTRUCTION_DATA_H */

@@ -60,7 +60,9 @@ typedef struct {
 } emex64_uart_t;
 
 emex64_uart_t *emex64_uart_alloc(E64MachineRef machine);
+void emex64_uart_receive(emex64_uart_t *u, UInt8 ch);
 void emex64_uart_dealloc(emex64_uart_t *u);
+void emex64_uart_reset(emex64_uart_t *u);
 
 UInt64 emex64_uart_read(E64CoreRef core, void *device, UInt64 offset, EFSize size);
 void emex64_uart_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, EFSize size);

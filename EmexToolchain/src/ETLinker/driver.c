@@ -28,6 +28,7 @@
 #include <EmexToolchain/Support/diagnostic/log.h>
 #include <EmexToolchain/ETLinker/linker.h>
 #include <EmexToolchain/ETLinker/driver.h>
+#include <EmexToolchain/VM/E64Memory.h>
 #include <EmexToolchain/ETLinker/emit.h>
 
 linker_driver_t *linker_driver_alloc(SInt32 argc,
@@ -86,6 +87,12 @@ linker_driver_t *linker_driver_alloc(SInt32 argc,
             fprintf(stderr, "  -T <script path>       Adds a linker script.\n");
             fprintf(stderr, "  -v                     Prints verbose linker log.\n");
             fprintf(stderr, "  -r                     Emits relocatable ELF object.\n");
+            fprintf(stderr, "  --base <address>       Links the image to run at <address> (page aligned) instead\n");
+            fprintf(stderr, "                         of 0, e.g. for kernels loaded by the firmware.\n");
+            fprintf(stderr, "  --elf                  Writes an ELF executable instead of a raw image, e.g. for\n");
+            fprintf(stderr, "                         programs an OS loads aka a read/execute text segment and a\n");
+            fprintf(stderr, "                         read/write data segment (.bss in its memory size), or one\n");
+            fprintf(stderr, "                         read/write/execute segment with --omagic.\n");
             goto failure;
         }
         else if(strcmp(argv[i], "--version") == 0)
@@ -143,6 +150,21 @@ linker_driver_t *linker_driver_alloc(SInt32 argc,
         else if(strcmp(argv[i], "--omagic") == 0)
         {
             driver->options.use_old_magic = true;
+        }
+        else if(strcmp(argv[i], "--elf") == 0)
+        {
+            driver->options.elf = true;
+        }
+        else if(strcmp(argv[i], "--base") == 0 && i + 1 < argc)
+        {
+            char *end = NULL;
+            unsigned long long base = strtoull(argv[++i], &end, 0);
+            if(end == argv[i] || *end != '\0' || (base & (EMEX64_PAGE_SIZE - 1)) != 0)
+            {
+                diagnostic_report(driver->consumer, kDiagnosticSeverityError, NULL, "--base expects a page aligned address (0x%x), got '%s'", EMEX64_PAGE_SIZE, argv[i]);
+                goto failure;
+            }
+            driver->options.image_base = (UInt64)base;
         }
         else if (argv[i][0] != '-')
         {

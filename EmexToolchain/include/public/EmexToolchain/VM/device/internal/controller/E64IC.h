@@ -29,27 +29,40 @@
 #include <EmexToolchain/VM/device/internal/controller/__E64IC.h>
 #endif /* ET_PRIVATE */
 
-#define EMEX64_INTC_SIZE      0x30
+#define EMEX64_INTC_SIZE            0x30
 
 /* internal devices */
-#define EMEX64_IRQ_EXCEPTION  0
-#define EMEX64_IRQ_TIMER      1
-#define EMEX64_IRQ_DISK       2
-#define EMEX64_IRQ_NETWORK    3
-#define EMEX64_IRQ_SOFTWARE   4
+#define EMEX64_IRQ_EXCEPTION        0
+#define EMEX64_IRQ_TIMER            1
+#define EMEX64_IRQ_DISK             2
+#define EMEX64_IRQ_NETWORK          3
+#define EMEX64_IRQ_SOFTWARE         4
 
 /* board devices */
-#define EMEX64_IRQ_UART       5
-#define EMEX64_IRQ_8042       6   /* emex8042 MMIO chip fires interrupt when device gets plugged in for example */
+#define EMEX64_IRQ_UART             5
+#define EMEX64_IRQ_8042             6   /* emex8042 MMIO chip fires interrupt when device gets plugged in for example */
 
-#define EMEX64_IRQ_MAX        63
+/* PCIe interrupt lines */
+#define EMEX64_IRQ_PCIE_BASE        16
+#define EMEX64_IRQ_PCIE_COUNT       16
 
-#define EMEX64_INTC_REG_PENDING   0x00
-#define EMEX64_INTC_REG_ENABLED   0x08
-#define EMEX64_INTC_REG_CTRL      0x10
-#define EMEX64_INTC_REG_VECTOR    0x18
-#define EMEX64_INTC_REG_ACK       0x20
-#define EMEX64_INTC_REG_CURRENT   0x28
+#define EMEX64_IRQ_MAX              63
+
+/* Local APIC interrupt lines */
+#define EMEX64_IRQ_IPI              64
+#define EMEX64_IRQ_LAPIC_TIMER      65
+
+/* I/O APIC */
+#define EMEX64_IOAPIC_SIZE          0x300
+#define EMEX64_IOAPIC_REG_VERSION   0x00
+#define EMEX64_IOAPIC_REG_ROUTE     0x100
+
+#define EMEX64_INTC_REG_PENDING     0x00
+#define EMEX64_INTC_REG_ENABLED     0x08
+#define EMEX64_INTC_REG_CTRL        0x10
+#define EMEX64_INTC_REG_VECTOR      0x18
+#define EMEX64_INTC_REG_ACK         0x20
+#define EMEX64_INTC_REG_CURRENT     0x28
 
 /* control register bits */
 #define EMEX64_INTC_CTRL_ENABLE   (1 << 0)
@@ -67,6 +80,7 @@ E64MMIORegionRef E64ICCopyMMIORegion(EFAllocatorRef allocatorRef, E64ICRef icRef
 Boolean E64ICRegisterOnMMIOBus(E64ICRef icRef, E64MMIOBusRef MMIOBusRef);
 
 void E64ICRaiseInterrupt(E64ICRef icRef, EFIndex irqLine);
+void E64ICSetWakeHandler(E64ICRef icRef, void (*wake)(void *context, UInt8 core), void *context);
 void E64ICClearInterrupt(E64ICRef icRef, EFIndex irqLine);
 
 #endif /* E64IC_H */

@@ -27,7 +27,7 @@ ETAssemblerDriverOptions ETAssemblerDriverOptionsDefault = {
     .verbose = false,
     .inProcess = false,
     .emitMode = kEmitModeFirmware,
-    .isa = 16,
+    .isa = 20,
 };
 
 ETAssemblerDiagnosticOptions ETAssemblerDiagnosticOptionsDefault = {

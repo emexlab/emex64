@@ -27,62 +27,53 @@
 #include <EmexToolchain/VM/device/base.h>
 #include <EmexToolchain/VM/device/board/controller/8042.h>
 
-/* the freequency of the framebuffer */
 #define EMEX64_FB_TICK_HZ 60.0
 #define EMEX64_FB_TICK_DT (1.0 / EMEX64_FB_TICK_HZ)
 
-/* registers of the framebuffer MMIO device */
-#define EMEX64_FB_REG_ENABLED 0x00    /* readonly: from now on only serving the purpose to know if screens are available */
-#define EMEX64_FB_REG_HEIGHT  0x08    /* readonly word: telling screen height */
-#define EMEX64_FB_REG_WIDTH   0x10    /* readonly word: telling screen width */
-#define EMEX64_FB_FRAMEBUFFER 0x18
-
 typedef struct __E64Core *E64CoreRef;
 typedef struct __E64Machine *E64MachineRef;
+typedef struct emex64_display emex64_display_t;
 
-typedef struct {
-    UInt8 enabled;
-    UInt8 *palette;
-    UInt8 *fb;
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#endif
+#if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || (defined(__APPLE__) && !TARGET_OS_IPHONE))
+#define EMEX64VM_DISPLAY_WINDOW 1
+#else
+#define EMEX64VM_DISPLAY_WINDOW 0
+#endif
+
+struct emex64_display {
+    Boolean enabled;
+    Boolean embedded;
+    volatile Boolean stopping;
     pthread_t pthread;
     emex64_8042_t *emex8042;
+    void *gpu;
 
     UInt16 width;
     UInt16 height;
-    UInt64 fb_size;
-} emex64_display_t;
+};
 
 emex64_display_t *emex64_display_alloc(E64MachineRef machine, Boolean install, UInt16 width, UInt16 height);
 void emex64_display_dealloc(emex64_display_t *display);
+void emex64_display_stop(emex64_display_t *display);
 
 void *display_start(void *arg);
 
-UInt64 emex64_fb_read(E64CoreRef core, void *device, UInt64 offset, EFSize size);
-void emex64_fb_write(E64CoreRef core, void *device, UInt64 offset, UInt64 value, EFSize size);
-
-#endif /* __linux__ | __APPLE__ */
-
 /* the apple bozo only part of this header */
-#if defined(__APPLE__) && defined(__OBJC__)
+#if defined(__APPLE__) && defined(__OBJC__) && !TARGET_OS_IPHONE
 
 #import <Cocoa/Cocoa.h>
-#import <OpenGL/gl3.h>
-#import <OpenGL/OpenGL.h>
+#import <Metal/Metal.h>
+#import <MetalKit/MetalKit.h>
 
-@interface EMEX64GLView : NSOpenGLView <NSWindowDelegate>
-{
-    emex64_display_t *_display;
-
-    GLuint _prog;
-    GLuint _vao, _vbo, _ebo;
-    GLuint _texIndex, _texPal;
-
-    NSTimer *_timer;
-}
+@interface EMEX64MetalView : MTKView <NSWindowDelegate, MTKViewDelegate>
 
 - (instancetype)initWithFrame:(NSRect)frame display:(emex64_display_t *)display;
 
 @end
 
-#endif /* __APPLE__ */
+#endif /* __APPLE__ && __OBJC__ */
 
+#endif /* EMEX64VM_DEVICE_DISPLAY_H */

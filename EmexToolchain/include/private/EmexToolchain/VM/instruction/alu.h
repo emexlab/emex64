@@ -50,4 +50,13 @@ void emex64_op_bswapq(__E64Core core);
 void emex64_op_inc(__E64Core core);
 void emex64_op_dec(__E64Core core);
 
+void emex64_op_sext(__E64Core core);
+void emex64_op_clz(__E64Core core);
+void emex64_op_ctz(__E64Core core);
+void emex64_op_popcnt(__E64Core core);
+void emex64_op_mulh(__E64Core core);
+void emex64_op_umulh(__E64Core core);
+void emex64_op_adc(__E64Core core);
+void emex64_op_sbb(__E64Core core);
+
 #endif /* EMEX64VM_INSTRUCTION_ALU_H */

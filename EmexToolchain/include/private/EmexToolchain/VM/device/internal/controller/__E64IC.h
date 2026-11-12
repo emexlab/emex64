@@ -24,6 +24,8 @@
 
 #include <EmexFoundation/EmexFoundation.h>
 
+#define E64IC_MAX_CORES 32
+
 typedef struct __E64IC {
     EFObject header;
     UInt64 pending;
@@ -31,11 +33,19 @@ typedef struct __E64IC {
     UInt64 ctrl;
     UInt64 vector_base;
     SInt64 current_irq;
+    UInt8 route[64];
+    UInt64 core_lines[E64IC_MAX_CORES];
+    void (*wake)(void *context, UInt8 core);
+    void *wake_context;
 } *__E64IC;
 
 typedef struct __E64IC *E64ICRef;
 typedef struct __E64Core *E64CoreRef;
 
 Boolean __E64ServeInterruptIfNeeded(E64ICRef icRef, E64CoreRef coreRef);
+void __E64ICReset(E64ICRef icRef);
+
+Boolean E64ICHasPendingInterrupt(E64ICRef icRef, UInt8 core);
+EFIndex E64ICTakeInterrupt(E64ICRef icRef, UInt8 core);
 
 #endif /* __E64IC_H */

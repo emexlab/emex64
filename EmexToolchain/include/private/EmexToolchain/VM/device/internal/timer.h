@@ -22,46 +22,39 @@
 #ifndef EMEX64VM_DEVICE_TIMER_H
 #define EMEX64VM_DEVICE_TIMER_H
 
+#include <pthread.h>
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/E64Core.h>
 #include <EmexToolchain/VM/device/base.h>
+#include <EmexToolchain/VM/device/internal/vtimer.h>
 
 #define EMEX64_TIMER_SIZE   0x28
 
-#define TIMER_REG_CTRL      0x00
-#define TIMER_REG_COUNT     0x08
-#define TIMER_REG_COMPARE   0x10
-#define TIMER_REG_STATUS    0x18
-#define TIMER_REG_FREQ      0x20        /* read only!!! */
-
-#define TIMER_CTRL_ENABLE   (1 << 0)
-#define TIMER_CTRL_IRQ_EN   (1 << 1)
-#define TIMER_CTRL_PERIODIC (1 << 2)
-#define TIMER_STATUS_IRQ    (1 << 0)
-
-#define TIMER_VIRTUAL_FREQ  1000000ULL
-
 typedef struct __E64Machine *E64MachineRef;
-/*typedef struct __E64Timer *E64TimerRef;
-
-E64TimerRef E64TimerCreate(EFAllocatorRef allocatorRef);*/
 
 typedef struct emex64_timer {
-    UInt64 ctrl;
-    UInt64 count;
-    UInt64 compare;
-    UInt64 status;
-
-    UInt64 host_freq;
-    UInt64 last_host_cycles;
-
+    emex64_vtimer_t vt;
+    pthread_mutex_t lock;
     E64MachineRef machine;
-    UInt64 tick_remainder;
+    UInt64 seq;
+    UInt64 snap_count;
+    UInt64 snap_host;
+    UInt64 snap_remainder;
+    UInt64 snap_compare;
+    UInt64 snap_mode;
 } emex64_timer_t;
+
+#define EMEX64_TIMER_SNAP_SLOW      0
+#define EMEX64_TIMER_SNAP_STOPPED   1
+#define EMEX64_TIMER_SNAP_COUNTING  2
+
+#define EMEX64_TIMER_TICK_INTERVAL  32
 
 emex64_timer_t *emex64_timer_alloc(E64MachineRef machine);
 void emex64_timer_dealloc(emex64_timer_t *timer);
+void emex64_timer_reset(emex64_timer_t *timer);
 void emex64_timer_tick(emex64_timer_t *timer, UInt64 host_cycles);
+Boolean emex64_timer_read_count(emex64_timer_t *timer, UInt64 *value);
 UInt64 emex64_get_host_cycles(void);
 
 UInt64 emex64_timer_read(E64CoreRef core, void *device, UInt64 offset, EFSize size);

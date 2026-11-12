@@ -105,32 +105,92 @@ typedef enum: UInt8 {
     /* control flow operations v3 */
     kE64OpcodeSVC =     0b00111111,
 
-    /* PSE - pointer self-entropy (implementation pending) */
-    /*kE64OpcodePSEAL =   0b00111100,
-    kE64OpcodePSEAUTH = 0b00111101,
-    kE64OpcodePSEDET =  0b00111110,
-    kE64OpcodePSECTX =  0b00111111,
-    kE64OpcodePSESEM =  0b01000000,
-    kE64OpcodePSECAP =  0b01000001,
-    kE64OpcodePSESYNC = 0b01000010,*/
+    /* ISA v17 (trap model and atomics) */
+    kE64OpcodeERET =    0b01000000,
+    kE64OpcodeCSWP =    0b01000001,
+    kE64OpcodeXCHG =    0b01000010,
+    kE64OpcodeCAS =     0b01000011,
 
-    /*
-     * for floating point later (ideas atleast):
-     *
-     * data operations:
-     * fmov
-     * fswp
-     * fswpz
-     *
-     * floating point arithmetic:
-     * fadd
-     * fsub
-     * fmul
-     * fdiv
-     * ... (what not)
-     */
+    /* ISA v18 (floating point unit) */
+    kE64OpcodeFADD =    0b01000100,
+    kE64OpcodeFSUB =    0b01000101,
+    kE64OpcodeFMUL =    0b01000110,
+    kE64OpcodeFDIV =    0b01000111,
+    kE64OpcodeFSQRT =   0b01001000,
+    kE64OpcodeFMIN =    0b01001001,
+    kE64OpcodeFMAX =    0b01001010,
+    kE64OpcodeFMADD =   0b01001011,
+    kE64OpcodeFNEG =    0b01001100,
+    kE64OpcodeFABS =    0b01001101,
+    kE64OpcodeFCMP =    0b01001110,
+    kE64OpcodeFADDS =   0b01001111,
+    kE64OpcodeFSUBS =   0b01010000,
+    kE64OpcodeFMULS =   0b01010001,
+    kE64OpcodeFDIVS =   0b01010010,
+    kE64OpcodeFSQRTS =  0b01010011,
+    kE64OpcodeFMINS =   0b01010100,
+    kE64OpcodeFMAXS =   0b01010101,
+    kE64OpcodeFMADDS =  0b01010110,
+    kE64OpcodeFNEGS =   0b01010111,
+    kE64OpcodeFABSS =   0b01011000,
+    kE64OpcodeFCMPS =   0b01011001,
+    kE64OpcodeFCVTDS =  0b01011010,
+    kE64OpcodeFCVTSD =  0b01011011,
+    kE64OpcodeFCVTDI =  0b01011100,
+    kE64OpcodeFCVTDU =  0b01011101,
+    kE64OpcodeFCVTID =  0b01011110,
+    kE64OpcodeFCVTUD =  0b01011111,
+    kE64OpcodeFCVTSI =  0b01100000,
+    kE64OpcodeFCVTSU =  0b01100001,
+    kE64OpcodeFCVTIS =  0b01100010,
+    kE64OpcodeFCVTUS =  0b01100011,
 
-    kE64OpcodeMAX = kE64OpcodeSVC,
+    /* ISA v19 (binary size reduction) */
+    kE64OpcodeSEXT =    0b01100100,
+    kE64OpcodeCBLT =    0b01100101,
+    kE64OpcodeCLZ =     0b01100110,
+    kE64OpcodeCTZ =     0b01100111,
+    kE64OpcodePOPCNT =  0b01101000,
+    kE64OpcodeMULH =    0b01101001,
+    kE64OpcodeUMULH =   0b01101010,
+    kE64OpcodeADC =     0b01101011,
+    kE64OpcodeSBB =     0b01101100,
+
+    /* ISA v19 (PAC extension) */
+    kE64OpcodePACIA =   0b01101101,
+    kE64OpcodeAUTIA =   0b01101110,
+    kE64OpcodePACDA =   0b01101111,
+    kE64OpcodeAUTDA =   0b01110000,
+    kE64OpcodeXPAC =    0b01110001,
+    kE64OpcodePACRET =  0b01110010,
+    kE64OpcodeRETA =    0b01110011,
+
+    /* ISA v20 (performance update) */
+    kE64OpcodeRDTIME =  0b01110100,
+    kE64OpcodeWFE =     0b01110101,
+    kE64OpcodeSEV =     0b01110110,
+    kE64OpcodePAUSE =   0b01110111,
+    kE64OpcodeCBEQ =    0b01111000,
+    kE64OpcodeCBNE =    0b01111001,
+    kE64OpcodeCBGE =    0b01111010,
+    kE64OpcodeCBLTU =   0b01111011,
+    kE64OpcodeCBGEU =   0b01111100,
+    kE64OpcodeLDSB =    0b01111101,
+    kE64OpcodeLDSW =    0b01111110,
+    kE64OpcodeLDSD =    0b01111111,
+    kE64OpcodeLDADD =   0b10000000,
+    kE64OpcodeLDAND =   0b10000001,
+    kE64OpcodeLDOR =    0b10000010,
+    kE64OpcodeLDXOR =   0b10000011,
+    kE64OpcodeSWPADD =  0b10000100,
+    kE64OpcodeLDADDD =  0b10000101,
+    kE64OpcodeLDANDD =  0b10000110,
+    kE64OpcodeLDORD =   0b10000111,
+    kE64OpcodeLDXORD =  0b10001000,
+    kE64OpcodeSWPADDD = 0b10001001,
+    kE64OpcodeTLBI =    0b10001010,
+
+    kE64OpcodeMAX = kE64OpcodeTLBI,
 
     kE64OpcodeInvalid =  0b11111111,
 } E64Opcode;
@@ -171,6 +231,9 @@ typedef enum: UInt8 {
     /* offsetting */
     kE64ParameterCodingOffsetAdd =      0b1011,
     kE64ParameterCodingOffsetSub =      0b1100,
+
+    /* floating point register */
+    kE64ParameterCodingRegFloat =       0b1101,
 } E64ParameterCoding;
 
 typedef enum: UInt8 {
@@ -284,7 +347,18 @@ typedef enum: UInt8 {
     kE64ControlRegisterCRPTB =  0b0100,                     /* CRPTB:   page table pointer (first 8bits are the flags and the rest is the physical address where the page table is) */
     kE64ControlRegisterCRFPC =  0b0101,                     /* CRFPC:   kernel only floating point control register */
     kE64ControlRegisterCRISA =  0b0110,                     /* CRISA:   instruction set architecture configuration */
-    kE64ControlRegisterMAX =    kE64ControlRegisterCRFPC
+
+    /* trap model */
+    kE64ControlRegisterCRSTAT = 0b0111,                     /* CRSTAT:  trap model enable, interrupt enable, state before the last trap */
+    kE64ControlRegisterCRTVEC = 0b1000,                     /* CRTVEC:  address of the trap entry */
+    kE64ControlRegisterCREPC =  0b1001,                     /* CREPC:   pc to return to */
+    kE64ControlRegisterCRCAUSE = 0b1010,                    /* CRCAUSE: exception cause */
+    kE64ControlRegisterCRTVAL = 0b1011,                     /* CRTVAL:  faulting address */
+    kE64ControlRegisterCRSCRATCH = 0b1100,                  /* CRSCRATCH: free for the kernel */
+    kE64ControlRegisterCRIAKEY = 0b1101,                    /* CRIAKEY: the key for instruction pointers (PAC) */
+    kE64ControlRegisterCRDAKEY = 0b1110,                    /* CRDAKEY: the key for data pointers (PAC) */
+    kE64ControlRegisterCRPAC =  0b1111,                     /* CRPAC:   pointer authentication on per level (PAC) */
+    kE64ControlRegisterMAX =    kE64ControlRegisterCRPAC
 } E64ControlRegister;
 
 typedef enum: UInt8 {
@@ -328,7 +402,9 @@ typedef enum: UInt8 {
 typedef enum: UInt8 {
     kE64CompareFlagZ =   0x1,
     kE64CompareFlagL =   0x2,
-    kE64CompareFlagG =   0x4
+    kE64CompareFlagG =   0x4,
+    kE64CompareFlagU =   0x8,
+    kE64CompareFlagC =   0x10
 } E64CompareFlag;
 
 typedef enum: UInt8 {
@@ -378,6 +454,53 @@ typedef enum: UInt8 {
      * KTRR exception!?
      */
     kE64ExceptionKTRRViolation =     0b110,
+
+    /*
+     * a system call, crepc points behind the svc instruction.
+     */
+    kE64ExceptionSVC =               0b111,
+
+    /*
+     * autia, autda or reta found a pointer whose
+     * signature is wrong.
+     */
+    kE64ExceptionPAC =               0b1000,
 } E64Exception;
+
+/* CRSTAT bits */
+#define E64_CRSTAT_IE               (1ULL << 0)                     /* interrupts enabled */
+#define E64_CRSTAT_PIE              (1ULL << 1)                     /* IE before the last trap */
+#define E64_CRSTAT_PEL_SHIFT        8                               /* elevation level before the last trap */
+#define E64_CRSTAT_PEL_MASK         (3ULL << E64_CRSTAT_PEL_SHIFT)
+#define E64_CRSTAT_TRAPS            (1ULL << 16)                    /* trap model enabled */
+#define E64_CRSTAT_WRITABLE         (E64_CRSTAT_IE | E64_CRSTAT_PIE | E64_CRSTAT_PEL_MASK | E64_CRSTAT_TRAPS)
+
+/* FPC bits */
+#define E64_FPC_RM_MASK             0x3ULL          /* rounding mode */
+#define E64_FPC_RM_NEAREST          0               /* to nearest, ties to even */
+#define E64_FPC_RM_ZERO             1               /* toward zero */
+#define E64_FPC_RM_DOWN             2               /* toward negative infinity */
+#define E64_FPC_RM_UP               3               /* toward positive infinity */
+#define E64_FPC_FLAGS_SHIFT         4               /* accrued exception flags */
+#define E64_FPC_NV                  (1ULL << 4)     /* invalid operation */
+#define E64_FPC_DZ                  (1ULL << 5)     /* division by zero */
+#define E64_FPC_OF                  (1ULL << 6)     /* overflow */
+#define E64_FPC_UF                  (1ULL << 7)     /* underflow */
+#define E64_FPC_NX                  (1ULL << 8)     /* inexact */
+
+/* PAC bits */
+#define E64_CRISA_EXT_PAC           (1ULL << 48)    /* CRISA PAC feature */
+#define E64_CRPAC_USER              (1ULL << 0)     /* on for user code */
+#define E64_CRPAC_KERNEL            (1ULL << 1)     /* on for kernel code */
+#define E64_CRPAC_WRITABLE          (E64_CRPAC_USER | E64_CRPAC_KERNEL)
+#define E64_PAC_SHIFT               54
+#define E64_PAC_MASK                (0x3FFULL << E64_PAC_SHIFT)
+
+/* CRCAUSE */
+#define E64_CRCAUSE_INTERRUPT       (1ULL << 63)
+#define E64_CRCAUSE_ACCESS_SHIFT    8
+#define E64_ACCESS_READ             1
+#define E64_ACCESS_WRITE            2
+#define E64_ACCESS_EXECUTE          3
 
 #endif /* E64TYPE_H */

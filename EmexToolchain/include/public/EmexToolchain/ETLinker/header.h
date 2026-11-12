@@ -55,6 +55,17 @@ typedef struct {
     UInt64 sh_entsize;
 } __attribute__((packed)) ELF64_Shdr;
 
+typedef struct {
+    UInt32 p_type;
+    UInt32 p_flags;
+    UInt64 p_offset;
+    UInt64 p_vaddr;
+    UInt64 p_paddr;
+    UInt64 p_filesz;
+    UInt64 p_memsz;
+    UInt64 p_align;
+} __attribute__((packed)) ELF64_Phdr;
+
 #define BOOT_HEADER_SIZE    10
 
 #endif /* EMEX64LD_HEADER_H */

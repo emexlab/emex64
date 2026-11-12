@@ -78,6 +78,22 @@ static inline E64RegisterExtended __register_extended_from_string(const char *na
         case PACK('e','r','1','3'): return kE64RegisterExtendedER13;
         case PACK('e','r','1','4'): return kE64RegisterExtendedER14;
         case PACK('e','r','1','5'): return kE64RegisterExtendedER15;
+        case PACK('f','r','0'): return (E64RegisterExtended)(16 + 0);
+        case PACK('f','r','1'): return (E64RegisterExtended)(16 + 1);
+        case PACK('f','r','2'): return (E64RegisterExtended)(16 + 2);
+        case PACK('f','r','3'): return (E64RegisterExtended)(16 + 3);
+        case PACK('f','r','4'): return (E64RegisterExtended)(16 + 4);
+        case PACK('f','r','5'): return (E64RegisterExtended)(16 + 5);
+        case PACK('f','r','6'): return (E64RegisterExtended)(16 + 6);
+        case PACK('f','r','7'): return (E64RegisterExtended)(16 + 7);
+        case PACK('f','r','8'): return (E64RegisterExtended)(16 + 8);
+        case PACK('f','r','9'): return (E64RegisterExtended)(16 + 9);
+        case PACK('f','r','1','0'): return (E64RegisterExtended)(16 + 10);
+        case PACK('f','r','1','1'): return (E64RegisterExtended)(16 + 11);
+        case PACK('f','r','1','2'): return (E64RegisterExtended)(16 + 12);
+        case PACK('f','r','1','3'): return (E64RegisterExtended)(16 + 13);
+        case PACK('f','r','1','4'): return (E64RegisterExtended)(16 + 14);
+        case PACK('f','r','1','5'): return (E64RegisterExtended)(16 + 15);
         default: return kE64RegisterExtendedInvalid;
     }
 }
@@ -135,8 +151,8 @@ void assembler_emit_register(ETAssemblerInvocationRef inv,
 void assembler_emit_register_extended(ETAssemblerInvocationRef inv,
                                       E64RegisterExtended reg)
 {
-    assert(reg <= kE64RegisterExtendedMAX);
+    assert(reg <= kE64RegisterExtendedMAX + 16);
 
-    EFBitWalkerWrite(inv->out_vbitwalker, kE64ParameterCodingRegExtended, 4);
-    EFBitWalkerWrite(inv->out_vbitwalker, reg, 4);
+    EFBitWalkerWrite(inv->out_vbitwalker, reg >= 16 ? kE64ParameterCodingRegFloat : kE64ParameterCodingRegExtended, 4);
+    EFBitWalkerWrite(inv->out_vbitwalker, reg & 0xF, 4);
 }

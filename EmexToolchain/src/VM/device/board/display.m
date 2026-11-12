@@ -21,17 +21,18 @@
 
 #if defined(__APPLE__)
 
-#define GL_SILENCE_DEPRECATION 1
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include <time.h>
 #include <pthread.h>
 #include <stdatomic.h>
+#include <dlfcn.h>
 #include <CoreGraphics/CoreGraphics.h>
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/device/board/display.h>
+#include <EmexToolchain/VM/device/board/pcie/gpu.h>
 #include <EmexToolchain/VM/E64Core.h>
 
 typedef struct {
@@ -39,10 +40,44 @@ typedef struct {
     Boolean e0;
 } ps2_code_t;
 
+static void mac_system_hotkeys(BOOL enabled)
+{
+    static int (*main_connection)(void);
+    static int (*set_mode)(int connection, int mode);
+    static BOOL looked_up;
+    if(!looked_up)
+    {
+        looked_up = YES;
+        main_connection = (int (*)(void))dlsym(RTLD_DEFAULT, "CGSMainConnectionID");
+        set_mode = (int (*)(int, int))dlsym(RTLD_DEFAULT, "CGSSetGlobalHotKeyOperatingMode");
+    }
+    if(main_connection != NULL && set_mode != NULL)
+    {
+        set_mode(main_connection(), enabled ? 0 : 2);
+    }
+}
+
+static BOOL mac_keyboard_is_iso(void)
+{
+    static int iso = -1;
+    if(iso < 0)
+    {
+        unsigned char (*get_kbd_type)(void) = (unsigned char (*)(void))dlsym(RTLD_DEFAULT, "LMGetKbdType");
+        unsigned int (*get_layout_type)(short) = (unsigned int (*)(short))dlsym(RTLD_DEFAULT, "KBGetLayoutType");
+        iso = 0;
+        if(get_kbd_type != NULL && get_layout_type != NULL)
+        {
+            iso = get_layout_type((short)get_kbd_type()) == 0x49534F20;
+        }
+    }
+    return iso;
+}
+
 kEmexKeyPhys mac_keycode_to_kEmexKeyPhys(UInt16 keyCode)
 {
     switch(keyCode)
     {
+        case 10: return mac_keyboard_is_iso() ? kEmexKeyPhysGrave : kEmexKeyPhysNonUSBackslash;
         case 0: return kEmexKeyPhysA;
         case 11: return kEmexKeyPhysB;
         case 8: return kEmexKeyPhysC;
@@ -81,7 +116,7 @@ kEmexKeyPhys mac_keycode_to_kEmexKeyPhys(UInt16 keyCode)
         case 25: return kEmexKeyPhys9;
         case 29: return kEmexKeyPhys0;
 
-        case 50: return kEmexKeyPhysGrave;
+        case 50: return mac_keyboard_is_iso() ? kEmexKeyPhysNonUSBackslash : kEmexKeyPhysGrave;
         case 27: return kEmexKeyPhysMinus;
         case 24: return kEmexKeyPhysEqual;
         case 33: return kEmexKeyPhysLeftBracket;
@@ -105,8 +140,8 @@ kEmexKeyPhys mac_keycode_to_kEmexKeyPhys(UInt16 keyCode)
         case 62: return kEmexKeyPhysRightCtrl;
         case 58: return kEmexKeyPhysLeftAlt;
         case 61: return kEmexKeyPhysRightAlt;
-        case 54: return kEmexKeyPhysLeftGUI;
-        case 55: return kEmexKeyPhysRightGUI;
+        case 55: return kEmexKeyPhysLeftGUI;
+        case 54: return kEmexKeyPhysRightGUI;
 
         case 123: return kEmexKeyPhysArrowLeft;
         case 124: return kEmexKeyPhysArrowRight;
@@ -161,89 +196,135 @@ static void run_on_main(void (^block)(void))
     }
 }
 
-static GLuint compileShader(GLenum type,
-                            const char* src)
+static NSString *const shader_source =
+    @"#include <metal_stdlib>\n"
+    "using namespace metal;\n"
+    "struct VOut { float4 pos [[position]]; float2 uv; };\n"
+    "constant float2 quad_pos[4] = { float2(-1, -1), float2(1, -1), float2(-1, 1), float2(1, 1) };\n"
+    "constant float2 quad_uv[4]  = { float2(0, 1),   float2(1, 1),  float2(0, 0),  float2(1, 0) };\n"
+    "vertex VOut vmain(uint vid [[vertex_id]])\n"
+    "{\n"
+    "    VOut o;\n"
+    "    o.pos = float4(quad_pos[vid], 0.0, 1.0);\n"
+    "    o.uv = quad_uv[vid];\n"
+    "    return o;\n"
+    "}\n"
+    "fragment float4 fmain(VOut in [[stage_in]],\n"
+    "                      texture2d<float> image [[texture(0)]],\n"
+    "                      texture2d<float> palette [[texture(1)]],\n"
+    "                      constant uint &format [[buffer(0)]])\n"
+    "{\n"
+    "    constexpr sampler s(coord::normalized, filter::nearest, address::clamp_to_edge);\n"
+    "    float4 c = image.sample(s, in.uv);\n"
+    "    if(format == 1)\n"
+    "    {\n"
+    "        uint idx = uint(c.r * 255.0 + 0.5);\n"
+    "        return float4(palette.read(uint2(idx, 0)).rgb, 1.0);\n"
+    "    }\n"
+    "    return float4(c.rgb, 1.0);\n"
+    "}\n";
+
+@implementation EMEX64MetalView
 {
-    GLuint s = glCreateShader(type);
-    glShaderSource(s, 1, &src, NULL);
-    glCompileShader(s);
+    emex64_display_t *_display;
 
-    GLint ok = 0;
-    glGetShaderiv(s, GL_COMPILE_STATUS, &ok);
-    if(!ok)
-    {
-        GLint len = 0;
-        glGetShaderiv(s, GL_INFO_LOG_LENGTH, &len);
-        GLsizei log_size = (len > 1) ? len : 2;
-        char *log = (char *)malloc((EFSize)log_size);
-        glGetShaderInfoLog(s, log_size, NULL, log);
-        fprintf(stderr, "Shader compile failed:\n%s\n", log);
-        free(log);
-        abort();
-    }
-    return s;
-}
+    id<MTLCommandQueue> _queue;
+    id<MTLRenderPipelineState> _pipeline;
+    id<MTLTexture> _image;
+    id<MTLTexture> _palette;
+    UInt32 _imageWidth, _imageHeight, _imageFormat;
+    UInt32 _paletteGen;
+    emex64_gpu_frame_t _frame;
 
-static GLuint linkProgram(GLuint vs,
-                          GLuint fs)
-{
-    GLuint p = glCreateProgram();
-    glAttachShader(p, vs);
-    glAttachShader(p, fs);
-    glLinkProgram(p);
-
-    GLint ok = 0;
-    glGetProgramiv(p, GL_LINK_STATUS, &ok);
-    if(!ok)
-    {
-        GLint len = 0;
-        glGetProgramiv(p, GL_INFO_LOG_LENGTH, &len);
-        GLsizei log_size = (len > 1) ? len : 2;
-        char *log = (char *)malloc((EFSize)log_size);
-        glGetProgramInfoLog(p, log_size, NULL, log);
-        fprintf(stderr, "Program link failed:\n%s\n", log);
-        free(log);
-        abort();
-    }
-    return p;
-}
-
-@implementation EMEX64GLView
-{
+    NSTimer *_timer;
     NSTrackingArea *_trackingArea;
     BOOL _mouseGrabbed;
+    BOOL _keyDown[kEmexKeyPhysUnknown + 1];
+    BOOL _guestCapsLock;
 }
+
+static const struct {
+    UInt16 keyCode;
+    NSUInteger deviceMask;
+    NSEventModifierFlags flag;
+} emex64_modifiers[] = {
+    { 56, 0x00000002, NSEventModifierFlagShift },
+    { 60, 0x00000004, NSEventModifierFlagShift },
+    { 59, 0x00000001, NSEventModifierFlagControl },
+    { 62, 0x00002000, NSEventModifierFlagControl },
+    { 58, 0x00000020, NSEventModifierFlagOption },
+    { 61, 0x00000040, NSEventModifierFlagOption },
+    { 55, 0x00000008, NSEventModifierFlagCommand },
+    { 54, 0x00000010, NSEventModifierFlagCommand },
+};
 
 - (instancetype)initWithFrame:(NSRect)frame
                       display:(emex64_display_t *)display
 {
-    NSOpenGLPixelFormatAttribute attrs[] = {
-        NSOpenGLPFAOpenGLProfile, NSOpenGLProfileVersion3_2Core,
-        NSOpenGLPFAColorSize, 24,
-        NSOpenGLPFAAlphaSize, 8,
-        NSOpenGLPFADoubleBuffer,
-        NSOpenGLPFADepthSize, 24,
-        0
-    };
-    NSOpenGLPixelFormat *pf = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
-    
-    if(!pf)
+    id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+    if(device == nil)
     {
-        die("NSOpenGLPixelFormat failed");
+        die("no Metal device");
     }
 
-    self = [super initWithFrame:frame pixelFormat:pf];
-    if (!self) die("NSOpenGLView init failed");
+    self = [super initWithFrame:frame device:device];
+    if(!self)
+    {
+        die("MTKView init failed");
+    }
 
     _display = display;
-    [self setWantsBestResolutionOpenGLSurface:YES];
-    __weak typeof(self) weakSelf = self;
-    _timer = [NSTimer scheduledTimerWithTimeInterval:EMEX64_FB_TICK_DT repeats:YES block:^(NSTimer *timer){
-        [weakSelf setNeedsDisplay:YES];
+    memset(&_frame, 0, sizeof(_frame));
+    _frame.palette_gen = ~0U;
+    _paletteGen = ~0U;
+
+    self.colorPixelFormat = MTLPixelFormatBGRA8Unorm;
+    self.clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0);
+    self.enableSetNeedsDisplay = NO;
+    self.paused = YES;
+    self.delegate = self;
+
+    _queue = [device newCommandQueue];
+
+    NSError *error = nil;
+    id<MTLLibrary> library = [device newLibraryWithSource:shader_source options:nil error:&error];
+    if(library == nil)
+    {
+        fprintf(stderr, "Metal shader compile failed: %s\n", error.localizedDescription.UTF8String);
+        abort();
+    }
+
+    MTLRenderPipelineDescriptor *pd = [[MTLRenderPipelineDescriptor alloc] init];
+    pd.vertexFunction = [library newFunctionWithName:@"vmain"];
+    pd.fragmentFunction = [library newFunctionWithName:@"fmain"];
+    pd.colorAttachments[0].pixelFormat = self.colorPixelFormat;
+    _pipeline = [device newRenderPipelineStateWithDescriptor:pd error:&error];
+    if(_pipeline == nil)
+    {
+        fprintf(stderr, "Metal pipeline failed: %s\n", error.localizedDescription.UTF8String);
+        abort();
+    }
+
+    MTLTextureDescriptor *td = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:MTLPixelFormatRGBA8Unorm width:256 height:1 mipmapped:NO];
+    td.usage = MTLTextureUsageShaderRead;
+    _palette = [device newTextureWithDescriptor:td];
+
+    [self updateTrackingAreas];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(windowResignedKey:) name:NSWindowDidResignKeyNotification object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(windowBecameKey:) name:NSWindowDidBecomeKeyNotification object:nil];
+
+    __weak EMEX64MetalView *weakSelf = self;
+    _timer = [NSTimer timerWithTimeInterval:EMEX64_FB_TICK_DT repeats:YES block:^(NSTimer *timer) {
+        [weakSelf draw];
     }];
     [[NSRunLoop currentRunLoop] addTimer:_timer forMode:NSRunLoopCommonModes];
-    [self updateTrackingAreas];
     return self;
+}
+
+- (BOOL)acceptsFirstResponder
+{
+    return YES;
 }
 
 - (void)updateTrackingAreas
@@ -259,144 +340,109 @@ static GLuint linkProgram(GLuint vs,
     [self addTrackingArea:_trackingArea];
 }
 
-- (void)prepareOpenGL
+- (void)uploadFrame
 {
-    [super prepareOpenGL];
+    BOOL indexed = _frame.format == GPU_FORMAT_I8;
 
-    GLint swapInt = 1;
-    [[self openGLContext] setValues:&swapInt forParameter:NSOpenGLContextParameterSwapInterval];
+    if(_image == nil || _imageWidth != _frame.width || _imageHeight != _frame.height || _imageFormat != _frame.format)
+    {
+        MTLTextureDescriptor *td = [MTLTextureDescriptor texture2DDescriptorWithPixelFormat:(indexed ? MTLPixelFormatR8Unorm : MTLPixelFormatBGRA8Unorm) width:_frame.width height:_frame.height mipmapped:NO];
+        td.usage = MTLTextureUsageShaderRead;
+        _image = [self.device newTextureWithDescriptor:td];
+        _imageWidth = _frame.width;
+        _imageHeight = _frame.height;
+        _imageFormat = _frame.format;
+    }
 
-    const char *vsSrc =
-        "#version 150 core\n"
-        "in vec2 aPos;\n"
-        "in vec2 aUV;\n"
-        "out vec2 vUV;\n"
-        "void main(){\n"
-        "  vUV = aUV;\n"
-        "  gl_Position = vec4(aPos, 0.0, 1.0);\n"
-        "}\n";
-
-    const char *fsSrc =
-        "#version 150 core\n"
-        "in vec2 vUV;\n"
-        "out vec4 FragColor;\n"
-        "uniform sampler2D uIndexTex;\n"
-        "uniform sampler2D uPalette;\n"
-        "void main(){\n"
-        "  float idxN = texture(uIndexTex, vUV).r;\n"
-        "  float idx  = floor(idxN * 255.0 + 0.5);\n"
-        "  float u    = (idx + 0.5) / 256.0;\n"
-        "  vec3 rgb   = texture(uPalette, vec2(u, 0.5)).rgb;\n"
-        "  FragColor  = vec4(rgb, 1.0);\n"
-        "}\n";
-
-    _prog = linkProgram(
-        compileShader(GL_VERTEX_SHADER,   vsSrc),
-        compileShader(GL_FRAGMENT_SHADER, fsSrc)
-    );
-
-    float verts[] = {
-        -1.f,-1.f,  0.f,1.f,
-         1.f,-1.f,  1.f,1.f,
-         1.f, 1.f,  1.f,0.f,
-        -1.f, 1.f,  0.f,0.f
-    };
-    UInt16 idxs[] = { 0,1,2, 2,3,0 };
-
-    glGenVertexArrays(1, &_vao);
-    glGenBuffers(1, &_vbo);
-    glGenBuffers(1, &_ebo);
-
-    glBindVertexArray(_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(idxs), idxs, GL_STATIC_DRAW);
-
-    GLint locPos = glGetAttribLocation(_prog, "aPos");
-    GLint locUV  = glGetAttribLocation(_prog, "aUV");
-    glEnableVertexAttribArray((GLuint)locPos);
-    glVertexAttribPointer((GLuint)locPos, 2, GL_FLOAT, GL_FALSE, 4*sizeof(float), (void*)0);
-    glEnableVertexAttribArray((GLuint)locUV);
-    glVertexAttribPointer((GLuint)locUV,  2, GL_FLOAT, GL_FALSE, 4*sizeof(float), (void*)(2*sizeof(float)));
-    glBindVertexArray(0);
-
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-    glGenTextures(1, &_texIndex);
-    glBindTexture(GL_TEXTURE_2D, _texIndex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, _display->width, _display->height,
-                 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    glGenTextures(1, &_texPal);
-    glBindTexture(GL_TEXTURE_2D, _texPal);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 256, 1,
-                 0, GL_RGB, GL_UNSIGNED_BYTE, _display->palette);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-    glUseProgram(_prog);
-    glUniform1i(glGetUniformLocation(_prog, "uIndexTex"), 0);
-    glUniform1i(glGetUniformLocation(_prog, "uPalette"), 1);
+    [_image replaceRegion:MTLRegionMake2D(0, 0, _frame.width, _frame.height) mipmapLevel:0 withBytes:_frame.pixels bytesPerRow:_frame.stride];
+    if(_paletteGen != _frame.palette_gen)
+    {
+        UInt8 rgba[GPU_PALETTE_ENTRIES * 4];
+        for(int i = 0; i < GPU_PALETTE_ENTRIES; i++)
+        {
+            rgba[i * 4 + 0] = _frame.palette[i * 3 + 0];
+            rgba[i * 4 + 1] = _frame.palette[i * 3 + 1];
+            rgba[i * 4 + 2] = _frame.palette[i * 3 + 2];
+            rgba[i * 4 + 3] = 0xFF;
+        }
+        [_palette replaceRegion:MTLRegionMake2D(0, 0, GPU_PALETTE_ENTRIES, 1) mipmapLevel:0 withBytes:rgba bytesPerRow:GPU_PALETTE_ENTRIES * 4];
+        _paletteGen = _frame.palette_gen;
+    }
 }
 
-- (void)drawRect:(NSRect)dirtyRect
+- (void)drawInMTKView:(MTKView *)view
 {
-    NSOpenGLContext *ctx = [self openGLContext];
-    [ctx makeCurrentContext];
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, _texIndex);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _display->width, _display->height, GL_RED, GL_UNSIGNED_BYTE, _display->fb);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, _texPal);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 512, 1, GL_RGB, GL_UNSIGNED_BYTE, _display->palette);
-
-    NSRect px = [self convertRectToBacking:[self bounds]];
-    GLint winW = (GLint)px.size.width;
-    GLint winH = (GLint)px.size.height;
-
-    const float fbAspect  = (float)_display->width / (float)_display->height;
-    const float winAspect = (float)winW / (float)winH;
-
-    GLint vpX, vpY, vpW, vpH;
-    if(winAspect > fbAspect)
+    emex64_gpu_t *gpu = (emex64_gpu_t *)_display->gpu;
+    if(gpu != NULL)
     {
-        vpH = winH;
-        vpW = (GLint)lroundf((float)vpH * fbAspect);
-        vpX = (winW - vpW) / 2;
-        vpY = 0;
+        emex64_gpu_get_frame(gpu, &_frame);
     }
     else
     {
-        vpW = winW;
-        vpH = (GLint)lroundf((float)vpW / fbAspect);
-        vpX = 0;
-        vpY = (winH - vpH) / 2;
+        _frame.active = false;
     }
 
-    glViewport(vpX, vpY, vpW, vpH);
-    glClear(GL_COLOR_BUFFER_BIT);
+    MTLRenderPassDescriptor *rp = view.currentRenderPassDescriptor;
+    id<CAMetalDrawable> drawable = view.currentDrawable;
+    if(rp == nil || drawable == nil)
+    {
+        return;
+    }
 
-    glUseProgram(_prog);
-    glBindVertexArray(_vao);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+    id<MTLCommandBuffer> cb = [_queue commandBuffer];
+    id<MTLRenderCommandEncoder> enc = [cb renderCommandEncoderWithDescriptor:rp];
 
-    [ctx flushBuffer];
+    if(_frame.active && _frame.pixels != NULL)
+    {
+        [self uploadFrame];
+
+        CGSize ds = view.drawableSize;
+        double img = (double)_frame.width / (double)_frame.height;
+        double win = ds.width / ds.height;
+        MTLViewport vp;
+        if(win > img)
+        {
+            vp.width = ds.height * img;
+            vp.height = ds.height;
+            vp.originX = (ds.width - vp.width) / 2.0;
+            vp.originY = 0.0;
+        }
+        else
+        {
+            vp.width = ds.width;
+            vp.height = ds.width / img;
+            vp.originX = 0.0;
+            vp.originY = (ds.height - vp.height) / 2.0;
+        }
+        vp.znear = 0.0;
+        vp.zfar = 1.0;
+
+        uint32_t format = _frame.format;
+        [enc setViewport:vp];
+        [enc setRenderPipelineState:_pipeline];
+        [enc setFragmentTexture:_image atIndex:0];
+        [enc setFragmentTexture:_palette atIndex:1];
+        [enc setFragmentBytes:&format length:sizeof(format) atIndex:0];
+        [enc drawPrimitives:MTLPrimitiveTypeTriangleStrip vertexStart:0 vertexCount:4];
+    }
+
+    [enc endEncoding];
+    [cb presentDrawable:drawable];
+    [cb commit];
+
+    if(gpu != NULL)
+    {
+        emex64_gpu_vblank(gpu);
+    }
 }
 
-- (void)reshape
+- (void)mtkView:(MTKView *)view drawableSizeWillChange:(CGSize)size
 {
-    [super reshape];
-    [[self openGLContext] update];
 }
 
 - (void)dealloc
 {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [_timer invalidate];
     _timer = nil;
     if(_trackingArea)
@@ -590,6 +636,69 @@ static NSString *backuped_windowname;
     [self sendMouseMovement:event];
 }
 
+- (void)guestKey:(kEmexKeyPhys)key down:(BOOL)down
+{
+    emex64_display_t *d = _display;
+    if(!d || !d->emex8042 || key >= kEmexKeyPhysUnknown)
+    {
+        return;
+    }
+    if(down)
+    {
+        emex64_8042_send_keyboard_make(d->emex8042, key);
+        _keyDown[key] = YES;
+    }
+    else if(_keyDown[key])
+    {
+        emex64_8042_send_keyboard_break(d->emex8042, key);
+        _keyDown[key] = NO;
+    }
+}
+
+- (void)syncCapsLock:(NSEventModifierFlags)flags
+{
+    BOOL on = (flags & NSEventModifierFlagCapsLock) != 0;
+    if(on != _guestCapsLock)
+    {
+        [self guestKey:kEmexKeyPhysCapsLock down:YES];
+        [self guestKey:kEmexKeyPhysCapsLock down:NO];
+        _guestCapsLock = on;
+    }
+}
+
+- (void)releaseModifiers:(NSEventModifierFlags)flags
+{
+    for(size_t i = 0; i < sizeof(emex64_modifiers) / sizeof(emex64_modifiers[0]); i++)
+    {
+        if(!(flags & emex64_modifiers[i].flag))
+        {
+            [self guestKey:mac_keycode_to_kEmexKeyPhys(emex64_modifiers[i].keyCode) down:NO];
+        }
+    }
+}
+
+- (void)windowResignedKey:(NSNotification *)note
+{
+    if(note.object != self.window)
+    {
+        return;
+    }
+    mac_system_hotkeys(YES);
+    for(int k = 0; k < kEmexKeyPhysUnknown; k++)
+    {
+        [self guestKey:(kEmexKeyPhys)k down:NO];
+    }
+}
+
+- (void)windowBecameKey:(NSNotification *)note
+{
+    if(note.object == self.window)
+    {
+        mac_system_hotkeys(NO);
+        [self syncCapsLock:[NSEvent modifierFlags]];
+    }
+}
+
 - (void)keyDown:(NSEvent *)event
 {
     if((event.modifierFlags & (NSEventModifierFlagOption | NSEventModifierFlagCommand)) == (NSEventModifierFlagOption | NSEventModifierFlagCommand))
@@ -601,94 +710,30 @@ static NSString *backuped_windowname;
         }
     }
 
-    emex64_display_t *d = _display;
-    kEmexKeyPhys phys_key = mac_keycode_to_kEmexKeyPhys(event.keyCode);
-    emex64_8042_send_keyboard_make(d->emex8042, phys_key);
+    [self releaseModifiers:event.modifierFlags];
+    [self syncCapsLock:event.modifierFlags];
+    [self guestKey:mac_keycode_to_kEmexKeyPhys(event.keyCode) down:YES];
 }
 
 - (void)keyUp:(NSEvent *)event
 {
-    emex64_display_t *d = _display;
-    kEmexKeyPhys phys_key = mac_keycode_to_kEmexKeyPhys(event.keyCode);
-    emex64_8042_send_keyboard_break(d->emex8042, phys_key);
+    [self releaseModifiers:event.modifierFlags];
+    [self guestKey:mac_keycode_to_kEmexKeyPhys(event.keyCode) down:NO];
 }
 
 - (void)flagsChanged:(NSEvent *)event
 {
-    emex64_display_t *d = _display;
-    static NSUInteger lastFlags = 0;
     NSUInteger current = event.modifierFlags;
-
-    if((current & NSEventModifierFlagShift) != (lastFlags & NSEventModifierFlagShift))
+    for(size_t i = 0; i < sizeof(emex64_modifiers) / sizeof(emex64_modifiers[0]); i++)
     {
-        BOOL pressed = (current & NSEventModifierFlagShift) != 0;
-        kEmexKeyPhys key = kEmexKeyPhysLeftShift;
-        if(pressed)
+        kEmexKeyPhys key = mac_keycode_to_kEmexKeyPhys(emex64_modifiers[i].keyCode);
+        BOOL down = (current & emex64_modifiers[i].deviceMask) != 0;
+        if(emex64_modifiers[i].keyCode == event.keyCode || (!down && _keyDown[key]))
         {
-            emex64_8042_send_keyboard_make(d->emex8042, key);
-        }
-        else
-        {
-            emex64_8042_send_keyboard_break(d->emex8042, key);
+            [self guestKey:key down:down];
         }
     }
-
-    if((current & NSEventModifierFlagControl) != (lastFlags & NSEventModifierFlagControl))
-    {
-        BOOL pressed = (current & NSEventModifierFlagControl) != 0;
-        kEmexKeyPhys key = kEmexKeyPhysLeftCtrl;
-        if(pressed)
-        {
-            emex64_8042_send_keyboard_make(d->emex8042, key);
-        }
-        else
-        {
-            emex64_8042_send_keyboard_break(d->emex8042, key);
-        }
-    }
-
-    if((current & NSEventModifierFlagOption) != (lastFlags & NSEventModifierFlagOption))
-    {
-        BOOL pressed = (current & NSEventModifierFlagOption) != 0;
-        kEmexKeyPhys key = kEmexKeyPhysLeftAlt;
-        if(pressed)
-        {
-            emex64_8042_send_keyboard_make(d->emex8042, key);
-        }
-        else
-        {
-            emex64_8042_send_keyboard_break(d->emex8042, key);
-        }
-    }
-
-    if((current & NSEventModifierFlagCommand) != (lastFlags & NSEventModifierFlagCommand))
-    {
-        BOOL pressed = (current & NSEventModifierFlagCommand) != 0;
-        kEmexKeyPhys key = kEmexKeyPhysLeftGUI;
-        if(pressed)
-        {
-            emex64_8042_send_keyboard_make(d->emex8042, key);
-        }
-        else
-        {
-            emex64_8042_send_keyboard_break(d->emex8042, key);
-        }
-    }
-
-    if((current & NSEventModifierFlagCapsLock) != (lastFlags & NSEventModifierFlagCapsLock))
-    {
-        BOOL pressed = (current & NSEventModifierFlagCapsLock) != 0;
-        if(pressed)
-        {
-            emex64_8042_send_keyboard_make(d->emex8042, kEmexKeyPhysCapsLock);
-        }
-        else
-        {
-            emex64_8042_send_keyboard_break(d->emex8042, kEmexKeyPhysCapsLock);
-        }
-    }
-
-    lastFlags = current;
+    [self syncCapsLock:current];
 }
 
 @end
@@ -708,19 +753,25 @@ void *display_start(void *arg)
             [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
             [NSApp activateIgnoringOtherApps:YES];
 
+            static id activity;
+            activity = [[NSProcessInfo processInfo] beginActivityWithOptions:(NSActivityUserInitiated | NSActivityLatencyCritical) reason:@"emex64vm runs a machine"];
+#if !__has_feature(objc_arc)
+            [activity retain];
+#endif
+
             NSRect r = NSMakeRect(100, 100, display->width, display->height);
             NSWindow *win = [[NSWindow alloc] initWithContentRect:r styleMask:(NSWindowStyleMaskTitled | NSWindowStyleMaskClosable | NSWindowStyleMaskResizable | NSWindowStyleMaskMiniaturizable) backing:NSBackingStoreBuffered defer:NO];
             [win setTitle:[NSString stringWithFormat:@"emex64vm %d x %d @ 60Hz", display->width, display->height]];
             [[win standardWindowButton:NSWindowZoomButton] setEnabled:NO];
 
-            EMEX64GLView *glView = [[EMEX64GLView alloc] initWithFrame:r display:display];
-            [win setContentView:glView];
-            [win setDelegate:glView];
+            EMEX64MetalView *view = [[EMEX64MetalView alloc] initWithFrame:r display:display];
+            [win setContentView:view];
+            [win setDelegate:view];
 
             [win setContentAspectRatio:NSMakeSize(display->width, display->height)];
             [win setContentMinSize:NSMakeSize(display->width, display->height)];
 
-            [win makeFirstResponder:glView];
+            [win makeFirstResponder:view];
             [win makeKeyAndOrderFront:nil];
             [NSApp run];
         });

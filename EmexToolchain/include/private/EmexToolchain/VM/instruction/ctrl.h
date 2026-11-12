@@ -62,7 +62,28 @@ static inline UInt64 emex64_pop_il(__E64Core core)
 
 void emex64_op_bbz(__E64Core core);
 void emex64_op_bbnz(__E64Core core);
+void emex64_op_cblt(__E64Core core);
+
+void emex64_op_cbeq(__E64Core core);
+void emex64_op_cbne(__E64Core core);
+void emex64_op_cbge(__E64Core core);
+void emex64_op_cbltu(__E64Core core);
+void emex64_op_cbgeu(__E64Core core);
+void emex64_op_wfe(__E64Core core);
+void emex64_op_sev(__E64Core core);
+void emex64_op_pause(__E64Core core);
+void emex64_op_tlbi(__E64Core core);
+
+/* pointer authentication extension */
+void emex64_op_pacia(__E64Core core);
+void emex64_op_autia(__E64Core core);
+void emex64_op_pacda(__E64Core core);
+void emex64_op_autda(__E64Core core);
+void emex64_op_xpac(__E64Core core);
+void emex64_op_pacret(__E64Core core);
+void emex64_op_reta(__E64Core core);
 
 void emex64_op_svc(__E64Core core);
+void emex64_op_eret(__E64Core core);
 
 #endif /* EMEX64VM_INSTRUCTION_CTRL_H */

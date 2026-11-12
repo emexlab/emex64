@@ -137,6 +137,7 @@ static const ps2_scancode_t kEmexKeyPhysToPS2Set1[] = {
     [kEmexKeyPhysPrintScreen] = {4, {0xE0, 0x2A, 0xE0, 0x37}},
     [kEmexKeyPhysScrollLock] = {1, {0x46}},
     [kEmexKeyPhysPause] = {3, {0xE1, 0x1D, 0x45}},
+    [kEmexKeyPhysNonUSBackslash] = {1, {0x56}},
     [kEmexKeyPhysUnknown] = {0, {0}},
 };
 
@@ -180,6 +181,20 @@ emex64_8042_t *emex64_8042_alloc(E64MachineRef machine,
     return dev;
 }
 
+void emex64_8042_reset(emex64_8042_t *dev)
+{
+    pthread_mutex_lock(&dev->lock);
+    dev->status = 0x10;
+    dev->command_byte = 0;
+    dev->last_command = 0;
+    dev->kbd_head = dev->kbd_tail = 0;
+    dev->mouse_head = dev->mouse_tail = 0;
+    dev->kbd_enabled = true;
+    dev->mouse_enabled = true;
+    dev->expecting_mouse_data = false;
+    pthread_mutex_unlock(&dev->lock);
+}
+
 void emex64_8042_dealloc(emex64_8042_t *dev)
 {
     pthread_mutex_destroy(&dev->lock);
@@ -215,7 +230,7 @@ static void update_8042_interrupt(emex64_8042_t *dev)
 void emex64_8042_send_keyboard(emex64_8042_t *dev,
                                UInt8 scancode)
 {
-    if(dev->keyboard_attached)
+    if(dev->keyboard_attached && dev->kbd_enabled)
     {
         pthread_mutex_lock(&dev->lock);
 
@@ -283,7 +298,7 @@ void emex64_8042_send_keyboard_break(emex64_8042_t *dev,
 void emex64_8042_send_mouse(emex64_8042_t *dev,
                             UInt8 byte)
 {
-    if(dev->mouse_attached)
+    if(dev->mouse_attached && dev->mouse_enabled)
     {
         pthread_mutex_lock(&dev->lock);
 

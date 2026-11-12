@@ -20,6 +20,7 @@
  */
 
 #include <pthread.h>
+#include <string.h>
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/E64Core.h>
 #include <EmexToolchain/VM/E64Machine.h>
@@ -37,7 +38,7 @@ static UInt64 __E64ICMMIORead(E64CoreRef core,
     switch(offset)
     {
         case EMEX64_INTC_REG_PENDING:
-            return ic->pending;
+            return __atomic_load_n(&ic->pending, __ATOMIC_RELAXED);
         case EMEX64_INTC_REG_ENABLED:
             return ic->enabled;
         case EMEX64_INTC_REG_CTRL:
@@ -62,7 +63,7 @@ static void __E64ICMMIOWrite(E64CoreRef core,
     switch(offset)
     {
         case EMEX64_INTC_REG_PENDING:
-            ic->pending &= ~value;
+            __atomic_fetch_and(&ic->pending, ~value, __ATOMIC_ACQ_REL);
             break;
         case EMEX64_INTC_REG_ENABLED:
             ic->enabled = value;
@@ -86,21 +87,52 @@ static void __E64ICMMIOWrite(E64CoreRef core,
 
 static EFIndex __E64ICFindPendingInterrupt(__E64IC ic)
 {
-    UInt64 active = ic->pending & ic->enabled;
+    UInt64 active = __atomic_load_n(&ic->pending, __ATOMIC_ACQUIRE) & ic->enabled & ic->core_lines[0];
     if(active == 0)
     {
         return -1;
     }
+    return __builtin_ctzll(active);
+}
 
-    for(EFIndex i = 0; i <= EMEX64_IRQ_MAX; i++)
+static UInt64 __E64IOAPICMMIORead(E64CoreRef core,
+                                  void *device,
+                                  UInt64 offset,
+                                  EFSize size)
+{
+    __E64IC ic = (__E64IC)device;
+    if(offset == EMEX64_IOAPIC_REG_VERSION)
     {
-        if(active & (1ULL << i))
-        {
-            return i;
-        }
+        return 1 | (UInt64)(EMEX64_IRQ_MAX + 1) << 8;
     }
+    if(offset >= EMEX64_IOAPIC_REG_ROUTE && offset < EMEX64_IOAPIC_REG_ROUTE + 8 * (EMEX64_IRQ_MAX + 1))
+    {
+        return ic->route[(offset - EMEX64_IOAPIC_REG_ROUTE) / 8];
+    }
+    return 0;
+}
 
-    return -1;
+static void __E64IOAPICMMIOWrite(E64CoreRef core,
+                                 void *device,
+                                 UInt64 offset,
+                                 UInt64 value,
+                                 EFSize size)
+{
+    __E64IC ic = (__E64IC)device;
+    if(offset < EMEX64_IOAPIC_REG_ROUTE || offset >= EMEX64_IOAPIC_REG_ROUTE + 8 * (EMEX64_IRQ_MAX + 1))
+    {
+        return;
+    }
+    UInt64 line = (offset - EMEX64_IOAPIC_REG_ROUTE) / 8;
+    UInt8 to = (UInt8)(value & 0xFF);
+    if(to >= E64IC_MAX_CORES)
+    {
+        return;
+    }
+    UInt8 from = ic->route[line];
+    ic->route[line] = to;
+    __atomic_fetch_and(&ic->core_lines[from], ~(1ULL << line), __ATOMIC_ACQ_REL);
+    __atomic_fetch_or(&ic->core_lines[to], 1ULL << line, __ATOMIC_ACQ_REL);
 }
 
 static EFClassDefinitionV4 E64ICClass = {
@@ -141,8 +173,31 @@ E64ICRef E64ICCreate(EFAllocatorRef allocatorRef)
     ic->enabled = 0;
     ic->ctrl = 0;
     ic->vector_base = 0;
+    ic->wake = NULL;
+    ic->wake_context = NULL;
+
+    memset(ic->route, 0, sizeof(ic->route));
+    memset(ic->core_lines, 0, sizeof(ic->core_lines));
+    ic->core_lines[0] = ~0ULL;
 
     return (E64ICRef)ic;
+}
+
+void __E64ICReset(E64ICRef icRef)
+{
+    __E64IC ic = (__E64IC)icRef;
+    if(ic == NULL)
+    {
+        return;
+    }
+    __atomic_store_n(&ic->pending, 0, __ATOMIC_RELEASE);
+    ic->current_irq = -1;
+    ic->enabled = 0;
+    ic->ctrl = 0;
+    ic->vector_base = 0;
+    memset(ic->route, 0, sizeof(ic->route));
+    memset(ic->core_lines, 0, sizeof(ic->core_lines));
+    ic->core_lines[0] = ~0ULL;
 }
 
 E64MMIORegionRef E64ICCopyMMIORegion(EFAllocatorRef allocatorRef,
@@ -177,6 +232,18 @@ Boolean E64ICRegisterOnMMIOBus(E64ICRef icRef,
 
     Boolean success = E64MMIOBusRegisterRegion(MMIOBusRef, MMIORegionRef);
     EFRelease(MMIORegionRef);
+    if(!success)
+    {
+        return false;
+    }
+
+    E64MMIORegionRef IOAPICRegionRef = E64MMIORegionCreate(EFGetAllocator(icRef), EMEX64_IOAPIC_BASE, EMEX64_IOAPIC_SIZE, icRef, __E64IOAPICMMIORead, __E64IOAPICMMIOWrite);
+    if(IOAPICRegionRef == NULL)
+    {
+        return false;
+    }
+    success = E64MMIOBusRegisterRegion(MMIOBusRef, IOAPICRegionRef);
+    EFRelease(IOAPICRegionRef);
     return success;
 }
 
@@ -189,7 +256,25 @@ void E64ICRaiseInterrupt(E64ICRef icRef,
         return;
     }
 
-    ic->pending |= (1ULL << irqLine);
+    __atomic_fetch_or(&ic->pending, 1ULL << irqLine, __ATOMIC_SEQ_CST);
+
+    if(ic->wake != NULL)
+    {
+        ic->wake(ic->wake_context, ic->route[irqLine]);
+    }
+}
+
+void E64ICSetWakeHandler(E64ICRef icRef,
+                         void (*wake)(void *context, UInt8 core),
+                         void *context)
+{
+    __E64IC ic = (__E64IC)icRef;
+    if(ic == NULL)
+    {
+        return;
+    }
+    ic->wake_context = context;
+    ic->wake = wake;
 }
 
 void E64ICClearInterrupt(E64ICRef icRef,
@@ -201,7 +286,43 @@ void E64ICClearInterrupt(E64ICRef icRef,
         return;
     }
 
-    ic->pending &= ~(1ULL << irqLine);
+    __atomic_fetch_and(&ic->pending, ~(1ULL << irqLine), __ATOMIC_ACQ_REL);
+}
+
+Boolean E64ICHasPendingInterrupt(E64ICRef icRef,
+                                 UInt8 core)
+{
+    __E64IC ic = (__E64IC)icRef;
+    return ic != NULL && (ic->ctrl & EMEX64_INTC_CTRL_ENABLE) &&
+           (__atomic_load_n(&ic->pending, __ATOMIC_RELAXED) & ic->enabled & __atomic_load_n(&ic->core_lines[core], __ATOMIC_RELAXED)) != 0;
+}
+
+EFIndex E64ICTakeInterrupt(E64ICRef icRef,
+                           UInt8 core)
+{
+    __E64IC ic = (__E64IC)icRef;
+    if(ic == NULL || !(ic->ctrl & EMEX64_INTC_CTRL_ENABLE))
+    {
+        return -1;
+    }
+
+    UInt64 mine = ic->enabled & __atomic_load_n(&ic->core_lines[core], __ATOMIC_RELAXED);
+    for(;;)
+    {
+        UInt64 pending = __atomic_load_n(&ic->pending, __ATOMIC_ACQUIRE);
+        UInt64 active = pending & mine;
+        if(active == 0)
+        {
+            return -1;
+        }
+        EFIndex irq = __builtin_ctzll(active);
+        UInt64 bit = 1ULL << irq;
+        if(__atomic_fetch_and(&ic->pending, ~bit, __ATOMIC_ACQ_REL) & bit)
+        {
+            ic->current_irq = irq;
+            return irq;
+        }
+    }
 }
 
 Boolean __E64ServeInterruptIfNeeded(E64ICRef icRef,
@@ -220,7 +341,6 @@ Boolean __E64ServeInterruptIfNeeded(E64ICRef icRef,
         return false;
     }
 
-    /* check if were already servicing an interrupt (unless nesting allowed) */
     if(core->in_interrupt || core->op.opcode == kE64OpcodeIRET)
     {
         return false;
@@ -236,8 +356,7 @@ Boolean __E64ServeInterruptIfNeeded(E64ICRef icRef,
     /* mark which IRQ were servicing */
     ic->current_irq = irq;
 
-    /* clear pending bit (edge-triggered style) */
-    ic->pending &= ~(1ULL << irq);
+    __atomic_fetch_and(&ic->pending, ~(1ULL << irq), __ATOMIC_ACQ_REL);
 
     /* read handler address from vector table */
     UInt64 vector_addr = ic->vector_base + (irq * 8);
@@ -266,22 +385,22 @@ Boolean __E64ServeInterruptIfNeeded(E64ICRef icRef,
     core->rl[kE64RegisterSP] = core->cr_state.crksp.address;
 
     /* creating interrupt stack frame */
-    emex64_push_il(core, oldel);    /* fp + 128 */
-    emex64_push_il(core, core->rl[kE64RegisterPC]); /* fp + 120 */
-    emex64_push_il(core, oldsp);    /* fp + 112 */
-    emex64_push_il(core, core->rl[kE64RegisterFP]); /* fp + 104 */
-    emex64_push_il(core, core->rl[kE64RegisterCF]); /* fp + 96 */
+    emex64_push_il(core, oldel);                        /* fp + 128 */
+    emex64_push_il(core, core->rl[kE64RegisterPC]);     /* fp + 120 */
+    emex64_push_il(core, oldsp);                        /* fp + 112 */
+    emex64_push_il(core, core->rl[kE64RegisterFP]);     /* fp + 104 */
+    emex64_push_il(core, core->rl[kE64RegisterCF]);     /* fp + 96 */
     emex64_push_il(core, core->rl[kE64RegisterFPC]);    /* fp + 88 */
-    emex64_push_il(core, core->rl[kE64RegisterR0]); /* fp + 80 */
-    emex64_push_il(core, core->rl[kE64RegisterR1]); /* fp + 72 */
-    emex64_push_il(core, core->rl[kE64RegisterR2]); /* fp + 64 */
-    emex64_push_il(core, core->rl[kE64RegisterR3]); /* fp + 56 */
-    emex64_push_il(core, core->rl[kE64RegisterR4]); /* fp + 48 */
-    emex64_push_il(core, core->rl[kE64RegisterR5]); /* fp + 40 */
-    emex64_push_il(core, core->rl[kE64RegisterR6]); /* fp + 32 */
-    emex64_push_il(core, core->rl[kE64RegisterR7]); /* fp + 24 */
-    emex64_push_il(core, core->rl[kE64RegisterR8]); /* fp + 16 */
-    emex64_push_il(core, core->rl[kE64RegisterR9]); /* fp + 8 */
+    emex64_push_il(core, core->rl[kE64RegisterR0]);     /* fp + 80 */
+    emex64_push_il(core, core->rl[kE64RegisterR1]);     /* fp + 72 */
+    emex64_push_il(core, core->rl[kE64RegisterR2]);     /* fp + 64 */
+    emex64_push_il(core, core->rl[kE64RegisterR3]);     /* fp + 56 */
+    emex64_push_il(core, core->rl[kE64RegisterR4]);     /* fp + 48 */
+    emex64_push_il(core, core->rl[kE64RegisterR5]);     /* fp + 40 */
+    emex64_push_il(core, core->rl[kE64RegisterR6]);     /* fp + 32 */
+    emex64_push_il(core, core->rl[kE64RegisterR7]);     /* fp + 24 */
+    emex64_push_il(core, core->rl[kE64RegisterR8]);     /* fp + 16 */
+    emex64_push_il(core, core->rl[kE64RegisterR9]);     /* fp + 8 */
 
     /* storing it as frame pointer  */
     core->rl[kE64RegisterFP] = core->rl[kE64RegisterSP];

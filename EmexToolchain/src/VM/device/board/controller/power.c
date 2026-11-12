@@ -43,4 +43,9 @@ void emex64_platform_write(E64CoreRef core,
     {
         E64CoreTerminate(core);
     }
+    else if(value == 1)
+    {
+        /* reset: the same machine, as at power on */
+        __E64CoreRequestReset(core);
+    }
 }

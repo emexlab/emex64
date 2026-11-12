@@ -24,6 +24,8 @@
 
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/E64Type.h>
+#include <EmexToolchain/VM/__E64Cache.h>
+#include <EmexToolchain/VM/device/internal/controller/apic.h>
 
 #define EMEX64_MAX_ARGS 16
 #define EMEX64_MAX_ILEN (1 + EMEX64_MAX_ARGS * 9)
@@ -38,6 +40,20 @@ typedef union {
     double f64;
     float f32;
 } FPReg;
+
+#define EMEX64_PAC_CACHE_ENTRIES 128
+
+typedef struct emex64_pac_cache_entry {
+    UInt64 key;
+    UInt64 ptr;
+    UInt64 modifier;
+    UInt64 signature;
+} emex64_pac_cache_entry_t;
+
+static inline UInt64 emex64_pac_cache_index(UInt64 ptr, UInt64 modifier)
+{
+    return (ptr ^ (ptr >> 7) ^ modifier ^ (modifier >> 4)) & (EMEX64_PAC_CACHE_ENTRIES - 1);
+}
 
 typedef struct __E64Core {
     EFObject header;
@@ -131,7 +147,30 @@ typedef struct __E64Core {
         struct {
             UInt16 activeIsa;
         } crisa;
+
+        /* trap model */
+        UInt64 crstat;
+        UInt64 crtvec;
+        UInt64 crepc;
+        UInt64 crcause;
+        UInt64 crtval;
+        UInt64 crscratch;
+
+        /* pointer authentication (PAC) */
+        UInt64 criakey;
+        UInt64 crdakey;
+        UInt64 crpac;
     } cr_state;
+
+    /* trap model bookkeeping */
+    struct {
+        Boolean fault_valid;
+        UInt64 fault_addr;
+        UInt8 fault_access;
+        Boolean svc_pending;
+        UInt64 rl[16];
+        UInt64 erl[16];
+    } trap;
 
     /*
      * cpu halting status (will later be in the same
@@ -144,10 +183,41 @@ typedef struct __E64Core {
      * one, but will be unset when the cpu calls iret.
      */
     Boolean in_interrupt;
+    Boolean irq_poll;
+    Boolean irq_ie;
 
     /* pointer back to machine */
     E64MachineRef machine;
+
+    /* more caching */
+    emex64_tlb_t tlb;
+    emex64_icache_entry_t *icache;
+    emex64_pac_cache_entry_t pac_cache[EMEX64_PAC_CACHE_ENTRIES];
+    emex64_snoop_t *snoop;
+    UInt8 *ram;
+    UInt64 ram_size;
+
+    /* multicore support */
+    UInt8 id;
+    emex64_lapic_t lapic;
+    UInt32 run_state;
+    UInt32 request;
+    struct {
+        UInt64 start;
+        UInt64 arg;
+        E64ElevationLevel level;
+        UInt16 isa;
+    } startup;
+    pthread_mutex_t wait_lock;
+    pthread_cond_t wait_cond;
+
+    Boolean sleeping;
+    Boolean event;
+    Boolean wfe;
 } *__E64Core;
+
+#define E64_CORE_RUNNING    1
+#define E64_CORE_WAITING    0
 
 typedef void (*emex64_opfunc_t)(__E64Core core);
 
@@ -160,5 +230,14 @@ typedef struct emex64_opfunc_entry {
 } emex64_opfunc_entry_t;
 
 extern const emex64_opfunc_entry_t kE64OpfuncTable[];
+
+void __E64CoreWritePageTableBase(__E64Core core, UInt64 value);
+struct __E64Machine;
+struct __E64Core *__E64CoreCreateWithID(EFAllocatorRef allocatorRef, struct __E64Machine *machine, UInt8 id);
+void __E64CoreSendIPI(__E64Core sender, __E64Core target, UInt64 type);
+void __E64CoreKick(__E64Core core);
+void __E64CoreRequestReset(__E64Core core);
+void __E64CoreResetForPowerOn(__E64Core core);
+UInt64 __E64CoreReadPageTableBase(__E64Core core);
 
 #endif /* __E64CORE_H */

@@ -30,6 +30,7 @@
 #include <EmexToolchain/Support/diagnostic/log.h>
 #include <EmexToolchain/VM/E64Machine.h>
 #include <EmexToolchain/VM/device/board/display.h>
+#include <EmexToolchain/VM/device/board/pcie/gpu.h>
 
 #if defined(__linux__) && EMEX64VM_DEVICE_DISPLAY
 
@@ -68,6 +69,7 @@ kEmexKeyPhys glfw_key_to_kEmexKeyPhys(SInt32 key)
         case GLFW_KEY_Z: return kEmexKeyPhysZ;
 
         case GLFW_KEY_GRAVE_ACCENT: return kEmexKeyPhysGrave;
+        case GLFW_KEY_WORLD_1: return kEmexKeyPhysNonUSBackslash;
         case GLFW_KEY_1: return kEmexKeyPhys1;
         case GLFW_KEY_2: return kEmexKeyPhys2;
         case GLFW_KEY_3: return kEmexKeyPhys3;
@@ -254,6 +256,30 @@ static GLuint linkProgram(GLuint vs,
     return p;
 }
 
+static void fit_viewport(SInt32 ww,
+                         SInt32 wh,
+                         UInt32 w,
+                         UInt32 h)
+{
+    if(w == 0 || h == 0 || ww <= 0 || wh <= 0)
+    {
+        glViewport(0, 0, ww, wh);
+        return;
+    }
+    Float64 img = (Float64)w / (Float64)h;
+    Float64 win = (Float64)ww / (Float64)wh;
+    if(win > img)
+    {
+        SInt32 vw = (SInt32)(wh * img + 0.5);
+        glViewport((ww - vw) / 2, 0, vw, wh);
+    }
+    else
+    {
+        SInt32 vh = (SInt32)(ww / img + 0.5);
+        glViewport(0, (wh - vh) / 2, ww, vh);
+    }
+}
+
 void *display_start(void *arg)
 {
     emex64_display_t *display = (emex64_display_t*)arg;
@@ -302,15 +328,21 @@ void *display_start(void *arg)
         #version 330 core
         in vec2 vUV;
         out vec4 FragColor;
-        uniform sampler2D uIndexTex;
+        uniform sampler2D uImage;
         uniform sampler1D uPalette;
+        uniform int uFormat;
         void main()
         {
-            float idxN = texture(uIndexTex, vUV).r;
-            float idx  = floor(idxN * 255.0 + 0.5);
-            float t    = (idx + 0.5) / 256.0;
-            vec3 rgb   = texture(uPalette, t).rgb;
-            FragColor  = vec4(rgb, 1.0);
+            vec4 c = texture(uImage, vUV);
+            if(uFormat == 1)
+            {
+                float idx = floor(c.r * 255.0 + 0.5);
+                FragColor = vec4(texture(uPalette, (idx + 0.5) / 256.0).rgb, 1.0);
+            }
+            else
+            {
+                FragColor = vec4(c.rgb, 1.0);
+            }
         }
     )GLSL";
 
@@ -345,65 +377,93 @@ void *display_start(void *arg)
     glVertexAttribPointer(1,2,GL_FLOAT,GL_FALSE,4*sizeof(float),(void*)(2*sizeof(float)));
     glBindVertexArray(0);
 
-    GLuint texIndex, texPal;
-    glGenTextures(1,&texIndex);
-    glBindTexture(GL_TEXTURE_2D,texIndex);
-    glTexStorage2D(GL_TEXTURE_2D,1,GL_R8,display->width,display->height);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+    GLuint texImage = 0, texPal;
+    UInt32 texW = 0, texH = 0, texFormat = 0;
 
     glGenTextures(1,&texPal);
     glBindTexture(GL_TEXTURE_1D,texPal);
-    glTexImage1D(GL_TEXTURE_1D,0,GL_RGB8,256,0,GL_RGB,GL_UNSIGNED_BYTE,display->palette);
+    glTexImage1D(GL_TEXTURE_1D,0,GL_RGB8,256,0,GL_RGB,GL_UNSIGNED_BYTE,NULL);
     glTexParameteri(GL_TEXTURE_1D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
     glTexParameteri(GL_TEXTURE_1D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
 
-    GLuint pbo[2];
-    glGenBuffers(2,pbo);
-
-    for(SInt32 i=0;i<2;i++)
-    {
-        glBindBuffer(GL_PIXEL_UNPACK_BUFFER,pbo[i]);
-        glBufferData(GL_PIXEL_UNPACK_BUFFER,display->fb_size,NULL,GL_STREAM_DRAW);
-    }
-
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER,0);
-
     glUseProgram(prog);
-    glUniform1i(glGetUniformLocation(prog,"uIndexTex"),0);
+    glUniform1i(glGetUniformLocation(prog,"uImage"),0);
     glUniform1i(glGetUniformLocation(prog,"uPalette"),1);
+    GLint locFormat = glGetUniformLocation(prog,"uFormat");
 
-    SInt32 pboIdx = 0;
+    emex64_gpu_frame_t frame;
+    memset(&frame, 0, sizeof(frame));
+    frame.palette_gen = ~0U;
+    UInt32 palGen = ~0U;
 
     while(!glfwWindowShouldClose(win))
     {
         glfwPollEvents();
 
-        glBindBuffer(GL_PIXEL_UNPACK_BUFFER,pbo[pboIdx]);
-        UInt8* ptr = (UInt8*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER,0,display->fb_size, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-        memcpy(ptr, display->fb, display->fb_size);
-        glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-
-        glBindTexture(GL_TEXTURE_2D,texIndex);
-        glPixelStorei(GL_UNPACK_ALIGNMENT,1);
-        glTexSubImage2D(GL_TEXTURE_2D,0,0,0,display->width,display->height,GL_RED,GL_UNSIGNED_BYTE,NULL);
-        glBindBuffer(GL_PIXEL_UNPACK_BUFFER,0);
-        pboIdx ^= 1;
-
         SInt32 ww,wh;
         glfwGetFramebufferSize(win,&ww,&wh);
         glViewport(0,0,ww,wh);
+        glClearColor(0.f, 0.f, 0.f, 1.f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glUseProgram(prog);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D,texIndex);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_1D,texPal);
-        glBindVertexArray(vao);
-        glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
+        emex64_gpu_t *gpu = (emex64_gpu_t *)display->gpu;
+        if(gpu != NULL)
+        {
+            emex64_gpu_get_frame(gpu, &frame);
+        }
+        else
+        {
+            frame.active = false;
+        }
+
+        if(frame.active)
+        {
+            if(texImage == 0 || texW != frame.width || texH != frame.height || texFormat != frame.format)
+            {
+                if(texImage != 0)
+                {
+                    glDeleteTextures(1, &texImage);
+                }
+                glGenTextures(1, &texImage);
+                glBindTexture(GL_TEXTURE_2D, texImage);
+                glTexImage2D(GL_TEXTURE_2D, 0, frame.format == GPU_FORMAT_I8 ? GL_R8 : GL_RGBA8, frame.width, frame.height, 0, frame.format == GPU_FORMAT_I8 ? GL_RED : GL_BGRA, GL_UNSIGNED_BYTE, NULL);
+                glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
+                glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
+                glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
+                glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
+                texW = frame.width;
+                texH = frame.height;
+                texFormat = frame.format;
+            }
+
+            UInt32 bpp = frame.format == GPU_FORMAT_I8 ? 1 : 4;
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, texImage);
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+            glPixelStorei(GL_UNPACK_ROW_LENGTH, frame.stride / bpp);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, frame.width, frame.height, frame.format == GPU_FORMAT_I8 ? GL_RED : GL_BGRA, GL_UNSIGNED_BYTE, frame.pixels);
+            glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_1D, texPal);
+            if(palGen != frame.palette_gen)
+            {
+                glTexSubImage1D(GL_TEXTURE_1D, 0, 0, 256, GL_RGB, GL_UNSIGNED_BYTE, frame.palette);
+                palGen = frame.palette_gen;
+            }
+
+            fit_viewport(ww, wh, frame.width, frame.height);
+            glUseProgram(prog);
+            glUniform1i(locFormat, (GLint)frame.format);
+            glBindVertexArray(vao);
+            glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_INT,0);
+        }
 
         glfwSwapBuffers(win);
+        if(gpu != NULL)
+        {
+            emex64_gpu_vblank(gpu);
+        }
     }
 
     glfwTerminate();
@@ -414,6 +474,25 @@ void *display_start(void *arg)
 
 extern void *display_start(void *arg);
 
+#if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || defined(__APPLE__))
+static void *display_vblank_thread(void *arg)
+{
+    emex64_display_t *display = (emex64_display_t *)arg;
+    struct timespec tick = { 0, (long)(EMEX64_FB_TICK_DT * 1e9) };
+
+    while(!display->stopping)
+    {
+        nanosleep(&tick, NULL);
+        emex64_gpu_t *gpu = (emex64_gpu_t *)display->gpu;
+        if(gpu != NULL && !display->stopping)
+        {
+            emex64_gpu_vblank(gpu);
+        }
+    }
+    return NULL;
+}
+#endif /* EMEX64VM_DEVICE_DISPLAY */
+
 emex64_display_t *emex64_display_alloc(E64MachineRef machine,
                                        Boolean install,
                                        UInt16 width,
@@ -422,7 +501,8 @@ emex64_display_t *emex64_display_alloc(E64MachineRef machine,
     #if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || defined(__APPLE__))
     if(install)
     {
-        if(width > 1920 || height > 1920)
+        UInt16 max = ((__E64Machine)machine)->embedded ? 4095 : 1920;
+        if(width > max || height > max)
         {
             diag_error(NULL, "display dimensions are too big");
             return NULL;
@@ -435,7 +515,7 @@ emex64_display_t *emex64_display_alloc(E64MachineRef machine,
     }
     #endif /* EMEX64VM_DEVICE_DISPLAY */
 
-    emex64_display_t *display = malloc(sizeof(emex64_display_t));
+    emex64_display_t *display = calloc(1, sizeof(emex64_display_t));
     if(display == NULL)
     {
         return NULL;
@@ -443,45 +523,17 @@ emex64_display_t *emex64_display_alloc(E64MachineRef machine,
 
     display->width = width;
     display->height = height;
-    display->fb_size = width * height;
-
-    EFAUTOREL E64MMIORegionRef FBRegion = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_FB_BASE, EMEX64_FB_FRAMEBUFFER + display->fb_size, display, emex64_fb_read, emex64_fb_write);
-    if(FBRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, FBRegion))
-    {
-        free(display);
-        return NULL;
-    }
-
-    /* allocate palette */
-    display->palette = calloc(3, 256);
-    if(display->palette == NULL)
-    {
-        free(display);
-        return NULL;
-    }
-
-    /* setting up by default with grayscale */
-    for(SInt32 i = 0; i < 256; i++)
-    {
-        UInt8 gray = (UInt8)i;
-
-        display->palette[i*3 + 0] = gray;
-        display->palette[i*3 + 1] = gray;
-        display->palette[i*3 + 2] = gray;
-    }
-
-    display->fb = calloc(1, display->fb_size);
-    if(display->fb == NULL)
-    {
-        free(display->palette);
-        free(display);
-        return NULL;
-    }
-
     display->emex8042 = machine->emex8042;
 
     #if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || defined(__APPLE__))
     display->enabled = install;
+    display->embedded = ((__E64Machine)machine)->embedded || !EMEX64VM_DISPLAY_WINDOW;
+    if(install && display->embedded)
+    {
+        pthread_create(&(display->pthread), NULL, display_vblank_thread, display);
+        return display;
+    }
+    #if EMEX64VM_DISPLAY_WINDOW
     if(install)
     {
         #if defined(__linux__)
@@ -495,9 +547,21 @@ emex64_display_t *emex64_display_alloc(E64MachineRef machine,
 
         pthread_create(&(display->pthread), NULL, display_start, display);
     }
+    #endif /* EMEX64VM_DISPLAY_WINDOW */
     #endif /* EMEX64VM_DEVICE_DISPLAY */
 
     return display;
+}
+
+void emex64_display_stop(emex64_display_t *display)
+{
+    #if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || defined(__APPLE__))
+    if(display != NULL && display->embedded && display->enabled && !display->stopping)
+    {
+        display->stopping = true;
+        pthread_join(display->pthread, NULL);
+    }
+    #endif /* EMEX64VM_DEVICE_DISPLAY */
 }
 
 void emex64_display_dealloc(emex64_display_t *display)
@@ -509,77 +573,15 @@ void emex64_display_dealloc(emex64_display_t *display)
     }
 
     #if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || defined(__APPLE__))
-    if(display->enabled)
+    if(display->embedded)
+    {
+        emex64_display_stop(display);
+    }
+    else if(display->enabled)
     {
         pthread_cancel(display->pthread);
     }
     #endif /* EMEX64VM_DEVICE_DISPLAY */
 
-    if(display->palette != NULL)
-    {
-        free(display->palette);
-    }
-
-    if(display->fb != NULL)
-    {
-        free(display->fb);
-    }
-}
-
-UInt64 emex64_fb_read(E64CoreRef core,
-                      void *device,
-                      UInt64 offset,
-                      EFSize size)
-{
-
-    #if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || defined(__APPLE__))
-    emex64_display_t *display = (emex64_display_t*)device;
-    if(display->enabled)
-    {
-        if(offset >= EMEX64_FB_FRAMEBUFFER)
-        {
-            UInt64 outvalue;
-            EMEX64_MEMORY_READ_HELPER(display->fb, offset - EMEX64_FB_FRAMEBUFFER, size, outvalue);
-            return outvalue;
-        }
-        else if(offset == EMEX64_FB_REG_HEIGHT)
-        {
-            return display->height;
-        }
-        else if(offset == EMEX64_FB_REG_WIDTH)
-        {
-            return display->width;
-        }
-        else
-        {
-            return display->enabled;
-        }
-    }
-    else
-    {
-        return 0;
-    }
-    #else
-    return 0;
-    #endif /* EMEX64VM_DEVICE_DISPLAY */
-}
-
-void emex64_fb_write(E64CoreRef core,
-                     void *device,
-                     UInt64 offset,
-                     UInt64 value,
-                     EFSize size)
-{
-    #if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || defined(__APPLE__))
-    emex64_display_t *display = (emex64_display_t*)device;
-
-    if(display->enabled)
-    {
-        if(offset >= EMEX64_FB_FRAMEBUFFER)
-        {
-            EMEX64_MEMORY_WRITE_HELPER(display->fb, offset - EMEX64_FB_FRAMEBUFFER, size, value);
-            return;
-        }
-    }
-    #endif /* EMEX64VM_DEVICE_DISPLAY */
+    free(display);
 }

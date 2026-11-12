@@ -29,6 +29,11 @@ E64MachineSupport E64MachineSupportCurrent = {
     #else
     .display = false,
     #endif /* EMEX64VM_DEVICE_DISPLAY */
+    #if EMEX64VM_NET
+    .network = true,
+    #else
+    .network = false,
+    #endif /* EMEX64VM_NET */
 };
 
 E64MachineOptions E64MachineOptionsDefault = {
@@ -50,6 +55,7 @@ E64MachineOptions E64MachineOptionsDefault = {
     .mousePeripheralMode = kE64PeripheralModeOff,
     #endif /* EMEX64VM_DEVICE_DISPLAY */
     .memoryLength = 100 * 1024 * 1024,
+    .coreCount = 4,
 };
 
 E64MachineOptions E64MachineOptionsMinimal = {

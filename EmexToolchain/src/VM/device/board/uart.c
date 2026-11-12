@@ -61,6 +61,34 @@ static void uart_update_irq(emex64_uart_t *u)
     }
 }
 
+void emex64_uart_receive(emex64_uart_t *u,
+                         UInt8 ch)
+{
+    pthread_mutex_lock(&u->mutex);
+
+    UInt32 next = (u->rx_tail + 1) % UART_BUF_SIZE;
+
+    if(next == u->rx_head)
+    {
+        u->status |= UART_STATUS_OVERFLOW;
+    }
+    else
+    {
+        u->rx_buf[u->rx_tail] = ch;
+        u->rx_tail = next;
+        u->status |= UART_STATUS_RX_READY;
+
+        if(((u->rx_tail - u->rx_head) % UART_BUF_SIZE) > (UART_BUF_SIZE - 4))
+        {
+            u->status |= UART_STATUS_RX_FULL;
+        }
+
+        uart_update_irq(u);
+    }
+
+    pthread_mutex_unlock(&u->mutex);
+}
+
 static void *uart_input_thread(void *arg)
 {
     emex64_uart_t *u = (emex64_uart_t *)arg;
@@ -97,29 +125,7 @@ static void *uart_input_thread(void *arg)
             break;
         }
 
-        pthread_mutex_lock(&u->mutex);
-
-        UInt32 next = (u->rx_tail + 1) % UART_BUF_SIZE;
-
-        if(next == u->rx_head)
-        {
-            u->status |= UART_STATUS_OVERFLOW;
-        }
-        else
-        {
-            u->rx_buf[u->rx_tail] = ch;
-            u->rx_tail = next;
-            u->status |= UART_STATUS_RX_READY;
-
-            if(((u->rx_tail - u->rx_head) % UART_BUF_SIZE) > (UART_BUF_SIZE - 4))
-            {
-                u->status |= UART_STATUS_RX_FULL;
-            }
-
-            uart_update_irq(u);
-        }
-
-        pthread_mutex_unlock(&u->mutex);
+        emex64_uart_receive(u, ch);
     }
 
     return NULL;
@@ -170,9 +176,21 @@ emex64_uart_t *emex64_uart_alloc(E64MachineRef machine)
     pthread_mutex_init(&u->mutex, NULL);
     atomic_store(&u->running, false);
 
-    emex64_uart_start(u);
+    if(!((__E64Machine)machine)->embedded)
+    {
+        emex64_uart_start(u);
+    }
 
     return u;
+}
+
+void emex64_uart_reset(emex64_uart_t *u)
+{
+    pthread_mutex_lock(&u->mutex);
+    u->rx_head = u->rx_tail = 0;
+    u->status = UART_STATUS_TX_EMPTY;
+    u->control = 0;
+    pthread_mutex_unlock(&u->mutex);
 }
 
 void emex64_uart_dealloc(emex64_uart_t *u)
@@ -234,8 +252,19 @@ void emex64_uart_write(E64CoreRef core,
     switch(offset)
     {
         case UART_REG_DATA:
-            putchar((char)(value & 0xFF));
-            fflush(stdout);
+            if(((__E64Machine)u->machine)->embedded)
+            {
+                const E64MachineHost *host = &((__E64Machine)u->machine)->host;
+                if(host->uartOutput != NULL)
+                {
+                    host->uartOutput(host->context, (UInt8)(value & 0xFF));
+                }
+            }
+            else
+            {
+                putchar((char)(value & 0xFF));
+                fflush(stdout);
+            }
             u->status |= UART_STATUS_TX_EMPTY;
             uart_update_irq(u);
             break;

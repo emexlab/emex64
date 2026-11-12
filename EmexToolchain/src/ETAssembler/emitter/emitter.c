@@ -57,6 +57,13 @@ static inline Boolean opcode_arg_is_branch_target(E64Opcode op,
         case kE64OpcodeBZ:
         case kE64OpcodeBNZ:
             return argno == 1;
+        case kE64OpcodeCBLT:
+        case kE64OpcodeCBEQ:
+        case kE64OpcodeCBNE:
+        case kE64OpcodeCBGE:
+        case kE64OpcodeCBLTU:
+        case kE64OpcodeCBGEU:
+            return argno == 2;
         default:
             return false;
     }

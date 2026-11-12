@@ -207,50 +207,56 @@ Boolean assembler_elf_emit(ETAssemblerInvocationRef inv)
     EFSize local_section_bss_idx __attribute__((unused))  = sym_buf.len / sizeof(ELF64_Sym);
     buf_append(&sym_buf, &sym_bss_sec,  sizeof(sym_bss_sec));
 
-    UInt32 first_global = (UInt32)(sym_buf.len / sizeof(ELF64_Sym));
-
-    const void *key; EFSize klen; assembler_label_t *lbl;
-    for(hashmap_iter_t it = hashmap_iter_create(inv->label_hashmap); hashmap_next(&it, &key, &klen, (void**)&lbl);)
+    UInt32 first_global = 0;
+    for(int pass = 0; pass < 2; pass++)
     {
-        if(!lbl->name || !lbl->defined)
+        if(pass == 1)
         {
-            continue;
+            first_global = (UInt32)(sym_buf.len / sizeof(ELF64_Sym));
         }
+        const void *key; EFSize klen; assembler_label_t *lbl;
+        for(hashmap_iter_t it = hashmap_iter_create(inv->label_hashmap); hashmap_next(&it, &key, &klen, (void**)&lbl);)
+        {
+            if(!lbl->name || !lbl->defined || (Boolean)lbl->global != (Boolean)(pass == 1))
+            {
+                continue;
+            }
 
-        UInt64 addr = lbl->addr;
-        UInt16 shndx;
-        UInt64 st_value;
+            UInt64 addr = lbl->addr;
+            UInt16 shndx;
+            UInt64 st_value;
 
-        if(inv->data_section_start != UINT64_MAX && addr >= inv->data_section_start && addr < data_end_raw)
-        {
-            shndx = kELFSectionHeaderIndexData;
-            st_value = addr - inv->data_section_start;
-        }
-        else if(inv->bss_section_start != UINT64_MAX && addr >= bss_start && addr < bss_end)
-        {
-            shndx = kELFSectionHeaderIndexBSS;
-            st_value = addr - bss_start;
-        }
-        else if(addr >= text_start)
-        {
-            shndx = kELFSectionHeaderIndexText;
-            st_value = addr - text_start;
-        }
-        else
-        {
-            shndx = kELFSectionHeaderNumberAbsolute;
-            st_value = addr;
-        }
+            if(inv->data_section_start != UINT64_MAX && addr >= inv->data_section_start && addr < data_end_raw)
+            {
+                shndx = kELFSectionHeaderIndexData;
+                st_value = addr - inv->data_section_start;
+            }
+            else if(inv->bss_section_start != UINT64_MAX && addr >= bss_start && addr < bss_end)
+            {
+                shndx = kELFSectionHeaderIndexBSS;
+                st_value = addr - bss_start;
+            }
+            else if(addr >= text_start)
+            {
+                shndx = kELFSectionHeaderIndexText;
+                st_value = addr - text_start;
+            }
+            else
+            {
+                shndx = kELFSectionHeaderNumberAbsolute;
+                st_value = addr;
+            }
 
-        ELF64_Sym sym = {
-            .st_name = (UInt32)strtab_intern(&strtab_buf, lbl->name),
-            .st_info = ELF_SYM_INFO(lbl->global ? kELFSymbolTableBindingGlobal : kELFSymbolTableBindingLocal, lbl->at_link->al->type == kETAssemblerLineTypeSectionData ? kELFSymbolTableTypeObject : kELFSymbolTableTypeFunc),
-            .st_other = kELFSymbolVisibilityDefault,
-            .st_shndx = shndx,
-            .st_value = st_value,
-            .st_size = 0,
-        };
-        buf_append(&sym_buf, &sym, sizeof(sym));
+            ELF64_Sym sym = {
+                .st_name = (UInt32)strtab_intern(&strtab_buf, lbl->name),
+                .st_info = ELF_SYM_INFO(lbl->global ? kELFSymbolTableBindingGlobal : kELFSymbolTableBindingLocal, lbl->at_link->al->type == kETAssemblerLineTypeSectionData ? kELFSymbolTableTypeObject : kELFSymbolTableTypeFunc),
+                .st_other = kELFSymbolVisibilityDefault,
+                .st_shndx = shndx,
+                .st_value = st_value,
+                .st_size = 0,
+            };
+            buf_append(&sym_buf, &sym, sizeof(sym));
+        }
     }
 
     buf_t rela_text_buf = {0};
@@ -263,8 +269,12 @@ Boolean assembler_elf_emit(ETAssemblerInvocationRef inv)
         {
             EFSize n = sym_buf.len / sizeof(ELF64_Sym);
             ELF64_Sym *syms = (ELF64_Sym *)sym_buf.data;
-            for(EFSize s = first_global; s < n; s++)
+            for(EFSize s = 1; s < n; s++)
             {
+                if(syms[s].st_name == 0)
+                {
+                    continue;
+                }
                 const char *sname = (char*)(strtab_buf.data + syms[s].st_name);
                 if(strcmp(sname, rtbe->name) == 0)
                 {

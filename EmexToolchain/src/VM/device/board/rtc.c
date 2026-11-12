@@ -20,6 +20,10 @@
  */
 
 #include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/device/board/rtc.h>
 
@@ -49,5 +53,94 @@ UInt64 emex64_rtc_read(E64CoreRef core,
             return t->tm_wday;
         default:
             return 0;
+    }
+}
+
+emex64_nvram_t *emex64_nvram_alloc(const char *path)
+{
+    emex64_nvram_t *nvram = calloc(1, sizeof(emex64_nvram_t));
+    if(nvram == NULL)
+    {
+        return NULL;
+    }
+    nvram->fd = -1;
+
+    if(path != NULL)
+    {
+        nvram->fd = open(path, O_RDWR | O_CREAT, 0644);
+        if(nvram->fd < 0)
+        {
+            fprintf(stderr, "emex64vm: cannot open the NVRAM file %s, it is kept in memory only\n", path);
+        }
+        else
+        {
+            /* a new or short file reads as zeros */
+            if(pread(nvram->fd, nvram->data, EMEX64_NVRAM_BYTES, 0) < 0 ||
+               ftruncate(nvram->fd, EMEX64_NVRAM_BYTES) != 0)
+            {
+                fprintf(stderr, "emex64vm: cannot use the NVRAM file %s, it is kept in memory only\n", path);
+                close(nvram->fd);
+                nvram->fd = -1;
+            }
+        }
+    }
+
+    return nvram;
+}
+
+void emex64_nvram_dealloc(emex64_nvram_t *nvram)
+{
+    if(nvram->fd >= 0)
+    {
+        close(nvram->fd);
+    }
+    free(nvram);
+}
+
+/* little endian in the file too, whatever the host is (the MMIO bus lock is held) */
+UInt64 emex64_nvram_read(E64CoreRef core,
+                         void *device,
+                         UInt64 offset,
+                         EFSize size)
+{
+    emex64_nvram_t *nvram = device;
+
+    if(offset == NVRAM_REG_SIZE)
+    {
+        return EMEX64_NVRAM_BYTES;
+    }
+    if(offset + 8 > EMEX64_NVRAM_BYTES)
+    {
+        return 0;
+    }
+
+    UInt64 value = 0;
+    for(int i = 0; i < 8; i++)
+    {
+        value |= (UInt64)nvram->data[offset + i] << (8 * i);
+    }
+    return value;
+}
+
+void emex64_nvram_write(E64CoreRef core,
+                        void *device,
+                        UInt64 offset,
+                        UInt64 value,
+                        EFSize size)
+{
+    emex64_nvram_t *nvram = device;
+
+    if(offset + 8 > EMEX64_NVRAM_BYTES)
+    {
+        return;
+    }
+
+    for(int i = 0; i < 8; i++)
+    {
+        nvram->data[offset + i] = (UInt8)(value >> (8 * i));
+    }
+    if(nvram->fd >= 0 && pwrite(nvram->fd, &nvram->data[offset], 8, (off_t)offset) != 8)
+    {
+        fprintf(stderr, "emex64vm: writing the NVRAM file failed\n");
     }
 }

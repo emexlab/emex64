@@ -60,6 +60,8 @@ typedef struct {
 
 emex64_8042_t *emex64_8042_alloc(E64MachineRef machine, Boolean keyboard_attached, Boolean mouse_attached);
 void emex64_8042_dealloc(emex64_8042_t *dev);
+/* machine reset: as at power on (keys not read are gone) */
+void emex64_8042_reset(emex64_8042_t *dev);
 
 /* for display backend */
 void emex64_8042_send_keyboard(emex64_8042_t *dev, UInt8 scancode);

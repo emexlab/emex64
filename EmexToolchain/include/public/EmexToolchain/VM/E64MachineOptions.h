@@ -24,6 +24,10 @@
 
 #include <EmexFoundation/EmexFoundation.h>
 
+#define E64_MACHINE_MAX_SATA_DISKS      8
+#define E64_MACHINE_MAX_USB_DISKS       8
+#define E64_MACHINE_MAX_HOST_FORWARDS   8
+
 typedef enum: UInt8 {
     kE64PeripheralModeOff,
     kE64PeripheralMode8042,
@@ -31,6 +35,7 @@ typedef enum: UInt8 {
 
 typedef struct {
     Boolean display;
+    Boolean network;
 } E64MachineSupport;
 
 typedef struct {
@@ -40,10 +45,40 @@ typedef struct {
 } E64DisplayOptions;
 
 typedef struct {
+    const char *path;
+    Boolean readOnly;
+} E64DiskOptions;
+
+typedef struct {
+    Boolean udp;
+    UInt16 hostPort;
+    UInt16 guestPort;
+} E64HostForward;
+
+typedef struct {
+    Boolean enabled;
+    E64HostForward forwards[E64_MACHINE_MAX_HOST_FORWARDS];
+    UInt8 forwardCount;
+} E64NetworkOptions;
+
+typedef struct {
+    void *context;
+    void (*uartOutput)(void *context, UInt8 byte);
+} E64MachineHost;
+
+typedef struct {
     UInt64 memoryLength;
+    UInt8 coreCount;
     E64DisplayOptions displayOptions;
+    E64DiskOptions sataDisks[E64_MACHINE_MAX_SATA_DISKS];
+    UInt8 sataDiskCount;
+    E64DiskOptions usbDisks[E64_MACHINE_MAX_USB_DISKS];
+    UInt8 usbDiskCount;
+    E64NetworkOptions networkOptions;
     E64PeripheralMode keyboardPeripheralMode;
     E64PeripheralMode mousePeripheralMode;
+    const E64MachineHost *host;
+    const char *nvramPath;
 } E64MachineOptions;
 
 extern E64MachineSupport E64MachineSupportCurrent;

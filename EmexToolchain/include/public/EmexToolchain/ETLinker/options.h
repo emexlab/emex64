@@ -30,6 +30,8 @@ typedef struct linker_options {
     Boolean use_old_magic;  /* default: false */
     kEmitMode emit_mode;    /* default: kEmitModeFirmware */
     const char *entry_name; /* borrowed, default: _start */
+    UInt64 image_base;      /* default: 0 */
+    Boolean elf;            /* default: false */
 } linker_options_t;
 
 extern linker_options_t linker_options_default;

@@ -27,6 +27,7 @@
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
 #include <EmexToolchain/VM/E64Core.h>
+#include <EmexToolchain/VM/E64Memory.h>
 #include <EmexToolchain/ETLinker/emit.h>
 #include <EmexToolchain/ETLinker/linker.h>
 
@@ -207,7 +208,7 @@ static Boolean obj_apply_relocs(linker_invocation_t *inv,
             }
             UInt64 value = sym_addr + (UInt64)addend;
 
-            EFBitWalkerSeek(vb, o->base_text + offset, 0);
+            EFBitWalkerSeek(vb, o->base_text + offset - inv->options.image_base + inv->file_offset, 0);
             EFBitWalkerWrite(vb, value, 64);
         }
     }
@@ -240,7 +241,7 @@ static Boolean obj_apply_relocs(linker_invocation_t *inv,
             }
             UInt64 value = sym_addr + (UInt64)addend;
 
-            EFBitWalkerSeek(vb, o->base_data + offset, 0);
+            EFBitWalkerSeek(vb, o->base_data + offset - inv->options.image_base + inv->file_offset, 0);
             EFBitWalkerWrite(vb, value, 64);
         }
     }
@@ -551,6 +552,55 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
         #undef PROCESS_RELA_SECTION
     }
 
+    {
+        EFSize n = sym_buf.len / sizeof(ELF64_Sym);
+        ELF64_Sym *syms = (ELF64_Sym *)sym_buf.data;
+        ELF64_Sym *sorted = malloc(sizeof(ELF64_Sym) * (n ? n : 1));
+        UInt32 *remap = malloc(sizeof(UInt32) * (n ? n : 1));
+        if(sorted == NULL || remap == NULL)
+        {
+            free(sorted);
+            free(remap);
+            return false;
+        }
+        EFSize k = 0;
+        const EFSize start = first_global;
+        for(EFSize i = 0; i < start; i++)
+        {
+            remap[i] = (UInt32)k;
+            sorted[k++] = syms[i];
+        }
+        for(int pass = 0; pass < 2; pass++)
+        {
+            for(EFSize i = start; i < n; i++)
+            {
+                Boolean local = (syms[i].st_info >> 4) == kELFSymbolTableBindingLocal;
+                if(local == (pass == 0))
+                {
+                    remap[i] = (UInt32)k;
+                    sorted[k++] = syms[i];
+                }
+            }
+            if(pass == 0)
+            {
+                first_global = (UInt32)k;
+            }
+        }
+        memcpy(syms, sorted, sizeof(ELF64_Sym) * n);
+        buf_t *relas[2] = { &rela_text, &rela_data };
+        for(int b = 0; b < 2; b++)
+        {
+            ELF64_Rela *r = (ELF64_Rela *)relas[b]->data;
+            for(EFSize i = 0; i < relas[b]->len / sizeof(ELF64_Rela); i++)
+            {
+                UInt32 sym = (UInt32)(r[i].r_info >> 32);
+                r[i].r_info = ELF64_R_INFO(remap[sym], (UInt32)r[i].r_info);
+            }
+        }
+        free(sorted);
+        free(remap);
+    }
+
     /* build shstrtab */
     UInt32 shname_text = (UInt32)strtab_intern(&shstrtab_buf, ".text");
     UInt32 shname_data = (UInt32)strtab_intern(&shstrtab_buf, ".data");
@@ -694,9 +744,10 @@ static Boolean __linker_link_relocatable(linker_invocation_t *inv,
 }
 
 static void emit_boot_header(EFBitWalkerRef vb,
+                             UInt64 file_offset,
                              UInt64 entry)
 {
-    EFBitWalkerSeek(vb, 0, 0);
+    EFBitWalkerSeek(vb, file_offset, 0);
     EFBitWalkerWrite(vb, kE64OpcodeB, 8);
     EFBitWalkerWrite(vb, kE64ParameterCodingAddr64, 3);
     EFBitWalkerAlignByte(vb);
@@ -715,7 +766,9 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
 
     EFIndex objectCount = EFArrayGetCount(inv->objects);
 
-    if(gsym->addr == BOOT_HEADER_SIZE)
+    const UInt64 base = inv->options.image_base;
+
+    if(gsym->addr == base + BOOT_HEADER_SIZE)
     {
         inv->needs_fw_hdr = false;
 
@@ -724,7 +777,7 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
         linker_layout(inv);
 
         /* re-applying linker scripts */
-        if(!linker_script_apply(inv, inv->out_bss_off, 0, inv->out_text_off, inv->out_bss_off > inv->out_data_off ? inv->out_data_off : inv->out_bss_off))
+        if(!linker_script_apply(inv, inv->out_bss_off, base, inv->out_text_off, inv->out_bss_off > inv->out_data_off ? inv->out_data_off : inv->out_bss_off))
         {
             linker_invocation_dealloc(inv);
             return false;
@@ -741,6 +794,8 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
         }
     }
 
+    inv->file_offset = inv->options.elf ? EMEX64_PAGE_SIZE : 0;
+
     EFAUTOREL EFBitWalkerRef vb = EFFileCreateBitWalker(EFGetAllocator(output), output, kEFEndianLittle);
     if(vb == NULL)
     {
@@ -752,7 +807,7 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
     {
         linker_object_t *o = EFArrayGetValueAtIndex(inv->objects, index);
         ELF64_Shdr *sh = &o->shdrs[o->idx_text];
-        EFBitWalkerSeek(vb, o->base_text, 0);
+        EFBitWalkerSeek(vb, o->base_text - base + inv->file_offset, 0);
         EFBitWalkerWriteBuffer(vb, o->content + sh->sh_offset, sh->sh_size);
     }
 
@@ -765,7 +820,7 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
             continue;
         }
         ELF64_Shdr *sh = &o->shdrs[o->idx_data];
-        EFBitWalkerSeek(vb, o->base_data, 0);
+        EFBitWalkerSeek(vb, o->base_data - base + inv->file_offset, 0);
         EFBitWalkerWriteBuffer(vb, o->content + sh->sh_offset, sh->sh_size);
     }
 
@@ -789,12 +844,98 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
             return false;
         }
         entry_addr = gsym->addr;
-        emit_boot_header(vb, entry_addr);
+        emit_boot_header(vb, inv->file_offset, entry_addr);
+    }
+
+    if(inv->options.elf)
+    {
+        linker_symbol_t *esym = linker_symbol_lookup(inv, inv->options.entry_name);
+        UInt64 entry = esym != NULL ? esym->addr : base;
+
+        ELF64_Ehdr eh;
+        memset(&eh, 0, sizeof(eh));
+        eh.e_ident[0] = 0x7F;
+        eh.e_ident[1] = 'E';
+        eh.e_ident[2] = 'L';
+        eh.e_ident[3] = 'F';
+        eh.e_ident[4] = 2;
+        eh.e_ident[5] = 1;
+        eh.e_ident[6] = 1;
+        eh.e_type = 2;
+        eh.e_machine = 0x0E64;
+        eh.e_version = 1;
+        eh.e_entry = entry;
+        eh.e_phoff = sizeof(ELF64_Ehdr);
+        eh.e_ehsize = sizeof(ELF64_Ehdr);
+        eh.e_phentsize = sizeof(ELF64_Phdr);
+
+        ELF64_Phdr ph[2];
+        memset(ph, 0, sizeof(ph));
+        UInt16 phnum = 1;
+        UInt64 text_end = inv->out_text_off;
+        if(!inv->options.use_old_magic && text_end > base && (text_end & (EMEX64_PAGE_SIZE - 1)) == 0 && text_end < inv->out_bss_off)
+        {
+            ph[0].p_type = 1;
+            ph[0].p_flags = 5;
+            ph[0].p_offset = inv->file_offset;
+            ph[0].p_vaddr = base;
+            ph[0].p_paddr = base;
+            ph[0].p_filesz = text_end - base;
+            ph[0].p_memsz = text_end - base;
+            ph[0].p_align = EMEX64_PAGE_SIZE;
+
+            ph[1].p_type = 1;
+            ph[1].p_flags = 6;
+            ph[1].p_offset = inv->file_offset + (text_end - base);
+            ph[1].p_vaddr = text_end;
+            ph[1].p_paddr = text_end;
+            ph[1].p_filesz = inv->out_data_off - text_end;
+            ph[1].p_memsz = inv->out_bss_off - text_end;
+            ph[1].p_align = EMEX64_PAGE_SIZE;
+            phnum = 2;
+        }
+        else
+        {
+            ph[0].p_type = 1;
+            ph[0].p_flags = 7;
+            ph[0].p_offset = inv->file_offset;
+            ph[0].p_vaddr = base;
+            ph[0].p_paddr = base;
+            ph[0].p_filesz = inv->out_data_off - base;
+            ph[0].p_memsz = inv->out_bss_off - base;
+            ph[0].p_align = EMEX64_PAGE_SIZE;
+        }
+        eh.e_phnum = phnum;
+
+        EFBitWalkerSeek(vb, 0, 0);
+        EFBitWalkerWriteBuffer(vb, (const char *)&eh, sizeof(eh));
+        EFBitWalkerWriteBuffer(vb, (const char *)ph, (EFIndex)(sizeof(ELF64_Phdr) * phnum));
+
+        UInt64 written_end = base;
+        for(EFIndex index = 0; index < objectCount; index++)
+        {
+            linker_object_t *o = EFArrayGetValueAtIndex(inv->objects, index);
+            UInt64 text_end_o = o->base_text + linker_object_text_size(o);
+            UInt64 data_end_o = o->base_data + linker_object_data_size(o);
+            if(text_end_o > written_end)
+            {
+                written_end = text_end_o;
+            }
+            if(o->idx_data >= 0 && data_end_o > written_end)
+            {
+                written_end = data_end_o;
+            }
+        }
+        if(inv->out_data_off > written_end)
+        {
+            EFBitWalkerSeek(vb, inv->file_offset + (inv->out_data_off - base) - 1, 0);
+            EFBitWalkerWrite(vb, 0, 8);
+        }
     }
 
     EFBitWalkerSync(vb);
 
-    UInt64 total_text = inv->out_text_off - (inv->needs_fw_hdr ? BOOT_HEADER_SIZE : 0);
+    UInt64 total_text = inv->out_text_off - base - (inv->needs_fw_hdr ? BOOT_HEADER_SIZE : 0);
     UInt64 total_data = inv->out_data_off - inv->out_text_off;
 
     if(inv->options.verbose)
@@ -804,9 +945,9 @@ static Boolean __linker_link_firmware(linker_invocation_t *inv,
         fprintf(stderr, "emex64ld: linked object(s) → %s\n", pathCStr);
         if(inv->options.emit_mode == kEmitModeFirmware)
         {
-            fprintf(stderr, "  .fw_hdr  %8lu bytes @ 0x%08lx\n", inv->needs_fw_hdr ? (unsigned long)BOOT_HEADER_SIZE : 0, (unsigned long)0);
+            fprintf(stderr, "  .fw_hdr  %8lu bytes @ 0x%08lx\n", inv->needs_fw_hdr ? (unsigned long)BOOT_HEADER_SIZE : 0, (unsigned long)base);
         }
-        fprintf(stderr, "  .text    %8lu bytes @ 0x%08lx\n", (unsigned long)total_text, inv->needs_fw_hdr ? (unsigned long)BOOT_HEADER_SIZE : 0);
+        fprintf(stderr, "  .text    %8lu bytes @ 0x%08lx\n", (unsigned long)total_text, (unsigned long)(base + (inv->needs_fw_hdr ? BOOT_HEADER_SIZE : 0)));
         fprintf(stderr, "  .data    %8lu bytes @ 0x%08lx\n", (unsigned long)total_data, (unsigned long)inv->out_text_off);
         fprintf(stderr, "  .bss     %8lu bytes @ 0x%08lx (virtual)\n", (unsigned long)(inv->out_bss_off - inv->out_data_off), (unsigned long)inv->out_data_off);
         fprintf(stderr, "  entry    %s @ 0x%08lx\n", inv->options.entry_name, (unsigned long)entry_addr);
@@ -843,7 +984,8 @@ Boolean linker_link(linker_invocation_t *inv,
         }
     }
 
-    if(!linker_script_apply(inv, inv->out_bss_off, BOOT_HEADER_SIZE, inv->out_text_off, inv->out_bss_off > inv->out_data_off ? inv->out_data_off : inv->out_bss_off))
+    UInt64 image_start = (inv->options.emit_mode == kEmitModeRelocatableObject ? 0 : inv->options.image_base) + BOOT_HEADER_SIZE;
+    if(!linker_script_apply(inv, inv->out_bss_off, image_start, inv->out_text_off, inv->out_bss_off > inv->out_data_off ? inv->out_data_off : inv->out_bss_off))
     {
         return false;
     }

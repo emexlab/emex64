@@ -9,7 +9,20 @@ find_package(Threads REQUIRED)
 
 option(EMEX64VM_DEVICE_DISPLAY "Enable display device support" ON)
 
-if(EMEX64VM_DEVICE_DISPLAY)
+if(EMEX64VM_DEVICE_DISPLAY AND APPLE)
+    find_library(COCOA_FRAMEWORK Cocoa)
+    find_library(METAL_FRAMEWORK Metal)
+    find_library(METALKIT_FRAMEWORK MetalKit)
+    find_library(QUARTZCORE_FRAMEWORK QuartzCore)
+
+    if(NOT COCOA_FRAMEWORK OR NOT METAL_FRAMEWORK OR NOT METALKIT_FRAMEWORK OR NOT QUARTZCORE_FRAMEWORK)
+        message(WARNING "Missing Cocoa, Metal, MetalKit and/or QuartzCore frameworks — EMEX64VM_DEVICE_DISPLAY disabled
+ If this is intentional, no further action is required.
+ This usually means the Xcode Command Line Tools are not installed.
+ You can install them with 'xcode-select --install'.")
+        set(EMEX64VM_DEVICE_DISPLAY OFF CACHE BOOL "" FORCE)
+    endif()
+elseif(EMEX64VM_DEVICE_DISPLAY)
     find_package(OpenGL)
 
     if(NOT OPENGL_FOUND)
@@ -29,17 +42,23 @@ if(EMEX64VM_DEVICE_DISPLAY)
  On most distributions, primarily ones based on Debian, these are named libglfw3-dev and libglew-dev.")
             set(EMEX64VM_DEVICE_DISPLAY OFF CACHE BOOL "" FORCE)
         endif()
-    elseif(APPLE)
-        find_library(COCOA_FRAMEWORK Cocoa)
-        find_library(OPENGL_FRAMEWORK OpenGL)
+    endif()
+endif()
 
-        if(NOT COCOA_FRAMEWORK OR NOT OPENGL_FRAMEWORK)
-            message(WARNING "Missing Cocoa and/or OpenGL frameworks — EMEX64VM_DEVICE_DISPLAY disabled
+option(EMEX64VM_NET "Network controller with user mode NAT (libslirp)" ON)
+
+if(EMEX64VM_NET)
+    find_package(PkgConfig)
+    if(PkgConfig_FOUND)
+        pkg_check_modules(SLIRP IMPORTED_TARGET slirp)
+    endif()
+
+    if(NOT SLIRP_FOUND)
+        message(WARNING "Missing libslirp — EMEX64VM_NET disabled
  If this is intentional, no further action is required.
- This usually means the Xcode Command Line Tools are not installed.
- You can install them with 'xcode-select --install'.")
-            set(EMEX64VM_DEVICE_DISPLAY OFF CACHE BOOL "" FORCE)
-        endif()
+ For the network controller (--net user). brew install libslirp on macOS,
+ libslirp-dev on distributions based on Debian.")
+        set(EMEX64VM_NET OFF CACHE BOOL "" FORCE)
     endif()
 endif()
 
@@ -81,6 +100,7 @@ add_library(EmexToolchain ${LIB_TYPE}
         src/VM/instruction/data.c
         src/VM/instruction/alu.c
         src/VM/instruction/ctrl.c
+        src/VM/instruction/fpu.c
 
         ## Devices
 
@@ -88,6 +108,8 @@ add_library(EmexToolchain ${LIB_TYPE}
             src/VM/device/internal/controller/E64IC.c
             src/VM/device/internal/controller/mem.c
             src/VM/device/internal/timer.c
+            src/VM/device/internal/cpuid.c
+            src/VM/device/internal/controller/apic.c
 
             ### Board devices
             src/VM/device/board/controller/power.c
@@ -97,6 +119,14 @@ add_library(EmexToolchain ${LIB_TYPE}
             src/VM/device/board/display.c
             src/VM/device/board/uart.c
             src/VM/device/board/rtc.c
+
+            ### PCIe devices
+            src/VM/device/board/pcie/pcie.c
+            src/VM/device/board/pcie/sata.c
+            src/VM/device/board/pcie/usb.c
+            src/VM/device/board/pcie/usb_msc.c
+            src/VM/device/board/pcie/gpu.c
+            src/VM/device/board/pcie/net.c
 
     # Assembler API
     src/ETAssembler/ETAssemblerOptions.c
@@ -140,22 +170,12 @@ add_library(EmexToolchain ${LIB_TYPE}
 
         ## Diagnostic API (Errors, Warnings, Notes, etc ^^)
         src/ETLinker/diagnostic/consumer.c
-    
-    # Compiler API
-    src/ETCompiler/ETCompilerDriver.c
-    src/ETCompiler/ETCompilerOptions.c
-    src/ETCompiler/ETCompilerDiagnosticConsumer.c
-    src/ETCompiler/ETCompilerJob.c
-    src/ETCompiler/ETCompilerToken.c
-    src/ETCompiler/ETCompilerLexer.c
-    src/ETCompiler/ETCompilerAST.c
-    src/ETCompiler/ETCompilerParser.c
-    src/ETCompiler/ETCompilerCodegen.c
 )
 
 target_compile_definitions(EmexToolchain PRIVATE
     EMEX64VM_DEVICE_DISPLAY=$<BOOL:${EMEX64VM_DEVICE_DISPLAY}>
     EMEX64VM_DEVICE_AUDIO=$<BOOL:${EMEX64VM_DEVICE_AUDIO}>
+    EMEX64VM_NET=$<BOOL:${EMEX64VM_NET}>
     ET_PRIVATE=$<BOOL:YES>
 )
 
@@ -211,6 +231,18 @@ target_link_libraries(EmexToolchain
         Threads::Threads
 )
 
+if(UNIX AND NOT APPLE)
+    target_link_libraries(EmexToolchain PRIVATE m)
+endif()
+
+if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+    set_source_files_properties(src/VM/instruction/fpu.c PROPERTIES COMPILE_OPTIONS "-fno-fast-math;-frounding-math")
+endif()
+
+if(EMEX64VM_NET)
+    target_link_libraries(EmexToolchain PRIVATE PkgConfig::SLIRP)
+endif()
+
 if(EMEX64VM_DEVICE_DISPLAY)
     if(UNIX AND NOT APPLE)
         target_link_libraries(EmexToolchain
@@ -225,13 +257,12 @@ if(EMEX64VM_DEVICE_DISPLAY)
                 src/vm/device/board/display.m
         )
 
-        find_library(COCOA_FRAMEWORK Cocoa REQUIRED)
-        find_library(OPENGL_FRAMEWORK OpenGL REQUIRED)
-
         target_link_libraries(EmexToolchain
             PRIVATE
                 ${COCOA_FRAMEWORK}
-                ${OPENGL_FRAMEWORK}
+                ${METAL_FRAMEWORK}
+                ${METALKIT_FRAMEWORK}
+                ${QUARTZCORE_FRAMEWORK}
         )
 
         set_source_files_properties(src/vm/device/board/display.m PROPERTIES
