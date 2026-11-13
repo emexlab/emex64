@@ -19,10 +19,6 @@ if(EMEX64_BUILD_TOOLS)
     add_subdirectory(tools/emex64ld)
 endif()
 
-if(EMEX64_BUILD_EXAMPLES)
-    add_subdirectory(examples/emex64hello)
-endif()
-
 if(MSVC)
     # Fuck MSVC nobody likes you
     message(FATAL_ERROR "MSVC is not supported. Switch to Linux moron, microslop sheep!")
@@ -59,10 +55,6 @@ else()
                 target_compile_options(emex64vm PRIVATE ${_EMEX64_WARN_FLAGS} ${_EMEX64_OPT_FLAGS})
                 target_compile_options(emex64ld PRIVATE ${_EMEX64_WARN_FLAGS} ${_EMEX64_OPT_FLAGS})
             endif()
-
-            if(EMEX64_BUILD_EXAMPLES)
-                target_compile_options(emex64hello PRIVATE ${_EMEX64_WARN_FLAGS} ${_EMEX64_OPT_FLAGS})
-            endif()
         else()
             message(STATUS "LTO not supported: ${_ipo_output}")
         endif()
@@ -74,10 +66,6 @@ else()
         target_compile_options(emex64asm PRIVATE ${_EMEX64_WARN_FLAGS} ${_EMEX64_OPT_FLAGS})
         target_compile_options(emex64vm PRIVATE ${_EMEX64_WARN_FLAGS} ${_EMEX64_OPT_FLAGS})
         target_compile_options(emex64ld PRIVATE ${_EMEX64_WARN_FLAGS} ${_EMEX64_OPT_FLAGS})
-    endif()
-
-    if(EMEX64_BUILD_EXAMPLES)
-        target_compile_options(emex64hello PRIVATE ${_EMEX64_WARN_FLAGS} ${_EMEX64_OPT_FLAGS})
     endif()
 endif()
 
