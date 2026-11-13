@@ -1,0 +1,1133 @@
+diff --git a/clang/lib/Basic/CMakeLists.txt b/clang/lib/Basic/CMakeLists.txt
+index 21851e79b..56cf39c91 100644
+--- a/clang/lib/Basic/CMakeLists.txt
++++ b/clang/lib/Basic/CMakeLists.txt
+@@ -104,6 +104,7 @@ add_clang_library(clangBasic
+   Targets/CSKY.cpp
+   Targets/DirectX.cpp
+   Targets/Hexagon.cpp
++  Targets/Emex64.cpp
+   Targets/Lanai.cpp
+   Targets/LoongArch.cpp
+   Targets/M68k.cpp
+diff --git a/clang/lib/Basic/Targets.cpp b/clang/lib/Basic/Targets.cpp
+index 8c01cfca8..b69375d90 100644
+--- a/clang/lib/Basic/Targets.cpp
++++ b/clang/lib/Basic/Targets.cpp
+@@ -22,6 +22,7 @@
+ #include "Targets/CSKY.h"
+ #include "Targets/DirectX.h"
+ #include "Targets/Hexagon.h"
++#include "Targets/Emex64.h"
+ #include "Targets/Lanai.h"
+ #include "Targets/LoongArch.h"
+ #include "Targets/M68k.h"
+@@ -135,6 +136,11 @@ std::unique_ptr<TargetInfo> AllocateTarget(const llvm::Triple &Triple,
+   case llvm::Triple::lanai:
+     return std::make_unique<LanaiTargetInfo>(Triple, Opts);
+ 
++  case llvm::Triple::emex64:
++    if (os == llvm::Triple::Linux)
++      return std::make_unique<LinuxTargetInfo<Emex64TargetInfo>>(Triple, Opts);
++    return std::make_unique<Emex64TargetInfo>(Triple, Opts);
++
+   case llvm::Triple::aarch64_32:
+     if (Triple.isOSDarwin())
+       return std::make_unique<DarwinAArch64TargetInfo>(Triple, Opts);
+diff --git a/clang/lib/CodeGen/CMakeLists.txt b/clang/lib/CodeGen/CMakeLists.txt
+index 853f038c4..d1dd5ba1c 100644
+--- a/clang/lib/CodeGen/CMakeLists.txt
++++ b/clang/lib/CodeGen/CMakeLists.txt
+@@ -144,6 +144,7 @@ add_clang_library(clangCodeGen
+   Targets/CSKY.cpp
+   Targets/DirectX.cpp
+   Targets/Hexagon.cpp
++  Targets/Emex64.cpp
+   Targets/Lanai.cpp
+   Targets/LoongArch.cpp
+   Targets/M68k.cpp
+diff --git a/clang/lib/CodeGen/CodeGenModule.cpp b/clang/lib/CodeGen/CodeGenModule.cpp
+index a910e5e0c..82c7002bd 100644
+--- a/clang/lib/CodeGen/CodeGenModule.cpp
++++ b/clang/lib/CodeGen/CodeGenModule.cpp
+@@ -289,6 +289,8 @@ createTargetCodeGenInfo(CodeGenModule &CGM) {
+     return createHexagonTargetCodeGenInfo(CGM);
+   case llvm::Triple::lanai:
+     return createLanaiTargetCodeGenInfo(CGM);
++  case llvm::Triple::emex64:
++    return createEmex64TargetCodeGenInfo(CGM);
+   case llvm::Triple::r600:
+     return createAMDGPUTargetCodeGenInfo(CGM);
+   case llvm::Triple::amdgpu:
+diff --git a/clang/lib/CodeGen/TargetInfo.h b/clang/lib/CodeGen/TargetInfo.h
+index 9405cf012..c1d56ed78 100644
+--- a/clang/lib/CodeGen/TargetInfo.h
++++ b/clang/lib/CodeGen/TargetInfo.h
+@@ -519,6 +519,9 @@ createHexagonTargetCodeGenInfo(CodeGenModule &CGM);
+ std::unique_ptr<TargetCodeGenInfo>
+ createLanaiTargetCodeGenInfo(CodeGenModule &CGM);
+ 
++std::unique_ptr<TargetCodeGenInfo>
++createEmex64TargetCodeGenInfo(CodeGenModule &CGM);
++
+ std::unique_ptr<TargetCodeGenInfo>
+ createLoongArchTargetCodeGenInfo(CodeGenModule &CGM, unsigned GRLen,
+                                  unsigned FLen);
+diff --git a/clang/lib/Driver/ToolChains/BareMetal.cpp b/clang/lib/Driver/ToolChains/BareMetal.cpp
+index ba454acbf..f0ef040b4 100644
+--- a/clang/lib/Driver/ToolChains/BareMetal.cpp
++++ b/clang/lib/Driver/ToolChains/BareMetal.cpp
+@@ -50,6 +50,11 @@ static bool isPPCBareMetal(const llvm::Triple &Triple) {
+ }
+ 
+ /// Is the triple {ix86,x86_64}-*-none-elf?
++static bool isEmex64BareMetal(const llvm::Triple &Triple) {
++  return Triple.getArch() == llvm::Triple::emex64 &&
++         Triple.getOS() == llvm::Triple::UnknownOS;
++}
++
+ static bool isX86BareMetal(const llvm::Triple &Triple) {
+   return Triple.isX86() && Triple.getOS() == llvm::Triple::UnknownOS &&
+          Triple.getEnvironmentName() == "elf";
+@@ -281,7 +286,8 @@ void BareMetal::findMultilibs(const Driver &D, const llvm::Triple &Triple,
+ bool BareMetal::handlesTarget(const llvm::Triple &Triple) {
+   return arm::isARMEABIBareMetal(Triple) ||
+          aarch64::isAArch64BareMetal(Triple) || isRISCVBareMetal(Triple) ||
+-         isPPCBareMetal(Triple) || isX86BareMetal(Triple);
++         isPPCBareMetal(Triple) || isX86BareMetal(Triple) ||
++         isEmex64BareMetal(Triple);
+ }
+ 
+ Tool *BareMetal::buildLinker() const {
+diff --git a/clang/lib/Driver/ToolChains/Clang.cpp b/clang/lib/Driver/ToolChains/Clang.cpp
+index db7893c54..2d43b3eeb 100644
+--- a/clang/lib/Driver/ToolChains/Clang.cpp
++++ b/clang/lib/Driver/ToolChains/Clang.cpp
+@@ -1538,6 +1538,38 @@ void Clang::AddARMTargetArgs(const llvm::Triple &Triple, const ArgList &Args,
+   AddUnalignedAccessWarning(CmdArgs);
+ }
+ 
++static void AddEmex64TargetArgs(const ToolChain &TC, const ArgList &Args,
++                                ArgStringList &CmdArgs) {
++  const Driver &D = TC.getDriver();
++  StringRef Scope =
++      TC.getEffectiveTriple().isEmex64e() ? "non-leaf" : "none";
++  if (const Arg *A = Args.getLastArg(options::OPT_mbranch_protection_EQ,
++                                     options::OPT_msign_return_address_EQ)) {
++    StringRef Value = A->getValue();
++    if (A->getOption().matches(options::OPT_msign_return_address_EQ) &&
++        (Value == "none" || Value == "non-leaf" || Value == "all"))
++      Scope = Value;
++    else if (Value == "none")
++      Scope = "none";
++    else if (Value == "standard" || Value == "pac-ret")
++      Scope = "non-leaf";
++    else if (Value == "pac-ret+leaf")
++      Scope = "all";
++    else
++      D.Diag(diag::err_drv_unsupported_option_argument)
++          << A->getSpelling() << Value;
++  }
++  if (Scope != "none") {
++    CmdArgs.push_back(
++        Args.MakeArgString(Twine("-msign-return-address=") + Scope));
++    CmdArgs.push_back("-msign-return-address-key=a_key");
++  }
++}
++
+ void Clang::RenderTargetOptions(const llvm::Triple &EffectiveTriple,
+                                 const ArgList &Args, bool KernelOrKext,
+                                 ArgStringList &CmdArgs) const {
+@@ -1565,6 +1597,10 @@ void Clang::RenderTargetOptions(const llvm::Triple &EffectiveTriple,
+     AddAArch64TargetArgs(Args, CmdArgs);
+     break;
+ 
++  case llvm::Triple::emex64:
++    AddEmex64TargetArgs(TC, Args, CmdArgs);
++    break;
++
+   case llvm::Triple::loongarch32:
+   case llvm::Triple::loongarch64:
+     AddLoongArchTargetArgs(Args, CmdArgs);
+diff --git a/clang/lib/Driver/ToolChains/CommonArgs.cpp b/clang/lib/Driver/ToolChains/CommonArgs.cpp
+index 08c06951..18780fe0 100644
+--- a/clang/lib/Driver/ToolChains/CommonArgs.cpp
++++ b/clang/lib/Driver/ToolChains/CommonArgs.cpp
+@@ -585,6 +585,8 @@ void tools::AddLinkerInputs(const ToolChain &TC, const InputInfoList &Inputs,
+ 
+ const char *tools::getLDMOption(const llvm::Triple &T, const ArgList &Args) {
+   switch (T.getArch()) {
++  case llvm::Triple::emex64:
++    return "elf64emex64";
+   case llvm::Triple::x86:
+     if (T.isOSIAMCU())
+       return "elf_iamcu";
+@@ -758,6 +760,31 @@ std::string tools::getCPUName(const Driver &D, const ArgList &Args,
+       return A->getValue();
+     return "";
+ 
++  case llvm::Triple::emex64:
++  {
++    if(const Arg *A = Args.getLastArg(options::OPT_march_EQ))
++    {
++      StringRef CPU = llvm::StringSwitch<StringRef>(A->getValue())
++                          .Case("la64-v17", "emex64-v17")
++                          .Case("la64-v18", "emex64-v18")
++                          .Case("la64-v19", "emex64-v19")
++                          .Case("la64-v20", "emex64-v20")
++                          .Case("la64-v21", "emex64-v21")
++                          .Case("la64e-v19", "emex64e")
++                          .Case("la64e-v20", "emex64e-v20")
++                          .Case("la64e-v21", "emex64e-v21")
++                          .Default("");
++      if(CPU.empty())
++      {
++        D.Diag(diag::err_drv_unsupported_option_argument) << A->getSpelling() << A->getValue();
++      }
++      return std::string(CPU);
++    }
++    if(const Arg *A = Args.getLastArg(options::OPT_mcpu_EQ))
++    {
++      return A->getValue();
++    }
++    return "";
++  }
+   case llvm::Triple::m68k:
+     return m68k::getM68kTargetCPU(Args);
+ 
+@@ -930,6 +957,14 @@ void tools::getTargetFeatures(const Driver &D, const llvm::Triple &Triple,
+   case llvm::Triple::loongarch64:
+     loongarch::getLoongArchTargetFeatures(D, Triple, Args, Features);
+     break;
++  case llvm::Triple::emex64:
++    if(Arg *A = Args.getLastArg(options::OPT_msoft_float, options::OPT_mhard_float))
++    {
++      Features.push_back(A->getOption().matches(options::OPT_msoft_float) ? "-fpu" : "+fpu");
++    }
++    break;
+   }
+ 
+   for (auto Feature : unifyTargetFeatures(Features)) {
+diff --git a/clang/lib/Driver/ToolChains/Gnu.cpp b/clang/lib/Driver/ToolChains/Gnu.cpp
+index 2fad9327..75601243 100644
+--- a/clang/lib/Driver/ToolChains/Gnu.cpp
++++ b/clang/lib/Driver/ToolChains/Gnu.cpp
+@@ -2457,6 +2457,14 @@ void Generic_GCC::GCCInstallationDetector::AddDefaultGCCPrefixes(
+   static const char *const RISCV32Triples[] = {"riscv32-unknown-linux-gnu",
+                                                "riscv32-unknown-elf"};
+   static const char *const RISCV64LibDirs[] = {"/lib64", "/lib"};
++  static const char *const Emex64LibDirs[] = {"/lib", "/lib64"};
++  static const char *const Emex64Triples[] = {
++      "emex64e-linux-gnu",         "emex64e-unknown-linux-gnu",
++      "la64e-linux-gnu",           "la64e-emexlabs-linux-gnu",
++      "emex64-linux-gnu",          "emex64-unknown-linux-gnu",
++      "la64-linux-gnu",            "la64-emexlabs-linux-gnu"};
+   static const char *const RISCV64Triples[] = {"riscv64-unknown-linux-gnu",
+                                                "riscv64-unknown-elf"};
+ 
+@@ -2793,6 +2801,10 @@ void Generic_GCC::GCCInstallationDetector::AddDefaultGCCPrefixes(
+     LibDirs.append(begin(SystemZLibDirs), end(SystemZLibDirs));
+     TripleAliases.append(begin(SystemZTriples), end(SystemZTriples));
+     break;
++  case llvm::Triple::emex64:
++    LibDirs.append(begin(Emex64LibDirs), end(Emex64LibDirs));
++    TripleAliases.append(begin(Emex64Triples), end(Emex64Triples));
++    break;
+   default:
+     // By default, just rely on the standard lib directories and the original
+     // triple.
+diff --git a/clang/lib/Driver/ToolChains/Linux.cpp b/clang/lib/Driver/ToolChains/Linux.cpp
+index 8d30a5ea..a9370ba3 100644
+--- a/clang/lib/Driver/ToolChains/Linux.cpp
++++ b/clang/lib/Driver/ToolChains/Linux.cpp
+@@ -219,6 +219,10 @@ static StringRef getOSLibDir(const llvm::Triple &Triple, const ArgList &Args) {
+     }
+   }
+ 
++  if (Triple.getArch() == llvm::Triple::emex64)
++    return "lib";
++
+   return Triple.isArch32Bit() ? "lib" : "lib64";
+ }
+ 
+@@ -632,6 +636,10 @@ std::string Linux::getDynamicLinker(const ArgList &Args) const {
+     LibDir = "lib";
+     Loader = "ld-linux-aarch64.so.1";
+     break;
++  case llvm::Triple::emex64:
++    LibDir = "lib";
++    Loader = "ld-linux-emex64.so.1";
++    break;
+   case llvm::Triple::aarch64_be:
+     LibDir = "lib";
+     Loader = "ld-linux-aarch64_be.so.1";
+@@ -942,6 +950,10 @@ void Linux::addSYCLIncludeArgs(const ArgList &DriverArgs,
+ }
+ 
+ bool Linux::isPIEDefault(const llvm::opt::ArgList &Args) const {
++  if(getTriple().getArch() == llvm::Triple::emex64 && !getTriple().isMusl())
++  {
++    return getSanitizerArgs(Args).requiresPIE();
++  }
+   return CLANG_DEFAULT_PIE_ON_LINUX || getTriple().isAndroid() ||
+          getTriple().isMusl() || getSanitizerArgs(Args).requiresPIE();
+ }
+diff --git a/libunwind/include/__libunwind_config.h b/libunwind/include/__libunwind_config.h
+index a1179c73c..d3a9633f8 100644
+--- a/libunwind/include/__libunwind_config.h
++++ b/libunwind/include/__libunwind_config.h
+@@ -31,6 +31,7 @@
+ #define _LIBUNWIND_HIGHEST_DWARF_REGISTER_VE        143
+ #define _LIBUNWIND_HIGHEST_DWARF_REGISTER_S390X     83
+ #define _LIBUNWIND_HIGHEST_DWARF_REGISTER_LOONGARCH 64
++#define _LIBUNWIND_HIGHEST_DWARF_REGISTER_EMEX64    47
+ 
+ #if defined(_LIBUNWIND_IS_NATIVE_ONLY)
+ # if defined(__linux__)
+@@ -183,6 +184,14 @@
+ #endif
+ #define _LIBUNWIND_HIGHEST_DWARF_REGISTER                                      \
+   _LIBUNWIND_HIGHEST_DWARF_REGISTER_LOONGARCH
++#elif defined(__emex64__)
++#define _LIBUNWIND_TARGET_EMEX64 1
++#define _LIBUNWIND_CONTEXT_SIZE 48
++#define _LIBUNWIND_CURSOR_SIZE 60
++#define _LIBUNWIND_HIGHEST_DWARF_REGISTER                                      \
++  _LIBUNWIND_HIGHEST_DWARF_REGISTER_EMEX64
+ #elif defined(__wasm__)
+ // Unused
+ #define _LIBUNWIND_CONTEXT_SIZE 0
+@@ -207,6 +216,7 @@
+ # define _LIBUNWIND_TARGET_VE 1
+ # define _LIBUNWIND_TARGET_S390X 1
+ # define _LIBUNWIND_TARGET_LOONGARCH 1
++# define _LIBUNWIND_TARGET_EMEX64 1
+ # define _LIBUNWIND_CONTEXT_SIZE 167
+ # define _LIBUNWIND_CURSOR_SIZE 204
+ # define _LIBUNWIND_HIGHEST_DWARF_REGISTER 287
+diff --git a/libunwind/include/libunwind.h b/libunwind/include/libunwind.h
+index 6c2dfe58e..bc2333550 100644
+--- a/libunwind/include/libunwind.h
++++ b/libunwind/include/libunwind.h
+@@ -1406,4 +1406,56 @@ enum {
+   UNW_LOONGARCH_F31 = 63,
+ };
+ 
++enum {
++  UNW_EMEX64_PC = 0,
++  UNW_EMEX64_SP = 1,
++  UNW_EMEX64_FP = 2,
++  UNW_EMEX64_CF = 3,
++  UNW_EMEX64_FPC = 4,
++  UNW_EMEX64_R0 = 5,
++  UNW_EMEX64_R1 = 6,
++  UNW_EMEX64_R2 = 7,
++  UNW_EMEX64_R3 = 8,
++  UNW_EMEX64_R4 = 9,
++  UNW_EMEX64_R5 = 10,
++  UNW_EMEX64_R6 = 11,
++  UNW_EMEX64_R7 = 12,
++  UNW_EMEX64_R8 = 13,
++  UNW_EMEX64_R9 = 14,
++  UNW_EMEX64_RR = 15,
++  UNW_EMEX64_ER0 = 16,
++  UNW_EMEX64_ER1 = 17,
++  UNW_EMEX64_ER2 = 18,
++  UNW_EMEX64_ER3 = 19,
++  UNW_EMEX64_ER4 = 20,
++  UNW_EMEX64_ER5 = 21,
++  UNW_EMEX64_ER6 = 22,
++  UNW_EMEX64_ER7 = 23,
++  UNW_EMEX64_ER8 = 24,
++  UNW_EMEX64_ER9 = 25,
++  UNW_EMEX64_ER10 = 26,
++  UNW_EMEX64_ER11 = 27,
++  UNW_EMEX64_ER12 = 28,
++  UNW_EMEX64_ER13 = 29,
++  UNW_EMEX64_ER14 = 30,
++  UNW_EMEX64_ER15 = 31,
++  UNW_EMEX64_FR0 = 32,
++  UNW_EMEX64_FR1 = 33,
++  UNW_EMEX64_FR2 = 34,
++  UNW_EMEX64_FR3 = 35,
++  UNW_EMEX64_FR4 = 36,
++  UNW_EMEX64_FR5 = 37,
++  UNW_EMEX64_FR6 = 38,
++  UNW_EMEX64_FR7 = 39,
++  UNW_EMEX64_FR8 = 40,
++  UNW_EMEX64_FR9 = 41,
++  UNW_EMEX64_FR10 = 42,
++  UNW_EMEX64_FR11 = 43,
++  UNW_EMEX64_FR12 = 44,
++  UNW_EMEX64_FR13 = 45,
++  UNW_EMEX64_FR14 = 46,
++  UNW_EMEX64_FR15 = 47,
++};
++
+ #endif
+diff --git a/libunwind/src/Registers.hpp b/libunwind/src/Registers.hpp
+index c88422a6d..25ab996f5 100644
+--- a/libunwind/src/Registers.hpp
++++ b/libunwind/src/Registers.hpp
+@@ -49,6 +49,7 @@ enum {
+   REGISTERS_VE,
+   REGISTERS_S390X,
+   REGISTERS_LOONGARCH,
++  REGISTERS_EMEX64,
+ };
+ 
+ #if defined(_LIBUNWIND_TARGET_I386)
+@@ -5545,6 +5546,129 @@ inline void Registers_loongarch::setVectorRegister(int, v128) {
+ }
+ #endif //_LIBUNWIND_TARGET_LOONGARCH
+ 
++#if defined(_LIBUNWIND_TARGET_EMEX64)
++class _LIBUNWIND_HIDDEN Registers_emex64 {
++public:
++  Registers_emex64();
++  Registers_emex64(const void *registers);
++
++  typedef uint64_t reg_t;
++  typedef uint64_t link_reg_t;
++  typedef const link_reg_t &link_hardened_reg_arg_t;
++
++  bool        validRegister(int num) const;
++  uint64_t    getRegister(int num) const;
++  void        setRegister(int num, uint64_t value);
++  bool        validFloatRegister(int num) const;
++  double      getFloatRegister(int num) const;
++  void        setFloatRegister(int num, double value);
++  bool        validVectorRegister(int num) const;
++  v128        getVectorRegister(int num) const;
++  void        setVectorRegister(int num, v128 value);
++  static const char *getRegisterName(int num);
++  void        jumpto();
++  static constexpr int lastDwarfRegNum() {
++    return _LIBUNWIND_HIGHEST_DWARF_REGISTER_EMEX64;
++  }
++  static int  getArch() { return REGISTERS_EMEX64; }
++
++  uint64_t  getSP() const         { return _registers[UNW_EMEX64_SP]; }
++  void      setSP(uint64_t value) { _registers[UNW_EMEX64_SP] = value; }
++  uint64_t  getIP() const         { return _registers[UNW_EMEX64_PC]; }
++  void      setIP(uint64_t value) { _registers[UNW_EMEX64_PC] = stripPAC(value); }
++
++private:
++  static uint64_t stripPAC(uint64_t value) { return value & ~(0x3FFULL << 54); }
++
++  uint64_t _registers[_LIBUNWIND_HIGHEST_DWARF_REGISTER_EMEX64 + 1];
++};
++
++inline Registers_emex64::Registers_emex64(const void *registers) {
++  static_assert((check_fit<Registers_emex64, unw_context_t>::does_fit),
++                "emex64 registers do not fit into unw_context_t");
++  memcpy(&_registers, registers, sizeof(_registers));
++}
++
++inline Registers_emex64::Registers_emex64() {
++  memset(&_registers, 0, sizeof(_registers));
++}
++
++inline bool Registers_emex64::validRegister(int regNum) const {
++  if (regNum == UNW_REG_IP || regNum == UNW_REG_SP)
++    return true;
++  return regNum >= UNW_EMEX64_PC && regNum <= UNW_EMEX64_ER15;
++}
++
++inline uint64_t Registers_emex64::getRegister(int regNum) const {
++  if (regNum == UNW_REG_IP)
++    return _registers[UNW_EMEX64_PC];
++  if (regNum == UNW_REG_SP)
++    return _registers[UNW_EMEX64_SP];
++  if (regNum >= UNW_EMEX64_PC && regNum <= UNW_EMEX64_FR15)
++    return _registers[regNum];
++  _LIBUNWIND_ABORT("unsupported emex64 register");
++}
++
++inline void Registers_emex64::setRegister(int regNum, uint64_t value) {
++  if (regNum == UNW_REG_IP || regNum == UNW_EMEX64_PC)
++    _registers[UNW_EMEX64_PC] = stripPAC(value);
++  else if (regNum == UNW_REG_SP)
++    _registers[UNW_EMEX64_SP] = value;
++  else if (regNum >= UNW_EMEX64_PC && regNum <= UNW_EMEX64_FR15)
++    _registers[regNum] = value;
++  else
++    _LIBUNWIND_ABORT("unsupported emex64 register");
++}
++
++inline bool Registers_emex64::validFloatRegister(int regNum) const {
++  return regNum >= UNW_EMEX64_FR0 && regNum <= UNW_EMEX64_FR15;
++}
++
++inline double Registers_emex64::getFloatRegister(int regNum) const {
++  assert(validFloatRegister(regNum));
++  double d;
++  memcpy(&d, &_registers[regNum], sizeof(d));
++  return d;
++}
++
++inline void Registers_emex64::setFloatRegister(int regNum, double value) {
++  assert(validFloatRegister(regNum));
++  memcpy(&_registers[regNum], &value, sizeof(value));
++}
++
++inline bool Registers_emex64::validVectorRegister(int) const { return false; }
++
++inline v128 Registers_emex64::getVectorRegister(int) const {
++  _LIBUNWIND_ABORT("emex64 has no vector registers");
++}
++
++inline void Registers_emex64::setVectorRegister(int, v128) {
++  _LIBUNWIND_ABORT("emex64 has no vector registers");
++}
++
++inline const char *Registers_emex64::getRegisterName(int regNum) {
++  static const char *const names[] = {
++      "pc",   "sp",   "fp",   "cf",   "fpc",  "r0",   "r1",   "r2",
++      "r3",   "r4",   "r5",   "r6",   "r7",   "r8",   "r9",   "rr",
++      "er0",  "er1",  "er2",  "er3",  "er4",  "er5",  "er6",  "er7",
++      "er8",  "er9",  "er10", "er11", "er12", "er13", "er14", "er15",
++      "fr0",  "fr1",  "fr2",  "fr3",  "fr4",  "fr5",  "fr6",  "fr7",
++      "fr8",  "fr9",  "fr10", "fr11", "fr12", "fr13", "fr14", "fr15"};
++  if (regNum == UNW_REG_IP)
++    return "pc";
++  if (regNum == UNW_REG_SP)
++    return "sp";
++  if (regNum >= 0 && regNum <= UNW_EMEX64_FR15)
++    return names[regNum];
++  return "unknown register";
++}
++#endif /* _LIBUNWIND_TARGET_EMEX64 */
++
+ } // namespace libunwind
+ 
+ #endif // __REGISTERS_HPP__
+diff --git a/libunwind/src/UnwindCursor.hpp b/libunwind/src/UnwindCursor.hpp
+index 537dbd83f..d94b5dca4 100644
+--- a/libunwind/src/UnwindCursor.hpp
++++ b/libunwind/src/UnwindCursor.hpp
+@@ -1144,6 +1144,10 @@ private:
+   int stepWithCompactEncoding(Registers_loongarch &) { return UNW_EINVAL; }
+ #endif
+ 
++#if defined(_LIBUNWIND_TARGET_EMEX64)
++  int stepWithCompactEncoding(Registers_emex64 &) { return UNW_EINVAL; }
++#endif
++
+ #if defined(_LIBUNWIND_TARGET_SPARC)
+   int stepWithCompactEncoding(Registers_sparc &) { return UNW_EINVAL; }
+ #endif
+@@ -1226,6 +1230,12 @@ private:
+   }
+ #endif
+ 
++#if defined(_LIBUNWIND_TARGET_EMEX64)
++  bool compactSaysUseDwarf(Registers_emex64 &, uint32_t *) const {
++    return true;
++  }
++#endif
++
+ #if defined(_LIBUNWIND_TARGET_SPARC)
+   bool compactSaysUseDwarf(Registers_sparc &, uint32_t *) const { return true; }
+ #endif
+@@ -1316,6 +1326,12 @@ private:
+   }
+ #endif
+ 
++#if defined(_LIBUNWIND_TARGET_EMEX64)
++  compact_unwind_encoding_t dwarfEncoding(Registers_emex64 &) const {
++    return 0;
++  }
++#endif
++
+ #if defined(_LIBUNWIND_TARGET_SPARC)
+   compact_unwind_encoding_t dwarfEncoding(Registers_sparc &) const { return 0; }
+ #endif
+diff --git a/libunwind/src/UnwindRegistersRestore.S b/libunwind/src/UnwindRegistersRestore.S
+index 37e815640..797cdbdf1 100644
+--- a/libunwind/src/UnwindRegistersRestore.S
++++ b/libunwind/src/UnwindRegistersRestore.S
+@@ -1308,6 +1308,39 @@ DEFINE_LIBUNWIND_FUNCTION(_ZN9libunwind19Registers_loongarch6jumptoEv)
+ 
+   jr      $ra
+ 
++#elif defined(__emex64__)
++
++DEFINE_LIBUNWIND_FUNCTION(_ZN9libunwind16Registers_emex646jumptoEv)
++  ldq er0, [r0 + 8]
++  sub er0, er0, 16
++  ldq er1, [r0 + 16]
++  stq [er0 + 8], er1
++  ldq er1, [r0 + 0]
++  stq [er0 + 16], er1
++  mov sp, er0
++  mov fp, er0
++#if defined(__emex64_fpu__)
++  .irp i,FROM_0_TO_15
++    ldq fr\i, [r0 + (256 + 8 * \i)]
++  .endr
++#endif
++  .irp i,FROM_0_TO_15
++    ldq er\i, [r0 + (128 + 8 * \i)]
++  .endr
++  .irp i,1,2,3,4,5,6,7,8,9
++    ldq r\i, [r0 + (40 + 8 * \i)]
++  .endr
++  ldq rr, [r0 + 120]
++  ldq r0, [r0 + 40]
++  ret
++
+ #endif
+ 
+ #endif /* !defined(__USING_SJLJ_EXCEPTIONS__) */
+diff --git a/libunwind/src/UnwindRegistersSave.S b/libunwind/src/UnwindRegistersSave.S
+index f44f6a133..4382d2d8c 100644
+--- a/libunwind/src/UnwindRegistersSave.S
++++ b/libunwind/src/UnwindRegistersSave.S
+@@ -1327,6 +1327,43 @@ DEFINE_LIBUNWIND_FUNCTION(__unw_getcontext)
+   move     $a0, $zero  // UNW_ESUCCESS
+   jr       $ra
+ 
++#elif defined(__emex64__)
++
++DEFINE_LIBUNWIND_FUNCTION(__unw_getcontext)
++  .irp i,0,1,2,3,4,5,6,7,8,9
++    stq [r0 + (40 + 8 * \i)], r\i
++  .endr
++  stq [r0 + 120], rr
++  .irp i,FROM_0_TO_15
++    stq [r0 + (128 + 8 * \i)], er\i
++  .endr
++#if defined(__emex64_fpu__)
++  .irp i,FROM_0_TO_15
++    stq [r0 + (256 + 8 * \i)], fr\i
++  .endr
++#endif
++  stq [r0 + 24], cf
++  ldq er0, [fp + 16]
++  stq [r0 + 0], er0
++  ldq er0, [fp + 8]
++  stq [r0 + 16], er0
++  add er0, fp, 16
++  stq [r0 + 8], er0
++  ldq er0, [r0 + 128]
++  mov rr, 0
++  ret
++
+ #endif
+ 
+ #ifdef __arm64ec__
+diff --git a/libunwind/src/assembly.h b/libunwind/src/assembly.h
+index 84c9d526f..306c1ef17 100644
+--- a/libunwind/src/assembly.h
++++ b/libunwind/src/assembly.h
+@@ -63,6 +63,9 @@
+ #  endif
+ # endif
+ # define SEPARATOR ;
++#elif defined(__emex64__)
++#define SEPARATOR %%
+ #else
+ #define SEPARATOR ;
+ #endif
+diff --git a/libunwind/src/config.h b/libunwind/src/config.h
+index f017403fa..76de4b437 100644
+--- a/libunwind/src/config.h
++++ b/libunwind/src/config.h
+@@ -126,7 +126,8 @@
+ #if defined(__i386__) || defined(__x86_64__) || defined(__powerpc__) ||        \
+     (!defined(__APPLE__) && defined(__arm__)) || defined(__aarch64__) ||       \
+     defined(__mips__) || defined(__riscv) || defined(__hexagon__) ||           \
+-    defined(__sparc__) || defined(__s390x__) || defined(__loongarch__)
++    defined(__sparc__) || defined(__s390x__) || defined(__loongarch__) ||     \
++    defined(__emex64__)
+ #if !defined(_LIBUNWIND_BUILD_SJLJ_APIS)
+ #define _LIBUNWIND_BUILD_ZERO_COST_APIS
+ #endif
+diff --git a/libunwind/src/libunwind.cpp b/libunwind/src/libunwind.cpp
+index 0b9d56ec8..4034d2d79 100644
+--- a/libunwind/src/libunwind.cpp
++++ b/libunwind/src/libunwind.cpp
+@@ -79,6 +79,8 @@ _LIBUNWIND_HIDDEN int __unw_init_local(unw_cursor_t *cursor,
+ # define REGISTER_KIND Registers_s390x
+ #elif defined(__loongarch__) && __loongarch_grlen == 64
+ #define REGISTER_KIND Registers_loongarch
++#elif defined(__emex64__)
++#define REGISTER_KIND Registers_emex64
+ #else
+ # error Architecture not supported
+ #endif
+diff --git a/lld/ELF/CMakeLists.txt b/lld/ELF/CMakeLists.txt
+index e22897c27..fcdedeb9d 100644
+--- a/lld/ELF/CMakeLists.txt
++++ b/lld/ELF/CMakeLists.txt
+@@ -28,6 +28,7 @@ add_lld_library(lldELF
+   Arch/LoongArch.cpp
+   Arch/Mips.cpp
+   Arch/MipsArchTree.cpp
++  Arch/Emex64.cpp
+   Arch/MSP430.cpp
+   Arch/PPC.cpp
+   Arch/PPC64.cpp
+diff --git a/lld/ELF/Driver.cpp b/lld/ELF/Driver.cpp
+index 51d9e3241..709bb09c7 100644
+--- a/lld/ELF/Driver.cpp
++++ b/lld/ELF/Driver.cpp
+@@ -178,6 +178,7 @@ static std::tuple<ELFKind, uint16_t, uint8_t> parseEmulation(Ctx &ctx,
+           .Case("elf64loongarch", {ELF64LEKind, EM_LOONGARCH})
+           .Case("elf64_s390", {ELF64BEKind, EM_S390})
+           .Case("hexagonelf", {ELF32LEKind, EM_HEXAGON})
++          .Case("elf64emex64", {ELF64LEKind, EM_EMEX64})
+           .Default({ELFNoneKind, EM_NONE});
+ 
+   if (ret.first == ELFNoneKind)
+@@ -1328,7 +1329,8 @@ static SmallVector<StringRef, 0> getSymbolOrderingFile(Ctx &ctx,
+ static bool getIsRela(Ctx &ctx, opt::InputArgList &args) {
+   // The psABI specifies the default relocation entry format.
+   bool rela = is_contained({EM_AARCH64, EM_AMDGPU, EM_HEXAGON, EM_LOONGARCH,
+-                            EM_PPC, EM_PPC64, EM_RISCV, EM_S390, EM_X86_64},
++                            EM_PPC, EM_PPC64, EM_RISCV, EM_S390, EM_X86_64,
++                            EM_EMEX64},
+                            ctx.arg.emachine);
+   // If -z rel or -z rela is specified, use the last option.
+   for (auto *arg : args.filtered(OPT_z)) {
+diff --git a/lld/ELF/InputFiles.cpp b/lld/ELF/InputFiles.cpp
+index 05c0f3f1c..dfdc894b4 100644
+--- a/lld/ELF/InputFiles.cpp
++++ b/lld/ELF/InputFiles.cpp
+@@ -1768,6 +1768,8 @@ static uint16_t getBitcodeMachineKind(Ctx &ctx, StringRef path,
+     return EM_MIPS;
+   case Triple::msp430:
+     return EM_MSP430;
++  case Triple::emex64:
++    return EM_EMEX64;
+   case Triple::ppc:
+   case Triple::ppcle:
+     return EM_PPC;
+diff --git a/lld/ELF/InputSection.cpp b/lld/ELF/InputSection.cpp
+index c78800787..6c8d18272 100644
+--- a/lld/ELF/InputSection.cpp
++++ b/lld/ELF/InputSection.cpp
+@@ -778,6 +778,9 @@ static int64_t getTlsTpOffset(Ctx &ctx, const Symbol &s) {
+     // to allow a signed 16-bit offset to reach 0x1000 of TCB/thread-library
+     // data and 0xf000 of the program's TLS segment.
+     return s.getVA(ctx, 0) + (tls->p_vaddr & (tls->p_align - 1)) - 0x7000;
++  case EM_EMEX64:
+   case EM_LOONGARCH:
+   case EM_RISCV:
+     // For TLSDESC=>IE, R_RISCV_TLSDESC_{LOAD_LO12,ADD_LO12_I,CALL} reference
+diff --git a/lld/ELF/ScriptParser.cpp b/lld/ELF/ScriptParser.cpp
+index 0c54fde48..10e26687a 100644
+--- a/lld/ELF/ScriptParser.cpp
++++ b/lld/ELF/ScriptParser.cpp
+@@ -487,6 +487,7 @@ static std::pair<ELFKind, uint16_t> parseBfdName(StringRef s) {
+       .Case("elf32-loongarch", {ELF32LEKind, EM_LOONGARCH})
+       .Case("elf64-loongarch", {ELF64LEKind, EM_LOONGARCH})
+       .Case("elf64-s390", {ELF64BEKind, EM_S390})
++      .Case("elf64-emex64", {ELF64LEKind, EM_EMEX64})
+       .Cases({"elf32-hexagon", "elf32-littlehexagon"},
+              {ELF32LEKind, EM_HEXAGON})
+       .Default({ELFNoneKind, EM_NONE});
+diff --git a/lld/ELF/Target.cpp b/lld/ELF/Target.cpp
+index 89e4dbeed..76e0576c7 100644
+--- a/lld/ELF/Target.cpp
++++ b/lld/ELF/Target.cpp
+@@ -71,6 +71,8 @@ void elf::setTarget(Ctx &ctx) {
+     return setMipsTargetInfo(ctx);
+   case EM_MSP430:
+     return setMSP430TargetInfo(ctx);
++  case EM_EMEX64:
++    return setEmex64TargetInfo(ctx);
+   case EM_PPC:
+     return setPPCTargetInfo(ctx);
+   case EM_PPC64:
+diff --git a/lld/ELF/Target.h b/lld/ELF/Target.h
+index 50f0cd8a9..787a9163e 100644
+--- a/lld/ELF/Target.h
++++ b/lld/ELF/Target.h
+@@ -212,6 +212,7 @@ void setAVRTargetInfo(Ctx &);
+ void setHexagonTargetInfo(Ctx &);
+ void setLoongArchTargetInfo(Ctx &);
+ void setMSP430TargetInfo(Ctx &);
++void setEmex64TargetInfo(Ctx &);
+ void setMipsTargetInfo(Ctx &);
+ void setPPC64TargetInfo(Ctx &);
+ void setPPCTargetInfo(Ctx &);
+diff --git a/llvm/cmake/config-ix.cmake b/llvm/cmake/config-ix.cmake
+index aca87f154..85e6767c1 100644
+--- a/llvm/cmake/config-ix.cmake
++++ b/llvm/cmake/config-ix.cmake
+@@ -586,6 +586,8 @@ elseif (LLVM_NATIVE_ARCH STREQUAL "m68k")
+   set(LLVM_NATIVE_ARCH M68k)
+ elseif (LLVM_NATIVE_ARCH MATCHES "loongarch")
+   set(LLVM_NATIVE_ARCH LoongArch)
++elseif (LLVM_NATIVE_ARCH MATCHES "emex64")
++  set(LLVM_NATIVE_ARCH Emex64)
+ else ()
+   message(FATAL_ERROR "Unknown architecture ${LLVM_NATIVE_ARCH}")
+ endif ()
+diff --git a/llvm/include/llvm/BinaryFormat/ELF.h b/llvm/include/llvm/BinaryFormat/ELF.h
+index 3f1889f23..5cac089ba 100644
+--- a/llvm/include/llvm/BinaryFormat/ELF.h
++++ b/llvm/include/llvm/BinaryFormat/ELF.h
+@@ -325,6 +325,7 @@ enum {
+   EM_VE = 251,            // NEC SX-Aurora VE
+   EM_CSKY = 252,          // C-SKY 32-bit processor
+   EM_LOONGARCH = 258,     // LoongArch
++  EM_EMEX64 = 0x0E64,     // emexlab emex64
+ };
+ 
+ // Object file classes.
+@@ -1103,6 +1104,11 @@ enum {
+ #include "ELFRelocs/Xtensa.def"
+ };
+ 
++enum {
++#include "ELFRelocs/Emex64.def"
++};
++
+ #undef ELF_RELOC
+ 
+ // Section header.
+diff --git a/llvm/include/llvm/IR/RuntimeLibcalls.td b/llvm/include/llvm/IR/RuntimeLibcalls.td
+index d5f38b967..b31f02806 100644
+--- a/llvm/include/llvm/IR/RuntimeLibcalls.td
++++ b/llvm/include/llvm/IR/RuntimeLibcalls.td
+@@ -2659,6 +2659,22 @@ def LanaiSystemLibrary
+   let DefaultLibcallCallingConv = FASTCC;
+ }
+ 
++//===----------------------------------------------------------------------===//
++// emex64 Runtime Libcalls
++//===----------------------------------------------------------------------===//
++
++def isEmex64 : RuntimeLibcallPredicate<"TT.getArch() == Triple::emex64">;
++
++def Emex64SystemLibrary
++    : SystemRuntimeLibrary<isEmex64,
++      (add DefaultRuntimeLibcallImpls, Int128RTLibcalls,
++           CompilerRTOnlyInt64Libcalls, CompilerRTOnlyInt128Libcalls,
++           __powisf2, __powidf2, exp10f, exp10,
++           LibmHasSinCosF32, LibmHasSinCosF64,
++           __stack_chk_fail, __stack_chk_guard)>;
++
+ //===----------------------------------------------------------------------===//
+ // Mips16 Runtime Libcalls
+ //===----------------------------------------------------------------------===//
+diff --git a/llvm/include/llvm/Object/ELFObjectFile.h b/llvm/include/llvm/Object/ELFObjectFile.h
+index 6d72741c3..dedd1f290 100644
+--- a/llvm/include/llvm/Object/ELFObjectFile.h
++++ b/llvm/include/llvm/Object/ELFObjectFile.h
+@@ -1352,6 +1352,8 @@ StringRef ELFObjectFile<ELFT>::getFileFormatName() const {
+       return "elf64-ve";
+     case ELF::EM_LOONGARCH:
+       return "elf64-loongarch";
++    case ELF::EM_EMEX64:
++      return "elf64-emex64";
+     default:
+       return "elf64-unknown";
+     }
+@@ -1456,6 +1458,9 @@ template <class ELFT> Triple::ArchType ELFObjectFile<ELFT>::getArch() const {
+   case ELF::EM_XTENSA:
+     return Triple::xtensa;
+ 
++  case ELF::EM_EMEX64:
++    return Triple::emex64;
++
+   default:
+     return Triple::UnknownArch;
+   }
+diff --git a/llvm/include/llvm/TargetParser/Triple.h b/llvm/include/llvm/TargetParser/Triple.h
+index c5af23252..dba7be104 100644
+--- a/llvm/include/llvm/TargetParser/Triple.h
++++ b/llvm/include/llvm/TargetParser/Triple.h
+@@ -114,7 +114,8 @@ public:
+     renderscript32, // 32-bit RenderScript
+     renderscript64, // 64-bit RenderScript
+     ve,             // NEC SX-Aurora Vector Engine
+-    LastArchType = ve
++    emex64,         // emexlab emex64
++    LastArchType = emex64
+   };
+   enum SubArchType {
+     NoSubArch,
+@@ -1214,6 +1215,13 @@ public:
+   // Tests whether the target is CSKY
+   bool isCSKY() const { return getArch() == Triple::csky; }
+ 
++  bool isEmex64e() const {
++    return getArch() == Triple::emex64 &&
++           (getArchName() == "la64e" || getArchName() == "emex64e");
++  }
++
+   /// Tests whether the target is the Apple "arm64e" AArch64 subarch.
+   bool isArm64e() const {
+     return getArch() == Triple::aarch64 &&
+diff --git a/llvm/lib/BinaryFormat/ELF.cpp b/llvm/lib/BinaryFormat/ELF.cpp
+index 4b430bc28..c66a90351 100644
+--- a/llvm/lib/BinaryFormat/ELF.cpp
++++ b/llvm/lib/BinaryFormat/ELF.cpp
+@@ -197,6 +197,7 @@ uint16_t ELF::convertArchNameToEMachine(StringRef Arch) {
+       .Case("ve", EM_VE)
+       .Case("csky", EM_CSKY)
+       .Case("loongarch", EM_LOONGARCH)
++      .Case("emex64", EM_EMEX64)
+       .Default(EM_NONE);
+ }
+ 
+@@ -229,6 +230,8 @@ uint16_t ELF::convertTripleArchTypeToEMachine(Triple::ArchType ArchType) {
+   case Triple::loongarch32:
+   case Triple::loongarch64:
+     return EM_LOONGARCH;
++  case Triple::emex64:
++    return EM_EMEX64;
+   case Triple::m68k:
+     return EM_68K;
+   case Triple::mips:
+@@ -628,6 +631,8 @@ StringRef ELF::convertEMachineToArchName(uint16_t EMachine) {
+     return "csky";
+   case EM_LOONGARCH:
+     return "loongarch";
++  case EM_EMEX64:
++    return "emex64";
+   default:
+     return "None";
+   }
+diff --git a/llvm/lib/CodeGen/AtomicExpandPass.cpp b/llvm/lib/CodeGen/AtomicExpandPass.cpp
+index 6985a7a48..4212e8a56 100644
+--- a/llvm/lib/CodeGen/AtomicExpandPass.cpp
++++ b/llvm/lib/CodeGen/AtomicExpandPass.cpp
+@@ -971,9 +971,12 @@ static PartwordMaskValues createMaskInstrs(IRBuilderBase &Builder,
+   }
+ 
+   PMV.ShiftAmt = Builder.CreateTrunc(PMV.ShiftAmt, PMV.WordType, "ShiftAmt");
+   PMV.Mask = Builder.CreateShl(
+-      ConstantInt::get(PMV.WordType, (1 << (ValueSize * 8)) - 1), PMV.ShiftAmt,
+-      "Mask");
++      ConstantInt::get(PMV.WordType,
++                       APInt::getLowBitsSet(MinWordSize * 8, ValueSize * 8)),
++      PMV.ShiftAmt, "Mask");
+ 
+   PMV.Inv_Mask = Builder.CreateNot(PMV.Mask, "Inv_Mask");
+ 
+diff --git a/llvm/lib/CodeGen/TargetLoweringObjectFileImpl.cpp b/llvm/lib/CodeGen/TargetLoweringObjectFileImpl.cpp
+index c7d07c1e4..e94c9fb9e 100644
+--- a/llvm/lib/CodeGen/TargetLoweringObjectFileImpl.cpp
++++ b/llvm/lib/CodeGen/TargetLoweringObjectFileImpl.cpp
+@@ -287,6 +287,7 @@ void TargetLoweringObjectFileELF::Initialize(MCContext &Ctx,
+     break;
+   case Triple::loongarch32:
+   case Triple::loongarch64:
++  case Triple::emex64:
+     LSDAEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
+     PersonalityEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
+                           dwarf::DW_EH_PE_sdata4;
+diff --git a/llvm/lib/Object/ELF.cpp b/llvm/lib/Object/ELF.cpp
+index 5dbdecc99..0b7024d96 100644
+--- a/llvm/lib/Object/ELF.cpp
++++ b/llvm/lib/Object/ELF.cpp
+@@ -183,6 +183,13 @@ StringRef llvm::object::getELFRelocationTypeName(uint32_t Machine,
+       break;
+     }
+     break;
++  case ELF::EM_EMEX64:
++    switch (Type) {
++#include "llvm/BinaryFormat/ELFRelocs/Emex64.def"
++    default:
++      break;
++    }
++    break;
+   default:
+     break;
+   }
+diff --git a/llvm/lib/Object/RelocationResolver.cpp b/llvm/lib/Object/RelocationResolver.cpp
+index f88bb1710..b7f6e503f 100644
+--- a/llvm/lib/Object/RelocationResolver.cpp
++++ b/llvm/lib/Object/RelocationResolver.cpp
+@@ -541,6 +541,39 @@ static uint64_t resolveCSKY(uint64_t Type, uint64_t Offset, uint64_t S,
+   }
+ }
+ 
++static bool supportsEmex64(uint64_t Type) {
++  switch (Type) {
++  case ELF::R_EMEX64_NONE:
++  case ELF::R_EMEX64_ABS64:
++  case ELF::R_EMEX64_ABS32:
++  case ELF::R_EMEX64_PC64:
++  case ELF::R_EMEX64_PC32:
++  case ELF::R_EMEX64_DTPOFF64:
++    return true;
++  default:
++    return false;
++  }
++}
++
++static uint64_t resolveEmex64(uint64_t Type, uint64_t Offset, uint64_t S,
++                              uint64_t LocData, int64_t Addend) {
++  switch (Type) {
++  case ELF::R_EMEX64_NONE:
++    return LocData;
++  case ELF::R_EMEX64_ABS64:
++  case ELF::R_EMEX64_DTPOFF64:
++    return S + Addend;
++  case ELF::R_EMEX64_ABS32:
++    return (S + Addend) & 0xFFFFFFFF;
++  case ELF::R_EMEX64_PC64:
++    return S + Addend - Offset;
++  case ELF::R_EMEX64_PC32:
++    return (S + Addend - Offset) & 0xFFFFFFFF;
++  default:
++    llvm_unreachable("Invalid relocation type");
++  }
++}
++
+ static bool supportsLoongArch(uint64_t Type) {
+   switch (Type) {
+   case ELF::R_LARCH_NONE:
+@@ -826,6 +859,8 @@ getRelocationResolver(const ObjectFile &Obj) {
+         return {supportsBPF, resolveBPF};
+       case Triple::loongarch64:
+         return {supportsLoongArch, resolveLoongArch};
++      case Triple::emex64:
++        return {supportsEmex64, resolveEmex64};
+       case Triple::mips64el:
+       case Triple::mips64:
+         return {supportsMips64, resolveMips64};
+diff --git a/llvm/lib/TargetParser/TargetDataLayout.cpp b/llvm/lib/TargetParser/TargetDataLayout.cpp
+index 18f0c1390..c29a3a6e3 100644
+--- a/llvm/lib/TargetParser/TargetDataLayout.cpp
++++ b/llvm/lib/TargetParser/TargetDataLayout.cpp
+@@ -520,6 +520,17 @@ static std::string computeWebAssemblyDataLayout(const Triple &TT) {
+                                       "i128:128-n32:64-S128-ni:1:10:20");
+ }
+ 
++static std::string computeEmex64DataLayout(const Triple &TT) {
++  return "e"
++         + getManglingComponent(TT).str()
++         + "-p:64:64"
++         "-i64:64"
++         "-i128:128"
++         "-n64"
++         "-S64";
++}
++
+ static std::string computeVEDataLayout(const Triple &T) {
+   // Aurora VE is little endian
+   std::string Ret = "e";
+@@ -649,6 +660,8 @@ std::string Triple::computeDataLayout(StringRef ABIName) const {
+     return computeWebAssemblyDataLayout(*this);
+   case Triple::ve:
+     return computeVEDataLayout(*this);
++  case Triple::emex64:
++    return computeEmex64DataLayout(*this);
+ 
+   case Triple::amdil:
+   case Triple::amdil64:
+diff --git a/llvm/lib/TargetParser/Triple.cpp b/llvm/lib/TargetParser/Triple.cpp
+index 2e4fe7ce7..1223417e5 100644
+--- a/llvm/lib/TargetParser/Triple.cpp
++++ b/llvm/lib/TargetParser/Triple.cpp
+@@ -152,6 +152,8 @@ StringRef Triple::getArchTypeName(ArchType Kind) {
+     return "thumbeb";
+   case ve:
+     return "ve";
++  case emex64:
++    return "emex64";
+   case wasm32:
+     return "wasm32";
+   case wasm64:
+@@ -405,6 +407,8 @@ StringRef Triple::getArchTypePrefix(ArchType Kind) {
+ 
+   case ve:
+     return "ve";
++  case emex64:
++    return "emex64";
+   case csky:
+     return "csky";
+ 
+@@ -569,6 +573,7 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
+       .Case("loongarch64", loongarch64)
+       .Case("dxil", dxil)
+       .Case("xtensa", xtensa)
++      .Cases({"emex64", "la64"}, emex64)
+       .Default(UnknownArch);
+ }
+ 
+@@ -724,6 +729,7 @@ Triple::ArchType Triple::parseArch(StringRef ArchName) {
+                   "dxilv1.9"},
+                  Triple::dxil)
+           .Case("xtensa", Triple::xtensa)
++          .Cases({"la64", "la64e", "emex64", "emex64e"}, Triple::emex64)
+           .Default(Triple::UnknownArch);
+ 
+   // Some architectures require special parsing logic just to compute the
+@@ -1058,6 +1064,9 @@ static Triple::ObjectFormatType getDefaultFormat(const Triple &T) {
+       return Triple::COFF;
+     return Triple::ELF;
+ 
++  case Triple::emex64:
++    return Triple::ELF;
++
+   case Triple::ppc64:
+   case Triple::ppc:
+     if (T.isOSAIX())
+@@ -1842,6 +1851,7 @@ unsigned Triple::getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
+   case llvm::Triple::tcele64:
+   case llvm::Triple::systemz:
+   case llvm::Triple::ve:
++  case llvm::Triple::emex64:
+   case llvm::Triple::wasm64:
+   case llvm::Triple::x86_64:
+     return 64;
+@@ -1890,6 +1900,7 @@ Triple Triple::get32BitArchVariant() const {
+   case Triple::msp430:
+   case Triple::systemz:
+   case Triple::ve:
++  case Triple::emex64:
+     T.setArch(UnknownArch);
+     break;
+ 
+@@ -2037,6 +2048,7 @@ Triple Triple::get64BitArchVariant() const {
+   case Triple::systemz:
+   case Triple::tcele64:
+   case Triple::ve:
++  case Triple::emex64:
+   case Triple::wasm64:
+   case Triple::x86_64:
+     // Already 64-bit.
+@@ -2150,6 +2162,7 @@ Triple Triple::getBigEndianArchVariant() const {
+   case Triple::x86_64:
+   case Triple::xcore:
+   case Triple::ve:
++  case Triple::emex64:
+   case Triple::csky:
+   case Triple::xtensa:
+ 
+@@ -2292,6 +2305,7 @@ bool Triple::isLittleEndian() const {
+   case Triple::tcele64:
+   case Triple::thumb:
+   case Triple::ve:
++  case Triple::emex64:
+   case Triple::wasm32:
+   case Triple::wasm64:
+   case Triple::x86:
+@@ -2541,6 +2555,7 @@ ExceptionHandling Triple::getDefaultExceptionHandling() const {
+   switch (getArch()) {
+   case Triple::arc:
+   case Triple::csky:
++  case Triple::emex64:
+   case Triple::hexagon:
+   case Triple::lanai:
+   case Triple::m68k:
+diff --git a/llvm/tools/llvm-readobj/ELFDumper.cpp b/llvm/tools/llvm-readobj/ELFDumper.cpp
+index bdc3062f3..04a3cbbb8 100644
+--- a/llvm/tools/llvm-readobj/ELFDumper.cpp
++++ b/llvm/tools/llvm-readobj/ELFDumper.cpp
+@@ -1331,6 +1331,7 @@ constexpr EnumStringDef<unsigned, 2> ElfMachineTypeDefs[] = {
+   ENUM_ENT(EM_BPF,           "EM_BPF"),
+   ENUM_ENT(EM_VE,            "NEC SX-Aurora Vector Engine"),
+   ENUM_ENT(EM_LOONGARCH,     "LoongArch"),
++  ENUM_ENT(EM_EMEX64,        "emex64"),
+   ENUM_ENT(EM_INTELGT,       "Intel Graphics Technology"),
+ };
+ // clang-format on
