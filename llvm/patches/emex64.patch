@@ -103,7 +103,7 @@ diff --git a/clang/lib/Driver/ToolChains/Clang.cpp b/clang/lib/Driver/ToolChains
 index db7893c54..2d43b3eeb 100644
 --- a/clang/lib/Driver/ToolChains/Clang.cpp
 +++ b/clang/lib/Driver/ToolChains/Clang.cpp
-@@ -1538,6 +1538,38 @@ void Clang::AddARMTargetArgs(const llvm::Triple &Triple, const ArgList &Args,
+@@ -1538,6 +1538,34 @@ void Clang::AddARMTargetArgs(const llvm::Triple &Triple, const ArgList &Args,
    AddUnalignedAccessWarning(CmdArgs);
  }
  
@@ -138,7 +138,7 @@ index db7893c54..2d43b3eeb 100644
  void Clang::RenderTargetOptions(const llvm::Triple &EffectiveTriple,
                                  const ArgList &Args, bool KernelOrKext,
                                  ArgStringList &CmdArgs) const {
-@@ -1565,6 +1597,10 @@ void Clang::RenderTargetOptions(const llvm::Triple &EffectiveTriple,
+@@ -1565,6 +1593,10 @@ void Clang::RenderTargetOptions(const llvm::Triple &EffectiveTriple,
      AddAArch64TargetArgs(Args, CmdArgs);
      break;
  
@@ -162,7 +162,7 @@ index 08c06951..18780fe0 100644
    case llvm::Triple::x86:
      if (T.isOSIAMCU())
        return "elf_iamcu";
-@@ -758,6 +760,31 @@ std::string tools::getCPUName(const Driver &D, const ArgList &Args,
+@@ -758,6 +760,32 @@ std::string tools::getCPUName(const Driver &D, const ArgList &Args,
        return A->getValue();
      return "";
  
@@ -195,7 +195,7 @@ index 08c06951..18780fe0 100644
    case llvm::Triple::m68k:
      return m68k::getM68kTargetCPU(Args);
  
-@@ -930,6 +957,14 @@ void tools::getTargetFeatures(const Driver &D, const llvm::Triple &Triple,
+@@ -930,6 +958,12 @@ void tools::getTargetFeatures(const Driver &D, const llvm::Triple &Triple,
    case llvm::Triple::loongarch64:
      loongarch::getLoongArchTargetFeatures(D, Triple, Args, Features);
      break;
@@ -212,7 +212,7 @@ diff --git a/clang/lib/Driver/ToolChains/Gnu.cpp b/clang/lib/Driver/ToolChains/G
 index 2fad9327..75601243 100644
 --- a/clang/lib/Driver/ToolChains/Gnu.cpp
 +++ b/clang/lib/Driver/ToolChains/Gnu.cpp
-@@ -2457,6 +2457,14 @@ void Generic_GCC::GCCInstallationDetector::AddDefaultGCCPrefixes(
+@@ -2457,6 +2457,12 @@ void Generic_GCC::GCCInstallationDetector::AddDefaultGCCPrefixes(
    static const char *const RISCV32Triples[] = {"riscv32-unknown-linux-gnu",
                                                 "riscv32-unknown-elf"};
    static const char *const RISCV64LibDirs[] = {"/lib64", "/lib"};
@@ -225,7 +225,7 @@ index 2fad9327..75601243 100644
    static const char *const RISCV64Triples[] = {"riscv64-unknown-linux-gnu",
                                                 "riscv64-unknown-elf"};
  
-@@ -2793,6 +2801,10 @@ void Generic_GCC::GCCInstallationDetector::AddDefaultGCCPrefixes(
+@@ -2793,6 +2799,10 @@ void Generic_GCC::GCCInstallationDetector::AddDefaultGCCPrefixes(
      LibDirs.append(begin(SystemZLibDirs), end(SystemZLibDirs));
      TripleAliases.append(begin(SystemZTriples), end(SystemZTriples));
      break;
@@ -240,7 +240,7 @@ diff --git a/clang/lib/Driver/ToolChains/Linux.cpp b/clang/lib/Driver/ToolChains
 index 8d30a5ea..a9370ba3 100644
 --- a/clang/lib/Driver/ToolChains/Linux.cpp
 +++ b/clang/lib/Driver/ToolChains/Linux.cpp
-@@ -219,6 +219,10 @@ static StringRef getOSLibDir(const llvm::Triple &Triple, const ArgList &Args) {
+@@ -219,6 +219,9 @@ static StringRef getOSLibDir(const llvm::Triple &Triple, const ArgList &Args) {
      }
    }
  
@@ -250,7 +250,7 @@ index 8d30a5ea..a9370ba3 100644
    return Triple.isArch32Bit() ? "lib" : "lib64";
  }
  
-@@ -632,6 +636,10 @@ std::string Linux::getDynamicLinker(const ArgList &Args) const {
+@@ -632,6 +635,10 @@ std::string Linux::getDynamicLinker(const ArgList &Args) const {
      LibDir = "lib";
      Loader = "ld-linux-aarch64.so.1";
      break;
@@ -261,7 +261,7 @@ index 8d30a5ea..a9370ba3 100644
    case llvm::Triple::aarch64_be:
      LibDir = "lib";
      Loader = "ld-linux-aarch64_be.so.1";
-@@ -942,6 +950,10 @@ void Linux::addSYCLIncludeArgs(const ArgList &DriverArgs,
+@@ -942,6 +949,10 @@ void Linux::addSYCLIncludeArgs(const ArgList &DriverArgs,
  }
  
  bool Linux::isPIEDefault(const llvm::opt::ArgList &Args) const {
@@ -284,7 +284,7 @@ index a1179c73c..d3a9633f8 100644
  
  #if defined(_LIBUNWIND_IS_NATIVE_ONLY)
  # if defined(__linux__)
-@@ -183,6 +184,14 @@
+@@ -183,6 +184,12 @@
  #endif
  #define _LIBUNWIND_HIGHEST_DWARF_REGISTER                                      \
    _LIBUNWIND_HIGHEST_DWARF_REGISTER_LOONGARCH
@@ -297,7 +297,7 @@ index a1179c73c..d3a9633f8 100644
  #elif defined(__wasm__)
  // Unused
  #define _LIBUNWIND_CONTEXT_SIZE 0
-@@ -207,6 +216,7 @@
+@@ -207,6 +214,7 @@
  # define _LIBUNWIND_TARGET_VE 1
  # define _LIBUNWIND_TARGET_S390X 1
  # define _LIBUNWIND_TARGET_LOONGARCH 1
@@ -309,7 +309,7 @@ diff --git a/libunwind/include/libunwind.h b/libunwind/include/libunwind.h
 index 6c2dfe58e..bc2333550 100644
 --- a/libunwind/include/libunwind.h
 +++ b/libunwind/include/libunwind.h
-@@ -1406,4 +1406,56 @@ enum {
+@@ -1406,4 +1406,55 @@ enum {
    UNW_LOONGARCH_F31 = 63,
  };
  
@@ -377,7 +377,7 @@ index c88422a6d..25ab996f5 100644
  };
  
  #if defined(_LIBUNWIND_TARGET_I386)
-@@ -5545,6 +5546,129 @@ inline void Registers_loongarch::setVectorRegister(int, v128) {
+@@ -5545,6 +5546,124 @@ inline void Registers_loongarch::setVectorRegister(int, v128) {
  }
  #endif //_LIBUNWIND_TARGET_LOONGARCH
  
@@ -547,7 +547,7 @@ diff --git a/libunwind/src/UnwindRegistersRestore.S b/libunwind/src/UnwindRegist
 index 37e815640..797cdbdf1 100644
 --- a/libunwind/src/UnwindRegistersRestore.S
 +++ b/libunwind/src/UnwindRegistersRestore.S
-@@ -1308,6 +1308,39 @@ DEFINE_LIBUNWIND_FUNCTION(_ZN9libunwind19Registers_loongarch6jumptoEv)
+@@ -1308,6 +1308,32 @@ DEFINE_LIBUNWIND_FUNCTION(_ZN9libunwind19Registers_loongarch6jumptoEv)
  
    jr      $ra
  
@@ -584,7 +584,7 @@ diff --git a/libunwind/src/UnwindRegistersSave.S b/libunwind/src/UnwindRegisters
 index f44f6a133..4382d2d8c 100644
 --- a/libunwind/src/UnwindRegistersSave.S
 +++ b/libunwind/src/UnwindRegistersSave.S
-@@ -1327,6 +1327,43 @@ DEFINE_LIBUNWIND_FUNCTION(__unw_getcontext)
+@@ -1327,6 +1327,32 @@ DEFINE_LIBUNWIND_FUNCTION(__unw_getcontext)
    move     $a0, $zero  // UNW_ESUCCESS
    jr       $ra
  
@@ -621,7 +621,7 @@ diff --git a/libunwind/src/assembly.h b/libunwind/src/assembly.h
 index 84c9d526f..306c1ef17 100644
 --- a/libunwind/src/assembly.h
 +++ b/libunwind/src/assembly.h
-@@ -63,6 +63,9 @@
+@@ -63,6 +63,8 @@
  #  endif
  # endif
  # define SEPARATOR ;
@@ -708,7 +708,7 @@ diff --git a/lld/ELF/InputSection.cpp b/lld/ELF/InputSection.cpp
 index c78800787..6c8d18272 100644
 --- a/lld/ELF/InputSection.cpp
 +++ b/lld/ELF/InputSection.cpp
-@@ -778,6 +778,9 @@ static int64_t getTlsTpOffset(Ctx &ctx, const Symbol &s) {
+@@ -778,6 +778,7 @@ static int64_t getTlsTpOffset(Ctx &ctx, const Symbol &s) {
      // to allow a signed 16-bit offset to reach 0x1000 of TCB/thread-library
      // data and 0xf000 of the program's TLS segment.
      return s.getVA(ctx, 0) + (tls->p_vaddr & (tls->p_align - 1)) - 0x7000;
@@ -778,7 +778,7 @@ index 3f1889f23..5cac089ba 100644
  };
  
  // Object file classes.
-@@ -1103,6 +1104,11 @@ enum {
+@@ -1103,6 +1104,10 @@ enum {
  #include "ELFRelocs/Xtensa.def"
  };
  
@@ -793,7 +793,7 @@ diff --git a/llvm/include/llvm/IR/RuntimeLibcalls.td b/llvm/include/llvm/IR/Runt
 index d5f38b967..b31f02806 100644
 --- a/llvm/include/llvm/IR/RuntimeLibcalls.td
 +++ b/llvm/include/llvm/IR/RuntimeLibcalls.td
-@@ -2659,6 +2659,22 @@ def LanaiSystemLibrary
+@@ -2659,6 +2659,20 @@ def LanaiSystemLibrary
    let DefaultLibcallCallingConv = FASTCC;
  }
  
@@ -851,7 +851,7 @@ index c5af23252..dba7be104 100644
    };
    enum SubArchType {
      NoSubArch,
-@@ -1214,6 +1215,13 @@ public:
+@@ -1214,6 +1215,11 @@ public:
    // Tests whether the target is CSKY
    bool isCSKY() const { return getArch() == Triple::csky; }
  
@@ -897,7 +897,7 @@ diff --git a/llvm/lib/CodeGen/AtomicExpandPass.cpp b/llvm/lib/CodeGen/AtomicExpa
 index 6985a7a48..4212e8a56 100644
 --- a/llvm/lib/CodeGen/AtomicExpandPass.cpp
 +++ b/llvm/lib/CodeGen/AtomicExpandPass.cpp
-@@ -971,9 +971,12 @@ static PartwordMaskValues createMaskInstrs(IRBuilderBase &Builder,
+@@ -971,9 +971,10 @@ static PartwordMaskValues createMaskInstrs(IRBuilderBase &Builder,
    }
  
    PMV.ShiftAmt = Builder.CreateTrunc(PMV.ShiftAmt, PMV.WordType, "ShiftAmt");
@@ -997,7 +997,7 @@ diff --git a/llvm/lib/TargetParser/TargetDataLayout.cpp b/llvm/lib/TargetParser/
 index 18f0c1390..c29a3a6e3 100644
 --- a/llvm/lib/TargetParser/TargetDataLayout.cpp
 +++ b/llvm/lib/TargetParser/TargetDataLayout.cpp
-@@ -520,6 +520,17 @@ static std::string computeWebAssemblyDataLayout(const Triple &TT) {
+@@ -520,6 +520,16 @@ static std::string computeWebAssemblyDataLayout(const Triple &TT) {
                                        "i128:128-n32:64-S128-ni:1:10:20");
  }
  
@@ -1014,7 +1014,7 @@ index 18f0c1390..c29a3a6e3 100644
  static std::string computeVEDataLayout(const Triple &T) {
    // Aurora VE is little endian
    std::string Ret = "e";
-@@ -649,6 +660,8 @@ std::string Triple::computeDataLayout(StringRef ABIName) const {
+@@ -649,6 +659,8 @@ std::string Triple::computeDataLayout(StringRef ABIName) const {
      return computeWebAssemblyDataLayout(*this);
    case Triple::ve:
      return computeVEDataLayout(*this);
