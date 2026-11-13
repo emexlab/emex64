@@ -37,7 +37,7 @@
 #define CPUID_BRAND_SIZE        64
 
 #define EMEX64_CPU_VENDOR       "emexLabs"
-#define EMEX64_CPU_BRAND        "emex64e-2050"
+#define EMEX64_CPU_BRAND        "emex64e-2100"
 
 UInt64 emex64_cpuid_read(E64CoreRef core, void *device, UInt64 offset, EFSize size);
 

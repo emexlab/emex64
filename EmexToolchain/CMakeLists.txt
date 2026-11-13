@@ -127,6 +127,9 @@ add_library(EmexToolchain ${LIB_TYPE}
             src/VM/device/board/pcie/usb_msc.c
             src/VM/device/board/pcie/gpu.c
             src/VM/device/board/pcie/net.c
+            src/VM/device/board/pcie/sb16.c
+            src/VM/device/board/sound.c
+            src/VM/device/board/opl3/opl3.c
 
     # Assembler API
     src/ETAssembler/ETAssemblerOptions.c
@@ -241,6 +244,10 @@ endif()
 
 if(EMEX64VM_NET)
     target_link_libraries(EmexToolchain PRIVATE PkgConfig::SLIRP)
+endif()
+
+if(APPLE)
+    target_link_libraries(EmexToolchain PRIVATE "-framework AudioToolbox" "-framework CoreFoundation")
 endif()
 
 if(EMEX64VM_DEVICE_DISPLAY)

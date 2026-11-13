@@ -42,6 +42,7 @@ typedef union {
 } FPReg;
 
 #define EMEX64_PAC_CACHE_ENTRIES 128
+#define EMEX64_FAST_PAGES 64
 
 typedef struct emex64_pac_cache_entry {
     UInt64 key;
@@ -49,6 +50,13 @@ typedef struct emex64_pac_cache_entry {
     UInt64 modifier;
     UInt64 signature;
 } emex64_pac_cache_entry_t;
+
+typedef struct emex64_fast_page {
+    UInt64 key;
+    UInt64 ppage;
+    UInt64 map_seq;
+    UInt64 tlb_seq;
+} emex64_fast_page_t;
 
 static inline UInt64 emex64_pac_cache_index(UInt64 ptr, UInt64 modifier)
 {
@@ -104,8 +112,11 @@ typedef struct __E64Core {
          * immediate, etc.
          */
         UInt8 param_cnt;
-        UInt64 *param[EMEX64_MAX_ARGS];
-        E64ParameterCoding param_coding[EMEX64_MAX_ARGS];
+        UInt64 **param;
+        E64ParameterCoding *param_coding;
+        const emex64_icache_entry_t *ce;
+        UInt64 *param_store[EMEX64_MAX_ARGS];
+        E64ParameterCoding coding_store[EMEX64_MAX_ARGS];
     } op;
 
     /*
@@ -189,6 +200,18 @@ typedef struct __E64Core {
     /* pointer back to machine */
     E64MachineRef machine;
 
+    struct {
+        UInt64 vpage;
+        UInt64 ppage;
+        UInt64 map_seq;
+        UInt64 context;
+    } fetch;
+
+    emex64_fast_page_t pages[2][EMEX64_FAST_PAGES];
+    UInt64 tlb_seq;
+
+    Boolean run_break;
+
     /* more caching */
     emex64_tlb_t tlb;
     emex64_icache_entry_t *icache;
@@ -230,6 +253,18 @@ typedef struct emex64_opfunc_entry {
 } emex64_opfunc_entry_t;
 
 extern const emex64_opfunc_entry_t kE64OpfuncTable[];
+
+static inline void emex64_core_context_changed(__E64Core core)
+{
+    core->fetch.vpage = ~0ULL;
+    core->run_break = true;
+}
+
+static inline void emex64_core_tlb_changed(__E64Core core)
+{
+    core->tlb_seq++;
+    emex64_core_context_changed(core);
+}
 
 void __E64CoreWritePageTableBase(__E64Core core, UInt64 value);
 struct __E64Machine;

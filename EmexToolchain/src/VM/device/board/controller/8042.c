@@ -302,11 +302,11 @@ void emex64_8042_send_mouse(emex64_8042_t *dev,
     {
         pthread_mutex_lock(&dev->lock);
 
-        SInt32 next = (dev->mouse_tail + 1) % 64;
+        SInt32 next = (dev->mouse_tail + 1) % EMEX64_8042_MOUSE_BUFFER;
 
         if(next == dev->mouse_head)
         {
-            dev->mouse_head = (dev->mouse_head + 1) % 64;
+            dev->mouse_head = (dev->mouse_head + 3) % EMEX64_8042_MOUSE_BUFFER;
         }
 
         dev->mouse_buf[dev->mouse_tail] = byte;
@@ -339,7 +339,7 @@ UInt64 emex64_8042_read(E64CoreRef core,
         else if(dev->mouse_head != dev->mouse_tail)
         {
             val = dev->mouse_buf[dev->mouse_head];
-            dev->mouse_head = (dev->mouse_head + 1) % 64;
+            dev->mouse_head = (dev->mouse_head + 1) % EMEX64_8042_MOUSE_BUFFER;
         }
 
         update_8042_interrupt(dev);

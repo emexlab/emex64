@@ -38,6 +38,8 @@ typedef struct emex64_snoop {
     UInt32 *gen;
     UInt64 chunks;
     UInt64 tlb_epoch;
+    UInt64 code_seq;
+    UInt64 map_seq;
     UInt64 scan_lo;
     UInt64 scan_hi;
     Boolean ktrr_locked;
@@ -80,6 +82,14 @@ static inline void emex64_snoop_write(emex64_snoop_t *snoop,
             if(f & EMEX64_CHUNK_PAGE_TABLE)
             {
                 __atomic_fetch_add(&snoop->tlb_epoch, 1, __ATOMIC_ACQ_REL);
+            }
+            if(f & EMEX64_CHUNK_CODE)
+            {
+                __atomic_fetch_add(&snoop->code_seq, 1, __ATOMIC_ACQ_REL);
+            }
+            if(f & (EMEX64_CHUNK_PTE | EMEX64_CHUNK_PAGE_TABLE))
+            {
+                __atomic_fetch_add(&snoop->map_seq, 1, __ATOMIC_ACQ_REL);
             }
             if(f & EMEX64_CHUNK_SCANOUT)
             {
@@ -156,7 +166,42 @@ static inline emex64_tlb_entry_t *emex64_tlb_lookup(emex64_tlb_t *tlb,
 }
 
 /* now things go hella faaaassstt :3c */
-#define EMEX64_ICACHE_ENTRIES       8192
+typedef enum: UInt8 {
+    kE64FastNone = 0,
+    kE64FastMov,
+    kE64FastAdd,
+    kE64FastSub,
+    kE64FastMul,
+    kE64FastAnd,
+    kE64FastOr,
+    kE64FastXor,
+    kE64FastShl,
+    kE64FastShr,
+    kE64FastCmp,
+    kE64FastBranch,
+    kE64FastBranchFlags,
+    kE64FastBranchZero,
+    kE64FastBranchNotZero,
+    kE64FastBranchEqual,
+    kE64FastBranchNotEqual,
+    kE64FastBranchLess,
+    kE64FastBranchGreaterEqual,
+    kE64FastBranchLessUnsigned,
+    kE64FastBranchGreaterEqualUnsigned,
+    kE64FastLoad8,
+    kE64FastLoad16,
+    kE64FastLoad32,
+    kE64FastLoad64,
+    kE64FastLoadSigned8,
+    kE64FastLoadSigned16,
+    kE64FastLoadSigned32,
+    kE64FastStore8,
+    kE64FastStore16,
+    kE64FastStore32,
+    kE64FastStore64,
+} E64Fast;
+
+#define EMEX64_ICACHE_ENTRIES       262144
 #define EMEX64_ICACHE_ARGS          8
 
 typedef enum: UInt8 {
@@ -167,6 +212,7 @@ typedef enum: UInt8 {
     kE64OperandRegDec,
     kE64OperandOffset,
     kE64OperandRegFloat,
+    kE64OperandOffsetRegImm,
 } E64OperandKind;
 
 typedef struct emex64_operand_recipe {
@@ -183,21 +229,32 @@ typedef struct emex64_operand_recipe {
 } emex64_operand_recipe_t;
 
 struct emex64_opfunc_entry;
+struct __E64Core;
 
 typedef struct emex64_icache_entry {
     UInt64 paddr;
+    UInt64 code_seq;
     UInt32 gen_first;
     UInt32 gen_last;
-    const struct emex64_opfunc_entry *opce;
+    UInt8 fast;
+    UInt8 cf_mask;
+    Boolean cf_invert;
     UInt8 ilen;
     UInt8 opcode;
     UInt8 param_cnt;
     Boolean rollback;
     Boolean save_erl;
-    UInt16 save_rl;
     UInt8 dyn_cnt;
-    UInt8 dyn[EMEX64_ICACHE_ARGS];
+    UInt16 save_rl;
+    UInt64 *q[3];
+    SInt64 rel;
+
+    struct emex64_icache_entry *seq;
+    struct emex64_icache_entry *target;
+
+    const struct emex64_opfunc_entry *opce;
     UInt64 *param[EMEX64_ICACHE_ARGS];
+    UInt8 dyn[EMEX64_ICACHE_ARGS];
     E64ParameterCoding param_coding[16];
     emex64_operand_recipe_t operands[EMEX64_ICACHE_ARGS];
 } emex64_icache_entry_t;

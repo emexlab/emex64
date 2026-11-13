@@ -190,7 +190,22 @@ typedef enum: UInt8 {
     kE64OpcodeSWPADDD = 0b10001001,
     kE64OpcodeTLBI =    0b10001010,
 
-    kE64OpcodeMAX = kE64OpcodeTLBI,
+    /* ISA v21 (32bit arithmetic update) */
+    kE64OpcodeADDD =    0b10001011,
+    kE64OpcodeIADDD =   0b10001100,
+    kE64OpcodeSUBD =    0b10001101,
+    kE64OpcodeISUBD =   0b10001110,
+    kE64OpcodeMULD =    0b10001111,
+    kE64OpcodeIMULD =   0b10010000,
+    kE64OpcodeSHLD =    0b10010001,
+    kE64OpcodeISHLD =   0b10010010,
+    kE64OpcodeSHRD =    0b10010011,
+    kE64OpcodeSARD =    0b10010100,
+    kE64OpcodeDIVD =    0b10010101,
+    kE64OpcodeIDIVD =   0b10010110,
+    kE64OpcodeMODD =    0b10010111,
+
+    kE64OpcodeMAX = kE64OpcodeMODD,
 
     kE64OpcodeInvalid =  0b11111111,
 } E64Opcode;

@@ -25,6 +25,7 @@
 #include <EmexToolchain/VM/instruction/data.h>
 #include <EmexToolchain/VM/E64Machine.h>
 #include <EmexToolchain/VM/E64Memory.h>
+#include <EmexToolchain/VM/__E64FastMem.h>
 #include <EmexToolchain/Support/likely.h>
 
 void emex64_op_mov(E64CoreRef core)
@@ -49,7 +50,10 @@ void emex64_op_push(E64CoreRef core)
 {
     for(UInt8 i = 0; i < core->op.param_cnt; i++)
     {
-        E64MemoryCoreAction(core->machine->memory, core, core->rl[kE64RegisterSP], sizeof(UInt64), core->op.param[i], kE64MemoryActionTypeWrite);
+        if(unlikely(!emex64_fast_store(core, core->rl[kE64RegisterSP], sizeof(UInt64), *(core->op.param[i]))))
+        {
+            E64MemoryCoreAction(core->machine->memory, core, core->rl[kE64RegisterSP], sizeof(UInt64), core->op.param[i], kE64MemoryActionTypeWrite);
+        }
         core->rl[kE64RegisterSP] -= 8;
     }
 }
@@ -59,48 +63,102 @@ void emex64_op_pop(E64CoreRef core)
     for(UInt8 i = 0; i < core->op.param_cnt; i++)
     {
         core->rl[kE64RegisterSP] += 8;
+        UInt64 value;
+        if(likely(emex64_fast_load(core, core->rl[kE64RegisterSP], sizeof(UInt64), &value)))
+        {
+            *(core->op.param[i]) = value;
+            continue;
+        }
         E64MemoryCoreAction(core->machine->memory, core, core->rl[kE64RegisterSP], sizeof(UInt64), core->op.param[i], kE64MemoryActionTypeRead);
     }
 }
 
 void emex64_op_ldb(E64CoreRef core)
 {
-    E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), sizeof(UInt8), core->op.param[0], kE64MemoryActionTypeRead);
+    UInt64 **param = core->op.param;
+    UInt64 value;
+    if(likely(emex64_fast_load(core, *(param[1]), sizeof(UInt8), &value)))
+    {
+        *(param[0]) = value;
+        return;
+    }
+    E64MemoryCoreAction(core->machine->memory, core, *(param[1]), sizeof(UInt8), param[0], kE64MemoryActionTypeRead);
 }
 
 void emex64_op_ldw(E64CoreRef core)
 {
-    E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), sizeof(UInt16), core->op.param[0], kE64MemoryActionTypeRead);
+    UInt64 **param = core->op.param;
+    UInt64 value;
+    if(likely(emex64_fast_load(core, *(param[1]), sizeof(UInt16), &value)))
+    {
+        *(param[0]) = value;
+        return;
+    }
+    E64MemoryCoreAction(core->machine->memory, core, *(param[1]), sizeof(UInt16), param[0], kE64MemoryActionTypeRead);
 }
 
 void emex64_op_ldd(E64CoreRef core)
 {
-    E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), sizeof(UInt32), core->op.param[0], kE64MemoryActionTypeRead);
+    UInt64 **param = core->op.param;
+    UInt64 value;
+    if(likely(emex64_fast_load(core, *(param[1]), sizeof(UInt32), &value)))
+    {
+        *(param[0]) = value;
+        return;
+    }
+    E64MemoryCoreAction(core->machine->memory, core, *(param[1]), sizeof(UInt32), param[0], kE64MemoryActionTypeRead);
 }
 
 void emex64_op_ldq(E64CoreRef core)
 {
-    E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), sizeof(UInt64), core->op.param[0], kE64MemoryActionTypeRead);
+    UInt64 **param = core->op.param;
+    UInt64 value;
+    if(likely(emex64_fast_load(core, *(param[1]), sizeof(UInt64), &value)))
+    {
+        *(param[0]) = value;
+        return;
+    }
+    E64MemoryCoreAction(core->machine->memory, core, *(param[1]), sizeof(UInt64), param[0], kE64MemoryActionTypeRead);
 }
 
 void emex64_op_stb(E64CoreRef core)
 {
-    E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[0]), sizeof(UInt8), core->op.param[1], kE64MemoryActionTypeWrite);
+    UInt64 **param = core->op.param;
+    if(likely(emex64_fast_store(core, *(param[0]), sizeof(UInt8), *(param[1]))))
+    {
+        return;
+    }
+    E64MemoryCoreAction(core->machine->memory, core, *(param[0]), sizeof(UInt8), param[1], kE64MemoryActionTypeWrite);
 }
 
 void emex64_op_stw(E64CoreRef core)
 {
-    E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[0]), sizeof(UInt16), core->op.param[1], kE64MemoryActionTypeWrite);
+    UInt64 **param = core->op.param;
+    if(likely(emex64_fast_store(core, *(param[0]), sizeof(UInt16), *(param[1]))))
+    {
+        return;
+    }
+    E64MemoryCoreAction(core->machine->memory, core, *(param[0]), sizeof(UInt16), param[1], kE64MemoryActionTypeWrite);
 }
 
 void emex64_op_std(E64CoreRef core)
 {
-    E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[0]), sizeof(UInt32), core->op.param[1], kE64MemoryActionTypeWrite);
+    UInt64 **param = core->op.param;
+    if(likely(emex64_fast_store(core, *(param[0]), sizeof(UInt32), *(param[1]))))
+    {
+        return;
+    }
+    E64MemoryCoreAction(core->machine->memory, core, *(param[0]), sizeof(UInt32), param[1], kE64MemoryActionTypeWrite);
 }
 
 void emex64_op_stq(E64CoreRef core)
 {
-    E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[0]), sizeof(UInt64), core->op.param[1], kE64MemoryActionTypeWrite);
+    UInt64 **param = core->op.param;
+    if(likely(emex64_fast_store(core, *(param[0]), sizeof(UInt64), *(param[1]))))
+    {
+        return;
+    }
+    E64MemoryCoreAction(core->machine->memory, core, *(param[0]), sizeof(UInt64), param[1], kE64MemoryActionTypeWrite);
 }
 
 void emex64_op_clr(E64CoreRef core)
@@ -111,13 +169,17 @@ void emex64_op_clr(E64CoreRef core)
     }
 }
 
-static Boolean emex64_cr_write(E64CoreRef core, UInt8 cr_select, UInt64 cr_value)
+static Boolean emex64_cr_write(E64CoreRef core,
+                               UInt8 cr_select,
+                               UInt64 cr_value)
 {
     if(core->cr_state.crel.level < kE64ElevationLevelKernel)
     {
         core->cr_state.crexc.exception = kE64ExceptionPermission;
         return false;
     }
+
+    emex64_core_context_changed(core);
 
     switch(cr_select)
     {
@@ -197,7 +259,9 @@ static Boolean emex64_cr_write(E64CoreRef core, UInt8 cr_select, UInt64 cr_value
     return true;
 }
 
-static Boolean emex64_cr_read(E64CoreRef core, UInt8 cr_select, UInt64 *cr_recv)
+static Boolean emex64_cr_read(E64CoreRef core,
+                              UInt8 cr_select,
+                              UInt64 *cr_recv)
 {
     Boolean kernel = core->cr_state.crel.level >= kE64ElevationLevelKernel;
 
@@ -530,11 +594,14 @@ void emex64_op_rdtime(E64CoreRef core)
     *(core->op.param[0]) = value;
 }
 
-static inline void emex64_load_signed(E64CoreRef core,
-                                      UInt64 size)
+static inline __attribute__((always_inline)) void emex64_load_signed(E64CoreRef core,
+                                                                     UInt64 size)
 {
     UInt64 value = 0;
-    E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), size, &value, kE64MemoryActionTypeRead);
+    if(unlikely(!emex64_fast_load(core, *(core->op.param[1]), size, &value)))
+    {
+        E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), size, &value, kE64MemoryActionTypeRead);
+    }
     if(likely(core->cr_state.crexc.exception == kE64ExceptionNone))
     {
         unsigned shift = 64 - (unsigned)size * 8;

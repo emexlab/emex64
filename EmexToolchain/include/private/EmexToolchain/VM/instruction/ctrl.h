@@ -26,6 +26,7 @@
 #include <EmexToolchain/VM/E64Machine.h>
 #include <EmexToolchain/VM/E64Core.h>
 #include <EmexToolchain/VM/E64Memory.h>
+#include <EmexToolchain/VM/__E64FastMem.h>
 
 void emex64_op_b(__E64Core core);
 void emex64_op_cmp(__E64Core core);
@@ -45,9 +46,31 @@ void emex64_op_iret(__E64Core core);
 void emex64_op_bl(__E64Core core);
 void emex64_op_ret(__E64Core core);
 
+static inline UInt64 emex64_branch_pc(UInt64 pc,
+                                      UInt64 v,
+                                      E64ParameterCoding coding)
+{
+    switch(coding)
+    {
+        case kE64ParameterCodingImm4:
+            return pc + ((SInt8)(v << 4) >> 4);
+        case kE64ParameterCodingImm8:
+            return pc + (SInt8)v;
+        case kE64ParameterCodingImm16:
+            return pc + (SInt16)v;
+        case kE64ParameterCodingImm32:
+            return pc + (SInt32)v;
+        default:
+            return v;
+    }
+}
+
 static inline void emex64_push_il(__E64Core core, UInt64 value)
 {
-    E64MemoryCoreAction(core->machine->memory, core, core->rl[kE64RegisterSP], sizeof(UInt64), &value, kE64MemoryActionTypeWrite);
+    if(unlikely(!emex64_fast_store(core, core->rl[kE64RegisterSP], sizeof(UInt64), value)))
+    {
+        E64MemoryCoreAction(core->machine->memory, core, core->rl[kE64RegisterSP], sizeof(UInt64), &value, kE64MemoryActionTypeWrite);
+    }
     core->rl[kE64RegisterSP] -= 8;
 }
 
@@ -56,7 +79,10 @@ static inline UInt64 emex64_pop_il(__E64Core core)
     core->rl[kE64RegisterSP] += 8;
 
     UInt64 value = 0;
-    E64MemoryCoreAction(core->machine->memory, core, core->rl[kE64RegisterSP], sizeof(UInt64), &value, kE64MemoryActionTypeRead);
+    if(unlikely(!emex64_fast_load(core, core->rl[kE64RegisterSP], sizeof(UInt64), &value)))
+    {
+        E64MemoryCoreAction(core->machine->memory, core, core->rl[kE64RegisterSP], sizeof(UInt64), &value, kE64MemoryActionTypeRead);
+    }
     return value;
 }
 

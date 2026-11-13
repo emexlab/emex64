@@ -24,25 +24,6 @@
 #include <EmexToolchain/VM/E64Machine.h>
 #include <EmexToolchain/Support/likely.h>
 
-static inline UInt64 emex64_branch_pc(UInt64 pc,
-                                      UInt64 v,
-                                      E64ParameterCoding coding)
-{
-    switch(coding)
-    {
-        case kE64ParameterCodingImm4:
-            return pc + ((SInt8)(v << 4) >> 4);
-        case kE64ParameterCodingImm8:
-            return pc + (SInt8)v;
-        case kE64ParameterCodingImm16:
-            return pc + (SInt16)v;
-        case kE64ParameterCodingImm32:
-            return pc + (SInt32)v;
-        default:
-            return v;
-    }
-}
-
 void emex64_op_b(__E64Core core)
 {
     core->op.ilen = 0;
@@ -217,6 +198,7 @@ void emex64_op_iret(__E64Core core)
     core->machine->intc->current_irq = -1;
     core->in_interrupt = false;
     core->halted = false;
+    emex64_core_context_changed(core);
 }
 
 void emex64_op_bl(__E64Core core)
@@ -519,9 +501,11 @@ void emex64_op_tlbi(__E64Core core)
         return;
     }
 
+    emex64_core_tlb_changed(core);
     if(core->op.param_cnt == 0)
     {
         __atomic_fetch_add(&core->snoop->tlb_epoch, 1, __ATOMIC_ACQ_REL);
+        __atomic_fetch_add(&core->snoop->map_seq, 1, __ATOMIC_ACQ_REL);
         return;
     }
 
@@ -584,4 +568,6 @@ void emex64_op_eret(__E64Core core)
     core->cr_state.crel.level = level;
     core->rl[kE64RegisterPC] = core->cr_state.crepc;
     core->op.ilen = 0;
+
+    emex64_core_context_changed(core);
 }

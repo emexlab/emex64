@@ -37,8 +37,9 @@
 #include <EmexToolchain/VM/device/board/pcie/usb.h>
 #include <EmexToolchain/VM/device/board/pcie/gpu.h>
 #include <EmexToolchain/VM/device/board/pcie/net.h>
+#include <EmexToolchain/VM/device/board/pcie/sb16.h>
 
-#define E64_MACHINE_MAX_CORES 64
+#define E64_MACHINE_MAX_CORES 16
 
 typedef struct __E64Machine {
     EFObject header;
@@ -64,6 +65,7 @@ typedef struct __E64Machine {
     emex64_usb_t *usb;
     emex64_gpu_t *gpu;
     emex64_net_t *net;
+    emex64_sb16_t *sb16;
     struct emex64_nvram *nvram;
     Boolean embedded;
     E64MachineHost host;

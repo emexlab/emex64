@@ -572,6 +572,8 @@ void E64MemoryReset(E64MemoryRef memoryRef)
         memory->snoop.gen[c]++;
     }
     memory->snoop.tlb_epoch++;
+    memory->snoop.code_seq++;
+    memory->snoop.map_seq++;
     memory->snoop.scan_lo = UINT64_MAX;
     memory->snoop.scan_hi = 0;
 }
@@ -703,6 +705,8 @@ void E64MemoryCoreAction(E64MemoryRef memoryRef,
      */
     if(addr >> 53)
     {
+        emex64_core_context_changed(core);
+
         if(unlikely(addr >> 54))
         {
             emex64_memory_fault(core, kE64ExceptionBadAccess, addr, actionType);
@@ -813,8 +817,14 @@ void E64MemoryCoreAction(E64MemoryRef memoryRef,
             case kE64MemoryActionTypePageDirectory:
             case kE64MemoryActionTypeExecute:
             case kE64MemoryActionTypeRead:
+                lo_val = 0;
+                hi_val = 0;
                 E64MemoryCoreAction(memoryRef, core, addr, lo_size, &lo_val, actionType);
                 E64MemoryCoreAction(memoryRef, core, page_end, hi_size, &hi_val, actionType);
+                if(unlikely(core->cr_state.crexc.exception != kE64ExceptionNone && emex64_traps_enabled(core)))
+                {
+                    return;
+                }
                 *value = lo_val | (hi_val << hi_shift);
                 return;
             case kE64MemoryActionTypeWrite:

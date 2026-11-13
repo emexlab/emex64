@@ -54,6 +54,9 @@ E64MachineOptions E64MachineOptionsDefault = {
     .keyboardPeripheralMode = kE64PeripheralModeOff,
     .mousePeripheralMode = kE64PeripheralModeOff,
     #endif /* EMEX64VM_DEVICE_DISPLAY */
+    .soundOptions = {
+        .enabled = true,
+    },
     .memoryLength = 100 * 1024 * 1024,
     .coreCount = 4,
 };

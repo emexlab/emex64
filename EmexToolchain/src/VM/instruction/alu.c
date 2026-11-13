@@ -312,3 +312,94 @@ void emex64_op_dec(__E64Core core)
         (*core->op.param[i])--;
     }
 }
+
+#define EMEX64_DW_A         ((UInt32)*(core->op.param[core->op.param_cnt - 2]))
+#define EMEX64_DW_B         ((UInt32)*(core->op.param[core->op.param_cnt - 1]))
+#define EMEX64_DW_ZEXT(v)   ((UInt64)(UInt32)(v))
+#define EMEX64_DW_SEXT(v)   ((UInt64)(SInt64)(SInt32)(UInt32)(v))
+
+void emex64_op_addd(__E64Core core)
+{
+    *(core->op.param[0]) = EMEX64_DW_ZEXT(EMEX64_DW_A + EMEX64_DW_B);
+}
+
+void emex64_op_iaddd(__E64Core core)
+{
+    *(core->op.param[0]) = EMEX64_DW_SEXT(EMEX64_DW_A + EMEX64_DW_B);
+}
+
+void emex64_op_subd(__E64Core core)
+{
+    *(core->op.param[0]) = EMEX64_DW_ZEXT(EMEX64_DW_A - EMEX64_DW_B);
+}
+
+void emex64_op_isubd(__E64Core core)
+{
+    *(core->op.param[0]) = EMEX64_DW_SEXT(EMEX64_DW_A - EMEX64_DW_B);
+}
+
+void emex64_op_muld(__E64Core core)
+{
+    *(core->op.param[0]) = EMEX64_DW_ZEXT(EMEX64_DW_A * EMEX64_DW_B);
+}
+
+void emex64_op_imuld(__E64Core core)
+{
+    *(core->op.param[0]) = EMEX64_DW_SEXT(EMEX64_DW_A * EMEX64_DW_B);
+}
+
+void emex64_op_shld(__E64Core core)
+{
+    *(core->op.param[0]) = EMEX64_DW_ZEXT((UInt64)EMEX64_DW_A << (*(core->op.param[core->op.param_cnt - 1]) & 63));
+}
+
+void emex64_op_ishld(__E64Core core)
+{
+    *(core->op.param[0]) = EMEX64_DW_SEXT((UInt64)EMEX64_DW_A << (*(core->op.param[core->op.param_cnt - 1]) & 63));
+}
+
+void emex64_op_shrd(__E64Core core)
+{
+    *(core->op.param[0]) = EMEX64_DW_ZEXT((UInt64)EMEX64_DW_A >> (*(core->op.param[core->op.param_cnt - 1]) & 63));
+}
+
+void emex64_op_sard(__E64Core core)
+{
+    *(core->op.param[0]) = EMEX64_DW_SEXT((SInt64)(SInt32)EMEX64_DW_A >> (*(core->op.param[core->op.param_cnt - 1]) & 63));
+}
+
+void emex64_op_divd(__E64Core core)
+{
+    UInt32 a = EMEX64_DW_A;
+    UInt32 b = EMEX64_DW_B;
+    if(b == 0)
+    {
+        core->cr_state.crexc.exception = kE64ExceptionBadArithmetic;
+        return;
+    }
+    *(core->op.param[0]) = EMEX64_DW_ZEXT(a / b);
+}
+
+void emex64_op_idivd(__E64Core core)
+{
+    SInt64 a = (SInt32)EMEX64_DW_A;
+    SInt64 b = (SInt32)EMEX64_DW_B;
+    if(b == 0)
+    {
+        core->cr_state.crexc.exception = kE64ExceptionBadArithmetic;
+        return;
+    }
+    *(core->op.param[0]) = EMEX64_DW_SEXT(a / b);
+}
+
+void emex64_op_modd(__E64Core core)
+{
+    UInt32 a = EMEX64_DW_A;
+    UInt32 b = EMEX64_DW_B;
+    if(b == 0)
+    {
+        core->cr_state.crexc.exception = kE64ExceptionBadArithmetic;
+        return;
+    }
+    *(core->op.param[0]) = EMEX64_DW_ZEXT(a % b);
+}

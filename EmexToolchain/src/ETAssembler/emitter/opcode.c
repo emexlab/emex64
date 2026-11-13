@@ -166,6 +166,19 @@ E64Opcode opcode_from_string(const char *name)
         case PACK('l','d','x','o','r','d'): return kE64OpcodeLDXORD;
         case PACK('s','w','p','a','d','d','d'): return kE64OpcodeSWPADDD;
         case PACK('t','l','b','i'): return kE64OpcodeTLBI;
+        case PACK('a','d','d','d'): return kE64OpcodeADDD;
+        case PACK('i','a','d','d','d'): return kE64OpcodeIADDD;
+        case PACK('s','u','b','d'): return kE64OpcodeSUBD;
+        case PACK('i','s','u','b','d'): return kE64OpcodeISUBD;
+        case PACK('m','u','l','d'): return kE64OpcodeMULD;
+        case PACK('i','m','u','l','d'): return kE64OpcodeIMULD;
+        case PACK('s','h','l','d'): return kE64OpcodeSHLD;
+        case PACK('i','s','h','l','d'): return kE64OpcodeISHLD;
+        case PACK('s','h','r','d'): return kE64OpcodeSHRD;
+        case PACK('s','a','r','d'): return kE64OpcodeSARD;
+        case PACK('d','i','v','d'): return kE64OpcodeDIVD;
+        case PACK('i','d','i','v','d'): return kE64OpcodeIDIVD;
+        case PACK('m','o','d','d'): return kE64OpcodeMODD;
         default: return kE64OpcodeInvalid;
     }
 }

@@ -31,6 +31,8 @@
 #define EMEX64_8042_DATA    0x00
 #define EMEX64_8042_STATUS  0x08
 
+#define EMEX64_8042_MOUSE_BUFFER    (512 * 3 + 3)
+
 typedef struct __E64Core *E64CoreRef;
 typedef struct __E64Machine *E64MachineRef;
 
@@ -43,7 +45,7 @@ typedef struct {
     SInt32 kbd_head;
     SInt32 kbd_tail;
 
-    UInt8 mouse_buf[64];
+    UInt8 mouse_buf[EMEX64_8042_MOUSE_BUFFER];
     SInt32 mouse_head;
     SInt32 mouse_tail;
 
@@ -60,7 +62,6 @@ typedef struct {
 
 emex64_8042_t *emex64_8042_alloc(E64MachineRef machine, Boolean keyboard_attached, Boolean mouse_attached);
 void emex64_8042_dealloc(emex64_8042_t *dev);
-/* machine reset: as at power on (keys not read are gone) */
 void emex64_8042_reset(emex64_8042_t *dev);
 
 /* for display backend */

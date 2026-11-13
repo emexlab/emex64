@@ -59,4 +59,18 @@ void emex64_op_umulh(__E64Core core);
 void emex64_op_adc(__E64Core core);
 void emex64_op_sbb(__E64Core core);
 
+void emex64_op_addd(__E64Core core);
+void emex64_op_iaddd(__E64Core core);
+void emex64_op_subd(__E64Core core);
+void emex64_op_isubd(__E64Core core);
+void emex64_op_muld(__E64Core core);
+void emex64_op_imuld(__E64Core core);
+void emex64_op_shld(__E64Core core);
+void emex64_op_ishld(__E64Core core);
+void emex64_op_shrd(__E64Core core);
+void emex64_op_sard(__E64Core core);
+void emex64_op_divd(__E64Core core);
+void emex64_op_idivd(__E64Core core);
+void emex64_op_modd(__E64Core core);
+
 #endif /* EMEX64VM_INSTRUCTION_ALU_H */

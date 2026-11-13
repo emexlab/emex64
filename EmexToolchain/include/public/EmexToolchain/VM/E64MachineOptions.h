@@ -62,6 +62,11 @@ typedef struct {
 } E64NetworkOptions;
 
 typedef struct {
+    Boolean enabled;
+    const char *wavPath;
+} E64SoundOptions;
+
+typedef struct {
     void *context;
     void (*uartOutput)(void *context, UInt8 byte);
 } E64MachineHost;
@@ -75,6 +80,7 @@ typedef struct {
     E64DiskOptions usbDisks[E64_MACHINE_MAX_USB_DISKS];
     UInt8 usbDiskCount;
     E64NetworkOptions networkOptions;
+    E64SoundOptions soundOptions;
     E64PeripheralMode keyboardPeripheralMode;
     E64PeripheralMode mousePeripheralMode;
     const E64MachineHost *host;

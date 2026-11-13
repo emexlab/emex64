@@ -41,6 +41,10 @@ static void __E64MachineDeinit(EFObjectRef machineRef)
     {
         emex64_net_dealloc(machine->net);
     }
+    if(machine->sb16 != NULL)
+    {
+        emex64_sb16_dealloc(machine->sb16);
+    }
 
     for(UInt8 i = 0; i < machine->core_count; i++)
     {
@@ -280,6 +284,15 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
         }
     }
 
+    if(options.soundOptions.enabled)
+    {
+        machine->sb16 = emex64_sb16_alloc(machine->pcie, 5, &options);
+        if(machine->sb16 == NULL)
+        {
+            return NULL;
+        }
+    }
+
     EFAUTOREL E64MMIORegionRef CPUIDRegion = E64MMIORegionCreate(NULL, EMEX64_CPUID_BASE, EMEX64_CPUID_SIZE, NULL, emex64_cpuid_read, NULL);
     if(CPUIDRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, CPUIDRegion))
     {
@@ -323,6 +336,7 @@ void __E64MachineResetHardware(__E64Machine machine)
 {
     /* resetting devices */
     emex64_net_reset(machine->net);
+    emex64_sb16_reset(machine->sb16);
     emex64_pcie_reset(machine->pcie);
     __E64ICReset(machine->intc);
     emex64_timer_reset(machine->timer);
