@@ -49,8 +49,7 @@ _start:
     ; the reason is that there is not
     ; enough space for the bss section
     ldq r0, EMEX64_MC_REG_SIZE
-    cmp r0, __bss_end
-    blt .poweroff                   ; bss section does not fit, sowwy, no way to handle that 3: not enough memory is.. not enough memory
+    cbltu r0, __bss_end, .poweroff@pcrel    ; bss section does not fit, sowwy, no way to handle that 3: not enough memory is.. not enough memory
 
     ; zeroing the whole bss
     setm __bss_start, 0, __bss_size
@@ -58,6 +57,7 @@ _start:
     ; early stack fixup
     mov sp, early_stack_top - 8
 
+    ; jumping to the main symbol of the bootloader :3
     bl main@pcrel
 .poweroff:
-    stq EMEX64_PLATFORM_REG_PWR, 0  ; telling platform device to turn off
+    stq EMEX64_PLATFORM_REG_PWR, 0          ; telling platform device to turn off
