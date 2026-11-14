@@ -242,7 +242,9 @@ static void __E64CoreDeinit(EFObjectRef obj)
 {
     __E64Core core = (__E64Core)obj;
     free(core->icache);
+    free(core->icold);
     core->icache = NULL;
+    core->icold = NULL;
     pthread_mutex_destroy(&core->wait_lock);
     pthread_cond_destroy(&core->wait_cond);
 }
@@ -324,7 +326,15 @@ E64CoreRef __E64CoreCreateWithID(EFAllocatorRef allocatorRef,
     {
         core->pac_cache[k].ptr = ~0ULL;
     }
-    core->icache = malloc(sizeof(emex64_icache_entry_t) * EMEX64_ICACHE_ENTRIES);
+    core->icache = aligned_alloc(_Alignof(emex64_icache_entry_t), sizeof(emex64_icache_entry_t) * EMEX64_ICACHE_ENTRIES);
+    core->icold = malloc(sizeof(emex64_icache_cold_t) * EMEX64_ICACHE_ENTRIES);
+    if(core->icache == NULL || core->icold == NULL)
+    {
+        free(core->icache);
+        free(core->icold);
+        core->icache = NULL;
+        core->icold = NULL;
+    }
     if(core->icache != NULL)
     {
         for(UInt64 k = 0; k < EMEX64_ICACHE_ENTRIES; k++)
@@ -708,18 +718,19 @@ static inline UInt64 __E64CoreOperandValue(__E64Core core,
 static inline __attribute__((always_inline)) void __E64CoreReplay(__E64Core core,
                                                                   const emex64_icache_entry_t *ce)
 {
+    const emex64_icache_cold_t *cc = &core->icold[ce - core->icache];
     core->op.ce = ce;
-    core->op.opcode = ce->opcode;
-    core->op.opce = ce->opce;
+    core->op.opcode = cc->opcode;
+    core->op.opce = cc->opce;
     core->op.ilen = ce->ilen;
-    core->op.param_cnt = ce->param_cnt;
-    core->op.param = (UInt64 **)ce->param;
-    core->op.param_coding = (E64ParameterCoding *)ce->param_coding;
+    core->op.param_cnt = cc->param_cnt;
+    core->op.param = (UInt64 **)cc->param;
+    core->op.param_coding = (E64ParameterCoding *)cc->param_coding;
 
-    for(UInt8 k = 0; k < ce->dyn_cnt; k++)
+    for(UInt8 k = 0; k < cc->dyn_cnt; k++)
     {
-        UInt8 i = ce->dyn[k];
-        const emex64_operand_recipe_t *r = &ce->operands[i];
+        UInt8 i = cc->dyn[k];
+        const emex64_operand_recipe_t *r = &cc->operands[i];
         if(likely(r->kind == kE64OperandOffsetRegImm))
         {
             core->op.immcache[i] = core->rl[r->base_reg] + r->off_imm;
@@ -989,7 +1000,7 @@ static inline UInt16 __E64CoreRegBit(UInt8 kind,
     return (kind == kE64OperandReg || kind == kE64OperandRegInc || kind == kE64OperandRegDec) ? (UInt16)(1u << reg) : 0;
 }
 
-static inline Boolean __E64CoreIsRelative(const emex64_icache_entry_t *ce,
+static inline Boolean __E64CoreIsRelative(const emex64_icache_cold_t *ce,
                                           const emex64_operand_recipe_t *rec,
                                           UInt8 i)
 {
@@ -1001,10 +1012,10 @@ static void __E64CoreSpecialize(__E64Core core,
                                 const emex64_operand_recipe_t *rec,
                                 UInt8 count)
 {
+    const emex64_icache_cold_t *cc = &core->icold[ce - core->icache];
     ce->fast = kE64FastNone;
     ce->rel = 0;
     ce->cf_mask = 0;
-    ce->cf_invert = false;
     ce->target = NULL;
 
     UInt64 page_offset = ce->paddr & EMEX64_PAGE_MASK;
@@ -1015,7 +1026,7 @@ static void __E64CoreSpecialize(__E64Core core,
     }
 
     UInt8 fast = kE64FastNone;
-    switch(ce->opcode)
+    switch(cc->opcode)
     {
         /* fast math */
         case kE64OpcodeADD:
@@ -1043,25 +1054,25 @@ static void __E64CoreSpecialize(__E64Core core,
             fast = kE64FastShr;
             goto arithmetic;
         arithmetic:
-            if(ce->dyn_cnt != 0 || (count != 2 && count != 3))
+            if(cc->dyn_cnt != 0 || (count != 2 && count != 3))
             {
                 return;
             }
-            ce->q[0] = ce->param[0];
-            ce->q[1] = ce->param[count - 2];
-            ce->q[2] = ce->param[count - 1];
+            ce->q[0] = cc->param[0];
+            ce->q[1] = cc->param[count - 2];
+            ce->q[2] = cc->param[count - 1];
             goto writes_first;
         
         /* fast compare and move */
         case kE64OpcodeMOV:
         case kE64OpcodeCMP:
-            if(ce->dyn_cnt != 0 || count != 2)
+            if(cc->dyn_cnt != 0 || count != 2)
             {
                 return;
             }
-            fast = ce->opcode == kE64OpcodeMOV ? kE64FastMov : kE64FastCmp;
-            ce->q[0] = ce->param[0];
-            ce->q[1] = ce->param[1];
+            fast = cc->opcode == kE64OpcodeMOV ? kE64FastMov : kE64FastCmp;
+            ce->q[0] = cc->param[0];
+            ce->q[1] = cc->param[1];
             if(fast == kE64FastMov)
             {
                 goto writes_first;
@@ -1077,9 +1088,8 @@ static void __E64CoreSpecialize(__E64Core core,
             ce->cf_mask = kE64CompareFlagZ;
             goto branch;
         case kE64OpcodeBNE:
-            fast = kE64FastBranchFlags;
+            fast = kE64FastBranchFlagsNot;
             ce->cf_mask = kE64CompareFlagZ;
-            ce->cf_invert = true;
             goto branch;
         case kE64OpcodeBLT:
             fast = kE64FastBranchFlags;
@@ -1123,17 +1133,17 @@ static void __E64CoreSpecialize(__E64Core core,
             goto branch;
         branch:
         {
-            UInt8 target = fast <= kE64FastBranchFlags ? 0 : fast <= kE64FastBranchNotZero ? 1 : 2;
-            if(ce->dyn_cnt != 0 || count != target + 1 || !__E64CoreIsRelative(ce, rec, target))
+            UInt8 target = fast <= kE64FastBranchFlagsNot ? 0 : fast <= kE64FastBranchNotZero ? 1 : 2;
+            if(cc->dyn_cnt != 0 || count != target + 1 || !__E64CoreIsRelative(cc, rec, target))
             {
                 return;
             }
-            ce->rel = (SInt64)emex64_branch_pc(0, rec[target].imm, ce->param_coding[target]);
-            ce->q[0] = ce->param[0];
-            ce->q[1] = ce->param[1];
-            if((SInt64)page_offset + ce->rel >= 0 && (SInt64)page_offset + ce->rel < EMEX64_PAGE_SIZE)
+            ce->rel = (SInt32)(SInt64)emex64_branch_pc(0, rec[target].imm, cc->param_coding[target]);
+            ce->q[0] = cc->param[0];
+            ce->q[1] = cc->param[1];
+            if((SInt64)page_offset + ce->rel >= 0 && (SInt64)page_offset + ce->rel < (SInt64)EMEX64_PAGE_SIZE)
             {
-                ce->target = &core->icache[emex64_icache_index(ce->paddr + (UInt64)ce->rel)];
+                ce->target = &core->icache[emex64_icache_index(ce->paddr + (UInt64)(SInt64)ce->rel)];
             }
             break;
         }
@@ -1182,22 +1192,26 @@ static void __E64CoreSpecialize(__E64Core core,
             }
 
             /* the only operand that may need computing is the address, and only as register + constant */
-            for(UInt8 k = 0; k < ce->dyn_cnt; k++)
+            for(UInt8 k = 0; k < cc->dyn_cnt; k++)
             {
-                if(ce->dyn[k] != at || ce->operands[at].kind != kE64OperandOffsetRegImm)
+                if(cc->dyn[k] != at || cc->operands[at].kind != kE64OperandOffsetRegImm)
                 {
                     return;
                 }
             }
-            ce->q[0] = ce->param[value];
-            if(ce->operands[at].kind == kE64OperandOffsetRegImm)
+            ce->q[0] = cc->param[value];
+            if(cc->operands[at].kind == kE64OperandOffsetRegImm)
             {
-                ce->q[1] = &core->rl[ce->operands[at].base_reg];
-                ce->rel = (SInt64)ce->operands[at].off_imm;
+                if((SInt64)cc->operands[at].off_imm != (SInt32)cc->operands[at].off_imm)
+                {
+                    return;
+                }
+                ce->q[1] = &core->rl[cc->operands[at].base_reg];
+                ce->rel = (SInt32)cc->operands[at].off_imm;
             }
             else
             {
-                ce->q[1] = ce->param[at];
+                ce->q[1] = cc->param[at];
             }
             if(fast < kE64FastStore8)
             {
@@ -1225,11 +1239,12 @@ static void __E64CoreFillCacheEntry(__E64Core core,
                                     const emex64_operand_recipe_t *rec,
                                     UInt8 count)
 {
-    UInt16 implicit = kE64ImplicitWrites[ce->opcode];
-    ce->save_rl = implicit != 0 ? implicit : 0xFFFF;
-    ce->save_erl = implicit == 0;
-    ce->dyn_cnt = 0;
-    UInt8 const_from = kE64ConstOperands[ce->opcode] == 2 ? 0 : kE64ConstOperands[ce->opcode] == 1 ? 1 : 0xFF;
+    emex64_icache_cold_t *cc = &core->icold[ce - core->icache];
+    UInt16 implicit = kE64ImplicitWrites[cc->opcode];
+    cc->save_rl = implicit != 0 ? implicit : 0xFFFF;
+    cc->save_erl = implicit == 0;
+    cc->dyn_cnt = 0;
+    UInt8 const_from = kE64ConstOperands[cc->opcode] == 2 ? 0 : kE64ConstOperands[cc->opcode] == 1 ? 1 : 0xFF;
 
     for(UInt8 i = 0; i < count; i++)
     {
@@ -1239,47 +1254,47 @@ static void __E64CoreFillCacheEntry(__E64Core core,
             case kE64OperandImm:
                 if(i >= const_from)
                 {
-                    ce->param[i] = &ce->operands[i].imm;
+                    cc->param[i] = &cc->operands[i].imm;
                     break;
                 }
-                ce->param[i] = &core->op.immcache[i];
-                ce->dyn[ce->dyn_cnt++] = i;
+                cc->param[i] = &core->op.immcache[i];
+                cc->dyn[cc->dyn_cnt++] = i;
                 break;
             case kE64OperandOffset:
                 if(r->base_kind == kE64OperandReg && r->off_kind == kE64OperandImm)
                 {
-                    emex64_operand_recipe_t *o = &ce->operands[i];
+                    emex64_operand_recipe_t *o = &cc->operands[i];
                     o->kind = kE64OperandOffsetRegImm;
                     o->off_imm = r->add ? r->off_imm : (UInt64)0 - r->off_imm;
                 }
-                ce->param[i] = &core->op.immcache[i];
-                ce->dyn[ce->dyn_cnt++] = i;
+                cc->param[i] = &core->op.immcache[i];
+                cc->dyn[cc->dyn_cnt++] = i;
                 break;
             case kE64OperandReg:
-                ce->param[i] = &core->rl[r->reg];
+                cc->param[i] = &core->rl[r->reg];
                 break;
             case kE64OperandRegExtended:
-                ce->param[i] = &core->erl[r->reg];
-                ce->save_erl = true;
+                cc->param[i] = &core->erl[r->reg];
+                cc->save_erl = true;
                 break;
             case kE64OperandRegFloat:
-                ce->param[i] = &core->frl[r->reg].u64;
+                cc->param[i] = &core->frl[r->reg].u64;
                 break;
             default:
-                ce->param[i] = &core->op.immcache[i];
-                ce->dyn[ce->dyn_cnt++] = i;
+                cc->param[i] = &core->op.immcache[i];
+                cc->dyn[cc->dyn_cnt++] = i;
                 break;
         }
 
-        ce->save_rl |= __E64CoreRegBit(r->kind, r->reg);
+        cc->save_rl |= __E64CoreRegBit(r->kind, r->reg);
         if(r->kind == kE64OperandOffset)
         {
-            ce->save_rl |= __E64CoreRegBit(r->base_kind, r->base_reg) | __E64CoreRegBit(r->off_kind, r->off_reg);
+            cc->save_rl |= __E64CoreRegBit(r->base_kind, r->base_reg) | __E64CoreRegBit(r->off_kind, r->off_reg);
         }
     }
     for(UInt8 i = count; i < EMEX64_ICACHE_ARGS; i++)
     {
-        ce->param[i] = &core->op.immcache[i];
+        cc->param[i] = &core->op.immcache[i];
     }
 
     __E64CoreSpecialize(core, ce, rec, count);
@@ -1523,17 +1538,18 @@ escape_from_la:
             emex64_snoop_mark(core->snoop, fetch_pa, EMEX64_CHUNK_CODE);
             emex64_snoop_mark(core->snoop, fetch_pa + core->op.ilen - 1, EMEX64_CHUNK_CODE);
             emex64_icache_entry_t *ce = &core->icache[emex64_icache_index(fetch_pa)];
+            emex64_icache_cold_t *cc = &core->icold[ce - core->icache];
             ce->paddr = fetch_pa;
             ce->code_seq = __atomic_load_n(&core->snoop->code_seq, __ATOMIC_ACQUIRE);
-            ce->gen_first = emex64_snoop_gen(core->snoop, first_chunk << EMEX64_CHUNK_SHIFT);
-            ce->gen_last = emex64_snoop_gen(core->snoop, last_chunk << EMEX64_CHUNK_SHIFT);
-            ce->opce = core->op.opce;
+            cc->gen_first = emex64_snoop_gen(core->snoop, first_chunk << EMEX64_CHUNK_SHIFT);
+            cc->gen_last = emex64_snoop_gen(core->snoop, last_chunk << EMEX64_CHUNK_SHIFT);
+            cc->opce = core->op.opce;
             ce->ilen = core->op.ilen;
-            ce->opcode = core->op.opcode;
-            ce->param_cnt = i;
+            cc->opcode = core->op.opcode;
+            cc->param_cnt = i;
             ce->rollback = __E64CoreNeedsRollback(core->op.opcode, rec, i);
-            memcpy(ce->param_coding, core->op.coding_store, sizeof(ce->param_coding));
-            memcpy(ce->operands, rec, sizeof(emex64_operand_recipe_t) * i);
+            memcpy(cc->param_coding, core->op.coding_store, sizeof(cc->param_coding));
+            memcpy(cc->operands, rec, sizeof(emex64_operand_recipe_t) * i);
             __E64CoreFillCacheEntry(core, ce, rec, i);
         }
 
@@ -1563,9 +1579,10 @@ static inline void __E64CoreExecuteInstructionAtPC(__E64Core core)
         if(likely(have_pa))
         {
             const emex64_icache_entry_t *ce = &core->icache[emex64_icache_index(fetch_pa)];
+            const emex64_icache_cold_t *cc = &core->icold[ce - core->icache];
             if(likely(ce->paddr == fetch_pa) &&
-               likely(emex64_snoop_gen(core->snoop, fetch_pa) == ce->gen_first) &&
-               likely(emex64_snoop_gen(core->snoop, fetch_pa + ce->ilen - 1) == ce->gen_last) &&
+               likely(emex64_snoop_gen(core->snoop, fetch_pa) == cc->gen_first) &&
+               likely(emex64_snoop_gen(core->snoop, fetch_pa + ce->ilen - 1) == cc->gen_last) &&
                likely(__E64CoreKTRRAllowsFetch(core, fetch_pa, ce->ilen)))
             {
                 __E64CoreReplay(core, ce);
@@ -1614,19 +1631,20 @@ static void __E64CoreTrapEnter(__E64Core core,
 static inline void __E64CoreSaveForRollback(__E64Core core,
                                             const emex64_icache_entry_t *ce)
 {
-    if(ce == NULL || ce->save_rl == 0xFFFF)
+    const emex64_icache_cold_t *cc = ce != NULL ? &core->icold[ce - core->icache] : NULL;
+    if(ce == NULL || cc->save_rl == 0xFFFF)
     {
         memcpy(core->trap.rl, core->rl, sizeof(core->trap.rl));
     }
     else
     {
-        for(UInt16 m = ce->save_rl; m != 0; m &= m - 1)
+        for(UInt16 m = cc->save_rl; m != 0; m &= m - 1)
         {
             UInt8 r = (UInt8)__builtin_ctz(m);
             core->trap.rl[r] = core->rl[r];
         }
     }
-    if(ce == NULL || ce->save_erl)
+    if(ce == NULL || cc->save_erl)
     {
         memcpy(core->trap.erl, core->erl, sizeof(core->trap.erl));
     }
@@ -1636,6 +1654,7 @@ static __attribute__((noinline)) void __E64CoreTrapFromException(__E64Core core,
                                                                  const emex64_icache_entry_t *ce,
                                                                  UInt64 pc)
 {
+    const emex64_icache_cold_t *cc = ce != NULL ? &core->icold[ce - core->icache] : NULL;
     UInt64 cause = core->cr_state.crexc.exception;
     UInt64 tval = 0;
     if(core->trap.fault_valid)
@@ -1646,12 +1665,12 @@ static __attribute__((noinline)) void __E64CoreTrapFromException(__E64Core core,
 
     if(ce == NULL || ce->rollback)
     {
-        for(UInt16 m = ce != NULL ? ce->save_rl : 0xFFFF; m != 0; m &= m - 1)
+        for(UInt16 m = ce != NULL ? cc->save_rl : 0xFFFF; m != 0; m &= m - 1)
         {
             UInt8 r = (UInt8)__builtin_ctz(m);
             core->rl[r] = core->trap.rl[r];
         }
-        if(ce == NULL || ce->save_erl)
+        if(ce == NULL || cc->save_erl)
         {
             memcpy(core->erl, core->trap.erl, sizeof(core->erl));
         }
@@ -1693,8 +1712,9 @@ static inline __attribute__((always_inline)) Boolean __E64CoreCacheEntryIsGood(_
     {
         return true;
     }
-    if(emex64_snoop_gen(core->snoop, fetch_pa) != ce->gen_first ||
-       emex64_snoop_gen(core->snoop, fetch_pa + ce->ilen - 1) != ce->gen_last)
+    const emex64_icache_cold_t *cc = &core->icold[ce - core->icache];
+    if(emex64_snoop_gen(core->snoop, fetch_pa) != cc->gen_first ||
+       emex64_snoop_gen(core->snoop, fetch_pa + ce->ilen - 1) != cc->gen_last)
     {
         return false;
     }
@@ -1746,6 +1766,12 @@ static __attribute__((noinline)) emex64_icache_entry_t *__E64CoreFetchSlow(__E64
             core->fetch.map_seq = map_seq;
             core->fetch.context = __E64CoreFetchContext(core);
             core->fetch.vpage = pc & ~(UInt64)EMEX64_PAGE_MASK;
+
+            UInt64 slot = (pc >> 13) & (EMEX64_FETCH_PAGES - 1);
+            core->fetch.pages[slot].vpage = core->fetch.vpage;
+            core->fetch.pages[slot].ppage = ppage;
+            core->fetch.pages[slot].map_seq = map_seq;
+            core->fetch.pages[slot].context = core->fetch.context;
         }
     }
 
@@ -1830,7 +1856,27 @@ static UInt32 __E64CoreRunTrapModel(__E64Core core,
             }
             else
             {
-                ce = __E64CoreFetchSlow(core, pc, &have_pa, &fetch_pa);
+                UInt64 slot = (pc >> 13) & (EMEX64_FETCH_PAGES - 1);
+                if(likely(core->fetch.pages[slot].vpage == (pc & ~(UInt64)EMEX64_PAGE_MASK)) &&
+                   likely(core->fetch.pages[slot].map_seq == __atomic_load_n(&snoop->map_seq, __ATOMIC_RELAXED)) &&
+                   likely(core->fetch.pages[slot].context == __E64CoreFetchContext(core)))
+                {
+                    core->fetch.vpage = core->fetch.pages[slot].vpage;
+                    core->fetch.ppage = core->fetch.pages[slot].ppage;
+                    core->fetch.map_seq = core->fetch.pages[slot].map_seq;
+                    core->fetch.context = core->fetch.pages[slot].context;
+                    have_pa = true;
+                    fetch_pa = core->fetch.ppage + (pc & EMEX64_PAGE_MASK);
+                    ce = &core->icache[emex64_icache_index(fetch_pa)];
+                    if(unlikely(!__E64CoreCacheEntryIsGood(core, ce, fetch_pa)))
+                    {
+                        ce = NULL;
+                    }
+                }
+                else
+                {
+                    ce = __E64CoreFetchSlow(core, pc, &have_pa, &fetch_pa);
+                }
             }
         }
 
@@ -1882,7 +1928,8 @@ static UInt32 __E64CoreRunTrapModel(__E64Core core,
                     }                                                   \
                     goto sequential;
                 E64_FAST_BRANCH(kE64FastBranch, true)
-                E64_FAST_BRANCH(kE64FastBranchFlags, ((core->rl[kE64RegisterCF] & ce->cf_mask) != 0) != ce->cf_invert)
+                E64_FAST_BRANCH(kE64FastBranchFlags, (core->rl[kE64RegisterCF] & ce->cf_mask) != 0)
+                E64_FAST_BRANCH(kE64FastBranchFlagsNot, (core->rl[kE64RegisterCF] & ce->cf_mask) == 0)
                 E64_FAST_BRANCH(kE64FastBranchZero, *q[0] == 0)
                 E64_FAST_BRANCH(kE64FastBranchNotZero, *q[0] != 0)
                 E64_FAST_BRANCH(kE64FastBranchEqual, *q[0] == *q[1])
@@ -1897,7 +1944,7 @@ static UInt32 __E64CoreRunTrapModel(__E64Core core,
                 case kind:                                              \
                 {                                                       \
                     UInt64 value;                                       \
-                    if(likely(emex64_fast_load(core, *q[1] + (UInt64)ce->rel, size, &value)))  \
+                    if(likely(emex64_fast_load(core, *q[1] + (UInt64)(SInt64)ce->rel, size, &value)))  \
                     {                                                   \
                         *q[0] = extend;                                 \
                         goto sequential;                                \
@@ -1915,7 +1962,7 @@ static UInt32 __E64CoreRunTrapModel(__E64Core core,
 
 #define E64_FAST_STORE(kind, size)                                      \
                 case kind:                                              \
-                    if(likely(emex64_fast_store(core, *q[1] + (UInt64)ce->rel, size, *q[0])))  \
+                    if(likely(emex64_fast_store(core, *q[1] + (UInt64)(SInt64)ce->rel, size, *q[0])))  \
                     {                                                   \
                         goto sequential;                                \
                     }                                                   \
@@ -1972,8 +2019,8 @@ static UInt32 __E64CoreRunTrapModel(__E64Core core,
         hint = ce->seq;
         goto moved;
     branched:
-        pc += (UInt64)ce->rel;
-        fetch_pa += (UInt64)ce->rel;
+        pc += (UInt64)(SInt64)ce->rel;
+        fetch_pa += (UInt64)(SInt64)ce->rel;
         hint = ce->target;
     moved:
         core->rl[kE64RegisterPC] = pc;

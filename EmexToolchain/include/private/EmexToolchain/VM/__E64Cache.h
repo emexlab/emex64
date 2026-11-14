@@ -180,6 +180,7 @@ typedef enum: UInt8 {
     kE64FastCmp,
     kE64FastBranch,
     kE64FastBranchFlags,
+    kE64FastBranchFlagsNot,
     kE64FastBranchZero,
     kE64FastBranchNotZero,
     kE64FastBranchEqual,
@@ -234,30 +235,35 @@ struct __E64Core;
 typedef struct emex64_icache_entry {
     UInt64 paddr;
     UInt64 code_seq;
-    UInt32 gen_first;
-    UInt32 gen_last;
-    UInt8 fast;
-    UInt8 cf_mask;
-    Boolean cf_invert;
-    UInt8 ilen;
-    UInt8 opcode;
-    UInt8 param_cnt;
-    Boolean rollback;
-    Boolean save_erl;
-    UInt8 dyn_cnt;
-    UInt16 save_rl;
     UInt64 *q[3];
-    SInt64 rel;
 
     struct emex64_icache_entry *seq;
     struct emex64_icache_entry *target;
+
+    SInt32 rel;
+    UInt8 fast;
+    UInt8 ilen;
+    UInt8 cf_mask;
+    Boolean rollback;
+} __attribute__((aligned(64))) emex64_icache_entry_t;
+
+_Static_assert(sizeof(emex64_icache_entry_t) == 64, "an instruction cache entry is one cache line");
+
+typedef struct emex64_icache_cold {
+    UInt32 gen_first;
+    UInt32 gen_last;
+    UInt8 opcode;
+    UInt8 param_cnt;
+    Boolean save_erl;
+    UInt8 dyn_cnt;
+    UInt16 save_rl;
 
     const struct emex64_opfunc_entry *opce;
     UInt64 *param[EMEX64_ICACHE_ARGS];
     UInt8 dyn[EMEX64_ICACHE_ARGS];
     E64ParameterCoding param_coding[16];
     emex64_operand_recipe_t operands[EMEX64_ICACHE_ARGS];
-} emex64_icache_entry_t;
+} emex64_icache_cold_t;
 
 static inline UInt64 emex64_icache_index(UInt64 paddr)
 {

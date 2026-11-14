@@ -63,6 +63,8 @@ static inline UInt64 emex64_pac_cache_index(UInt64 ptr, UInt64 modifier)
     return (ptr ^ (ptr >> 7) ^ modifier ^ (modifier >> 4)) & (EMEX64_PAC_CACHE_ENTRIES - 1);
 }
 
+#define EMEX64_FETCH_PAGES 64
+
 typedef struct __E64Core {
     EFObject header;
 
@@ -205,6 +207,12 @@ typedef struct __E64Core {
         UInt64 ppage;
         UInt64 map_seq;
         UInt64 context;
+        struct {
+            UInt64 vpage;
+            UInt64 ppage;
+            UInt64 map_seq;
+            UInt64 context;
+        } pages[EMEX64_FETCH_PAGES];
     } fetch;
 
     emex64_fast_page_t pages[2][EMEX64_FAST_PAGES];
@@ -215,6 +223,7 @@ typedef struct __E64Core {
     /* more caching */
     emex64_tlb_t tlb;
     emex64_icache_entry_t *icache;
+    emex64_icache_cold_t *icold;
     emex64_pac_cache_entry_t pac_cache[EMEX64_PAC_CACHE_ENTRIES];
     emex64_snoop_t *snoop;
     UInt8 *ram;
