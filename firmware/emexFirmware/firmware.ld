@@ -45,6 +45,7 @@ SECTIONS
         *(.bss .bss.*) *(COMMON)
         __bss_end = .;
     }
+    __bss_size = __bss_end - __bss_start;
     __emex64_exec_img_end = .;
 
     /DISCARD/ : { *(.comment) *(.note.GNU-stack) *(.llvm_addrsig) }

@@ -20,27 +20,29 @@
 ;
 
 ; some hardware definitions and rules
-%define% EMEX64_PAGE_SIZE           0x2000
-%define% EMEX64_MMIO_BASE           0x0020000000000000
+#define EMEX64_PAGE_SIZE            0x2000
+#define EMEX64_MMIO_BASE            0x0020000000000000
+
 
 ; needed MMIO constants
-%define% EMEX64_MC_BASE             (EMEX64_MMIO_BASE + (EMEX64_PAGE_SIZE * 5))
-%define% EMEX64_PLATFORM_BASE       (EMEX64_MMIO_BASE + (EMEX64_PAGE_SIZE * 6))
-%define% EMEX64_MC_REG_SIZE         EMEX64_MC_BASE
-%define% EMEX64_PLATFORM_REG_PWR    EMEX64_PLATFORM_BASE
+#define EMEX64_MC_BASE              (EMEX64_MMIO_BASE + (EMEX64_PAGE_SIZE * 5))
+#define EMEX64_PLATFORM_BASE        (EMEX64_MMIO_BASE + (EMEX64_PAGE_SIZE * 6))
+#define EMEX64_MC_REG_SIZE          EMEX64_MC_BASE
+#define EMEX64_PLATFORM_REG_PWR     EMEX64_PLATFORM_BASE
 
 ; now the stack shit
-%define% EARLY_STACK_SIZE           (EMEX64_PAGE_SIZE * 4)
-%define% EARLY_STACK_TOP_SUB        (EARLY_STACK_SIZE - 8)
+#define  EARLY_STACK_SIZE           (EMEX64_PAGE_SIZE * 4)
 
-section .bss
-    early_stack db EARLY_STACK_SIZE
-
-extern main
-extern __bss_start
-extern __bss_end
+; the early stack
+    .section .bss
+    .balign 16
+early_stack:
+    .space EARLY_STACK_SIZE
+early_stack_top:
 
 ; this stays =3
+.section .text
+.globl _start
 _start:
     ; will just shutdown for now
     ; if it does and your reading this
@@ -51,11 +53,11 @@ _start:
     blt .poweroff                   ; bss section does not fit, sowwy, no way to handle that 3: not enough memory is.. not enough memory
 
     ; zeroing the whole bss
-    setm __bss_start, 0, [__bss_end - __bss_start]
+    setm __bss_start, 0, __bss_size
 
     ; early stack fixup
-    add sp, early_stack, EARLY_STACK_TOP_SUB
+    mov sp, early_stack_top - 8
 
-    bl main
+    bl main@pcrel
 .poweroff:
     stq EMEX64_PLATFORM_REG_PWR, 0  ; telling platform device to turn off
