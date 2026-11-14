@@ -1,0 +1,84 @@
+; SPDX-License-Identifier: GPL-3.0-or-later
+; Copyright (C) 2026 emexlab
+
+HeaderInclude
+config/emex64/emex64-opts.h
+
+mcpu=
+Target RejectNegative Joined Enum(emex64_cpu) Var(emex64_cpu) Init(EMEX64_CPU_DEFAULT)
+-mcpu=CPU	Generate code for CPU: generic, emex64-v17, emex64-v18, emex64-v19, emex64-v20, emex64-v21, emex64e, emex64e-v20 or emex64e-v21.
+
+Enum
+Name(emex64_cpu) Type(enum emex64_cpu_type)
+Known emex64 CPUs (for use with the -mcpu= option):
+
+EnumValue
+Enum(emex64_cpu) String(generic) Value(EMEX64_CPU_GENERIC)
+
+EnumValue
+Enum(emex64_cpu) String(emex64-v17) Value(EMEX64_CPU_V17)
+
+EnumValue
+Enum(emex64_cpu) String(emex64-v18) Value(EMEX64_CPU_V18)
+
+EnumValue
+Enum(emex64_cpu) String(emex64-v19) Value(EMEX64_CPU_V19)
+
+EnumValue
+Enum(emex64_cpu) String(emex64-v20) Value(EMEX64_CPU_V20)
+
+EnumValue
+Enum(emex64_cpu) String(emex64e) Value(EMEX64_CPU_EMEX64E)
+
+EnumValue
+Enum(emex64_cpu) String(emex64e-v20) Value(EMEX64_CPU_EMEX64E_V20)
+
+EnumValue
+Enum(emex64_cpu) String(emex64-v21) Value(EMEX64_CPU_V21)
+
+EnumValue
+Enum(emex64_cpu) String(emex64e-v21) Value(EMEX64_CPU_EMEX64E_V21)
+
+march=
+Target RejectNegative Joined Enum(emex64_arch) Var(emex64_arch) Init(EMEX64_CPU_NONE)
+-march=ISA	Generate code for ISA: la64-v17, la64-v18, la64-v19, la64-v20, la64-v21, la64e-v19, la64e-v20 or la64e-v21 (e: pointer authentication); wins over -mcpu.
+
+Enum
+Name(emex64_arch) Type(enum emex64_cpu_type)
+Known emex64 ISAs (for use with the -march= option):
+
+EnumValue
+Enum(emex64_arch) String(la64-v17) Value(EMEX64_CPU_V17)
+
+EnumValue
+Enum(emex64_arch) String(la64-v18) Value(EMEX64_CPU_V18)
+
+EnumValue
+Enum(emex64_arch) String(la64-v19) Value(EMEX64_CPU_V19)
+
+EnumValue
+Enum(emex64_arch) String(la64-v20) Value(EMEX64_CPU_V20)
+
+EnumValue
+Enum(emex64_arch) String(la64e-v19) Value(EMEX64_CPU_EMEX64E)
+
+EnumValue
+Enum(emex64_arch) String(la64e-v20) Value(EMEX64_CPU_EMEX64E_V20)
+
+EnumValue
+Enum(emex64_arch) String(la64-v21) Value(EMEX64_CPU_V21)
+
+EnumValue
+Enum(emex64_arch) String(la64e-v21) Value(EMEX64_CPU_EMEX64E_V21)
+
+msoft-float
+Target RejectNegative Mask(SOFT_FLOAT)
+Do not use the floating point unit; float and double are passed like integers.
+
+mhard-float
+Target RejectNegative InverseMask(SOFT_FLOAT)
+Use the floating point unit (ISA v18 and later).
+
+mbranch-protection=
+Target RejectNegative Joined Var(emex64_branch_protection_string)
+-mbranch-protection=none|standard|pac-ret[+leaf]	Sign return addresses (emex64e).

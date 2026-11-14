@@ -1,0 +1,92 @@
+diff --git a/config.sub b/config.sub
+index 38f3d037a..8743a7b68 100755
+--- a/config.sub
++++ b/config.sub
+@@ -971,6 +971,20 @@ unset -v basic_machine
+ 
+ # Decode basic machines in the full and proper CPU-Company form.
+ case $cpu-$vendor in
++	emex64-unknown)
++		cpu=la64
++		vendor=emexlabs
++		;;
++	emex64e-unknown)
++		cpu=la64e
++		vendor=emexlabs
++		;;
++	emex64-*)
++		cpu=la64
++		;;
++	emex64e-*)
++		cpu=la64e
++		;;
+ 	# Here we handle the default manufacturer of certain CPU types in canonical form. It is in
+ 	# some cases the only manufacturer, in others, it is the most popular.
+ 	craynv-unknown)
+@@ -1200,6 +1214,7 @@ case $cpu-$vendor in
+ 			| i370 | i*86 | i860 | i960 | ia16 | ia64 \
+ 			| ip2k | iq2000 \
+ 			| k1om \
++			| la64 | la64e \
+ 			| le32 | le64 \
+ 			| lm32 \
+ 			| loongarch32 | loongarch64 | loongarchx32 \
+diff --git a/gcc/config.gcc b/gcc/config.gcc
+index 087aaa7be..37311529b 100644
+--- a/gcc/config.gcc
++++ b/gcc/config.gcc
+@@ -405,6 +405,10 @@ ft32*)	cpu_type=ft32
+ moxie*)	cpu_type=moxie
+ 	target_has_targetm_common=no
+ 	;;
++la64*-*-*)
++	cpu_type=emex64
++	target_has_targetm_common=no
++	;;
+ fido-*-*)
+ 	cpu_type=m68k
+ 	extra_headers=math-68881.h
+@@ -2916,6 +2920,18 @@ nvptx-*)
+ 		tm_file="${tm_file} nvptx/offload.h"
+ 	fi
+ 	;;
++la64*-*-linux*)
++	tm_file="elfos.h gnu-user.h linux.h glibc-stdint.h ${tm_file} emex64/linux.h"
++	tmake_file="${tmake_file} emex64/t-emex64"
++	gnu_ld=yes
++	gas=yes
++	gcc_cv_initfini_array=yes
++	case ${target} in
++	la64e-*)
++		tm_defines="${tm_defines} EMEX64E_TRIPLE=1 EMEX64_CPU_DEFAULT=EMEX64_CPU_EMEX64E_V21 EMEX64_DEFAULT_PAC_RET=1"
++		;;
++	esac
++	;;
+ or1k*-*-*)
+ 	tm_file="elfos.h ${tm_file}"
+ 	tmake_file="${tmake_file} or1k/t-or1k"
+diff --git a/libgcc/config.host b/libgcc/config.host
+index 6a88ee5a2..2f1479705 100644
+--- a/libgcc/config.host
++++ b/libgcc/config.host
+@@ -91,6 +91,9 @@ aarch64*-*-*)
+ alpha*-*-*)
+ 	cpu_type=alpha
+ 	;;
++la64*-*-*)
++	cpu_type=emex64
++	;;
+ am33_2.0-*-linux*)
+ 	cpu_type=mn10300
+ 	;;
+@@ -1196,6 +1199,10 @@ nds32*-elf*)
+ 		;;
+ 	esac
+ 	;;
++la64*-*-linux*)
++	tmake_file="$tmake_file emex64/t-emex64"
++	md_unwind_header=emex64/linux-unwind.h
++	;;
+ or1k-*-linux*)
+ 	tmake_file="$tmake_file or1k/t-or1k or1k/t-crtstuff"
+ 	tmake_file="$tmake_file t-softfp-sfdf t-softfp"

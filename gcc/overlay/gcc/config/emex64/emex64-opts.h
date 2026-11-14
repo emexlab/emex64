@@ -1,0 +1,23 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright (C) 2026 emexlab
+ */
+
+#ifndef GCC_EMEX64_OPTS_H
+#define GCC_EMEX64_OPTS_H
+
+enum emex64_cpu_type
+{
+    EMEX64_CPU_GENERIC,
+    EMEX64_CPU_V17,
+    EMEX64_CPU_V18,
+    EMEX64_CPU_V19,
+    EMEX64_CPU_V20,
+    EMEX64_CPU_EMEX64E,
+    EMEX64_CPU_EMEX64E_V20,
+    EMEX64_CPU_V21,
+    EMEX64_CPU_EMEX64E_V21,
+    EMEX64_CPU_NONE
+};
+
+#endif /* GCC_EMEX64_OPTS_H */

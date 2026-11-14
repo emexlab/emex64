@@ -1,0 +1,29 @@
+#!/bin/sh
+
+llvm=${EMEX64_LLVM:-@LLVM@}
+name=$(basename "$0")
+triple=${name%-as}
+[ "$triple" = "$name" ] && triple=${EMEX64_TRIPLE:-emex64e-linux-gnu}
+out=a.out
+args=
+inputs=
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --version|-version)
+            echo "emex64 LLVM assembler (clang integrated assembler)"; exit 0 ;;
+        -v|-V)
+            echo "emex64 LLVM assembler (clang integrated assembler)" >&2
+            [ $# -gt 1 ] || exit 0
+            shift ;;
+        -o) out=$2; shift 2 ;;
+        -o*) out=${1#-o}; shift ;;
+        -I) args="$args -I $2"; shift 2 ;;
+        -I*) args="$args $1"; shift ;;
+        --) shift ;;
+        -) inputs="$inputs -"; shift ;;
+        -*) shift ;;
+        *) inputs="$inputs $1"; shift ;;
+    esac
+done
+[ -n "$inputs" ] || inputs=-
+exec "$llvm/clang" --target="$triple" -c -x assembler $args -o "$out" $inputs
