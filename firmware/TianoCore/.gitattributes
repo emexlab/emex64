@@ -1,0 +1,2 @@
+# the patch keeps EDK2s CRLF lines
+patches/*.patch -text

@@ -1,0 +1,123 @@
+## @file
+#  Copyright (C) 2026 emexlab
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[FD.TIANOCORE]
+BaseAddress     = 0x00000000|gEmex64PkgTokenSpaceGuid.PcdEmex64FdBase
+Size            = 0x00400000|gEmex64PkgTokenSpaceGuid.PcdEmex64FdSize
+ErasePolarity   = 1
+BlockSize       = 0x00001000
+NumBlocks       = 0x400
+
+0x00000000|0x00001000
+DATA = { 0x26, 0x07, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+
+0x00001000|0x003FF000
+gEmex64PkgTokenSpaceGuid.PcdEmex64FvBase|gEmex64PkgTokenSpaceGuid.PcdEmex64FvSize
+FV = FVMAIN
+
+[FV.FVMAIN]
+FvNameGuid          = 0E640040-7E64-4C64-8E64-00000000E640
+BlockSize           = 0x1000
+FvAlignment         = 16
+ERASE_POLARITY      = 1
+MEMORY_MAPPED       = TRUE
+STICKY_WRITE        = TRUE
+LOCK_CAP            = TRUE
+LOCK_STATUS         = TRUE
+WRITE_DISABLED_CAP  = TRUE
+WRITE_ENABLED_CAP   = TRUE
+WRITE_STATUS        = TRUE
+WRITE_LOCK_CAP      = TRUE
+WRITE_LOCK_STATUS   = TRUE
+READ_DISABLED_CAP   = TRUE
+READ_ENABLED_CAP    = TRUE
+READ_STATUS         = TRUE
+READ_LOCK_CAP       = TRUE
+READ_LOCK_STATUS    = TRUE
+
+APRIORI DXE {
+    INF MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
+}
+
+INF  Emex64Pkg/Sec/Sec.inf
+
+INF  MdeModulePkg/Core/Dxe/DxeMain.inf
+INF  MdeModulePkg/Universal/PCD/Dxe/Pcd.inf
+INF  Emex64Pkg/CpuDxe/CpuDxe.inf
+INF  Emex64Pkg/TimerDxe/TimerDxe.inf
+INF  MdeModulePkg/Core/RuntimeDxe/RuntimeDxe.inf
+INF  MdeModulePkg/Universal/SecurityStubDxe/SecurityStubDxe.inf
+INF  MdeModulePkg/Universal/CapsuleRuntimeDxe/CapsuleRuntimeDxe.inf
+INF  MdeModulePkg/Universal/MonotonicCounterRuntimeDxe/MonotonicCounterRuntimeDxe.inf
+INF  MdeModulePkg/Universal/ResetSystemRuntimeDxe/ResetSystemRuntimeDxe.inf
+INF  MdeModulePkg/Universal/WatchdogTimerDxe/WatchdogTimer.inf
+INF  EmbeddedPkg/RealTimeClockRuntimeDxe/RealTimeClockRuntimeDxe.inf
+INF  EmbeddedPkg/MetronomeDxe/MetronomeDxe.inf
+INF  MdeModulePkg/Universal/Variable/RuntimeDxe/VariableRuntimeDxe.inf
+
+INF  Emex64Pkg/GopDxe/GopDxe.inf
+INF  MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
+INF  Emex64Pkg/SmbiosPlatformDxe/SmbiosPlatformDxe.inf
+INF  Emex64Pkg/KeyboardDxe/KeyboardDxe.inf
+INF  Emex64Pkg/SataDxe/SataDxe.inf
+INF  Emex64Pkg/UsbHcDxe/UsbHcDxe.inf
+INF  MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf
+INF  MdeModulePkg/Bus/Usb/UsbMassStorageDxe/UsbMassStorageDxe.inf
+
+INF  MdeModulePkg/Universal/Console/ConPlatformDxe/ConPlatformDxe.inf
+INF  MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
+INF  MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
+INF  MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
+INF  MdeModulePkg/Universal/Disk/DiskIoDxe/DiskIoDxe.inf
+INF  MdeModulePkg/Universal/Disk/PartitionDxe/PartitionDxe.inf
+INF  FatPkg/EnhancedFatDxe/Fat.inf
+
+INF  MdeModulePkg/Universal/DevicePathDxe/DevicePathDxe.inf
+INF  MdeModulePkg/Universal/HiiDatabaseDxe/HiiDatabaseDxe.inf
+INF  MdeModulePkg/Universal/SetupBrowserDxe/SetupBrowserDxe.inf
+INF  MdeModulePkg/Universal/DisplayEngineDxe/DisplayEngineDxe.inf
+INF  MdeModulePkg/Universal/DriverHealthManagerDxe/DriverHealthManagerDxe.inf
+INF  MdeModulePkg/Universal/BdsDxe/BdsDxe.inf
+INF  MdeModulePkg/Logo/LogoDxe.inf
+INF  MdeModulePkg/Application/UiApp/UiApp.inf
+
+[Rule.Common.SEC]
+    FILE SEC = $(NAMED_GUID) RELOCS_STRIPPED FIXED {
+        PE32     PE32    Align = Auto     $(INF_OUTPUT)/$(MODULE_NAME).efi
+        UI       STRING ="$(MODULE_NAME)" Optional
+    }
+
+[Rule.Common.DXE_CORE]
+    FILE DXE_CORE = $(NAMED_GUID) {
+        PE32     PE32    $(INF_OUTPUT)/$(MODULE_NAME).efi
+        UI       STRING="$(MODULE_NAME)" Optional
+    }
+
+[Rule.Common.DXE_DRIVER]
+    FILE DRIVER = $(NAMED_GUID) {
+        DXE_DEPEX    DXE_DEPEX Optional      $(INF_OUTPUT)/$(MODULE_NAME).depex
+        PE32     PE32    $(INF_OUTPUT)/$(MODULE_NAME).efi
+        UI       STRING="$(MODULE_NAME)" Optional
+    }
+
+[Rule.Common.DXE_RUNTIME_DRIVER]
+    FILE DRIVER = $(NAMED_GUID) {
+        DXE_DEPEX    DXE_DEPEX Optional      $(INF_OUTPUT)/$(MODULE_NAME).depex
+        PE32     PE32    $(INF_OUTPUT)/$(MODULE_NAME).efi
+        UI       STRING="$(MODULE_NAME)" Optional
+    }
+
+[Rule.Common.UEFI_DRIVER]
+    FILE DRIVER = $(NAMED_GUID) {
+        DXE_DEPEX    DXE_DEPEX Optional      $(INF_OUTPUT)/$(MODULE_NAME).depex
+        PE32     PE32   $(INF_OUTPUT)/$(MODULE_NAME).efi
+        UI       STRING="$(MODULE_NAME)" Optional
+    }
+
+[Rule.Common.UEFI_APPLICATION]
+    FILE APPLICATION = $(NAMED_GUID) {
+        PE32     PE32    $(INF_OUTPUT)/$(MODULE_NAME).efi
+        UI       STRING="$(MODULE_NAME)" Optional
+    }

@@ -1,0 +1,42 @@
+## @file
+#  Copyright (C) 2026 emexlab
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+    INF_VERSION     = 0x0001001B
+    BASE_NAME       = SataDxe
+    FILE_GUID       = 0E640035-7E64-4C64-8E64-00000000E640
+    MODULE_TYPE     = DXE_DRIVER
+    VERSION_STRING  = 1.0
+    ENTRY_POINT     = SataDxeInitialize
+
+[Sources]
+    SataDxe.c
+
+[Packages]
+    MdePkg/MdePkg.dec
+    Emex64Pkg/Emex64Pkg.dec
+
+[LibraryClasses]
+    BaseLib
+    BaseMemoryLib
+    DebugLib
+    DevicePathLib
+    IoLib
+    MemoryAllocationLib
+    TimerLib
+    UefiBootServicesTableLib
+    UefiDriverEntryPoint
+
+[Guids]
+    gEmex64SataDevicePathGuid
+    gEfiDiskInfoAhciInterfaceGuid
+
+[Protocols]
+    gEfiBlockIoProtocolGuid
+    gEfiDevicePathProtocolGuid
+    gEfiDiskInfoProtocolGuid
+
+[Depex]
+    TRUE

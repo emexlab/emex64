@@ -1,0 +1,882 @@
+diff --git a/BaseTools/Conf/tools_def.template b/BaseTools/Conf/tools_def.template
+index 72ca0df..bad23d8 100644
+--- a/BaseTools/Conf/tools_def.template
++++ b/BaseTools/Conf/tools_def.template
+@@ -1562,6 +1562,42 @@ RELEASE_XCODE5_X64_CC_FLAGS   = -target x86_64-pc-win32-macho -c    -Os       -W
+ *_*_*_LZMAF86_PATH         = LzmaF86Compress
+ *_*_*_LZMAF86_GUID         = D42AE6BD-1352-4bfb-909A-CA72A6EAE889
+ 
++*_CLANGEMEX64_*_*_FAMILY              = GCC
++*_CLANGEMEX64_*_*_BUILDRULEFAMILY     = GCC
++*_CLANGEMEX64_*_MAKE_PATH             = make
++*_CLANGEMEX64_*_*_DLL                 = ENV(EMEX64_LLVM_BIN)
++*_CLANGEMEX64_*_APP_FLAGS             =
++*_CLANGEMEX64_*_GENFWHII_FLAGS        = --hiibinpackage
++
++DEFINE CLANGEMEX64_TARGET             = -target emex64-unknown-elf
++DEFINE CLANGEMEX64_WARNINGS           = -Wall -Wno-array-bounds -Wno-parentheses-equality -Wno-empty-body -Wno-varargs -Wno-unknown-warning-option -Wno-address -Wno-shift-negative-value -Wno-unknown-pragmas -Wno-incompatible-library-redeclaration -Wno-null-dereference -Wno-microsoft-anon-tag
++DEFINE CLANGEMEX64_CC_FLAGS           = DEF(CLANGEMEX64_TARGET) -Os -fshort-wchar -fno-builtin -fno-strict-aliasing -include AutoGen.h -fno-common -ffunction-sections -fdata-sections -DSTRING_ARRAY_NAME=$(BASE_NAME)Strings -fno-pic -fno-pie -fno-stack-protector -fno-asynchronous-unwind-tables -fno-unwind-tables -msoft-float -fno-ms-extensions DEF(CLANGEMEX64_WARNINGS)
++DEFINE CLANGEMEX64_DLINK_FLAGS        = DEF(CLANGEMEX64_TARGET) -nostdlib -fuse-ld=lld -Wl,--no-pie,-q,--gc-sections -Wl,-z,notext -Wl,-z,common-page-size=0x40 -Wl,--entry,$(IMAGE_ENTRY_POINT) -u $(IMAGE_ENTRY_POINT) -Wl,-Map,$(DEST_DIR_DEBUG)/$(BASE_NAME).map
++DEFINE CLANGEMEX64_DLINK2_FLAGS       = -Wl,--defsym=PECOFF_HEADER_SIZE=0x228 -Wl,--script=$(EDK_TOOLS_PATH)/Scripts/GccBase.lds
++
++*_CLANGEMEX64_EMEX64_CC_PATH          = ENV(EMEX64_LLVM_BIN)clang
++*_CLANGEMEX64_EMEX64_SLINK_PATH       = ENV(EMEX64_LLVM_BIN)llvm-ar
++*_CLANGEMEX64_EMEX64_DLINK_PATH       = ENV(EMEX64_LLVM_BIN)clang
++*_CLANGEMEX64_EMEX64_ASM_PATH         = ENV(EMEX64_LLVM_BIN)clang
++*_CLANGEMEX64_EMEX64_PP_PATH          = ENV(EMEX64_LLVM_BIN)clang
++*_CLANGEMEX64_EMEX64_VFRPP_PATH       = ENV(EMEX64_LLVM_BIN)clang
++*_CLANGEMEX64_EMEX64_ASLCC_PATH       = ENV(EMEX64_LLVM_BIN)clang
++*_CLANGEMEX64_EMEX64_ASLPP_PATH       = ENV(EMEX64_LLVM_BIN)clang
++*_CLANGEMEX64_EMEX64_ASLDLINK_PATH    = ENV(EMEX64_LLVM_BIN)clang
++*_CLANGEMEX64_EMEX64_OBJCOPY_PATH     = ENV(EMEX64_LLVM_BIN)llvm-objcopy
++*_CLANGEMEX64_EMEX64_RC_PATH          = ENV(EMEX64_RC)
++
++*_CLANGEMEX64_EMEX64_CC_FLAGS         = DEF(CLANGEMEX64_CC_FLAGS)
++*_CLANGEMEX64_EMEX64_DLINK_FLAGS      = DEF(CLANGEMEX64_DLINK_FLAGS)
++*_CLANGEMEX64_EMEX64_DLINK2_FLAGS     = DEF(CLANGEMEX64_DLINK2_FLAGS)
++*_CLANGEMEX64_EMEX64_ASM_FLAGS        = DEF(CLANGEMEX64_TARGET) -c -x assembler
++*_CLANGEMEX64_EMEX64_PP_FLAGS         = DEF(CLANGEMEX64_TARGET) -E -x assembler-with-cpp -include AutoGen.h
++*_CLANGEMEX64_EMEX64_VFRPP_FLAGS      = DEF(CLANGEMEX64_TARGET) -x c -E -DVFRCOMPILE --include $(MODULE_NAME)StrDefs.h
++*_CLANGEMEX64_EMEX64_ASLPP_FLAGS      = DEF(CLANGEMEX64_TARGET) -x c -E -include AutoGen.h
++*_CLANGEMEX64_EMEX64_ASLCC_FLAGS      = DEF(CLANGEMEX64_TARGET) -x c -include AutoGen.h -fshort-wchar
++*_CLANGEMEX64_EMEX64_RC_FLAGS         =
++*_CLANGEMEX64_EMEX64_OBJCOPY_FLAGS    =
++
+ ##################
+ # TianoCompress tool definitions
+ ##################
+diff --git a/BaseTools/Source/C/Common/BasePeCoff.c b/BaseTools/Source/C/Common/BasePeCoff.c
+index 6bd6092..edcc164 100644
+--- a/BaseTools/Source/C/Common/BasePeCoff.c
++++ b/BaseTools/Source/C/Common/BasePeCoff.c
+@@ -165,7 +165,8 @@ PeCoffLoaderCheckImageType (
+       ImageContext->Machine != IMAGE_FILE_MACHINE_EBC  && \
+       ImageContext->Machine != IMAGE_FILE_MACHINE_ARM64 && \
+       ImageContext->Machine != IMAGE_FILE_MACHINE_RISCV64 && \
+-      ImageContext->Machine != IMAGE_FILE_MACHINE_LOONGARCH64) {
++      ImageContext->Machine != IMAGE_FILE_MACHINE_LOONGARCH64 && \
++      ImageContext->Machine != IMAGE_FILE_MACHINE_EMEX64) {
+     //
+     // unsupported PeImage machine type
+     //
+diff --git a/BaseTools/Source/C/GenFv/GenFvInternalLib.c b/BaseTools/Source/C/GenFv/GenFvInternalLib.c
+index 8f844c2..a5a95fe 100644
+--- a/BaseTools/Source/C/GenFv/GenFvInternalLib.c
++++ b/BaseTools/Source/C/GenFv/GenFvInternalLib.c
+@@ -43,6 +43,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
+ BOOLEAN mArm = FALSE;
+ BOOLEAN mRiscV = FALSE;
+ BOOLEAN mLoongArch = FALSE;
++BOOLEAN mEmex64 = FALSE;
+ STATIC UINT32   MaxFfsAlignment = 0;
+ BOOLEAN VtfFileFlag = FALSE;
+ 
+@@ -2214,6 +2215,56 @@ Returns:
+   return EFI_SUCCESS;
+ }
+ 
++EFI_STATUS
++UpdateEmex64ResetVectorIfNeeded (
++  MEMORY_FILE            *FvImage,
++  FV_INFO                *FvInfo
++  )
++
++{
++  EFI_STATUS                Status;
++  EFI_FILE_SECTION_POINTER  SecPe32;
++  EFI_PHYSICAL_ADDRESS      SecCoreEntryAddress;
++  UINT16                    MachineType;
++  UINT8                     *Vector;
++  UINT32                    Index;
++
++  if (FvImage == NULL || FvInfo == NULL) {
++    return EFI_INVALID_PARAMETER;
++  }
++
++  InitializeFvLib (FvImage->FileImage, FvInfo->Size);
++
++  Status = FindCorePeSection (FvImage->FileImage, FvInfo->Size, EFI_FV_FILETYPE_SECURITY_CORE, &SecPe32);
++  if (EFI_ERROR (Status)) {
++    return EFI_SUCCESS;
++  }
++
++  Status = GetCoreMachineType (SecPe32, &MachineType);
++  if (EFI_ERROR (Status) || MachineType != IMAGE_FILE_MACHINE_EMEX64) {
++    Error (NULL, 0, 3000, "Invalid", "Could not update SEC core because Machine type is not emex64.");
++    return EFI_ABORTED;
++  }
++
++  Status = GetCoreEntryPointAddress (FvImage->FileImage, FvInfo, SecPe32, &SecCoreEntryAddress);
++  if (EFI_ERROR (Status)) {
++    Error (NULL, 0, 3000, "Invalid", "Could not get the PE32 entry point address for SEC Core.");
++    return EFI_ABORTED;
++  }
++
++  VerboseMsg ("UpdateEmex64ResetVectorIfNeeded: SEC entry at 0x%llX", (unsigned long long) SecCoreEntryAddress);
++
++  Vector = (UINT8 *)FvImage->FileImage;
++  memset (Vector, 0, 16);
++  Vector[0] = 0x26;
++  Vector[1] = 0x07;
++  for (Index = 0; Index < 8; Index++) {
++    Vector[2 + Index] = (UINT8)(SecCoreEntryAddress >> (8 * Index));
++  }
++
++  return EFI_SUCCESS;
++}
++
+ EFI_STATUS
+ UpdateLoongArchResetVectorIfNeeded (
+   IN MEMORY_FILE            *FvImage,
+@@ -2399,7 +2450,7 @@ Returns:
+   //
+   if ((*MachineType != IMAGE_FILE_MACHINE_I386) &&  (*MachineType != IMAGE_FILE_MACHINE_X64) && (*MachineType != IMAGE_FILE_MACHINE_EBC) &&
+       (*MachineType != IMAGE_FILE_MACHINE_ARM64) && (*MachineType != IMAGE_FILE_MACHINE_RISCV64) &&
+-      (*MachineType != IMAGE_FILE_MACHINE_LOONGARCH64)) {
++      (*MachineType != IMAGE_FILE_MACHINE_LOONGARCH64) && (*MachineType != IMAGE_FILE_MACHINE_EMEX64)) {
+     Error (NULL, 0, 3000, "Invalid", "Unrecognized machine type in the PE32 file.");
+     return EFI_UNSUPPORTED;
+   }
+@@ -2843,7 +2894,7 @@ Returns:
+       goto Finish;
+     }
+ 
+-    if (!mArm && !mRiscV && !mLoongArch) {
++    if (!mArm && !mRiscV && !mLoongArch && !mEmex64) {
+       //
+       // Update reset vector (SALE_ENTRY for IPF)
+       // Now for IA32 and IA64 platform, the fv which has bsf file must have the
+@@ -2894,6 +2945,16 @@ Returns:
+     FvHeader->Checksum = CalculateChecksum16 ((UINT16 *) FvHeader, FvHeader->HeaderLength / sizeof (UINT16));
+   }
+ 
++  if (mEmex64) {
++    Status = UpdateEmex64ResetVectorIfNeeded (&FvImageMemoryFile, &mFvDataInfo);
++    if (EFI_ERROR (Status)) {
++      Error (NULL, 0, 3000, "Invalid", "Could not update the reset vector for emex64.");
++      goto Finish;
++    }
++    FvHeader->Checksum = 0;
++    FvHeader->Checksum = CalculateChecksum16 ((UINT16 *) FvHeader, FvHeader->HeaderLength / sizeof (UINT16));
++  }
++
+   if (mLoongArch) {
+     Status = UpdateLoongArchResetVectorIfNeeded (&FvImageMemoryFile, &mFvDataInfo);
+     if (EFI_ERROR (Status)) {
+@@ -3374,6 +3435,11 @@ Returns:
+         VerboseMsg("Located LoongArch64 SEC core in child FV");
+         mLoongArch = TRUE;
+       }
++
++      if (MachineType == IMAGE_FILE_MACHINE_EMEX64) {
++        VerboseMsg("Located emex64 SEC core in child FV");
++        mEmex64 = TRUE;
++      }
+     }
+ 
+     //
+@@ -3546,6 +3612,10 @@ Returns:
+       mLoongArch = TRUE;
+     }
+ 
++    if (ImageContext.Machine == IMAGE_FILE_MACHINE_EMEX64) {
++      mEmex64 = TRUE;
++    }
++
+     //
+     // Keep Image Context for PE image in FV
+     //
+@@ -3826,6 +3896,10 @@ Returns:
+       mLoongArch = TRUE;
+     }
+ 
++    if (ImageContext.Machine == IMAGE_FILE_MACHINE_EMEX64) {
++      mEmex64 = TRUE;
++    }
++
+     //
+     // Keep Image Context for TE image in FV
+     //
+diff --git a/BaseTools/Source/C/GenFw/Elf64Convert.c b/BaseTools/Source/C/GenFw/Elf64Convert.c
+index 1208137..ae74e1c 100644
+--- a/BaseTools/Source/C/GenFw/Elf64Convert.c
++++ b/BaseTools/Source/C/GenFw/Elf64Convert.c
+@@ -180,7 +180,7 @@ InitializeElf64 (
+     Error (NULL, 0, 3000, "Unsupported", "ELF e_type not ET_EXEC or ET_DYN");
+     return FALSE;
+   }
+-  if (!((mEhdr->e_machine == EM_X86_64) || (mEhdr->e_machine == EM_AARCH64) || (mEhdr->e_machine == EM_RISCV64) || (mEhdr->e_machine == EM_LOONGARCH))) {
++  if (!((mEhdr->e_machine == EM_X86_64) || (mEhdr->e_machine == EM_AARCH64) || (mEhdr->e_machine == EM_RISCV64) || (mEhdr->e_machine == EM_LOONGARCH) || (mEhdr->e_machine == EM_EMEX64))) {
+     Warning (NULL, 0, 3000, "Unsupported", "ELF e_machine is not Elf64 machine.");
+   }
+   if (mEhdr->e_version != EV_CURRENT) {
+@@ -872,6 +872,7 @@ ScanSections64 (
+   case EM_AARCH64:
+   case EM_RISCV64:
+   case EM_LOONGARCH:
++  case EM_EMEX64:
+     mCoffOffset += sizeof (EFI_IMAGE_NT_HEADERS64);
+   break;
+   default:
+@@ -1219,6 +1220,10 @@ ScanSections64 (
+     NtHdr->Pe32Plus.FileHeader.Machine = IMAGE_FILE_MACHINE_LOONGARCH64;
+     NtHdr->Pe32Plus.OptionalHeader.Magic = EFI_IMAGE_NT_OPTIONAL_HDR64_MAGIC;
+     break;
++  case EM_EMEX64:
++    NtHdr->Pe32Plus.FileHeader.Machine = IMAGE_FILE_MACHINE_EMEX64;
++    NtHdr->Pe32Plus.OptionalHeader.Magic = EFI_IMAGE_NT_OPTIONAL_HDR64_MAGIC;
++    break;
+ 
+   default:
+     VerboseMsg ("%u unknown e_machine type. Assume X64", (UINTN)mEhdr->e_machine);
+@@ -1335,6 +1340,84 @@ ScanSections64 (
+ 
+ }
+ 
++STATIC
++UINT32
++Emex64ReadField32 (
++  UINT8   *Targ,
++  UINT32  Shift
++  )
++{
++  UINT64  Bits;
++
++  Bits = (UINT64)Targ[0] | ((UINT64)Targ[1] << 8) | ((UINT64)Targ[2] << 16) | ((UINT64)Targ[3] << 24) | ((UINT64)Targ[4] << 32);
++  return (UINT32)(Bits >> Shift);
++}
++
++STATIC
++VOID
++Emex64WriteField32 (
++  UINT8   *Targ,
++  UINT32  Shift,
++  UINT32  Value
++  )
++{
++  UINT64  Bits;
++  UINT64  Mask;
++  UINT32  Index;
++
++  Bits = (UINT64)Targ[0] | ((UINT64)Targ[1] << 8) | ((UINT64)Targ[2] << 16) | ((UINT64)Targ[3] << 24) | ((UINT64)Targ[4] << 32);
++  Mask = (UINT64)0xFFFFFFFF << Shift;
++  Bits = (Bits & ~Mask) | (((UINT64)Value << Shift) & Mask);
++  for (Index = 0; Index < 5; Index++) {
++    Targ[Index] = (UINT8)(Bits >> (8 * Index));
++  }
++}
++
++STATIC
++VOID
++WriteSectionEmex64 (
++  Elf_Rela  *Rel,
++  UINT8     *Targ,
++  Elf_Shdr  *SymShdr,
++  Elf_Sym   *Sym,
++  UINT32    SecOffset,
++  Elf_Shdr  *SecShdr
++  )
++{
++  INT64   SymDelta;
++  INT64   PcDelta;
++  UINT32  Shift;
++
++  SymDelta = (INT64)mCoffSectionsOffset[Sym->st_shndx] - (INT64)SymShdr->sh_addr;
++  PcDelta  = (INT64)SecOffset - (INT64)SecShdr->sh_addr;
++
++  switch (ELF_R_TYPE (Rel->r_info)) {
++  case R_EMEX64_NONE:
++    break;
++  case R_EMEX64_ABS64:
++    *(UINT64 *)Targ = *(UINT64 *)Targ + SymDelta;
++    break;
++  case R_EMEX64_ABS32:
++    *(UINT32 *)Targ = (UINT32)(*(UINT32 *)Targ + SymDelta);
++    break;
++  case R_EMEX64_PC64:
++    *(UINT64 *)Targ = *(UINT64 *)Targ + SymDelta - PcDelta;
++    break;
++  case R_EMEX64_PC32:
++    *(UINT32 *)Targ = (UINT32)(*(UINT32 *)Targ + SymDelta - PcDelta);
++    break;
++  case R_EMEX64_BRANCH32:
++  case R_EMEX64_PLT32:
++  case R_EMEX64_BRANCH32_B4:
++  case R_EMEX64_PLT32_B4:
++    Shift = (ELF_R_TYPE (Rel->r_info) == R_EMEX64_BRANCH32_B4 || ELF_R_TYPE (Rel->r_info) == R_EMEX64_PLT32_B4) ? 4 : 0;
++    Emex64WriteField32 (Targ, Shift, (UINT32)(Emex64ReadField32 (Targ, Shift) + SymDelta - PcDelta));
++    break;
++  default:
++    Error (NULL, 0, 3000, "Invalid", "WriteSections64(): %s unsupported ELF EM_EMEX64 relocation 0x%x (build with -fno-pic and hidden visibility).", mInImageName, (unsigned) ELF_R_TYPE(Rel->r_info));
++  }
++}
++
+ STATIC
+ BOOLEAN
+ WriteSections64 (
+@@ -1814,6 +1897,8 @@ WriteSections64 (
+           // Write section for RISC-V 64 architecture.
+           //
+           WriteSectionRiscV64 (Rel, Targ, SymShdr, Sym);
++        } else if (mEhdr->e_machine == EM_EMEX64) {
++          WriteSectionEmex64 (Rel, Targ, SymShdr, Sym, SecOffset, SecShdr);
+         } else if (mEhdr->e_machine == EM_LOONGARCH) {
+           switch (ELF_R_TYPE(Rel->r_info)) {
+             INT64     Offset;
+@@ -2268,6 +2353,25 @@ WriteRelocations64 (
+             default:
+               Error (NULL, 0, 3000, "Invalid", "WriteRelocations64(): %s unsupported ELF EM_RISCV64 relocation 0x%x.", mInImageName, (unsigned) ELF_R_TYPE(Rel->r_info));
+             }
++          } else if (mEhdr->e_machine == EM_EMEX64) {
++            switch (ELF_R_TYPE(Rel->r_info)) {
++            case R_EMEX64_ABS64:
++              CoffAddFixup(
++                (UINT32) ((UINT64) mCoffSectionsOffset[RelShdr->sh_info]
++                + (Rel->r_offset - SecShdr->sh_addr)),
++                EFI_IMAGE_REL_BASED_DIR64);
++              break;
++            case R_EMEX64_NONE:
++            case R_EMEX64_PC64:
++            case R_EMEX64_PC32:
++            case R_EMEX64_BRANCH32:
++            case R_EMEX64_BRANCH32_B4:
++            case R_EMEX64_PLT32:
++            case R_EMEX64_PLT32_B4:
++              break;
++            default:
++              Error (NULL, 0, 3000, "Invalid", "WriteRelocations64(): %s unsupported ELF EM_EMEX64 relocation 0x%x.", mInImageName, (unsigned) ELF_R_TYPE(Rel->r_info));
++            }
+           } else if (mEhdr->e_machine == EM_LOONGARCH) {
+             switch (ELF_R_TYPE(Rel->r_info)) {
+               case R_LARCH_MARK_LA:
+diff --git a/BaseTools/Source/C/GenFw/elf_common.h b/BaseTools/Source/C/GenFw/elf_common.h
+index 2a9d038..77437bd 100644
+--- a/BaseTools/Source/C/GenFw/elf_common.h
++++ b/BaseTools/Source/C/GenFw/elf_common.h
+@@ -195,6 +195,7 @@ typedef struct {
+ #define EM_RISCV64  243 /* 64bit RISC-V Architecture */
+ #define EM_RISCV    244 /* 32bit RISC-V Architecture */
+ #define EM_LOONGARCH 258 /* LoongArch Architecture */
++#define EM_EMEX64   0x0E64
+ 
+ /* Non-standard or deprecated. */
+ #define EM_486    6  /* Intel i486. */
+@@ -1057,6 +1058,22 @@ typedef struct {
+ #define R_RISCV_SET16           55
+ #define R_RISCV_SET32           56
+ 
++#define R_EMEX64_NONE           0
++#define R_EMEX64_ABS64          1
++#define R_EMEX64_ABS32          2
++#define R_EMEX64_ABS16          3
++#define R_EMEX64_ABS8           4
++#define R_EMEX64_PC64           5
++#define R_EMEX64_PC32           6
++#define R_EMEX64_GOT64          14
++#define R_EMEX64_GOTPC64        15
++#define R_EMEX64_PLT64          16
++#define R_EMEX64_BRANCH32       17
++#define R_EMEX64_BRANCH32_B4    18
++#define R_EMEX64_PLT32          19
++#define R_EMEX64_PLT32_B4       20
++#define R_EMEX64_GOTPCREL64     21
++
+ /*
+  * LoongArch relocation types
+  */
+diff --git a/BaseTools/Source/Python/Common/DataType.py b/BaseTools/Source/Python/Common/DataType.py
+index 7ef3e93..f67f988 100644
+--- a/BaseTools/Source/Python/Common/DataType.py
++++ b/BaseTools/Source/Python/Common/DataType.py
+@@ -54,8 +54,9 @@ TAB_ARCH_EBC = 'EBC'
+ TAB_ARCH_AARCH64 = 'AARCH64'
+ TAB_ARCH_RISCV64 = 'RISCV64'
+ TAB_ARCH_LOONGARCH64 = 'LOONGARCH64'
++TAB_ARCH_EMEX64 = 'EMEX64'
+ 
+-ARCH_SET_FULL = {TAB_ARCH_IA32, TAB_ARCH_X64, TAB_ARCH_EBC, TAB_ARCH_AARCH64, TAB_ARCH_RISCV64, TAB_ARCH_LOONGARCH64, TAB_ARCH_COMMON}
++ARCH_SET_FULL = {TAB_ARCH_IA32, TAB_ARCH_X64, TAB_ARCH_EBC, TAB_ARCH_AARCH64, TAB_ARCH_RISCV64, TAB_ARCH_LOONGARCH64, TAB_ARCH_EMEX64, TAB_ARCH_COMMON}
+ 
+ SUP_MODULE_BASE = 'BASE'
+ SUP_MODULE_SEC = 'SEC'
+diff --git a/BaseTools/Source/Python/build/buildoptions.py b/BaseTools/Source/Python/build/buildoptions.py
+index 1787d80..9048cfd 100644
+--- a/BaseTools/Source/Python/build/buildoptions.py
++++ b/BaseTools/Source/Python/build/buildoptions.py
+@@ -42,7 +42,7 @@ class MyOptionParser():
+     def GetOption(self):
+         Parser = OptionParser(description=__copyright__, version=__version__, prog="build.exe", usage="%prog [options] [all|fds|genc|genmake|clean|cleanall|cleanlib|modules|libraries|run]")
+         Parser.add_option("-a", "--arch", action="append", dest="TargetArch",
+-            help="ARCHS is one of list: IA32, X64, AARCH64, RISCV64, LOONGARCH64 or EBC, which overrides target.txt's TARGET_ARCH definition. To specify more archs, please repeat this option.")
++            help="ARCHS is one of list: IA32, X64, AARCH64, RISCV64, LOONGARCH64, EMEX64 or EBC, which overrides target.txt's TARGET_ARCH definition. To specify more archs, please repeat this option.")
+         Parser.add_option("-p", "--platform", action="callback", type="string", dest="PlatformFile", callback=SingleCheckCallback,
+             help="Build the platform specified by the DSC file name argument, overriding target.txt's ACTIVE_PLATFORM definition.")
+         Parser.add_option("-m", "--module", action="callback", type="string", dest="ModuleFile", callback=SingleCheckCallback,
+diff --git a/MdeModulePkg/Core/Dxe/Image/Image.c b/MdeModulePkg/Core/Dxe/Image/Image.c
+index bbf9921..ec43b0a 100644
+--- a/MdeModulePkg/Core/Dxe/Image/Image.c
++++ b/MdeModulePkg/Core/Dxe/Image/Image.c
+@@ -83,6 +83,7 @@ GLOBAL_REMOVE_IF_UNREFERENCED MACHINE_TYPE_INFO  mMachineTypeInfo[] = {
+   { EFI_IMAGE_MACHINE_AARCH64,     L"AARCH64"     },
+   { EFI_IMAGE_MACHINE_RISCV64,     L"RISCV64"     },
+   { EFI_IMAGE_MACHINE_LOONGARCH64, L"LOONGARCH64" },
++  { EFI_IMAGE_MACHINE_EMEX64,      L"EMEX64"      },
+ };
+ 
+ UINT16  mDxeCoreImageMachineType = 0;
+diff --git a/MdeModulePkg/Universal/CapsuleRuntimeDxe/CapsuleRuntimeDxe.inf b/MdeModulePkg/Universal/CapsuleRuntimeDxe/CapsuleRuntimeDxe.inf
+index bc32fc3..e78e6bd 100644
+--- a/MdeModulePkg/Universal/CapsuleRuntimeDxe/CapsuleRuntimeDxe.inf
++++ b/MdeModulePkg/Universal/CapsuleRuntimeDxe/CapsuleRuntimeDxe.inf
+@@ -30,13 +30,13 @@
+   CapsuleService.c
+   CapsuleService.h
+ 
+-[Sources.Ia32, Sources.EBC, Sources.AARCH64, Sources.RISCV64, Sources.LOONGARCH64]
++[Sources.Ia32, Sources.EBC, Sources.AARCH64, Sources.RISCV64, Sources.LOONGARCH64, Sources.EMEX64]
+   SaveLongModeContext.c
+ 
+-[Sources.Ia32, Sources.X64, Sources.AARCH64, Sources.RISCV64, Sources.LOONGARCH64]
++[Sources.Ia32, Sources.X64, Sources.AARCH64, Sources.RISCV64, Sources.LOONGARCH64, Sources.EMEX64]
+   CapsuleCache.c
+ 
+-[Sources.Ia32, Sources.X64, Sources.EBC, Sources.RISCV64, Sources.LOONGARCH64]
++[Sources.Ia32, Sources.X64, Sources.EBC, Sources.RISCV64, Sources.LOONGARCH64, Sources.EMEX64]
+   CapsuleReset.c
+ 
+ [Sources.AARCH64]
+diff --git a/MdePkg/Include/IndustryStandard/Dhcp.h b/MdePkg/Include/IndustryStandard/Dhcp.h
+index a496159..c36bcb1 100644
+--- a/MdePkg/Include/IndustryStandard/Dhcp.h
++++ b/MdePkg/Include/IndustryStandard/Dhcp.h
+@@ -271,6 +271,7 @@ typedef enum {
+ #define PXE_CLIENT_ARCH_RISCV128     0x001D          /// RISC-V uefi 128 for PXE
+ #define PXE_CLIENT_ARCH_LOONGARCH32  0x0025          /// LoongArch uefi 32 for PXE
+ #define PXE_CLIENT_ARCH_LOONGARCH64  0x0027          /// LoongArch uefi 64 for PXE
++#define PXE_CLIENT_ARCH_EMEX64       0x0E64
+ 
+ #define HTTP_CLIENT_ARCH_IA32         0x000F          /// x86 uefi boot from http
+ #define HTTP_CLIENT_ARCH_X64          0x0010          /// x64 uefi boot from http
+@@ -282,3 +283,4 @@ typedef enum {
+ #define HTTP_CLIENT_ARCH_RISCV128     0x001E          /// RISC-V uefi 128 boot from http
+ #define HTTP_CLIENT_ARCH_LOONGARCH32  0x0026          /// LoongArch uefi 32 boot from http
+ #define HTTP_CLIENT_ARCH_LOONGARCH64  0x0028          /// LoongArch uefi 64 boot from http
++#define HTTP_CLIENT_ARCH_EMEX64       0x0E65
+diff --git a/MdePkg/Include/IndustryStandard/PeImage.h b/MdePkg/Include/IndustryStandard/PeImage.h
+index 53e6f25..787aabc 100644
+--- a/MdePkg/Include/IndustryStandard/PeImage.h
++++ b/MdePkg/Include/IndustryStandard/PeImage.h
+@@ -36,6 +36,7 @@ SPDX-License-Identifier: BSD-2-Clause-Patent
+ #define IMAGE_FILE_MACHINE_ARM64           0xAA64
+ #define IMAGE_FILE_MACHINE_RISCV32         0x5032
+ #define IMAGE_FILE_MACHINE_RISCV64         0x5064
++#define IMAGE_FILE_MACHINE_EMEX64          0x0E64
+ #define IMAGE_FILE_MACHINE_RISCV128        0x5128
+ #define IMAGE_FILE_MACHINE_LOONGARCH32     0x6232
+ #define IMAGE_FILE_MACHINE_LOONGARCH64     0x6264
+diff --git a/MdePkg/Include/Library/BaseLib.h b/MdePkg/Include/Library/BaseLib.h
+index 468ecac..ed80e87 100644
+--- a/MdePkg/Include/Library/BaseLib.h
++++ b/MdePkg/Include/Library/BaseLib.h
+@@ -576,6 +576,29 @@ IoCsrWrite64 (
+ 
+ #endif // defined (MDE_CPU_LOONGARCH64)
+ 
++#if defined (MDE_CPU_EMEX64)
++typedef struct {
++  UINT64    R6;
++  UINT64    R7;
++  UINT64    R8;
++  UINT64    R9;
++  UINT64    ER8;
++  UINT64    ER9;
++  UINT64    ER10;
++  UINT64    ER11;
++  UINT64    ER12;
++  UINT64    ER13;
++  UINT64    ER14;
++  UINT64    ER15;
++  UINT64    SP;
++  UINT64    FP;
++  UINT64    PC;
++} BASE_LIBRARY_JUMP_BUFFER;
++
++#define BASE_LIBRARY_JUMP_BUFFER_ALIGNMENT  8
++
++#endif
++
+ //
+ // String Services
+ //
+diff --git a/MdePkg/Include/Library/CpuLib.h b/MdePkg/Include/Library/CpuLib.h
+index cdbfaea..7750961 100644
+--- a/MdePkg/Include/Library/CpuLib.h
++++ b/MdePkg/Include/Library/CpuLib.h
+@@ -41,7 +41,7 @@ CpuFlushTlb (
+   VOID
+   );
+ 
+-#if defined (MDE_CPU_IA32) || defined (MDE_CPU_X64) || defined (MDE_CPU_LOONGARCH64) || defined (MDE_CPU_RISCV64)
++#if defined (MDE_CPU_IA32) || defined (MDE_CPU_X64) || defined (MDE_CPU_LOONGARCH64) || defined (MDE_CPU_RISCV64) || defined (MDE_CPU_EMEX64)
+ 
+ /**
+   Initialize the CPU floating point units.
+diff --git a/MdePkg/Include/Protocol/DebugSupport.h b/MdePkg/Include/Protocol/DebugSupport.h
+index ee1fc59..eb50ed4 100644
+--- a/MdePkg/Include/Protocol/DebugSupport.h
++++ b/MdePkg/Include/Protocol/DebugSupport.h
+@@ -796,6 +796,60 @@ typedef struct {
+   UINT64    BADI;  // BAD Instruction
+ } EFI_SYSTEM_CONTEXT_LOONGARCH64;
+ 
++#define EXCEPT_EMEX64_BAD_ACCESS       1
++#define EXCEPT_EMEX64_PERMISSION       2
++#define EXCEPT_EMEX64_BAD_INSTRUCTION  3
++#define EXCEPT_EMEX64_BAD_ARITHMETIC   4
++#define EXCEPT_EMEX64_PAGE_FAULT       5
++#define EXCEPT_EMEX64_KTRR_VIOLATION   6
++#define EXCEPT_EMEX64_SVC              7
++#define EXCEPT_EMEX64_PAC              8
++#define EXCEPT_EMEX64_MAX_EXCEPTIONS   9
++
++#define EXCEPT_EMEX64_IRQ_INDEX(Type)  ((Type) & 0x7F)
++#define EXCEPT_EMEX64_IRQ(Index)       (0x8000000000000000UL | (Index))
++#define EXCEPT_EMEX64_IRQ_IPI          EXCEPT_EMEX64_IRQ (64)
++#define EXCEPT_EMEX64_IRQ_LAPIC_TIMER  EXCEPT_EMEX64_IRQ (65)
++#define EXCEPT_EMEX64_MAX_IRQS         66
++
++typedef struct {
++  UINT64    R0;
++  UINT64    R1;
++  UINT64    R2;
++  UINT64    R3;
++  UINT64    R4;
++  UINT64    R5;
++  UINT64    R6;
++  UINT64    R7;
++  UINT64    R8;
++  UINT64    R9;
++  UINT64    RR;
++  UINT64    ER0;
++  UINT64    ER1;
++  UINT64    ER2;
++  UINT64    ER3;
++  UINT64    ER4;
++  UINT64    ER5;
++  UINT64    ER6;
++  UINT64    ER7;
++  UINT64    ER8;
++  UINT64    ER9;
++  UINT64    ER10;
++  UINT64    ER11;
++  UINT64    ER12;
++  UINT64    ER13;
++  UINT64    ER14;
++  UINT64    ER15;
++  UINT64    SP;
++  UINT64    FP;
++  UINT64    CF;
++  UINT64    FPC;
++  UINT64    CREPC;
++  UINT64    CRSTAT;
++  UINT64    CRCAUSE;
++  UINT64    CRTVAL;
++} EFI_SYSTEM_CONTEXT_EMEX64;
++
+ ///
+ /// Universal EFI_SYSTEM_CONTEXT definition.
+ ///
+@@ -808,6 +862,7 @@ typedef union {
+   EFI_SYSTEM_CONTEXT_AARCH64        *SystemContextAArch64;
+   EFI_SYSTEM_CONTEXT_RISCV64        *SystemContextRiscV64;
+   EFI_SYSTEM_CONTEXT_LOONGARCH64    *SystemContextLoongArch64;
++  EFI_SYSTEM_CONTEXT_EMEX64         *SystemContextEmex64;
+ } EFI_SYSTEM_CONTEXT;
+ 
+ //
+diff --git a/MdePkg/Include/Protocol/PxeBaseCode.h b/MdePkg/Include/Protocol/PxeBaseCode.h
+index c48af48..3a1d695 100644
+--- a/MdePkg/Include/Protocol/PxeBaseCode.h
++++ b/MdePkg/Include/Protocol/PxeBaseCode.h
+@@ -158,6 +158,8 @@ typedef UINT16 EFI_PXE_BASE_CODE_UDP_PORT;
+ #define EFI_PXE_CLIENT_SYSTEM_ARCHITECTURE  0x001B
+ #elif defined (MDE_CPU_LOONGARCH64)
+ #define EFI_PXE_CLIENT_SYSTEM_ARCHITECTURE  0x0027
++#elif defined (MDE_CPU_EMEX64)
++#define EFI_PXE_CLIENT_SYSTEM_ARCHITECTURE  0x0E64
+ #endif
+ 
+ ///
+diff --git a/MdePkg/Include/Uefi/UefiBaseType.h b/MdePkg/Include/Uefi/UefiBaseType.h
+index 5bd6e59..af3f953 100644
+--- a/MdePkg/Include/Uefi/UefiBaseType.h
++++ b/MdePkg/Include/Uefi/UefiBaseType.h
+@@ -252,6 +252,8 @@ typedef union {
+ #define EFI_IMAGE_MACHINE_LOONGARCH32  0x6232
+ #define EFI_IMAGE_MACHINE_LOONGARCH64  0x6264
+ 
++#define EFI_IMAGE_MACHINE_EMEX64  0x0E64
++
+   #if !defined (EFI_IMAGE_MACHINE_TYPE_VALUE) && !defined (EFI_IMAGE_MACHINE_CROSS_TYPE_VALUE)
+     #if   defined (MDE_CPU_IA32)
+ 
+@@ -285,6 +287,13 @@ typedef union {
+ #define EFI_IMAGE_MACHINE_TYPE_SUPPORTED(Machine) \
+     ((Machine) == EFI_IMAGE_MACHINE_LOONGARCH64)
+ 
++#define EFI_IMAGE_MACHINE_CROSS_TYPE_SUPPORTED(Machine)  (FALSE)
++
++    #elif defined (MDE_CPU_EMEX64)
++
++#define EFI_IMAGE_MACHINE_TYPE_SUPPORTED(Machine) \
++    ((Machine) == EFI_IMAGE_MACHINE_EMEX64)
++
+ #define EFI_IMAGE_MACHINE_CROSS_TYPE_SUPPORTED(Machine)  (FALSE)
+ 
+     #elif defined (MDE_CPU_EBC)
+diff --git a/MdePkg/Include/Uefi/UefiSpec.h b/MdePkg/Include/Uefi/UefiSpec.h
+index 144f4d3..e2cb59a 100644
+--- a/MdePkg/Include/Uefi/UefiSpec.h
++++ b/MdePkg/Include/Uefi/UefiSpec.h
+@@ -2270,6 +2270,7 @@ typedef struct {
+ #define EFI_REMOVABLE_MEDIA_FILE_NAME_AARCH64      L"\\EFI\\BOOT\\BOOTAA64.EFI"
+ #define EFI_REMOVABLE_MEDIA_FILE_NAME_RISCV64      L"\\EFI\\BOOT\\BOOTRISCV64.EFI"
+ #define EFI_REMOVABLE_MEDIA_FILE_NAME_LOONGARCH64  L"\\EFI\\BOOT\\BOOTLOONGARCH64.EFI"
++#define EFI_REMOVABLE_MEDIA_FILE_NAME_EMEX64       L"\\EFI\\BOOT\\BOOTEMEX64.EFI"
+ 
+ #if !defined (EFI_REMOVABLE_MEDIA_FILE_NAME)
+   #if   defined (MDE_CPU_IA32)
+@@ -2284,6 +2285,8 @@ typedef struct {
+ #define EFI_REMOVABLE_MEDIA_FILE_NAME  EFI_REMOVABLE_MEDIA_FILE_NAME_RISCV64
+   #elif defined (MDE_CPU_LOONGARCH64)
+ #define EFI_REMOVABLE_MEDIA_FILE_NAME  EFI_REMOVABLE_MEDIA_FILE_NAME_LOONGARCH64
++  #elif defined (MDE_CPU_EMEX64)
++#define EFI_REMOVABLE_MEDIA_FILE_NAME  EFI_REMOVABLE_MEDIA_FILE_NAME_EMEX64
+   #else
+     #error Unknown Processor Type
+   #endif
+diff --git a/MdePkg/Library/BaseCacheMaintenanceLib/BaseCacheMaintenanceLib.inf b/MdePkg/Library/BaseCacheMaintenanceLib/BaseCacheMaintenanceLib.inf
+index 8f06f7d..ad4ea3d 100644
+--- a/MdePkg/Library/BaseCacheMaintenanceLib/BaseCacheMaintenanceLib.inf
++++ b/MdePkg/Library/BaseCacheMaintenanceLib/BaseCacheMaintenanceLib.inf
+@@ -40,6 +40,9 @@
+ [Sources.AARCH64]
+   ArmCache.c
+ 
++[Sources.EMEX64]
++  EbcCache.c
++
+ [Sources.RISCV64]
+   RiscVCache.c
+ 
+diff --git a/MdePkg/Library/BaseCpuLib/BaseCpuLib.inf b/MdePkg/Library/BaseCpuLib/BaseCpuLib.inf
+index 4aae0b6..896315a 100644
+--- a/MdePkg/Library/BaseCpuLib/BaseCpuLib.inf
++++ b/MdePkg/Library/BaseCpuLib/BaseCpuLib.inf
+@@ -55,6 +55,9 @@
+   AArch64/CpuFlushTlb.asm | MSFT
+   AArch64/CpuSleep.asm    | MSFT
+ 
++[Sources.EMEX64]
++  Emex64/Cpu.c
++
+ [Sources.RISCV64]
+   RiscV/Cpu.S             | GCC
+   RiscV/InitializeFpu.S   | GCC
+diff --git a/MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf b/MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
+index d16ada9..ce152e1 100644
+--- a/MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
++++ b/MdePkg/Library/BaseIoLibIntrinsic/BaseIoLibIntrinsic.inf
+@@ -51,6 +51,9 @@
+ [Sources.AARCH64]
+   IoLibNoIo.c
+ 
++[Sources.EMEX64]
++  IoLibNoIo.c
++
+ [Sources.RISCV64]
+   IoLibNoIo.c
+ 
+diff --git a/MdePkg/Library/BaseLib/BaseLib.inf b/MdePkg/Library/BaseLib/BaseLib.inf
+index 94ef391..dfbfd53 100644
+--- a/MdePkg/Library/BaseLib/BaseLib.inf
++++ b/MdePkg/Library/BaseLib/BaseLib.inf
+@@ -395,6 +395,13 @@
+   IntelTdxNull.c
+   AmdSevNull.c
+ 
++[Sources.EMEX64]
++  Math64.c
++  Emex64/Cpu.c
++  Emex64/SetJumpLongJump.S          | GCC
++  IntelTdxNull.c
++  AmdSevNull.c
++
+ [Sources.LOONGARCH64]
+   Math64.c
+   LoongArch64/Csr.c
+diff --git a/MdePkg/Library/BaseMemoryLib/CopyMem.c b/MdePkg/Library/BaseMemoryLib/CopyMem.c
+index 929f700..5e44d7a 100644
+--- a/MdePkg/Library/BaseMemoryLib/CopyMem.c
++++ b/MdePkg/Library/BaseMemoryLib/CopyMem.c
+@@ -23,6 +23,22 @@
+   @return Destination
+ 
+ **/
++#if defined (MDE_CPU_EMEX64)
++
++VOID *
++EFIAPI
++InternalMemCopyMem (
++  OUT     VOID        *DestinationBuffer,
++  IN      CONST VOID  *SourceBuffer,
++  IN      UINTN       Length
++  )
++{
++  __asm__ __volatile__ ("movm %0, %1, %2" : : "r" (DestinationBuffer), "r" (SourceBuffer), "r" (Length) : "memory");
++  return DestinationBuffer;
++}
++
++#else
++
+ VOID *
+ EFIAPI
+ InternalMemCopyMem (
+@@ -146,3 +162,5 @@ InternalMemCopyMem (
+ 
+   return DestinationBuffer;
+ }
++
++#endif
+diff --git a/MdePkg/Library/BaseMemoryLib/SetMem.c b/MdePkg/Library/BaseMemoryLib/SetMem.c
+index c079d75..ede2cef 100644
+--- a/MdePkg/Library/BaseMemoryLib/SetMem.c
++++ b/MdePkg/Library/BaseMemoryLib/SetMem.c
+@@ -24,6 +24,22 @@
+   @return Buffer
+ 
+ **/
++#if defined (MDE_CPU_EMEX64)
++
++VOID *
++EFIAPI
++InternalMemSetMem (
++  OUT     VOID   *Buffer,
++  IN      UINTN  Length,
++  IN      UINT8  Value
++  )
++{
++  __asm__ __volatile__ ("setm %0, %1, %2" : : "r" (Buffer), "r" ((UINTN)Value), "r" (Length) : "memory");
++  return Buffer;
++}
++
++#else
++
+ VOID *
+ EFIAPI
+ InternalMemSetMem (
+@@ -78,3 +94,5 @@ InternalMemSetMem (
+ 
+   return Buffer;
+ }
++
++#endif
+diff --git a/MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf b/MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf
+index 4449579..998033c 100644
+--- a/MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf
++++ b/MdePkg/Library/BasePeCoffLib/BasePeCoffLib.inf
+@@ -39,7 +39,7 @@
+   BasePeCoffLibInternals.h
+   BasePeCoff.c
+ 
+-[Sources.IA32, Sources.X64, Sources.EBC, Sources.AARCH64]
++[Sources.IA32, Sources.X64, Sources.EBC, Sources.AARCH64, Sources.EMEX64]
+   PeCoffLoaderEx.c
+ 
+ [Sources.RISCV64]
+diff --git a/MdePkg/Library/BasePeCoffLib/PeCoffLoaderEx.c b/MdePkg/Library/BasePeCoffLib/PeCoffLoaderEx.c
+index 1a94547..d2068f5 100644
+--- a/MdePkg/Library/BasePeCoffLib/PeCoffLoaderEx.c
++++ b/MdePkg/Library/BasePeCoffLib/PeCoffLoaderEx.c
+@@ -50,7 +50,8 @@ PeCoffLoaderImageFormatSupported (
+   )
+ {
+   if ((Machine == IMAGE_FILE_MACHINE_I386) || (Machine == IMAGE_FILE_MACHINE_X64) ||
+-      (Machine == IMAGE_FILE_MACHINE_EBC) || (Machine == IMAGE_FILE_MACHINE_ARM64))
++      (Machine == IMAGE_FILE_MACHINE_EBC) || (Machine == IMAGE_FILE_MACHINE_ARM64) ||
++      (Machine == IMAGE_FILE_MACHINE_EMEX64))
+   {
+     return TRUE;
+   }
+diff --git a/MdePkg/Library/BaseRngLib/BaseRngLib.inf b/MdePkg/Library/BaseRngLib/BaseRngLib.inf
+index 4794a48..aca7efe 100644
+--- a/MdePkg/Library/BaseRngLib/BaseRngLib.inf
++++ b/MdePkg/Library/BaseRngLib/BaseRngLib.inf
+@@ -52,6 +52,12 @@
+ [Guids.Ia32, Guids.X64]
+   gEfiRngAlgorithmSp80090Ctr256Guid
+ 
++[Sources.EMEX64]
++  Emex64/Rng.c
++
++[Guids.EMEX64]
++  gEfiRngAlgorithmRaw
++
+ [Sources.RISCV64]
+   RiscV/Rng.c
+   RiscV/Seed.S               | GCC
+diff --git a/MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf b/MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
+index d851ded..3f243d0 100644
+--- a/MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
++++ b/MdePkg/Library/BaseSafeIntLib/BaseSafeIntLib.inf
+@@ -35,7 +35,7 @@
+ [Sources.Ia32]
+   SafeIntLib32.c
+ 
+-[Sources.X64, Sources.AARCH64, Sources.RISCV64, Sources.LOONGARCH64]
++[Sources.X64, Sources.AARCH64, Sources.RISCV64, Sources.LOONGARCH64, Sources.EMEX64]
+   SafeIntLib64.c
+ 
+ [Sources.EBC]
+diff --git a/MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf b/MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
+index 26093bd..b96b5ad 100755
+--- a/MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
++++ b/MdePkg/Library/BaseSynchronizationLib/BaseSynchronizationLib.inf
+@@ -75,6 +75,10 @@
+   AArch64/Synchronization.S     | GCC
+   AArch64/Synchronization.asm   | MSFT
+ 
++[Sources.EMEX64]
++  Synchronization.c
++  Emex64/Synchronization.c
++
+ [Sources.RISCV64]
+   Synchronization.c
+   RiscV64/Synchronization.S     | GCC
+diff --git a/MdePkg/Library/DxeServicesLib/DxeServicesLib.inf b/MdePkg/Library/DxeServicesLib/DxeServicesLib.inf
+index b380050..594cfc8 100644
+--- a/MdePkg/Library/DxeServicesLib/DxeServicesLib.inf
++++ b/MdePkg/Library/DxeServicesLib/DxeServicesLib.inf
+@@ -28,7 +28,7 @@
+ [Sources]
+   DxeServicesLib.c
+ 
+-[Sources.IA32, Sources.EBC, Sources.AARCH64, Sources.RISCV64, Sources.LOONGARCH64]
++[Sources.IA32, Sources.EBC, Sources.AARCH64, Sources.RISCV64, Sources.LOONGARCH64, Sources.EMEX64]
+   Allocate.c
+ 
+ [Sources.X64]
+diff --git a/MdePkg/MdePkg.dec b/MdePkg/MdePkg.dec
+index 92e6f98..736eefd 100644
+--- a/MdePkg/MdePkg.dec
++++ b/MdePkg/MdePkg.dec
+@@ -50,6 +50,9 @@
+ [Includes.LOONGARCH64]
+   Include/LoongArch64
+ 
++[Includes.EMEX64]
++  Include/Emex64
++
+ [LibraryClasses]
+   ##  @libraryclass  Provides most usb APIs to support the Hid requests defined in Usb Hid 1.1 spec
+   #                  and the standard requests defined in Usb 1.1 spec.

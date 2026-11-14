@@ -1,0 +1,17 @@
+#!/bin/sh
+
+set -e
+
+for arg in "$@"; do
+    file="$arg"
+done
+if [ -z "$file" ] || [ ! -f "$file" ]; then
+    echo "emex64-rc: no input file" >&2
+    exit 1
+fi
+
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+cp "$file" "$tmp/blob"
+printf '\t.section .hii,"a"\n\t.p2align 3\n\t.incbin "%s"\n' "$tmp/blob" > "$tmp/hii.s"
+"${EMEX64_LLVM_BIN}clang" -target emex64-unknown-elf -c "$tmp/hii.s" -o "$file"

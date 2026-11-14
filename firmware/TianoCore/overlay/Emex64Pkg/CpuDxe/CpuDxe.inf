@@ -1,0 +1,35 @@
+## @file
+#  Copyright (C) 2026 emexlab
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+    INF_VERSION     = 0x0001001B
+    BASE_NAME       = CpuDxe
+    FILE_GUID       = 0E640030-7E64-4C64-8E64-00000000E640
+    MODULE_TYPE     = DXE_DRIVER
+    VERSION_STRING  = 1.0
+    ENTRY_POINT     = CpuDxeInitialize
+
+[Sources]
+    CpuDxe.c
+
+[Packages]
+    MdePkg/MdePkg.dec
+    MdeModulePkg/MdeModulePkg.dec
+    Emex64Pkg/Emex64Pkg.dec
+
+[LibraryClasses]
+    BaseLib
+    CpuExceptionHandlerLib
+    DebugLib
+    IoLib
+    TimerLib
+    UefiBootServicesTableLib
+    UefiDriverEntryPoint
+
+[Protocols]
+    gEfiCpuArchProtocolGuid
+
+[Depex]
+    TRUE

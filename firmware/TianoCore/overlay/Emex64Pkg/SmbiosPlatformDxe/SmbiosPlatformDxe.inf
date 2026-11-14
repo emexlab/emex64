@@ -1,0 +1,44 @@
+## @file
+#  Copyright (C) 2026 emexlab
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+    INF_VERSION     = 0x0001001B
+    BASE_NAME       = SmbiosPlatformDxe
+    FILE_GUID       = 0E640034-7E64-4C64-8E64-00000000E640
+    MODULE_TYPE     = DXE_DRIVER
+    VERSION_STRING  = 1.0
+    ENTRY_POINT     = SmbiosPlatformDxeInitialize
+
+[Sources]
+    SmbiosPlatformDxe.c
+
+[Packages]
+    MdePkg/MdePkg.dec
+    MdeModulePkg/MdeModulePkg.dec
+    Emex64Pkg/Emex64Pkg.dec
+
+[LibraryClasses]
+    BaseLib
+    BaseMemoryLib
+    DebugLib
+    IoLib
+    MemoryAllocationLib
+    PcdLib
+    PrintLib
+    TimerLib
+    UefiBootServicesTableLib
+    UefiDriverEntryPoint
+
+[Protocols]
+    gEfiSmbiosProtocolGuid
+
+[FixedPcd]
+    gEmex64PkgTokenSpaceGuid.PcdEmex64FdSize
+
+[Pcd]
+    gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString
+
+[Depex]
+    gEfiSmbiosProtocolGuid
