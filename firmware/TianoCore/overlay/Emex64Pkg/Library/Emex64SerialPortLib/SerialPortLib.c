@@ -50,6 +50,10 @@ UINTN EFIAPI SerialPortRead(OUT UINT8 *Buffer,
         {
         }
         Buffer[Index] = (UINT8)MmioRead64 (EMEX64_UART_DATA);
+        if(Buffer[Index] == '\n')
+        {
+            Buffer[Index] = '\r';
+        }
     }
 
     return NumberOfBytes;

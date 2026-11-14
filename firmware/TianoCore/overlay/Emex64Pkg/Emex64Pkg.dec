@@ -7,7 +7,7 @@
     DEC_SPECIFICATION   = 0x0001001B
     PACKAGE_NAME        = Emex64Pkg
     PACKAGE_GUID        = 0E640000-7E64-4C64-8E64-00000000E640
-    PACKAGE_VERSION     = 1.0
+    PACKAGE_VERSION     = 1.0.1
 
 [Includes]
     Include

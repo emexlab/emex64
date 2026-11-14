@@ -32,6 +32,17 @@
 
 [Pcd]
     gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut
+    gEfiMdeModulePkgTokenSpaceGuid.PcdConOutColumn
+    gEfiMdeModulePkgTokenSpaceGuid.PcdConOutRow
+
+[FixedPcd]
+    gEfiMdePkgTokenSpaceGuid.PcdUartDefaultBaudRate
+    gEfiMdePkgTokenSpaceGuid.PcdUartDefaultDataBits
+    gEfiMdePkgTokenSpaceGuid.PcdUartDefaultParity
+    gEfiMdePkgTokenSpaceGuid.PcdUartDefaultStopBits
+
+[Protocols]
+    gEfiGraphicsOutputProtocolGuid
 
 [Guids]
     gEfiEndOfDxeEventGroupGuid

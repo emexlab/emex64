@@ -5,6 +5,8 @@
 
 #include <Uefi.h>
 #include <Guid/EventGroup.h>
+#include <Guid/SerialPortLibVendor.h>
+#include <Guid/TtyTerm.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/BootLogoLib.h>
 #include <Library/DebugLib.h>
@@ -16,6 +18,7 @@
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
 #include <Protocol/DevicePath.h>
+#include <Protocol/GraphicsOutput.h>
 #include <Emex64Platform.h>
 
 #define DP_NODE_LEN(Type)                               \
@@ -28,25 +31,57 @@ typedef struct {
   VENDOR_DEVICE_PATH        Vendor;
   EFI_DEVICE_PATH_PROTOCOL  End;
 } PLATFORM_VENDOR_DEVICE;
+
+typedef struct {
+  VENDOR_DEVICE_PATH        SerialDxe;
+  UART_DEVICE_PATH          Uart;
+  VENDOR_DEVICE_PATH        Terminal;
+  EFI_DEVICE_PATH_PROTOCOL  End;
+} PLATFORM_SERIAL_CONSOLE;
 #pragma pack ()
+
+STATIC BOOLEAN mDisplayAvailable;
+STATIC BOOLEAN mSetupHintShown;
 
 STATIC PLATFORM_VENDOR_DEVICE mDisplay = {
     {
-        { HARDWARE_DEVICE_PATH, HW_VENDOR_DP, DP_NODE_LEN (VENDOR_DEVICE_PATH) },
+        { HARDWARE_DEVICE_PATH, HW_VENDOR_DP, DP_NODE_LEN(VENDOR_DEVICE_PATH) },
         { 0 }
     },
     {
-        END_DEVICE_PATH_TYPE, END_ENTIRE_DEVICE_PATH_SUBTYPE, DP_NODE_LEN (EFI_DEVICE_PATH_PROTOCOL)
+        END_DEVICE_PATH_TYPE, END_ENTIRE_DEVICE_PATH_SUBTYPE, DP_NODE_LEN(EFI_DEVICE_PATH_PROTOCOL)
     }
 };
 
 STATIC PLATFORM_VENDOR_DEVICE  mKeyboard = {
     {
-        { HARDWARE_DEVICE_PATH, HW_VENDOR_DP, DP_NODE_LEN (VENDOR_DEVICE_PATH) },
+        { HARDWARE_DEVICE_PATH, HW_VENDOR_DP, DP_NODE_LEN(VENDOR_DEVICE_PATH) },
         { 0 }
     },
     {
-        END_DEVICE_PATH_TYPE, END_ENTIRE_DEVICE_PATH_SUBTYPE, DP_NODE_LEN (EFI_DEVICE_PATH_PROTOCOL)
+        END_DEVICE_PATH_TYPE, END_ENTIRE_DEVICE_PATH_SUBTYPE, DP_NODE_LEN(EFI_DEVICE_PATH_PROTOCOL)
+    }
+};
+
+STATIC PLATFORM_SERIAL_CONSOLE mSerial = {
+    {
+        { HARDWARE_DEVICE_PATH, HW_VENDOR_DP, DP_NODE_LEN(VENDOR_DEVICE_PATH) },
+        EDKII_SERIAL_PORT_LIB_VENDOR_GUID
+    },
+    {
+        { MESSAGING_DEVICE_PATH, MSG_UART_DP, DP_NODE_LEN(UART_DEVICE_PATH) },
+        0,
+        FixedPcdGet64(PcdUartDefaultBaudRate),
+        FixedPcdGet8(PcdUartDefaultDataBits),
+        FixedPcdGet8(PcdUartDefaultParity),
+        FixedPcdGet8(PcdUartDefaultStopBits)
+    },
+    {
+        { MESSAGING_DEVICE_PATH, MSG_VENDOR_DP, DP_NODE_LEN(VENDOR_DEVICE_PATH) },
+        EFI_TTY_TERM_GUID
+    },
+    {
+        END_DEVICE_PATH_TYPE, END_ENTIRE_DEVICE_PATH_SUBTYPE, DP_NODE_LEN(EFI_DEVICE_PATH_PROTOCOL)
     }
 };
 
@@ -85,15 +120,36 @@ STATIC VOID RegisterSetupKeys(VOID)
 
 VOID EFIAPI PlatformBootManagerBeforeConsole(VOID)
 {
+    EFI_STATUS Status;
+    VOID *Gop;
+
     EfiEventGroupSignal(&gEfiEndOfDxeEventGroupGuid);
     EfiBootManagerDispatchDeferredImages();
 
     CopyGuid(&mDisplay.Vendor.Guid, &gEmex64DisplayDevicePathGuid);
     CopyGuid(&mKeyboard.Vendor.Guid, &gEmex64KeyboardDevicePathGuid);
 
+    mDisplayAvailable = !EFI_ERROR(gBS->LocateProtocol(&gEfiGraphicsOutputProtocolGuid, NULL, &Gop));
+
     EfiBootManagerUpdateConsoleVariable(ConIn, (EFI_DEVICE_PATH_PROTOCOL *)&mKeyboard, NULL);
-    EfiBootManagerUpdateConsoleVariable(ConOut, (EFI_DEVICE_PATH_PROTOCOL *)&mDisplay, NULL);
-    EfiBootManagerUpdateConsoleVariable(ErrOut, (EFI_DEVICE_PATH_PROTOCOL *)&mDisplay, NULL);
+    if(mDisplayAvailable)
+    {
+        EfiBootManagerUpdateConsoleVariable(ConIn, NULL, (EFI_DEVICE_PATH_PROTOCOL *)&mSerial);
+        EfiBootManagerUpdateConsoleVariable(ConOut, (EFI_DEVICE_PATH_PROTOCOL *)&mDisplay, (EFI_DEVICE_PATH_PROTOCOL *)&mSerial);
+        EfiBootManagerUpdateConsoleVariable(ErrOut, (EFI_DEVICE_PATH_PROTOCOL *)&mDisplay, (EFI_DEVICE_PATH_PROTOCOL *)&mSerial);
+    }
+    else
+    {
+        DEBUG((DEBUG_INFO, "PlatformBm: no display, the console is the serial port\n"));
+        EfiBootManagerUpdateConsoleVariable(ConIn, (EFI_DEVICE_PATH_PROTOCOL *)&mSerial, NULL);
+        EfiBootManagerUpdateConsoleVariable(ConOut, (EFI_DEVICE_PATH_PROTOCOL *)&mSerial, (EFI_DEVICE_PATH_PROTOCOL *)&mDisplay);
+        EfiBootManagerUpdateConsoleVariable(ErrOut, (EFI_DEVICE_PATH_PROTOCOL *)&mSerial, (EFI_DEVICE_PATH_PROTOCOL *)&mDisplay);
+
+        Status = PcdSet32S(PcdConOutColumn, 80);
+        ASSERT_EFI_ERROR(Status);
+        Status = PcdSet32S(PcdConOutRow, 25);
+        ASSERT_EFI_ERROR(Status);
+    }
 
     RegisterSetupKeys();
 }
@@ -149,6 +205,16 @@ VOID EFIAPI PlatformBootManagerWaitCallback(UINT16 TimeoutRemain)
     Timeout = PcdGet16(PcdPlatformBootTimeOut);
     if(Timeout == 0)
     {
+        return;
+    }
+
+    if(!mDisplayAvailable)
+    {
+        if(!mSetupHintShown)
+        {
+            mSetupHintShown = TRUE;
+            Print(L"Press ESC or F2 to enter setup\r\n");
+        }
         return;
     }
 

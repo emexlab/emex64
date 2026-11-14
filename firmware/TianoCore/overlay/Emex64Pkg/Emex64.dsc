@@ -6,7 +6,7 @@
 [Defines]
     PLATFORM_NAME           = Emex64
     PLATFORM_GUID           = 0E640000-7E64-4C64-8E64-0000000000E6
-    PLATFORM_VERSION        = 1.0
+    PLATFORM_VERSION        = 1.0.1
     DSC_SPECIFICATION       = 0x0001001C
     OUTPUT_DIRECTORY        = Build/Emex64
     SUPPORTED_ARCHITECTURES = EMEX64
@@ -124,13 +124,14 @@
     gEfiMdePkgTokenSpaceGuid.PcdUartDefaultDataBits|8
     gEfiMdePkgTokenSpaceGuid.PcdUartDefaultParity|1
     gEfiMdePkgTokenSpaceGuid.PcdUartDefaultStopBits|1
+    gEfiMdePkgTokenSpaceGuid.PcdDefaultTerminalType|4
 
     gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable|TRUE
     gEfiMdeModulePkgTokenSpaceGuid.PcdMaxVariableSize|0x2000
     gEfiMdeModulePkgTokenSpaceGuid.PcdVariableStoreSize|0x10000
 
     gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVendor|L"emexLabs"
-    gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString|L"TianoCore for emex64 1.0"
+    gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString|L"TianoCore for emex64 1.0.1"
     gEfiMdeModulePkgTokenSpaceGuid.PcdSmbiosVersion|0x0307
     gEfiMdeModulePkgTokenSpaceGuid.PcdSmbiosDocRev|0x0
 
@@ -189,6 +190,8 @@
     MdeModulePkg/Universal/Console/ConPlatformDxe/ConPlatformDxe.inf
     MdeModulePkg/Universal/Console/ConSplitterDxe/ConSplitterDxe.inf
     MdeModulePkg/Universal/Console/GraphicsConsoleDxe/GraphicsConsoleDxe.inf
+    MdeModulePkg/Universal/SerialDxe/SerialDxe.inf
+    MdeModulePkg/Universal/Console/TerminalDxe/TerminalDxe.inf
     MdeModulePkg/Universal/Disk/UnicodeCollation/EnglishDxe/EnglishDxe.inf
 
     # Partitions and FAT, for \EFI\BOOT\BOOTEMEX64.EFI
