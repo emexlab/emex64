@@ -1,7 +1,0 @@
-PROVIDE __emex64_exec_img_end = IMAGE_END;
-
-PROVIDE __image_start = IMAGE_START;
-PROVIDE __text_start = TEXT_START;
-PROVIDE __data_start = DATA_START;
-PROVIDE __bss_start = BSS_START;
-PROVIDE __bss_end = IMAGE_END;
