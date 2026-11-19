@@ -33,7 +33,6 @@ COBJS = $(addprefix build/,$(notdir $(CFILES:.c=.o)))
 
 compile:
 	mkdir -p build
-#	emex64asm -r $(FILES) -o $(CURDIR)/build/fw_asm.o $(ASMFLAGS)
 	$(CLANG) --target=emex64-unknown-elf -o $(CURDIR)/build/fw_asm.o -c src/boot.S
 	@set -e; for f in $(CFILES); do \
 		echo "$(CLANG) $(CFLAGS_FW) $(CDEFS) -c $$f -o build/$$(basename $$f .c).o"; \

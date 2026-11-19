@@ -30,14 +30,11 @@
 #define EMEX64_MC_REG_SIZE          EMEX64_MC_BASE
 #define EMEX64_PLATFORM_REG_PWR     EMEX64_PLATFORM_BASE
 
-; now the stack shit
-#define  EARLY_STACK_SIZE           (EMEX64_PAGE_SIZE * 4)
-
 ; the early stack
     .section .bss
     .balign 16
 early_stack:
-    .space EARLY_STACK_SIZE
+    .space (EMEX64_PAGE_SIZE * 4)
 early_stack_top:
 
 ; this stays =3
@@ -49,7 +46,7 @@ _start:
     ; the reason is that there is not
     ; enough space for the bss section
     ldq r0, EMEX64_MC_REG_SIZE
-    cbltu r0, __bss_end, .poweroff@pcrel    ; bss section does not fit, sowwy, no way to handle that 3: not enough memory is.. not enough memory
+    cbltu r0, __bss_end, .poweroff@pcrel
 
     ; zeroing the whole bss
     setm __bss_start, 0, __bss_size
@@ -57,7 +54,8 @@ _start:
     ; early stack fixup
     mov sp, early_stack_top - 8
 
-    ; jumping to the main symbol of the bootloader :3
+    ; branch and linking to the main symbol of the bootloader :3 (hopefully does not return)
     bl main@pcrel
 .poweroff:
-    stq EMEX64_PLATFORM_REG_PWR, 0          ; telling platform device to turn off
+    ; telling platform device to turn off
+    stq EMEX64_PLATFORM_REG_PWR, 0
