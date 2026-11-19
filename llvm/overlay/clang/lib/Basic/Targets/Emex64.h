@@ -25,6 +25,7 @@ class LLVM_LIBRARY_VISIBILITY Emex64TargetInfo : public TargetInfo
     bool HasISA19 = true;
     bool HasISA20 = true;
     bool HasISA21 = true;
+    bool HasISA22 = true;
     bool HasPAuth = true;
 
 public:

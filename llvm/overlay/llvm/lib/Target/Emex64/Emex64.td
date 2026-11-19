@@ -21,11 +21,14 @@ def HasPAuth : Predicate<"Subtarget->hasPAuth()">, AssemblerPredicate<(all_of Fe
 def FeatureISA19 : SubtargetFeature<"isa19", "HasISA19", "true", "ISA v19: sext, cblt, clz, ctz, popcnt, mulh, umulh, adc, sbb">;
 def HasISA19 : Predicate<"Subtarget->hasISA19()">, AssemblerPredicate<(all_of FeatureISA19), "isa19">;
 
-def FeatureISA20 : SubtargetFeature<"isa20", "HasISA20", "true", "ISA v20: rdtime, wfe/sev/pause, cbeq/cbne/cbge/cbltu/cbgeu, ldsb/ldsw/ldsd, ldadd/ldand/ldor/ldxor/swpadd, tlbi", [FeatureFPU, FeatureISA19]>;
+def FeatureISA20 : SubtargetFeature<"isa20", "HasISA20", "true", "ISA v20: rdtime, wfe/sev/pause, cbeq/cbne/cbge/cbltu/cbgeu, ldsb/ldsw/ldsd, ldadd/ldand/ldor/ldxor/swpadd, tlbi", [FeatureISA19]>;
 def HasISA20 : Predicate<"Subtarget->hasISA20()">, AssemblerPredicate<(all_of FeatureISA20), "isa20">;
 
 def FeatureISA21 : SubtargetFeature<"isa21", "HasISA21", "true", "ISA v21: double word arithmetic (addd/iaddd, subd/isubd, muld/imuld, shld/ishld, shrd, sard, divd, idivd, modd)", [FeatureISA20]>;
 def HasISA21 : Predicate<"Subtarget->hasISA21()">, AssemblerPredicate<(all_of FeatureISA21), "isa21">;
+
+def FeatureISA22 : SubtargetFeature<"isa22", "HasISA22", "true", "ISA v22: bl with the arguments of the call (bl target, arg, ...)", [FeatureISA21]>;
+def HasISA22 : Predicate<"Subtarget->hasISA22()">, AssemblerPredicate<(all_of FeatureISA22), "isa22">;
 
 include "Emex64RegisterInfo.td"
 include "Emex64CallingConv.td"
@@ -49,7 +52,7 @@ def Emex64AsmWriter : AsmWriter
 // Processors
 //===----------------------------------------------------------------------===//
 
-def : ProcessorModel<"generic", NoSchedModel, [FeatureFPU, FeatureISA19, FeatureISA20, FeatureISA21, FeaturePAuth]>;
+def : ProcessorModel<"generic", NoSchedModel, [FeatureFPU, FeatureISA19, FeatureISA20, FeatureISA21, FeatureISA22, FeaturePAuth]>;
 def : ProcessorModel<"emex64-v17", NoSchedModel, []>;
 def : ProcessorModel<"emex64-v18", NoSchedModel, [FeatureFPU]>;
 def : ProcessorModel<"emex64-v19", NoSchedModel, [FeatureFPU, FeatureISA19]>;
@@ -58,6 +61,8 @@ def : ProcessorModel<"emex64e", NoSchedModel, [FeatureFPU, FeatureISA19, Feature
 def : ProcessorModel<"emex64e-v20", NoSchedModel, [FeatureFPU, FeatureISA19, FeatureISA20, FeaturePAuth]>;
 def : ProcessorModel<"emex64-v21", NoSchedModel, [FeatureFPU, FeatureISA19, FeatureISA20, FeatureISA21]>;
 def : ProcessorModel<"emex64e-v21", NoSchedModel, [FeatureFPU, FeatureISA19, FeatureISA20, FeatureISA21, FeaturePAuth]>;
+def : ProcessorModel<"emex64-v22", NoSchedModel, [FeatureFPU, FeatureISA19, FeatureISA20, FeatureISA21, FeatureISA22]>;
+def : ProcessorModel<"emex64e-v22", NoSchedModel, [FeatureFPU, FeatureISA19, FeatureISA20, FeatureISA21, FeatureISA22, FeaturePAuth]>;
 
 def Emex64 : Target {
     let InstructionSet = Emex64InstrInfo;

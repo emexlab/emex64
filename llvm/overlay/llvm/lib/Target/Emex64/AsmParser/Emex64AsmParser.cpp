@@ -307,7 +307,12 @@ class Emex64AsmParser : public MCTargetAsmParser
         }
         getLexer().Lex();
 
-        if(Count > OI.MaxArgs)
+        if(Op == Emex64Opc::BL && Count > 1)
+        {
+            Op = Emex64Opc::BLA;
+            Inst.getOperand(0).setImm(Op);
+        }
+        if(Count > getEmex64OpcodeInfo(Op).MaxArgs)
         {
             return Error(NameLoc, "too many operands for '" + Name + "'");
         }

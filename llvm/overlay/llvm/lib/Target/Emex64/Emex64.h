@@ -19,6 +19,7 @@ class FunctionPass;
 class PassRegistry;
 
 FunctionPass *createEmex64ISelDag(Emex64TargetMachine &TM, CodeGenOptLevel OptLevel);
+FunctionPass *createEmex64CallArgumentsPass();
 
 void initializeEmex64AsmPrinterPass(PassRegistry &);
 void initializeEmex64DAGToDAGISelLegacyPass(PassRegistry &);

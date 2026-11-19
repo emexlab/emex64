@@ -47,7 +47,7 @@ void Emex64TargetInfo::getTargetDefines(const LangOptions &Opts,
     Builder.defineMacro("__emex64__");
     Builder.defineMacro("__EMEX64__");
     Builder.defineMacro("__la64__");
-    Builder.defineMacro("__emex64_isa__", HasISA21 ? "21" : HasISA20 ? "20" : HasISA19 ? "19" : HasFPU ? "18" : "17");
+    Builder.defineMacro("__emex64_isa__", HasISA22 ? "22" : HasISA21 ? "21" : HasISA20 ? "20" : HasISA19 ? "19" : HasFPU ? "18" : "17");
     if(HasPAuth)
     {
         Builder.defineMacro("__emex64_pauth__");
@@ -76,13 +76,13 @@ void Emex64TargetInfo::getTargetDefines(const LangOptions &Opts,
 bool Emex64TargetInfo::isValidCPUName(StringRef Name) const
 {
     return llvm::StringSwitch<bool>(Name)
-        .Cases({"generic", "emex64-v17", "emex64-v18", "emex64-v19", "emex64-v20", "emex64-v21", "emex64e", "emex64e-v20", "emex64e-v21"}, true)
+        .Cases({"generic", "emex64-v17", "emex64-v18", "emex64-v19", "emex64-v20", "emex64-v21", "emex64-v22", "emex64e", "emex64e-v20", "emex64e-v21", "emex64e-v22"}, true)
         .Default(false);
 }
 
 void Emex64TargetInfo::fillValidCPUList(SmallVectorImpl<StringRef> &Values) const
 {
-    Values.append({"generic", "emex64-v17", "emex64-v18", "emex64-v19", "emex64-v20", "emex64-v21", "emex64e", "emex64e-v20", "emex64e-v21"});
+    Values.append({"generic", "emex64-v17", "emex64-v18", "emex64-v19", "emex64-v20", "emex64-v21", "emex64-v22", "emex64e", "emex64e-v20", "emex64e-v21", "emex64e-v22"});
 }
 
 bool Emex64TargetInfo::setCPU(StringRef Name)
@@ -100,13 +100,15 @@ bool Emex64TargetInfo::initFeatureMap(llvm::StringMap<bool> &Features,
                                       StringRef CPU, const std::vector<std::string> &FeaturesVec) const
 {
     bool Generic = CPU.empty() || CPU == "generic";
-    bool V21 = Generic || CPU == "emex64-v21" || CPU == "emex64e-v21";
+    bool V22 = Generic || CPU == "emex64-v22" || CPU == "emex64e-v22";
+    bool V21 = V22 || CPU == "emex64-v21" || CPU == "emex64e-v21";
     bool V20 = V21 || CPU == "emex64-v20" || CPU == "emex64e-v20";
     Features["fpu"] = CPU != "emex64-v17";
     Features["isa19"] = V20 || CPU == "emex64-v19" || CPU == "emex64e";
     Features["isa20"] = V20;
     Features["isa21"] = V21;
-    Features["pauth"] = Generic || CPU == "emex64e" || CPU == "emex64e-v20" || CPU == "emex64e-v21";
+    Features["isa22"] = V22;
+    Features["pauth"] = Generic || CPU == "emex64e" || CPU == "emex64e-v20" || CPU == "emex64e-v21" || CPU == "emex64e-v22";
     return TargetInfo::initFeatureMap(Features, Diags, CPU, FeaturesVec);
 }
 
@@ -117,6 +119,7 @@ bool Emex64TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
     HasISA19 = false;
     HasISA20 = false;
     HasISA21 = false;
+    HasISA22 = false;
     HasPAuth = false;
     for(const std::string &F : Features)
     {
@@ -152,6 +155,14 @@ bool Emex64TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
         {
             HasISA21 = false;
         }
+        else if(F == "+isa22")
+        {
+            HasISA22 = true;
+        }
+        else if(F == "-isa22")
+        {
+            HasISA22 = false;
+        }
         else if(F == "+pauth")
         {
             HasPAuth = true;
@@ -172,6 +183,7 @@ bool Emex64TargetInfo::hasFeature(StringRef Feature) const
         .Case("isa19", HasISA19)
         .Case("isa20", HasISA20)
         .Case("isa21", HasISA21)
+        .Case("isa22", HasISA22)
         .Case("pauth", HasPAuth)
         .Default(false);
 }

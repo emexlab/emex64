@@ -83,22 +83,27 @@ class Emex64PassConfig : public TargetPassConfig
 {
 public:
     Emex64PassConfig(Emex64TargetMachine &TM, PassManagerBase &PM) : TargetPassConfig(TM, PM) {}
-    
+
     Emex64TargetMachine &getEmex64TargetMachine() const
     {
         return getTM<Emex64TargetMachine>();
     }
-    
+
     void addIRPasses() override
     {
         addPass(createAtomicExpandLegacyPass());
         TargetPassConfig::addIRPasses();
     }
-    
+
     bool addInstSelector() override
     {
         addPass(createEmex64ISelDag(getEmex64TargetMachine(), getOptLevel()));
         return false;
+    }
+
+    void addPreEmitPass2() override
+    {
+        addPass(createEmex64CallArgumentsPass());
     }
 };
 

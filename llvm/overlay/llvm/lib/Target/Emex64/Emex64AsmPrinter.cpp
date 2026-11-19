@@ -46,6 +46,7 @@ public:
 private:
     void emitBranchOnCF(const MachineInstr *MI);
     void emitBranch(const MCInst &Inst);
+    void emitCallWithArguments(const MachineInstr *MI, unsigned First);
 };
 
 } /* namespace */
@@ -128,6 +129,50 @@ void Emex64AsmPrinter::emitBranch(const MCInst &In)
     EmitToStreamer(*OutStreamer, Raw);
 }
 
+static unsigned firstCallArgument(const MachineInstr &MI)
+{
+    for(unsigned I = 1, E = MI.getNumOperands(); I < E; ++I)
+    {
+        if(MI.getOperand(I).isImm())
+        {
+            return I;
+        }
+    }
+    return 0;
+}
+
+void Emex64AsmPrinter::emitCallWithArguments(const MachineInstr *MI,
+                                             unsigned First)
+{
+    Emex64MCInstLower Lower(OutContext, *this);
+    MCInst Raw;
+    Raw.setOpcode(Emex64::RAW);
+    Raw.addOperand(MCOperand::createImm(Emex64Opc::BLA));
+
+    MCOperand Target;
+    Lower.lowerOperand(MI->getOperand(0), Target);
+    if(Target.isExpr())
+    {
+        Raw.addOperand(MCOperand::createImm(Emex64Raw::PCRel8));
+        Raw.addOperand(MCOperand::createExpr(setEmex64Specifier(Target.getExpr(), Emex64S::PLT, OutContext)));
+    }
+    else
+    {
+        Raw.addOperand(MCOperand::createImm(Emex64Raw::Value));
+        Raw.addOperand(Target);
+    }
+
+    for(unsigned I = First, E = MI->getNumOperands(); I < E; ++I)
+    {
+        MCOperand MCOp;
+        if(Lower.lowerOperand(MI->getOperand(I), MCOp))
+        {
+            Raw.addOperand(MCOp);
+        }
+    }
+    EmitToStreamer(*OutStreamer, Raw);
+}
+
 void Emex64AsmPrinter::emitInstruction(const MachineInstr *MI)
 {
     Emex64_MC::verifyInstructionPredicates(MI->getOpcode(), getSubtargetInfo().getFeatureBits());
@@ -187,6 +232,15 @@ void Emex64AsmPrinter::emitInstruction(const MachineInstr *MI)
             break;
     }
     
+    if(MI->getOpcode() == Emex64::BL || MI->getOpcode() == Emex64::BLr)
+    {
+        if(unsigned First = firstCallArgument(*MI))
+        {
+            emitCallWithArguments(MI, First);
+            return;
+        }
+    }
+
     Emex64MCInstLower Lower(OutContext, *this);
     MCInst Inst;
     Lower.lower(MI, Inst);

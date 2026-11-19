@@ -39,6 +39,19 @@ inline unsigned getNumKindOperands(int64_t K)
 
 } /* Emex64Raw (namespace) */
 
+namespace Emex64Opc {
+
+enum : unsigned {
+    BL = 0x33,
+    BLA = 0x98,
+};
+
+enum : unsigned {
+    CallArgs = 6,
+};
+
+} /* Emex64Opc (namespace) */
+
 struct Emex64OpcodeInfo {
     const char *Name;
     uint8_t MaxArgs;
@@ -101,6 +114,9 @@ inline const Emex64OpcodeInfo &getEmex64OpcodeInfo(unsigned Op)
         {"iaddd", 3, -1}, {"subd", 3, -1}, {"isubd", 3, -1}, {"muld", 3, -1},
         {"imuld", 3, -1}, {"shld", 3, -1}, {"ishld", 3, -1}, {"shrd", 3, -1},
         {"sard", 3, -1}, {"divd", 3, -1}, {"idivd", 3, -1}, {"modd", 3, -1},
+
+        /* ISA v22: bl with the arguments of the call, the same mnemonic as the bl without */
+        {"bl", 1 + 6, 0},
     };
     return Table[Op & 0xFF];
 }

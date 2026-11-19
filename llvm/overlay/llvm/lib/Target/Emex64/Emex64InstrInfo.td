@@ -321,9 +321,13 @@ multiclass ALU<bits<8> op, string name, SDNode node, bit commutable = 0, bit rev
 defm ADD : ALU<0x0F, "add", add, 1>;
 defm SUB : ALU<0x10, "sub", sub, 0, 1>;
 defm MUL : ALU<0x11, "mul", mul, 1>;
-defm DIV : ALU<0x12, "div", udiv, 0, 1>;
-defm IDIV : ALU<0x13, "idiv", sdiv, 0, 1>;
-defm MOD : ALU<0x14, "mod", urem, 0, 1>;
+
+let hasSideEffects = 1 in
+{
+    defm DIV : ALU<0x12, "div", udiv, 0, 1>;
+    defm IDIV : ALU<0x13, "idiv", sdiv, 0, 1>;
+    defm MOD : ALU<0x14, "mod", urem, 0, 1>;
+}
 defm AND : ALU<0x17, "and", and, 1>;
 defm OR : ALU<0x18, "or", or, 1>;
 defm XOR : ALU<0x19, "xor", xor, 1>;
@@ -566,9 +570,11 @@ let Predicates = [HasISA21] in
     defm ISHLD : DW<0x92, "ishld">;
     defm SHRD : DW<0x93, "shrd">;
     defm SARD : DW<0x94, "sard">;
-    defm DIVD : DW<0x95, "divd">;
-    defm IDIVD : DW<0x96, "idivd">;
-    defm MODD : DW<0x97, "modd">;
+    let hasSideEffects = 1 in {
+        defm DIVD : DW<0x95, "divd">;
+        defm IDIVD : DW<0x96, "idivd">;
+        defm MODD : DW<0x97, "modd">;
+    }
 
     multiclass DWPats<PatFrag op, Instruction Zrr, Instruction Zri, Instruction Srr, Instruction Sri>
     {

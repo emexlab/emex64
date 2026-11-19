@@ -29,6 +29,7 @@ class Emex64Subtarget : public Emex64GenSubtargetInfo
     bool HasISA19 = false;
     bool HasISA20 = false;
     bool HasISA21 = false;
+    bool HasISA22 = false;
     bool HasPAuth = false;
     
     Emex64InstrInfo InstrInfo;
@@ -61,6 +62,11 @@ public:
     bool hasISA21() const
     {
         return HasISA21;
+    }
+
+    bool hasISA22() const
+    {
+        return HasISA22;
     }
 
     bool hasPAuth() const

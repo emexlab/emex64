@@ -1,6 +1,6 @@
 #ifndef EMEX64_CRT_STACK_SIZE
 #define EMEX64_CRT_STACK_SIZE 0x100000
-#endif  ; EMEX64_CRT_STACK_SIZE
+#endif  /* EMEX64_CRT_STACK_SIZE */
 
     .section .bss
     .p2align 3

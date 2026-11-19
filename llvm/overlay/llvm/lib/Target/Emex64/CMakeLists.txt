@@ -14,6 +14,7 @@ add_public_tablegen_target(Emex64CommonTableGen)
 
 add_llvm_target(Emex64CodeGen
     Emex64AsmPrinter.cpp
+    Emex64CallArguments.cpp
     Emex64FrameLowering.cpp
     Emex64InstrInfo.cpp
     Emex64ISelDAGToDAG.cpp

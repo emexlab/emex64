@@ -162,7 +162,7 @@ index 08c06951..18780fe0 100644
    case llvm::Triple::x86:
      if (T.isOSIAMCU())
        return "elf_iamcu";
-@@ -758,6 +760,32 @@ std::string tools::getCPUName(const Driver &D, const ArgList &Args,
+@@ -758,6 +760,34 @@ std::string tools::getCPUName(const Driver &D, const ArgList &Args,
        return A->getValue();
      return "";
  
@@ -176,9 +176,11 @@ index 08c06951..18780fe0 100644
 +                          .Case("la64-v19", "emex64-v19")
 +                          .Case("la64-v20", "emex64-v20")
 +                          .Case("la64-v21", "emex64-v21")
++                          .Case("la64-v22", "emex64-v22")
 +                          .Case("la64e-v19", "emex64e")
 +                          .Case("la64e-v20", "emex64e-v20")
 +                          .Case("la64e-v21", "emex64e-v21")
++                          .Case("la64e-v22", "emex64e-v22")
 +                          .Default("");
 +      if(CPU.empty())
 +      {
@@ -195,7 +197,7 @@ index 08c06951..18780fe0 100644
    case llvm::Triple::m68k:
      return m68k::getM68kTargetCPU(Args);
  
-@@ -930,6 +958,12 @@ void tools::getTargetFeatures(const Driver &D, const llvm::Triple &Triple,
+@@ -930,6 +960,12 @@ void tools::getTargetFeatures(const Driver &D, const llvm::Triple &Triple,
    case llvm::Triple::loongarch64:
      loongarch::getLoongArchTargetFeatures(D, Triple, Args, Features);
      break;
