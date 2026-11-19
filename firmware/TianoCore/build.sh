@@ -64,6 +64,14 @@ else
     rm -f "$LOGO_BMP.new"
 fi
 
+CLANG_SUM=$(cksum < "$EMEX64_LLVM/clang" | cut -d' ' -f1)
+if [ "$(cat "$EDK2_SRC/Build/.emex64-clang" 2>/dev/null)" != "$CLANG_SUM" ]; then
+    echo "== another clang: building all of it again"
+    rm -rf "$EDK2_SRC/Build/Emex64"
+    mkdir -p "$EDK2_SRC/Build"
+    echo "$CLANG_SUM" > "$EDK2_SRC/Build/.emex64-clang"
+fi
+
 echo "== BaseTools"
 make -C "$EDK2_SRC/BaseTools/Source/C" -j "$JOBS"
 
