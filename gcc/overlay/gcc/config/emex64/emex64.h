@@ -10,16 +10,19 @@
           (emex64_cpu == EMEX64_CPU_V17 ? 17                                                \
         :  emex64_cpu == EMEX64_CPU_V18 ? 18                                                \
         :  emex64_cpu == EMEX64_CPU_V19 || emex64_cpu == EMEX64_CPU_EMEX64E ? 19            \
-        : (emex64_cpu == EMEX64_CPU_V20 || emex64_cpu == EMEX64_CPU_EMEX64E_V20) ? 20 : 21)
+        : (emex64_cpu == EMEX64_CPU_V20 || emex64_cpu == EMEX64_CPU_EMEX64E_V20) ? 20       \
+        : (emex64_cpu == EMEX64_CPU_V21 || emex64_cpu == EMEX64_CPU_EMEX64E_V21) ? 21 : 22)
 
 #define TARGET_FPU      (EMEX64_ISA_LEVEL >= 18)
 #define TARGET_ISA19    (EMEX64_ISA_LEVEL >= 19)
 #define TARGET_ISA20    (EMEX64_ISA_LEVEL >= 20)
 #define TARGET_ISA21    (EMEX64_ISA_LEVEL >= 21)
+#define TARGET_ISA22    (EMEX64_ISA_LEVEL >= 22)
 #define TARGET_PAUTH    (emex64_cpu == EMEX64_CPU_GENERIC       \
                       || emex64_cpu == EMEX64_CPU_EMEX64E       \
                       || emex64_cpu == EMEX64_CPU_EMEX64E_V20   \
-                      || emex64_cpu == EMEX64_CPU_EMEX64E_V21)
+                      || emex64_cpu == EMEX64_CPU_EMEX64E_V21   \
+                      || emex64_cpu == EMEX64_CPU_EMEX64E_V22)
 #define TARGET_HARD_FLOAT (!TARGET_SOFT_FLOAT)
 
 #ifndef EMEX64_CPU_DEFAULT

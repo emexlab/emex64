@@ -14,10 +14,10 @@
    (FR0_REGNUM	30)])
 
 (define_c_enum "unspec" [
-  UNSPEC_GOTPCREL	; [pc + sym@gotpcrel]
-  UNSPEC_TPOFF		; sym@tpoff
-  UNSPEC_GOTTPOFF	; [pc + sym@gottpoff]
-  UNSPEC_TLSGD		; add r, pc, sym@tlsgd
+  UNSPEC_GOTPCREL	  ; [pc + sym@gotpcrel]
+  UNSPEC_TPOFF		  ; sym@tpoff
+  UNSPEC_GOTTPOFF	  ; [pc + sym@gottpoff]
+  UNSPEC_TLSGD		  ; add r, pc, sym@tlsgd
   UNSPEC_XPAC
   UNSPEC_CPYM
   UNSPEC_MOVM
@@ -25,6 +25,7 @@
   UNSPEC_FENCE
   UNSPEC_FMIN
   UNSPEC_FMAX
+  UNSPEC_CALL_ARGS  ; bl target, arg, ...
 ])
 
 (define_c_enum "unspecv" [
@@ -902,6 +903,23 @@
   "@
    bl\t%1
    bl\t%1@plt")
+
+;; v22: bl target, arg, ... The moves into r0 - r5 that stood in front of
+;; the call, as its operands (emex64_reorg).
+(define_insn "*call_args_insn"
+  [(call (mem:QI (match_operand:DI 0 "emex64_call_operand" "r,S"))
+	 (match_operand 1 "" ""))
+   (use (match_operand:DI 2 "emex64_call_args" ""))]
+  "TARGET_ISA22"
+  "* return emex64_output_call_args (operands[0], operands[2]);")
+
+(define_insn "*call_value_args_insn"
+  [(set (match_operand 0 "" "")
+	(call (mem:QI (match_operand:DI 1 "emex64_call_operand" "r,S"))
+	      (match_operand 2 "" "")))
+   (use (match_operand:DI 3 "emex64_call_args" ""))]
+  "TARGET_ISA22"
+  "* return emex64_output_call_args (operands[1], operands[3]);")
 
 ;; -------------------------------------------------------------------------
 ;; Prologue, epilogue, returns

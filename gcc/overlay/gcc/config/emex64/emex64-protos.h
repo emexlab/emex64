@@ -19,6 +19,7 @@ extern bool emex64_expand_move(machine_mode, rtx *);
 extern void emex64_expand_cbranch(rtx *, machine_mode);
 extern void emex64_expand_cstore(rtx *, machine_mode);
 extern void emex64_expand_call(rtx, rtx, rtx);
+extern const char *emex64_output_call_args(rtx, rtx);
 extern void emex64_expand_eh_return(rtx);
 extern void emex64_expand_atomic_cas(rtx *);
 extern rtx emex64_return_addr(int, rtx);

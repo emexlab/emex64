@@ -25,6 +25,11 @@
   (ior (match_code "symbol_ref")
        (match_operand 0 "register_operand")))
 
+;; The arguments a v22 call carries (emex64_reorg puts them there).
+(define_predicate "emex64_call_args"
+  (and (match_code "unspec")
+       (match_test "XINT (op, 1) == UNSPEC_CALL_ARGS")))
+
 ;; A tp offset: (const (unspec [sym] UNSPEC_TPOFF)), perhaps plus a constant.
 ;; Nothing else: (const (plus sym n)) would come out as an absolute address.
 (define_predicate "emex64_tpoff_operand"

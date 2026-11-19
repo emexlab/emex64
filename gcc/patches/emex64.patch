@@ -58,7 +58,7 @@ index 087aaa7be..37311529b 100644
 +	gcc_cv_initfini_array=yes
 +	case ${target} in
 +	la64e-*)
-+		tm_defines="${tm_defines} EMEX64E_TRIPLE=1 EMEX64_CPU_DEFAULT=EMEX64_CPU_EMEX64E_V21 EMEX64_DEFAULT_PAC_RET=1"
++		tm_defines="${tm_defines} EMEX64E_TRIPLE=1 EMEX64_CPU_DEFAULT=EMEX64_CPU_EMEX64E_V22 EMEX64_DEFAULT_PAC_RET=1"
 +		;;
 +	esac
 +	;;

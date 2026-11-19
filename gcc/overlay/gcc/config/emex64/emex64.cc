@@ -36,6 +36,7 @@
 #include "tm-constrs.h"
 #include "opts.h"
 #include "rtl-iter.h"
+#include "cfgrtl.h"
 
 #include "target-def.h"
 static int emex64_pac_ret;
@@ -1199,6 +1200,151 @@ void emex64_expand_call(rtx retval,
     emit_call_insn (call);
 }
 
+#define EMEX64_CALL_ARGS 6
+
+static bool emex64_call_arg_value_p(rtx dest,
+                                    rtx src)
+{
+    machine_mode mode = GET_MODE(dest);
+    if(!known_le(GET_MODE_SIZE(mode), UNITS_PER_WORD))
+    {
+        return false;
+    }
+    if(REG_P(src))
+    {
+        return HARD_REGISTER_P(src) && REGNO(src) < ARG_POINTER_REGNUM;
+    }
+    if(GET_MODE_CLASS(mode) != MODE_INT)
+    {
+        return false;
+    }
+    if(CONST_INT_P(src))
+    {
+        return INTVAL(src) >= 0;
+    }
+    if(mode != DImode)
+    {
+        return false;
+    }
+    if(GET_CODE(src) == PLUS)
+    {
+        rtx a = XEXP(src, 0), b = XEXP(src, 1);
+        return REG_P(a) && HARD_REGISTER_P(a) && ((REG_P(b) && HARD_REGISTER_P(b)) || (CONST_INT_P(b) && INTVAL(b) != HOST_WIDE_INT_MIN));
+    }
+    return emex64_symbolic_operand(src, DImode);
+}
+
+static bool emex64_fold_call_arguments(rtx_insn *call)
+{
+    rtx pat = PATTERN(call);
+    rtx c = GET_CODE(pat) == SET ? SET_SRC(pat) : pat;
+    if(GET_CODE(c) != CALL || !MEM_P(XEXP(c, 0)))
+    {
+        return false;
+    }
+
+    rtx target = XEXP(XEXP(c, 0), 0);
+    unsigned int target_reg = REG_P(target) ? REGNO(target) : INVALID_REGNUM;
+
+    rtx_insn *moves[EMEX64_CALL_ARGS] = {};
+    rtx values[EMEX64_CALL_ARGS] = {};
+    HARD_REG_SET read_behind;
+    CLEAR_HARD_REG_SET(read_behind);
+    unsigned int folded = 0;
+    int last = -1;
+
+    for(rtx_insn *p = PREV_INSN(call); p; p = PREV_INSN(p))
+    {
+        if(DEBUG_INSN_P(p))
+        {
+            continue;
+        }
+        if(NOTE_P(p))
+        {
+            int kind = NOTE_KIND(p);
+            if(kind == NOTE_INSN_DELETED || kind == NOTE_INSN_VAR_LOCATION || kind == NOTE_INSN_BEGIN_STMT || kind == NOTE_INSN_INLINE_ENTRY)
+            {
+                continue;
+            }
+            break;
+        }
+        if(!NONJUMP_INSN_P(p) || RTX_FRAME_RELATED_P(p) || GET_CODE(PATTERN(p)) != SET)
+        {
+            break;
+        }
+
+        rtx dest = SET_DEST(PATTERN(p)), src = SET_SRC(PATTERN(p));
+        if(!REG_P(dest) || REGNO(dest) >= EMEX64_CALL_ARGS || !emex64_call_arg_value_p(dest, src))
+        {
+            break;
+        }
+        unsigned int arg = REGNO(dest);
+        if(moves[arg] || arg == target_reg || TEST_HARD_REG_BIT(read_behind, arg))
+        {
+            break;
+        }
+
+        moves[arg] = p;
+        values[arg] = src;
+        folded++;
+        last = MAX(last, (int)arg);
+
+        subrtx_iterator::array_type array;
+        FOR_EACH_SUBRTX(iter, array, src, NONCONST)
+        {
+            const_rtx x = *iter;
+            if(REG_P(x))
+            {
+                SET_HARD_REG_BIT(read_behind, REGNO(x));
+            }
+        }
+    }
+
+    if(folded == 0 || (unsigned int)(last + 1) - folded > folded)
+    {
+        return false;
+    }
+
+    rtvec v = rtvec_alloc(last + 1);
+    for(int i = 0; i <= last; i++)
+    {
+        RTVEC_ELT(v, i) = moves[i] ? copy_rtx(values[i]) : gen_rtx_REG(DImode, i);
+    }
+    rtx args = gen_rtx_UNSPEC(DImode, v, UNSPEC_CALL_ARGS);
+    PATTERN(call) = gen_rtx_PARALLEL(VOIDmode, gen_rtvec(2, pat, gen_rtx_USE(VOIDmode, args)));
+    INSN_CODE(call) = -1;
+    if(recog_memoized(call) < 0)
+    {
+        PATTERN(call) = pat;
+        INSN_CODE(call) = -1;
+        return false;
+    }
+
+    for(int i = 0; i <= last; i++)
+    {
+        if(moves[i])
+        {
+            delete_insn(moves[i]);
+        }
+    }
+    return true;
+}
+
+static void emex64_reorg(void)
+{
+    if(!TARGET_ISA22)
+    {
+        return;
+    }
+    for(rtx_insn *insn = get_insns(); insn; insn = NEXT_INSN(insn))
+    {
+        if(CALL_P(insn) && !SIBLING_CALL_P(insn))
+        {
+            emex64_fold_call_arguments(insn);
+        }
+    }
+}
+
 /* -------------------------------------------------------------------------
    Atomics
    ------------------------------------------------------------------------- */
@@ -1435,6 +1581,53 @@ static void emex64_print_operand_address(FILE *f,
         output_addr_const(f, addr);
         fputc(']', f);
     }
+}
+
+const char *emex64_output_call_args(rtx target,
+                                    rtx args)
+{
+    FILE *f = asm_out_file;
+    fputs("\tbl\t", f);
+    if(REG_P(target))
+    {
+        fputs(reg_names[REGNO(target)], f);
+    }
+    else
+    {
+        output_addr_const(f, target);
+        fputs("@plt", f);
+    }
+
+    for(int i = 0; i < XVECLEN(args, 0); i++)
+    {
+        rtx x = XVECEXP(args, 0, i);
+        fputs(", ", f);
+        if(REG_P(x))
+        {
+            fputs(reg_names[REGNO(x)], f);
+        }
+        else if(CONST_INT_P(x))
+        {
+            fprintf(f, HOST_WIDE_INT_PRINT_DEC, INTVAL(x));
+        }
+        else if(GET_CODE(x) == PLUS)
+        {
+            emex64_print_operand_address(f, DImode, x);
+        }
+        else if(flag_pic)
+        {
+            fputs("[pc + ", f);
+            emex64_print_symbolic(f, x, "@pcrel");
+            fputc(']', f);
+        }
+        else
+        {
+            output_addr_const(f, x);
+        }
+    }
+
+    fputc('\n', f);
+    return "";
 }
 
 static void emex64_print_operand(FILE *f,
@@ -1785,6 +1978,9 @@ static int emex64_address_cost(rtx,
 #define TARGET_RTX_COSTS emex64_rtx_costs
 #undef TARGET_ADDRESS_COST
 #define TARGET_ADDRESS_COST emex64_address_cost
+
+#undef TARGET_MACHINE_DEPENDENT_REORG
+#define TARGET_MACHINE_DEPENDENT_REORG emex64_reorg
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
