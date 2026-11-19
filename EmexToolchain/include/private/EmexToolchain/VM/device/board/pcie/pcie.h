@@ -34,6 +34,7 @@
 #define PCIE_RC_REG_MMIO_SIZE       0x20
 #define PCIE_RC_REG_IRQ_BASE        0x28
 #define PCIE_RC_REG_IRQ_COUNT       0x30
+#define PCIE_RC_REG_PCI_ECAM_BASE   0x38
 
 #define PCIE_RC_ID_MAGIC            0x49435045ULL
 #define PCIE_RC_VERSION             1
@@ -83,11 +84,13 @@ struct emex64_pcie_function {
     SInt32 irq;
     UInt8 bus, dev, fn;
     emex64_pcie_t *pcie;
+    UInt8 pci_probe;
 };
 
 struct emex64_pcie {
     E64MachineRef machine;
     emex64_pcie_function_t *functions[PCIE_MAX_DEVICES * PCIE_MAX_FUNCTIONS];
+    struct E64PCIeDevice *hosted;
 };
 
 emex64_pcie_t *emex64_pcie_alloc(E64MachineRef machine);

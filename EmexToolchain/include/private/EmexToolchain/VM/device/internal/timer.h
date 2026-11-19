@@ -47,8 +47,7 @@ typedef struct emex64_timer {
 #define EMEX64_TIMER_SNAP_SLOW      0
 #define EMEX64_TIMER_SNAP_STOPPED   1
 #define EMEX64_TIMER_SNAP_COUNTING  2
-
-#define EMEX64_TIMER_TICK_INTERVAL  32
+#define EMEX64_TIMER_TICK_INTERVAL  256
 
 emex64_timer_t *emex64_timer_alloc(E64MachineRef machine);
 void emex64_timer_dealloc(emex64_timer_t *timer);

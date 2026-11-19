@@ -25,45 +25,70 @@
 #include <string.h>
 #include <EmexFoundation/EmexFoundation.h>
 
-extern UInt64 kMask[65];
-
 typedef struct {
     const UInt8 *buf;
     UInt32 pos;
+    UInt32 have;
+    UInt64 win;
 } bitbolt_t;
 
-static inline UInt64 cpy64le(const UInt8 *p)
+__attribute__((always_inline)) UInt64 bb_load64(const UInt8 *p)
 {
+#if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    UInt64 v;
+    memcpy(&v, p, 8);
+    return v;
+#else
     return  (UInt64)p[0] | ((UInt64)p[1] <<  8) | ((UInt64)p[2] << 16) | ((UInt64)p[3] << 24) | ((UInt64)p[4] << 32) | ((UInt64)p[5] << 40) | ((UInt64)p[6] << 48) | ((UInt64)p[7] << 56);
+#endif /* defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ */
 }
 
-static inline UInt64 bb_read(bitbolt_t *bb,
-                               unsigned n)
+__attribute__((always_inline)) UInt64 bb_mask(unsigned n)
 {
-    const UInt8 *p = (const UInt8 *)bb->buf + (bb->pos >> 3);
-    UInt64 lo = cpy64le(p);
-    UInt64 hi = cpy64le(p + 8);
+    return n >= 64 ? ~0ULL : ((1ULL << n) - 1ULL);
+}
 
-    unsigned shift = bb->pos & 7;
-
-    UInt64 v;
-    if(shift == 0)
+__attribute__((always_inline)) UInt64 bb_read(bitbolt_t *bb,
+                                              unsigned n)
+{
+    if(__builtin_expect(n > bb->have, 0))
     {
-        v = lo;
-    }
-    else
-    {
-        v = (lo >> shift) | (hi << (64 - shift));
+        const UInt8 *p = bb->buf + (bb->pos >> 3);
+        unsigned shift = bb->pos & 7;
+        UInt64 lo = bb_load64(p);
+
+        if(__builtin_expect(n > 64 - shift, 0))
+        {
+            UInt64 v = ((lo >> shift) | ((UInt64)p[8] << (64 - shift))) & bb_mask(n);
+            bb->pos += n;
+            bb->have = 0;
+            return v;
+        }
+
+        bb->win = lo >> shift;
+        bb->have = 64 - shift;
     }
 
-    v &= kMask[n];
+    UInt64 v = bb->win & bb_mask(n);
+    bb->win = n >= 64 ? 0 : (bb->win >> n);
+    bb->have -= n;
     bb->pos += n;
     return v;
 }
 
-static inline void bb_align(bitbolt_t *bb)
+__attribute__((always_inline)) void bb_align(bitbolt_t *bb)
 {
-    bb->pos = (bb->pos + 7u) & ~7u;
+    UInt32 skip = (0u - bb->pos) & 7u;
+    if(skip <= bb->have)
+    {
+        bb->win >>= skip;
+        bb->have -= skip;
+    }
+    else
+    {
+        bb->have = 0;
+    }
+    bb->pos += skip;
 }
 
 #endif /* EMEX64_BITBOLT_H */

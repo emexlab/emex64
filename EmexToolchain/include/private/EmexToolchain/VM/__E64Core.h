@@ -42,7 +42,7 @@ typedef union {
 } FPReg;
 
 #define EMEX64_PAC_CACHE_ENTRIES 128
-#define EMEX64_FAST_PAGES 64
+#define EMEX64_FAST_PAGES 256
 
 typedef struct emex64_pac_cache_entry {
     UInt64 key;
@@ -55,7 +55,7 @@ typedef struct emex64_fast_page {
     UInt64 key;
     UInt64 ppage;
     UInt64 map_seq;
-    UInt64 tlb_seq;
+    UInt64 ctx;
 } emex64_fast_page_t;
 
 static inline UInt64 emex64_pac_cache_index(UInt64 ptr, UInt64 modifier)
@@ -217,6 +217,19 @@ typedef struct __E64Core {
 
     emex64_fast_page_t pages[2][EMEX64_FAST_PAGES];
     UInt64 tlb_seq;
+
+    struct {
+        UInt64 vbase;
+        UInt64 size;
+        UInt64 pbase;
+        UInt64 seq;
+        UInt64 context;
+        UInt64 root;
+        UInt64 pages;
+        UInt8 *runs;
+        UInt32 wait;
+        Boolean flushed;
+    } ktext;
 
     Boolean run_break;
 

@@ -49,6 +49,3 @@ gcc/build.sh
 ```
 
 `-msoft-float` builds code that leaves the FPU alone (kernels, firmware). emexFirmware's C parts are built with it.
-
-## Documentation
-[Specefication](LA64-v21.md)

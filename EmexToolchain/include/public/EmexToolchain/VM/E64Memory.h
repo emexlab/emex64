@@ -107,6 +107,8 @@ void E64MemoryCoreAction(E64MemoryRef memoryRef, E64CoreRef core, UInt64 addr, E
 Boolean E64MemoryCoreCopyIn(E64MemoryRef memoryRef, E64CoreRef core, UInt8 *dst, UInt64 addr, EFSize len, E64MemoryActionType actionType);
 
 void *E64MemoryCoreMap(E64MemoryRef memoryRef, E64CoreRef core, UInt64 addr, EFSize size, E64MemoryActionType actionType);
+Boolean E64MemoryCoreProbe(E64MemoryRef memoryRef, E64CoreRef core, UInt64 addr, UInt64 len, E64MemoryActionType actionType);
+Boolean E64MemoryCoreWatchPage(E64MemoryRef memoryRef, E64CoreRef core, UInt64 vaddr, UInt64 *pte, UInt64 *root);
 struct emex64_snoop *E64MemoryGetSnoop(E64MemoryRef memoryRef);
 UInt8 *E64MemoryGetRAM(E64MemoryRef memoryRef);
 Boolean E64MemoryCoreTranslate(E64MemoryRef memoryRef, E64CoreRef core, UInt64 vaddr, E64MemoryActionType actionType, UInt64 *paddr);

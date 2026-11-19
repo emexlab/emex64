@@ -36,12 +36,15 @@ typedef struct emex64_display emex64_display_t;
 
 #if defined(__APPLE__)
 #include <TargetConditionals.h>
-#endif
+#endif /* defined(__APPLE__) */
+
+#ifndef EMEX64VM_DISPLAY_WINDOW
 #if EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || (defined(__APPLE__) && !TARGET_OS_IPHONE))
 #define EMEX64VM_DISPLAY_WINDOW 1
 #else
 #define EMEX64VM_DISPLAY_WINDOW 0
-#endif
+#endif /* EMEX64VM_DEVICE_DISPLAY && (defined(__linux__) || (defined(__APPLE__) && !TARGET_OS_IPHONE)) */
+#endif /* EMEX64VM_DISPLAY_WINDOW */
 
 struct emex64_display {
     Boolean enabled;

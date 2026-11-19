@@ -131,7 +131,7 @@ void emex64_op_blw(__E64Core core)
     emex64_push_il(core, core->rl[kE64RegisterR9]);
 
     /* writing parameters */
-    for(UInt8 i = 1; i < core->op.param_cnt && i < (kE64RegisterR9 - 1); i++)
+    for(UInt8 i = 1; i < core->op.param_cnt && i <= (kE64RegisterR9 - kE64RegisterR0 + 1); i++)
     {
         core->rl[(kE64RegisterR0 - 1) + i] = param_imm[i];
     }
@@ -213,6 +213,27 @@ void emex64_op_bl(__E64Core core)
     /* initiating jump */
     core->op.ilen = 0;
     core->rl[kE64RegisterPC] = emex64_branch_pc(core->rl[kE64RegisterPC], *(core->op.param[0]), core->op.param_coding[0]);
+}
+
+void emex64_op_bla(__E64Core core)
+{
+    UInt64 arg[EMEX64_CALL_ARGS];
+    UInt8 count = core->op.param_cnt - 1;
+    for(UInt8 i = 0; i < count; i++)
+    {
+        arg[i] = *(core->op.param[i + 1]);
+    }
+
+    emex64_op_bl(core);
+    if(unlikely(core->cr_state.crexc.exception != kE64ExceptionNone))
+    {
+        return;
+    }
+
+    for(UInt8 i = 0; i < count; i++)
+    {
+        core->rl[kE64RegisterR0 + i] = arg[i];
+    }
 }
 
 void emex64_op_ret(__E64Core core)
@@ -398,6 +419,50 @@ void emex64_op_pacret(__E64Core core)
     }
     ret = emex64_pac_sign(core, core->cr_state.criakey, ret, frame);
     E64MemoryCoreAction(core->machine->memory, core, frame + 16, sizeof(UInt64), &ret, kE64MemoryActionTypeWrite);
+}
+
+Boolean emex64_fast_pacret(__E64Core core,
+                           Boolean *touched)
+{
+    *touched = false;
+    if(!emex64_pac_enabled(core))
+    {
+        return true;
+    }
+
+    UInt64 frame = core->rl[kE64RegisterFP];
+    UInt64 from, to;
+    if(unlikely(!emex64_fast_paddr(core, frame + 16, sizeof(UInt64), kE64MemoryActionTypeRead, &from)) ||
+       unlikely(!emex64_fast_paddr(core, frame + 16, sizeof(UInt64), kE64MemoryActionTypeWrite, &to)))
+    {
+        return false;
+    }
+
+    UInt64 ret;
+    memcpy(&ret, core->ram + from, sizeof(ret));
+    ret = emex64_pac_sign(core, core->cr_state.criakey, ret, frame);
+    memcpy(core->ram + to, &ret, sizeof(ret));
+    *touched = emex64_snoop_write(core->snoop, to, sizeof(ret));
+    return true;
+}
+
+Boolean emex64_fast_reta(__E64Core core,
+                         UInt64 frame,
+                         UInt64 ret,
+                         UInt64 *pc)
+{
+    if(!emex64_pac_enabled(core))
+    {
+        *pc = ret;
+        return true;
+    }
+
+    if(unlikely((ret & E64_PAC_MASK) != emex64_pac_signature(core, core->cr_state.criakey, ret, frame)))
+    {
+        return false;
+    }
+    *pc = ret & ~E64_PAC_MASK;
+    return true;
 }
 
 void emex64_op_reta(__E64Core core)

@@ -423,6 +423,16 @@ static Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
                 driver->driverOptions.isa = 20;
                 goto valid_target;
             }
+            if(EFEqual(targetStr, EFSTR("la64-v21")) || EFEqual(targetStr, EFSTR("la64e-v21")))
+            {
+                driver->driverOptions.isa = 21;
+                goto valid_target;
+            }
+            if(EFEqual(targetStr, EFSTR("la64-v22")) || EFEqual(targetStr, EFSTR("la64e-v22")))
+            {
+                driver->driverOptions.isa = 22;
+                goto valid_target;
+            }
 
             if(EFStringHasPrefix(targetStr, EFSTR("la64-generic-v")))
             {
@@ -471,6 +481,12 @@ static Boolean __ETAssemblerDriverPredrive(__ETAssemblerDriver driver)
                         goto valid_target;
                     case 20:
                         driver->driverOptions.isa = 20;
+                        goto valid_target;
+                    case 21:
+                        driver->driverOptions.isa = 21;
+                        goto valid_target;
+                    case 22:
+                        driver->driverOptions.isa = 22;
                         goto valid_target;
                     default:
                         goto invalid_target;

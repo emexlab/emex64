@@ -22,8 +22,112 @@
 #ifndef __E64CACHE_H
 #define __E64CACHE_H
 
+#include <pthread.h>
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/E64Type.h>
+
+#ifndef EMEX64_KTEXT
+#define EMEX64_KTEXT                1
+#endif
+#ifndef EMEX64_KTEXT_SHARED
+#define EMEX64_KTEXT_SHARED         1
+#endif
+
+typedef enum: UInt8 {
+    kE64TextNone = 0,
+
+    kE64TextMovRR, kE64TextMovRI,
+    kE64TextAddRR, kE64TextAddRI, kE64TextAddIR,
+    kE64TextSubRR, kE64TextSubRI, kE64TextSubIR,
+    kE64TextMulRR, kE64TextMulRI, kE64TextMulIR,
+    kE64TextAndRR, kE64TextAndRI, kE64TextAndIR,
+    kE64TextOrRR, kE64TextOrRI, kE64TextOrIR,
+    kE64TextXorRR, kE64TextXorRI, kE64TextXorIR,
+    kE64TextShlRR, kE64TextShlRI, kE64TextShlIR,
+    kE64TextShrRR, kE64TextShrRI, kE64TextShrIR,
+    kE64TextCmpRR, kE64TextCmpRI, kE64TextCmpIR,
+
+    kE64TextBranch,
+    kE64TextBranchFlags,
+    kE64TextBranchFlagsNot,
+    kE64TextBranchZero,
+    kE64TextBranchNotZero,
+    kE64TextBranchEqualRR, kE64TextBranchEqualRI, kE64TextBranchEqualIR,
+    kE64TextBranchNotEqualRR, kE64TextBranchNotEqualRI, kE64TextBranchNotEqualIR,
+    kE64TextBranchLessRR, kE64TextBranchLessRI, kE64TextBranchLessIR,
+    kE64TextBranchGreaterEqualRR, kE64TextBranchGreaterEqualRI, kE64TextBranchGreaterEqualIR,
+    kE64TextBranchLessUnsignedRR, kE64TextBranchLessUnsignedRI, kE64TextBranchLessUnsignedIR,
+    kE64TextBranchGreaterEqualUnsignedRR, kE64TextBranchGreaterEqualUnsignedRI, kE64TextBranchGreaterEqualUnsignedIR,
+
+    kE64TextLoad8, kE64TextLoad16, kE64TextLoad32, kE64TextLoad64,
+    kE64TextLoadSigned8, kE64TextLoadSigned16, kE64TextLoadSigned32,
+
+    kE64TextStore8R, kE64TextStore8I,
+    kE64TextStore16R, kE64TextStore16I,
+    kE64TextStore32R, kE64TextStore32I,
+    kE64TextStore64R, kE64TextStore64I,
+
+    kE64TextCall,
+    kE64TextCallArgs,
+    kE64TextCallIndirect,
+    kE64TextReturn,
+    kE64TextReturnAuth,
+    kE64TextSignReturn,
+} E64TextFast;
+
+typedef enum: UInt8 {
+    kE64TextArgReg,
+    kE64TextArgImm,
+    kE64TextArgRegImm,
+} E64TextArgKind;
+
+typedef struct emex64_ktext_arg {
+    UInt64 imm;
+    UInt16 reg;
+    UInt8 kind;
+} emex64_ktext_arg_t;
+
+typedef struct emex64_ktext_entry {
+    struct emex64_ktext_entry *seq;
+    struct emex64_ktext_entry *target;
+    UInt64 imm;
+    const emex64_ktext_arg_t *args;
+    SInt32 rel;
+    UInt16 r[3];
+    UInt8 fast;
+    UInt8 ilen;
+    UInt8 cf_mask;
+    UInt8 argc;
+} emex64_ktext_entry_t;
+
+#define EMEX64_KTEXT_SLAB           16384
+#define EMEX64_KTEXT_SLABS          1024
+
+typedef struct emex64_ktext_store {
+    pthread_mutex_t lock;
+    UInt64 base;
+    UInt64 pages;
+    UInt32 **index;
+    emex64_ktext_entry_t *slab[EMEX64_KTEXT_SLABS];
+    UInt32 count;
+} emex64_ktext_store_t;
+
+static inline emex64_ktext_entry_t *emex64_ktext_find(const emex64_ktext_store_t *store,
+                                                      UInt64 paddr)
+{
+    UInt64 off = paddr - store->base;
+    if(off >= (__atomic_load_n(&store->pages, __ATOMIC_ACQUIRE) << 13))
+    {
+        return NULL;
+    }
+    UInt32 *page = __atomic_load_n(&store->index[off >> 13], __ATOMIC_ACQUIRE);
+    if(page == NULL)
+    {
+        return NULL;
+    }
+    UInt32 n = __atomic_load_n(&page[off & 0x1FFF], __ATOMIC_ACQUIRE);
+    return n == 0 ? NULL : &store->slab[n / EMEX64_KTEXT_SLAB][n % EMEX64_KTEXT_SLAB];
+}
 
 #define EMEX64_CHUNK_SHIFT          8
 #define EMEX64_CHUNK_SIZE           (1ULL << EMEX64_CHUNK_SHIFT)
@@ -32,6 +136,7 @@
 #define EMEX64_CHUNK_PAGE_TABLE     (1 << 1)
 #define EMEX64_CHUNK_SCANOUT        (1 << 2)
 #define EMEX64_CHUNK_PTE            (1 << 3)
+#define EMEX64_CHUNK_KTEXT          (1 << 4)
 
 typedef struct emex64_snoop {
     UInt8 *flags;
@@ -40,11 +145,13 @@ typedef struct emex64_snoop {
     UInt64 tlb_epoch;
     UInt64 code_seq;
     UInt64 map_seq;
+    UInt64 ktext_seq;
     UInt64 scan_lo;
     UInt64 scan_hi;
     Boolean ktrr_locked;
     UInt64 ktrr_base;
     UInt64 ktrr_size;
+    emex64_ktext_store_t text;
 } emex64_snoop_t;
 
 static inline void emex64_snoop_scan_written(emex64_snoop_t *snoop, UInt64 c)
@@ -59,15 +166,16 @@ static inline void emex64_snoop_scan_written(emex64_snoop_t *snoop, UInt64 c)
     }
 }
 
-static inline void emex64_snoop_write(emex64_snoop_t *snoop,
-                                      UInt64 paddr,
-                                      UInt64 len)
+static inline Boolean emex64_snoop_write(emex64_snoop_t *snoop,
+                                         UInt64 paddr,
+                                         UInt64 len)
 {
     if(len == 0)
     {
-        return;
+        return false;
     }
 
+    Boolean touched = false;
     UInt64 c = paddr >> EMEX64_CHUNK_SHIFT;
     UInt64 last = (paddr + len - 1) >> EMEX64_CHUNK_SHIFT;
     for(; c <= last; c++)
@@ -75,6 +183,7 @@ static inline void emex64_snoop_write(emex64_snoop_t *snoop,
         if(__builtin_expect(__atomic_load_n(&snoop->flags[c], __ATOMIC_RELAXED) != 0, 0))
         {
             UInt8 f = __atomic_exchange_n(&snoop->flags[c], 0, __ATOMIC_ACQ_REL);
+            touched |= (f & (EMEX64_CHUNK_CODE | EMEX64_CHUNK_PTE | EMEX64_CHUNK_PAGE_TABLE)) != 0;
             if(f & (EMEX64_CHUNK_CODE | EMEX64_CHUNK_PTE))
             {
                 __atomic_fetch_add(&snoop->gen[c], 1, __ATOMIC_ACQ_REL);
@@ -91,12 +200,17 @@ static inline void emex64_snoop_write(emex64_snoop_t *snoop,
             {
                 __atomic_fetch_add(&snoop->map_seq, 1, __ATOMIC_ACQ_REL);
             }
+            if(f & EMEX64_CHUNK_KTEXT)
+            {
+                __atomic_fetch_add(&snoop->ktext_seq, 1, __ATOMIC_ACQ_REL);
+            }
             if(f & EMEX64_CHUNK_SCANOUT)
             {
                 emex64_snoop_scan_written(snoop, c);
             }
         }
     }
+    return touched;
 }
 
 static inline void emex64_snoop_mark(emex64_snoop_t *snoop,
@@ -200,9 +314,17 @@ typedef enum: UInt8 {
     kE64FastStore16,
     kE64FastStore32,
     kE64FastStore64,
+    kE64FastCall,
+    kE64FastCallArgs,
+    kE64FastCallIndirect,
+    kE64FastReturn,
+    kE64FastReturnAuth,
+    kE64FastSignReturn,
 } E64Fast;
 
-#define EMEX64_ICACHE_ENTRIES       262144
+#ifndef EMEX64_ICACHE_ENTRIES
+#define EMEX64_ICACHE_ENTRIES       262144  /* must be a power of two */
+#endif
 #define EMEX64_ICACHE_ARGS          8
 
 typedef enum: UInt8 {
@@ -246,8 +368,6 @@ typedef struct emex64_icache_entry {
     UInt8 cf_mask;
     Boolean rollback;
 } __attribute__((aligned(64))) emex64_icache_entry_t;
-
-_Static_assert(sizeof(emex64_icache_entry_t) == 64, "an instruction cache entry is one cache line");
 
 typedef struct emex64_icache_cold {
     UInt32 gen_first;

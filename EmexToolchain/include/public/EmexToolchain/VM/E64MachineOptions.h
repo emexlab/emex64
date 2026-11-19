@@ -69,6 +69,7 @@ typedef struct {
 typedef struct {
     void *context;
     void (*uartOutput)(void *context, UInt8 byte);
+    void (*reset)(void *context);
 } E64MachineHost;
 
 typedef struct {

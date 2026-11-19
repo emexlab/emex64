@@ -51,6 +51,24 @@ typedef struct E64Memory {
     EFFileRef image;
 } *E64Memory;
 
+static void emex64_ktext_clear(emex64_ktext_store_t *store)
+{
+    for(UInt64 i = 0; store->index != NULL && i < store->pages; i++)
+    {
+        free(store->index[i]);
+    }
+    free(store->index);
+    for(UInt32 i = 0; i < EMEX64_KTEXT_SLABS; i++)
+    {
+        free(store->slab[i]);
+        store->slab[i] = NULL;
+    }
+    store->index = NULL;
+    store->pages = 0;
+    store->base = 0;
+    store->count = 0;
+}
+
 static void __E64MemoryDeinit(E64MemoryRef memoryRef)
 {
     E64Memory memory = (E64Memory)memoryRef;
@@ -58,6 +76,8 @@ static void __E64MemoryDeinit(E64MemoryRef memoryRef)
     {
         munmap(memory->memory, memory->memory_size);
     }
+    emex64_ktext_clear(&memory->snoop.text);
+    pthread_mutex_destroy(&memory->snoop.text.lock);
     free(memory->snoop.flags);
     free(memory->snoop.gen);
     if(memory->image != NULL)
@@ -144,6 +164,7 @@ E64MemoryRef E64MemoryCreate(EFAllocatorRef allocatorRef,
         return NULL;
     }
 
+    pthread_mutex_init(&memory->snoop.text.lock, NULL);
     memory->snoop.chunks = memory->memory_size >> EMEX64_CHUNK_SHIFT;
     memory->snoop.scan_lo = UINT64_MAX;
     memory->snoop.scan_hi = 0;
@@ -163,6 +184,24 @@ void E64MemoryLockKTRR(E64MemoryRef memoryRef)
     if(memory == NULL)
     {
         return;
+    }
+
+    emex64_ktext_store_t *text = &memory->snoop.text;
+    UInt64 pages = (memory->ktrr_size + EMEX64_PAGE_MASK) >> 13;
+    if(EMEX64_KTEXT_SHARED && !memory->ktrr_locked && pages != 0 && pages <= 65536 && (memory->ktrr_base & EMEX64_PAGE_MASK) == 0)
+    {
+        pthread_mutex_lock(&text->lock);
+        if(text->index == NULL)
+        {
+            text->index = calloc(pages, sizeof(UInt32 *));
+            if(text->index != NULL)
+            {
+                text->base = memory->ktrr_base;
+                text->count = 0;
+                __atomic_store_n(&text->pages, pages, __ATOMIC_RELEASE);
+            }
+        }
+        pthread_mutex_unlock(&text->lock);
     }
 
     memory->ktrr_locked = true;
@@ -214,6 +253,7 @@ Boolean E64MemorySetKTRRBase(E64MemoryRef memoryRef,
 
     memory->ktrr_base = base;
     memory->snoop.ktrr_base = base;
+    __atomic_fetch_add(&memory->snoop.map_seq, 1, __ATOMIC_ACQ_REL);
     return true;
 }
 
@@ -239,6 +279,7 @@ Boolean E64MemorySetKTRRSize(E64MemoryRef memoryRef,
 
     memory->ktrr_size = size;
     memory->snoop.ktrr_size = size;
+    __atomic_fetch_add(&memory->snoop.map_seq, 1, __ATOMIC_ACQ_REL);
     return true;
 }
 
@@ -565,6 +606,7 @@ void E64MemoryReset(E64MemoryRef memoryRef)
     memory->snoop.ktrr_base = 0;
     memory->snoop.ktrr_size = 0;
     memory->snoop.ktrr_locked = false;
+    emex64_ktext_clear(&memory->snoop.text);
 
     memset(memory->snoop.flags, 0, memory->snoop.chunks);
     for(UInt64 c = 0; c < memory->snoop.chunks; c++)
@@ -574,6 +616,7 @@ void E64MemoryReset(E64MemoryRef memoryRef)
     memory->snoop.tlb_epoch++;
     memory->snoop.code_seq++;
     memory->snoop.map_seq++;
+    memory->snoop.ktext_seq++;
     memory->snoop.scan_lo = UINT64_MAX;
     memory->snoop.scan_hi = 0;
 }
@@ -1012,6 +1055,83 @@ Boolean E64MemoryCoreCopyIn(E64MemoryRef memoryRef,
         len -= chunk;
     }
 
+    return true;
+}
+
+Boolean E64MemoryCoreProbe(E64MemoryRef memoryRef,
+                           E64CoreRef core,
+                           UInt64 addr,
+                           UInt64 len,
+                           E64MemoryActionType actionType)
+{
+    E64Memory memory = (E64Memory)memoryRef;
+    if(memory == NULL || core == NULL || len == 0 || !core->cr_state.crptb.enabled || core->in_interrupt)
+    {
+        return true;
+    }
+
+    /* ranges that are no memory are told so by the access it self */
+    UInt64 last = addr + len - 1;
+    if(last < addr || (last >> 53))
+    {
+        return true;
+    }
+
+    UInt64 at = addr;
+    for(;;)
+    {
+        UInt64 paddr;
+        if(!emex64_mmu_translate(memory, core, at, actionType, &paddr))
+        {
+            emex64_memory_fault(core, kE64ExceptionPageFault, at, actionType);
+            return false;
+        }
+        if((at | EMEX64_PAGE_MASK) >= last)
+        {
+            return true;
+        }
+        at = (at | EMEX64_PAGE_MASK) + 1;
+    }
+}
+
+Boolean E64MemoryCoreWatchPage(E64MemoryRef memoryRef,
+                               E64CoreRef core,
+                               UInt64 vaddr,
+                               UInt64 *pte,
+                               UInt64 *root)
+{
+    static const UInt8 shift[4] = { 43, 33, 23, 13 };
+    E64Memory memory = (E64Memory)memoryRef;
+    if(memory == NULL || core == NULL || (vaddr >> 53))
+    {
+        return false;
+    }
+
+    UInt64 table = core->cr_state.crptb.pgd_addr;
+    UInt64 entry = 0;
+    for(int level = 0; level < 4; level++)
+    {
+        table = EMEX64_PAGE_ROUND_DOWN(table);
+        if(!EMEX64_IN_PHYS_MEMORY(table, EMEX64_PAGE_SIZE, memory->memory, memory->memory_size))
+        {
+            return false;
+        }
+
+        UInt64 entry_pa = table + ((vaddr >> shift[level]) & 0x3FF) * sizeof(UInt64);
+        emex64_snoop_mark(&memory->snoop, entry_pa, EMEX64_CHUNK_KTEXT);
+        entry = ((UInt64 *)(memory->memory + table))[(vaddr >> shift[level]) & 0x3FF];
+        if(level == 0 && root != NULL)
+        {
+            *root = entry & (EMEX64_MEMORY_MMU_MASK_PFN | kE64MMUPTPresent);
+        }
+        if(!(entry & kE64MMUPTPresent))
+        {
+            return false;
+        }
+        table = ((entry & EMEX64_MEMORY_MMU_MASK_PFN) >> 8) << 13;
+    }
+
+    *pte = entry;
     return true;
 }
 

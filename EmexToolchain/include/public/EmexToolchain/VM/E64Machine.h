@@ -41,43 +41,35 @@ EFTypeID E64MachineGetTypeID(void);
 E64MachineRef E64MachineCreate(EFAllocatorRef allocatorRef);
 E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef, E64MachineOptions options);
 
+UInt8 E64MachineGetMaxCoreCount(void);
+
 E64CoreRef E64MachineGetCore(E64MachineRef machineRef);
 E64MemoryRef E64MachineGetMemory(E64MachineRef machineRef);
 E64MMIOBusRef E64MachineGetMMIOBus(E64MachineRef machineRef);
 
 E64ICRef E64MachineGetIC(E64MachineRef machineRef);
 
-/*
- * For a host that embeds the machine (E64MachineOptions.host). These are
- * safe from any thread while E64CoreExecute runs on another.
- */
-
-/* powers the machine off: E64CoreExecute returns */
 void E64MachineStop(E64MachineRef machineRef);
 
-/* bytes typed into the UART (the serial console) */
 void E64MachineSendUARTInput(E64MachineRef machineRef, const UInt8 *bytes, EFSize length);
 
-/* a key on the keyboard (by position, as a PC keyboard sends it) went down or up */
 void E64MachineSendKey(E64MachineRef machineRef, kEmexKeyPhys key, Boolean down);
+void E64MachineSendMouse(E64MachineRef machineRef, SInt32 dx, SInt32 dy, UInt8 buttons);
 
-/* what the monitor shows now */
+SInt32 E64MachinePlugUSBDisk(E64MachineRef machineRef, const char *path, Boolean readOnly);
+Boolean E64MachineUnplugUSBDisk(E64MachineRef machineRef, UInt8 port);
+
 typedef struct {
-    Boolean active;             /* false: the screen is black */
-    const UInt8 *pixels;        /* in guest RAM: read it while drawing, don't keep it */
-    UInt32 width, height;       /* pixels */
-    UInt32 stride;              /* bytes from one row to the next */
-    UInt32 format;              /* 1: 8-bit palette indices, 2: XRGB8888 (bytes B, G, R, X) */
-    UInt32 paletteGeneration;   /* changes when the palette does */
-    UInt8 palette[256 * 3];     /* R, G, B for format 1; copied when paletteGeneration changed */
-    /* the rows written since the last call: [dirtyTop, dirtyBottom), all
-       of them for a new scanout, none when the picture didn't change */
+    Boolean active;
+    const UInt8 *pixels;
+    UInt32 width, height;
+    UInt32 stride;
+    UInt32 format;
+    UInt32 paletteGeneration;
+    UInt8 palette[256 * 3];
     UInt32 dirtyTop, dirtyBottom;
 } E64DisplayFrame;
 
-/* false without a display (E64MachineOptions.displayOptions.enabled). Zero
-   the frame once and pass the same one every time: the palette is only
-   copied when it changed */
 Boolean E64MachineGetDisplayFrame(E64MachineRef machineRef, E64DisplayFrame *frame);
 
 #endif /* E64MACHINE_H */

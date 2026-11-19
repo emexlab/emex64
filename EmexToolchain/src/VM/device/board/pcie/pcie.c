@@ -27,6 +27,7 @@
 #include <EmexToolchain/VM/E64MMIORegion.h>
 #include <EmexToolchain/VM/device/internal/controller/E64IC.h>
 #include <EmexToolchain/VM/device/board/pcie/pcie.h>
+#include <EmexToolchain/VM/E64PCIe.h>
 
 static UInt64 pcie_rc_read(E64CoreRef core,
                            void *device,
@@ -50,6 +51,8 @@ static UInt64 pcie_rc_read(E64CoreRef core,
             return EMEX64_IRQ_PCIE_BASE;
         case PCIE_RC_REG_IRQ_COUNT:
             return EMEX64_IRQ_PCIE_COUNT;
+        case PCIE_RC_REG_PCI_ECAM_BASE:
+            return EMEX64_PCIE_PCI_ECAM_BASE;
         default:
             return 0;
     }
@@ -227,6 +230,148 @@ static void pcie_mmio_write(E64CoreRef core,
     f->ops->bar_write(f, bar, bar_offset, value);
 }
 
+#define PCI_CFG_ID          0x00
+#define PCI_CFG_COMMAND     0x04
+#define PCI_CFG_CLASS       0x08
+#define PCI_CFG_HEADER      0x0C
+#define PCI_CFG_BAR0        0x10
+#define PCI_CFG_BAR_END     0x28
+#define PCI_CFG_SUBSYSTEM   0x2C
+#define PCI_CFG_INTERRUPT   0x3C
+
+static emex64_pcie_function_t *pcie_function_for_pci_offset(emex64_pcie_t *pcie,
+                                                            UInt64 offset)
+{
+    UInt64 bus = offset >> 20;
+    UInt64 dev = (offset >> 15) & 0x1F;
+    UInt64 fn = (offset >> 12) & 0x7;
+    return bus != 0 ? NULL : pcie->functions[dev * PCIE_MAX_FUNCTIONS + fn];
+}
+
+static UInt32 pcie_pci_register(emex64_pcie_t *pcie,
+                                emex64_pcie_function_t *f,
+                                UInt32 reg)
+{
+    switch(reg)
+    {
+        case PCI_CFG_ID:
+            return (UInt32)f->vendor | ((UInt32)f->device << 16);
+        case PCI_CFG_COMMAND:
+        {
+            UInt32 command = 0;
+            if(f->control & PCIE_CONTROL_MEM)
+            {
+                command |= 1 << 1;
+            }
+            if(f->control & PCIE_CONTROL_MASTER)
+            {
+                command |= 1 << 2;
+            }
+            if(!(f->control & PCIE_CONTROL_IRQ))
+            {
+                command |= 1 << 10;
+            }
+            return command;
+        }
+        case PCI_CFG_CLASS:
+            return (UInt32)f->revision | ((f->class_code & 0xFFFFFF) << 8);
+        case PCI_CFG_HEADER:
+            for(UInt8 i = 0; i < PCIE_MAX_FUNCTIONS; i++)
+            {
+                if(i != f->fn && pcie->functions[f->dev * PCIE_MAX_FUNCTIONS + i] != NULL)
+                {
+                    return 0x80 << 16;
+                }
+            }
+            return 0;
+        case PCI_CFG_SUBSYSTEM:
+            return (UInt32)f->subsystem;
+        case PCI_CFG_INTERRUPT:
+            return f->irq < 0 || f->irq > 254 ? 0xFF : ((UInt32)f->irq | (1 << 8));
+        default:
+            break;
+    }
+
+    if(reg >= PCI_CFG_BAR0 && reg < PCI_CFG_BAR_END)
+    {
+        UInt8 slot = (UInt8)((reg - PCI_CFG_BAR0) / 4);
+        UInt64 size = f->bar_size[slot / 2];
+        if(size == 0)
+        {
+            return 0;
+        }
+
+        UInt64 value = f->bar_base[slot / 2];
+        if(f->pci_probe & (1 << slot))
+        {
+            UInt64 span = 16;
+            while(span < size)
+            {
+                span <<= 1;
+            }
+            value = ~(span - 1);
+        }
+        return (slot & 1) ? (UInt32)(value >> 32) : (((UInt32)value & ~0xFU) | 0x4);
+    }
+
+    return 0;
+}
+
+static UInt64 pcie_pci_read(E64CoreRef core,
+                            void *device,
+                            UInt64 offset,
+                            EFSize size)
+{
+    emex64_pcie_t *pcie = device;
+    emex64_pcie_function_t *f = pcie_function_for_pci_offset(pcie, offset);
+    if(f == NULL)
+    {
+        return ~0ULL;
+    }
+
+    UInt64 value = 0;
+    UInt32 reg = (UInt32)(offset & 0xFFF);
+    for(EFSize i = 0; i < size && i < 8; i++)
+    {
+        UInt32 at = reg + (UInt32)i;
+        value |= (UInt64)((pcie_pci_register(pcie, f, at & ~3U) >> ((at & 3) * 8)) & 0xFF) << (i * 8);
+    }
+    return value;
+}
+
+static void pcie_pci_write(E64CoreRef core,
+                           void *device,
+                           UInt64 offset,
+                           UInt64 value,
+                           EFSize size)
+{
+    emex64_pcie_t *pcie = device;
+    emex64_pcie_function_t *f = pcie_function_for_pci_offset(pcie, offset);
+    UInt32 reg = (UInt32)(offset & 0xFFF);
+    if(f == NULL || (reg & 3) != 0 || (size != 4 && size != 8))
+    {
+        return;
+    }
+
+    for(EFSize i = 0; i < size; i += 4)
+    {
+        UInt32 at = reg + (UInt32)i;
+        UInt32 written = (UInt32)(value >> (i * 8));
+        if(at >= PCI_CFG_BAR0 && at < PCI_CFG_BAR_END)
+        {
+            UInt8 slot = (UInt8)((at - PCI_CFG_BAR0) / 4);
+            if(written == 0xFFFFFFFFU)
+            {
+                f->pci_probe |= (UInt8)(1 << slot);
+            }
+            else
+            {
+                f->pci_probe &= (UInt8)~(1 << slot);
+            }
+        }
+    }
+}
+
 emex64_pcie_t *emex64_pcie_alloc(E64MachineRef machine)
 {
     emex64_pcie_t *pcie = calloc(1, sizeof(emex64_pcie_t));
@@ -240,10 +385,8 @@ emex64_pcie_t *emex64_pcie_alloc(E64MachineRef machine)
     EFAUTOREL E64MMIORegionRef rc = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_PCIE_BASE, EMEX64_PCIE_SIZE, pcie, pcie_rc_read, pcie_rc_write);
     EFAUTOREL E64MMIORegionRef ecam = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_PCIE_ECAM_BASE, EMEX64_PCIE_ECAM_SIZE, pcie, pcie_cfg_read, pcie_cfg_write);
     EFAUTOREL E64MMIORegionRef mmio = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_PCIE_MMIO_BASE, EMEX64_PCIE_MMIO_SIZE, pcie, pcie_mmio_read, pcie_mmio_write);
-    if(rc == NULL || ecam == NULL || mmio == NULL ||
-       !E64MMIOBusRegisterRegion(machine->mmio_bus, rc) ||
-       !E64MMIOBusRegisterRegion(machine->mmio_bus, ecam) ||
-       !E64MMIOBusRegisterRegion(machine->mmio_bus, mmio))
+    EFAUTOREL E64MMIORegionRef pci = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_PCIE_PCI_ECAM_BASE, EMEX64_PCIE_PCI_ECAM_SIZE, pcie, pcie_pci_read, pcie_pci_write);
+    if(rc == NULL || ecam == NULL || mmio == NULL || pci == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, rc) || !E64MMIOBusRegisterRegion(machine->mmio_bus, ecam) || !E64MMIOBusRegisterRegion(machine->mmio_bus, mmio) || !E64MMIOBusRegisterRegion(machine->mmio_bus, pci))
     {
         free(pcie);
         return NULL;
@@ -252,8 +395,29 @@ emex64_pcie_t *emex64_pcie_alloc(E64MachineRef machine)
     return pcie;
 }
 
+struct E64PCIeDevice {
+    emex64_pcie_function_t function;
+    E64PCIeDeviceDescriptor descriptor;
+    struct E64PCIeDevice *next;
+};
+
 void emex64_pcie_dealloc(emex64_pcie_t *pcie)
 {
+    if(pcie == NULL)
+    {
+        return;
+    }
+    struct E64PCIeDevice *device = pcie->hosted;
+    while(device != NULL)
+    {
+        struct E64PCIeDevice *next = device->next;
+        if(device->descriptor.free != NULL)
+        {
+            device->descriptor.free(device->descriptor.context);
+        }
+        free(device);
+        device = next;
+    }
     free(pcie);
 }
 
@@ -339,4 +503,93 @@ void *emex64_pcie_dma_map(emex64_pcie_function_t *function,
     }
 
     return E64MemoryMapPhysical(function->pcie->machine->memory, paddr, len, forWrite);
+}
+
+static UInt64 hosted_bar_read(emex64_pcie_function_t *function,
+                              UInt8 bar,
+                              UInt64 offset)
+{
+    struct E64PCIeDevice *device = function->context;
+    return device->descriptor.read != NULL ? device->descriptor.read(device->descriptor.context, bar, offset) : 0;
+}
+
+static void hosted_bar_write(emex64_pcie_function_t *function,
+                             UInt8 bar,
+                             UInt64 offset,
+                             UInt64 value)
+{
+    struct E64PCIeDevice *device = function->context;
+    if(device->descriptor.write != NULL)
+    {
+        device->descriptor.write(device->descriptor.context, bar, offset, value);
+    }
+}
+
+static const emex64_pcie_ops_t hosted_ops = {
+    .bar_read = hosted_bar_read,
+    .bar_write = hosted_bar_write,
+};
+
+#define PCIE_FIRST_HOSTED_SLOT      8
+
+E64PCIeDeviceRef E64MachineAttachPCIeDevice(E64MachineRef machineRef,
+                                            const E64PCIeDeviceDescriptor *descriptor)
+{
+    if(machineRef == NULL || descriptor == NULL || machineRef->pcie == NULL)
+    {
+        return NULL;
+    }
+
+    emex64_pcie_t *pcie = machineRef->pcie;
+    struct E64PCIeDevice *device = calloc(1, sizeof(struct E64PCIeDevice));
+    if(device == NULL)
+    {
+        return NULL;
+    }
+
+    device->descriptor = *descriptor;
+    device->function.vendor = descriptor->vendor;
+    device->function.device = descriptor->device;
+    device->function.class_code = descriptor->classCode;
+    device->function.revision = descriptor->revision;
+    for(UInt8 b = 0; b < PCIE_MAX_BARS && b < E64_PCIE_BARS; b++)
+    {
+        device->function.bar_size[b] = descriptor->barSize[b];
+    }
+    device->function.ops = &hosted_ops;
+    device->function.context = device;
+
+    for(UInt8 slot = PCIE_FIRST_HOSTED_SLOT; slot < PCIE_MAX_DEVICES; slot++)
+    {
+        if(pcie->functions[slot * PCIE_MAX_FUNCTIONS] == NULL &&
+           emex64_pcie_attach(pcie, &device->function, slot, 0))
+        {
+            device->next = pcie->hosted;
+            pcie->hosted = device;
+            return device;
+        }
+    }
+
+    free(device);
+    return NULL;
+}
+
+void E64PCIeDeviceRaiseInterrupt(E64PCIeDeviceRef deviceRef)
+{
+    if(deviceRef != NULL)
+    {
+        emex64_pcie_raise_irq(&deviceRef->function);
+    }
+}
+
+void *E64PCIeDeviceMapMemory(E64PCIeDeviceRef deviceRef,
+                             UInt64 paddr,
+                             UInt64 length,
+                             Boolean forWrite)
+{
+    if(deviceRef == NULL)
+    {
+        return NULL;
+    }
+    return emex64_pcie_dma_map(&deviceRef->function, paddr, length, forWrite);
 }

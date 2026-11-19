@@ -354,6 +354,16 @@ void __E64MachineResetHardware(__E64Machine machine)
     {
         __E64CoreResetForPowerOn((__E64Core)machine->cores[i]);
     }
+
+    if(machine->host.reset != NULL)
+    {
+        machine->host.reset(machine->host.context);
+    }
+}
+
+UInt8 E64MachineGetMaxCoreCount(void)
+{
+    return E64_MACHINE_MAX_CORES;
 }
 
 E64CoreRef E64MachineGetCore(E64MachineRef machineRef)
@@ -421,6 +431,77 @@ void E64MachineSendKey(E64MachineRef machineRef,
     {
         emex64_8042_send_keyboard_break(machine->emex8042, key);
     }
+}
+
+void E64MachineSendMouse(E64MachineRef machineRef,
+                         SInt32 dx,
+                         SInt32 dy,
+                         UInt8 buttons)
+{
+    __E64Machine machine = (__E64Machine)machineRef;
+    if(machine == NULL || machine->emex8042 == NULL)
+    {
+        return;
+    }
+
+    dy = -dy;
+
+    UInt8 packets = 0;
+    do
+    {
+        SInt32 px = dx > 127 ? 127 : (dx < -127 ? -127 : dx);
+        SInt32 py = dy > 127 ? 127 : (dy < -127 ? -127 : dy);
+        UInt8 status = 0x08 | (buttons & 0x07);
+        if(px < 0)
+        {
+            status |= 0x10;
+        }
+        if(py < 0)
+        {
+            status |= 0x20;
+        }
+        emex64_8042_send_mouse(machine->emex8042, status);
+        emex64_8042_send_mouse(machine->emex8042, (UInt8)(SInt8)px);
+        emex64_8042_send_mouse(machine->emex8042, (UInt8)(SInt8)py);
+        dx -= px;
+        dy -= py;
+    }
+    while((dx != 0 || dy != 0) && ++packets < 8);
+}
+
+SInt32 E64MachinePlugUSBDisk(E64MachineRef machineRef,
+                             const char *path,
+                             Boolean readOnly)
+{
+    __E64Machine machine = (__E64Machine)machineRef;
+    if(machine == NULL || machine->usb == NULL || path == NULL)
+    {
+        return -1;
+    }
+
+    static UInt8 serial = E64_MACHINE_MAX_USB_DISKS;
+    emex64_usb_device_t *disk = emex64_usb_msc_alloc(path, readOnly, serial++);
+    if(disk == NULL)
+    {
+        return -1;
+    }
+    SInt32 port = emex64_usb_plug(machine->usb, disk);
+    if(port < 0 && disk->ops->free != NULL)
+    {
+        disk->ops->free(disk);
+    }
+    return port;
+}
+
+Boolean E64MachineUnplugUSBDisk(E64MachineRef machineRef,
+                                UInt8 port)
+{
+    __E64Machine machine = (__E64Machine)machineRef;
+    if(machine == NULL || machine->usb == NULL)
+    {
+        return false;
+    }
+    return emex64_usb_unplug(machine->usb, port);
 }
 
 Boolean E64MachineGetDisplayFrame(E64MachineRef machineRef,

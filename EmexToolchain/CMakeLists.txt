@@ -128,6 +128,7 @@ add_library(EmexToolchain ${LIB_TYPE}
             src/VM/device/board/pcie/gpu.c
             src/VM/device/board/pcie/net.c
             src/VM/device/board/pcie/sb16.c
+            src/VM/device/board/pcie/virtio.c
             src/VM/device/board/sound.c
             src/VM/device/board/opl3/opl3.c
 

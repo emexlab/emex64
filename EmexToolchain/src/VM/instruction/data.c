@@ -184,7 +184,7 @@ static Boolean emex64_cr_write(E64CoreRef core,
     switch(cr_select)
     {
         case kE64ControlRegisterCREL:
-            if(kE64ElevationLevelSecureMonitor < cr_value)
+            if(kE64ElevationLevelSecurePageTableMonitor < cr_value)
             {
                 core->cr_state.crexc.exception = kE64ExceptionBadInstruction;
                 return false;
@@ -470,6 +470,80 @@ void emex64_op_rdrnd(__E64Core core)
     cursor[1] = arc4random();
 }
 
+static inline Boolean emex64_block_probe(__E64Core core,
+                                         UInt64 dst,
+                                         UInt64 src,
+                                         UInt64 len,
+                                         Boolean copies)
+{
+    return E64MemoryCoreProbe(core->machine->memory, core, dst, len, kE64MemoryActionTypeWrite) && (!copies || E64MemoryCoreProbe(core->machine->memory, core, src, len, kE64MemoryActionTypeRead));
+}
+
+static inline UInt64 emex64_block_piece(UInt64 addr,
+                                        UInt64 len)
+{
+    UInt64 left = EMEX64_PAGE_SIZE - (addr & EMEX64_PAGE_MASK);
+    return len < left ? len : left;
+}
+
+static inline UInt64 emex64_block_piece_down(UInt64 end,
+                                             UInt64 len)
+{
+    UInt64 left = ((end - 1) & EMEX64_PAGE_MASK) + 1;
+    return len < left ? len : left;
+}
+
+static inline Boolean emex64_block_copy(__E64Core core,
+                                        UInt64 dst,
+                                        UInt64 src,
+                                        UInt64 n,
+                                        Boolean down)
+{
+    void *dptr = E64MemoryCoreMap(core->machine->memory, core, dst, n, kE64MemoryActionTypeWrite);
+    void *sptr = dptr != NULL ? E64MemoryCoreMap(core->machine->memory, core, src, n, kE64MemoryActionTypeRead) : NULL;
+    if(likely(sptr != NULL))
+    {
+        memmove(dptr, sptr, n);
+        return true;
+    }
+
+    for(UInt64 i = 0; i < n; i++)
+    {
+        UInt64 at = down ? n - 1 - i : i;
+        UInt64 value = 0;
+        E64MemoryCoreAction(core->machine->memory, core, src + at, 1, &value, kE64MemoryActionTypeRead);
+        E64MemoryCoreAction(core->machine->memory, core, dst + at, 1, &value, kE64MemoryActionTypeWrite);
+        if(core->cr_state.crexc.exception != kE64ExceptionNone)
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+static void emex64_block_copy_up(__E64Core core,
+                                 UInt64 dst,
+                                 UInt64 src,
+                                 UInt64 len)
+{
+    if(emex64_block_piece(dst, emex64_block_piece(src, len)) != len && !emex64_block_probe(core, dst, src, len, true))
+    {
+        return;
+    }
+
+    while(len != 0)
+    {
+        UInt64 n = emex64_block_piece(dst, emex64_block_piece(src, len));
+        if(!emex64_block_copy(core, dst, src, n, false))
+        {
+            return;
+        }
+        dst += n;
+        src += n;
+        len -= n;
+    }
+}
+
 void emex64_op_movm(__E64Core core)
 {
     UInt64 dst = *(core->op.param[0]);
@@ -480,78 +554,35 @@ void emex64_op_movm(__E64Core core)
         return;
     }
 
-    void *dptr = E64MemoryCoreMap(core->machine->memory, core, dst, len, kE64MemoryActionTypeWrite);
-    void *sptr = E64MemoryCoreMap(core->machine->memory, core, src, len, kE64MemoryActionTypeRead);
-    if(dptr != NULL && sptr != NULL)
+    if(dst - src >= len)
     {
-        memmove(dptr, sptr, len);
+        emex64_block_copy_up(core, dst, src, len);
         return;
     }
 
-    if(dst < src)
+    if(!emex64_block_probe(core, dst, src, len, true))
     {
-        while(len--)
-        {
-            UInt64 value = 0;
-            E64MemoryCoreAction(core->machine->memory, core, src, 1, &value, kE64MemoryActionTypeRead);
-            E64MemoryCoreAction(core->machine->memory, core, dst, 1, &value, kE64MemoryActionTypeWrite);
-            if(core->cr_state.crexc.exception != kE64ExceptionNone)
-            {
-                return;
-            }
-            src++;
-            dst++;
-        }
+        return;
     }
-    else
+
+    dst += len;
+    src += len;
+    while(len != 0)
     {
-        src += len;
-        dst += len;
-        while(len--)
+        UInt64 n = emex64_block_piece_down(dst, emex64_block_piece_down(src, len));
+        dst -= n;
+        src -= n;
+        if(!emex64_block_copy(core, dst, src, n, true))
         {
-            UInt64 value = 0;
-            src--;
-            dst--;
-            E64MemoryCoreAction(core->machine->memory, core, src, 1, &value, kE64MemoryActionTypeRead);
-            E64MemoryCoreAction(core->machine->memory, core, dst, 1, &value, kE64MemoryActionTypeWrite);
-            if(core->cr_state.crexc.exception != kE64ExceptionNone)
-            {
-                return;
-            }
+            return;
         }
+        len -= n;
     }
 }
 
 void emex64_op_cpym(__E64Core core)
 {
-    UInt64 dst = *(core->op.param[0]);
-    UInt64 src = *(core->op.param[1]);
-    UInt64 len = *(core->op.param[2]);
-    if(len == 0)
-    {
-        return;
-    }
-
-    void *dptr = E64MemoryCoreMap(core->machine->memory, core, dst, len, kE64MemoryActionTypeWrite);
-    void *sptr = E64MemoryCoreMap(core->machine->memory, core, src, len, kE64MemoryActionTypeRead);
-    if(dptr != NULL && sptr != NULL)
-    {
-        memcpy(dptr, sptr, len);
-        return;
-    }
-
-    while(len--)
-    {
-        UInt64 value = 0;
-        E64MemoryCoreAction(core->machine->memory, core, src, 1, &value, kE64MemoryActionTypeRead);
-        E64MemoryCoreAction(core->machine->memory, core, dst, 1, &value, kE64MemoryActionTypeWrite);
-        if(core->cr_state.crexc.exception != kE64ExceptionNone)
-        {
-            return;
-        }
-        src++;
-        dst++;
-    }
+    emex64_block_copy_up(core, *(core->op.param[0]), *(core->op.param[1]), *(core->op.param[2]));
 }
 
 void emex64_op_setm(__E64Core core)
@@ -559,27 +590,33 @@ void emex64_op_setm(__E64Core core)
     UInt64 dst = *(core->op.param[0]);
     UInt8 value = *(core->op.param[1]) & 0xFF;
     UInt64 len = *(core->op.param[2]);
-    if(len == 0)
+    if(emex64_block_piece(dst, len) != len && !emex64_block_probe(core, dst, 0, len, false))
     {
         return;
     }
 
-    void *ptr = E64MemoryCoreMap(core->machine->memory, core, dst, len, kE64MemoryActionTypeWrite);
-    if(ptr != NULL)
+    while(len != 0)
     {
-        memset(ptr, (int)value, len);
-        return;
-    }
-
-    while(len--)
-    {
-        UInt64 byte = value;
-        E64MemoryCoreAction(core->machine->memory, core, dst, 1, &byte, kE64MemoryActionTypeWrite);
-        if(core->cr_state.crexc.exception != kE64ExceptionNone)
+        UInt64 n = emex64_block_piece(dst, len);
+        void *ptr = E64MemoryCoreMap(core->machine->memory, core, dst, n, kE64MemoryActionTypeWrite);
+        if(likely(ptr != NULL))
         {
-            return;
+            memset(ptr, (int)value, n);
         }
-        dst++;
+        else
+        {
+            for(UInt64 i = 0; i < n; i++)
+            {
+                UInt64 byte = value;
+                E64MemoryCoreAction(core->machine->memory, core, dst + i, 1, &byte, kE64MemoryActionTypeWrite);
+                if(core->cr_state.crexc.exception != kE64ExceptionNone)
+                {
+                    return;
+                }
+            }
+        }
+        dst += n;
+        len -= n;
     }
 }
 

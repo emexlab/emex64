@@ -125,7 +125,21 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
         return false;
     }
 
-    const E64Opcode opcode = al->token[0]->instruction_identifier.v;
+    E64Opcode opcode = al->token[0]->instruction_identifier.v;
+
+    /* a bl that carries arguments is a opcode of its own (v22), a comma tells them apart */
+    if(opcode == kE64OpcodeBL)
+    {
+        for(UInt64 k = 1; k < al->token_cnt; k++)
+        {
+            if(al->token[k]->type == kETAssemblerTokenTypeComma)
+            {
+                opcode = kE64OpcodeBLA;
+                break;
+            }
+        }
+    }
+
     const emex64_opfunc_entry_t *entry = &kE64OpfuncTable[opcode];
 
     if(al->inv->isa < entry->isa)

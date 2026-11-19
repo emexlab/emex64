@@ -205,7 +205,10 @@ typedef enum: UInt8 {
     kE64OpcodeIDIVD =   0b10010110,
     kE64OpcodeMODD =    0b10010111,
 
-    kE64OpcodeMAX = kE64OpcodeMODD,
+    /* ISA v22 (calls that carry their arguments) */
+    kE64OpcodeBLA =     0b10011000,
+
+    kE64OpcodeMAX = kE64OpcodeBLA,
 
     kE64OpcodeInvalid =  0b11111111,
 } E64Opcode;
@@ -355,25 +358,28 @@ typedef enum: UInt8 {
 } E64RegisterExtended;
 
 typedef enum: UInt8 {
-    kE64ControlRegisterCREL =   0b0000,                     /* CREL:    elevation control register */
-    kE64ControlRegisterCRKSP =  0b0001,                     /* CRKSP:   kernel stack pointer (the stack pointer the interrupt controller will use when receiving interrupt) */
-    kE64ControlRegisterCREXC =  0b0010,                     /* CREXC:   exception register (first 3bits for the exception) */
-    kE64ControlRegisterCRVEC =  0b0011,                     /* CRVEC:   cpu vector table */
-    kE64ControlRegisterCRPTB =  0b0100,                     /* CRPTB:   page table pointer (first 8bits are the flags and the rest is the physical address where the page table is) */
-    kE64ControlRegisterCRFPC =  0b0101,                     /* CRFPC:   kernel only floating point control register */
-    kE64ControlRegisterCRISA =  0b0110,                     /* CRISA:   instruction set architecture configuration */
+    kE64ControlRegisterCREL =       0b00000000, /* CREL:    elevation control register */
+    kE64ControlRegisterCRKSP =      0b00000001, /* CRKSP:   kernel stack pointer (the stack pointer the interrupt controller will use when receiving interrupt) */
+    kE64ControlRegisterCREXC =      0b00000010, /* CREXC:   exception register (first 3bits for the exception) */
+    kE64ControlRegisterCRVEC =      0b00000011, /* CRVEC:   nop */
+    kE64ControlRegisterCRPTB =      0b00000100, /* CRPTB:   page table pointer (first 8bits are the flags and the rest is the physical address where the page table is) */
+    kE64ControlRegisterCRFPC =      0b00000101, /* CRFPC:   kernel only floating point control register */
+    kE64ControlRegisterCRISA =      0b00000110, /* CRISA:   instruction set architecture configuration */
 
-    /* trap model */
-    kE64ControlRegisterCRSTAT = 0b0111,                     /* CRSTAT:  trap model enable, interrupt enable, state before the last trap */
-    kE64ControlRegisterCRTVEC = 0b1000,                     /* CRTVEC:  address of the trap entry */
-    kE64ControlRegisterCREPC =  0b1001,                     /* CREPC:   pc to return to */
-    kE64ControlRegisterCRCAUSE = 0b1010,                    /* CRCAUSE: exception cause */
-    kE64ControlRegisterCRTVAL = 0b1011,                     /* CRTVAL:  faulting address */
-    kE64ControlRegisterCRSCRATCH = 0b1100,                  /* CRSCRATCH: free for the kernel */
-    kE64ControlRegisterCRIAKEY = 0b1101,                    /* CRIAKEY: the key for instruction pointers (PAC) */
-    kE64ControlRegisterCRDAKEY = 0b1110,                    /* CRDAKEY: the key for data pointers (PAC) */
-    kE64ControlRegisterCRPAC =  0b1111,                     /* CRPAC:   pointer authentication on per level (PAC) */
-    kE64ControlRegisterMAX =    kE64ControlRegisterCRPAC
+    /* trap model (ISA v17) */
+    kE64ControlRegisterCRSTAT =     0b00000111, /* CRSTAT:  trap model enable, interrupt enable, state before the last trap */
+    kE64ControlRegisterCRTVEC =     0b00001000, /* CRTVEC:  address of the trap entry */
+    kE64ControlRegisterCREPC =      0b00001001, /* CREPC:   pc to return to */
+    kE64ControlRegisterCRCAUSE =    0b00001010, /* CRCAUSE: exception cause */
+    kE64ControlRegisterCRTVAL =     0b00001011, /* CRTVAL:  faulting address */
+    kE64ControlRegisterCRSCRATCH =  0b00001100, /* CRSCRATCH: free for the kernel */
+
+    /* pointer authentication(ISA v19) */
+    kE64ControlRegisterCRIAKEY =    0b00001101, /* CRIAKEY: the key for instruction pointers (PAC) */
+    kE64ControlRegisterCRDAKEY =    0b00001110, /* CRDAKEY: the key for data pointers (PAC) */
+    kE64ControlRegisterCRPAC =      0b00001111, /* CRPAC:   pointer authentication on per level (PAC) */
+
+    kE64ControlRegisterMAX =        kE64ControlRegisterCRPAC
 } E64ControlRegister;
 
 typedef enum: UInt8 {
@@ -397,9 +403,10 @@ typedef enum: UInt8 {
 } E64FloatingRegister;
 
 typedef enum: UInt8 {
-    kE64ElevationLevelUser =             0b00,
-    kE64ElevationLevelKernel =           0b01,
-    kE64ElevationLevelSecureMonitor =    0b10    /* used for software kernel secure mechanism like apples PPL */
+    kE64ElevationLevelUser =                    0b00,
+    kE64ElevationLevelKernel =                  0b01,
+    kE64ElevationLevelHypervisor =              0b10,
+    kE64ElevationLevelSecurePageTableMonitor =  0b11,   /* authority higher than kernel (later when guarding is enabled the only authority allowed to mess with page tables) */
 } E64ElevationLevel;
 
 /*

@@ -28,6 +28,8 @@
 #include <EmexToolchain/VM/E64Memory.h>
 #include <EmexToolchain/VM/__E64FastMem.h>
 
+#define EMEX64_CALL_ARGS 6
+
 void emex64_op_b(__E64Core core);
 void emex64_op_cmp(__E64Core core);
 void emex64_op_be(__E64Core core);
@@ -45,6 +47,46 @@ void emex64_op_iret(__E64Core core);
 
 void emex64_op_bl(__E64Core core);
 void emex64_op_ret(__E64Core core);
+void emex64_op_bla(__E64Core core);
+
+static inline __attribute__((always_inline)) Boolean emex64_hot_call(__E64Core core,
+                                                                     UInt64 ctx,
+                                                                     UInt64 ret,
+                                                                     Boolean *touched)
+{
+    UInt64 sp = core->rl[kE64RegisterSP];
+    UInt64 pa;
+    if(unlikely(!emex64_hot_paddr(core, ctx, sp - 8, 16, kE64MemoryActionTypeWrite, &pa)))
+    {
+        return false;
+    }
+
+    UInt64 frame[2] = { core->rl[kE64RegisterFP], ret };
+    memcpy(core->ram + pa, frame, sizeof(frame));
+    *touched = emex64_snoop_write(core->snoop, pa, sizeof(frame));
+    core->rl[kE64RegisterSP] = sp - 16;
+    core->rl[kE64RegisterFP] = sp - 16;
+    return true;
+}
+
+static inline __attribute__((always_inline)) Boolean emex64_hot_frame(__E64Core core,
+                                                                      UInt64 ctx,
+                                                                      UInt64 frame,
+                                                                      UInt64 *fp,
+                                                                      UInt64 *ret)
+{
+    UInt64 pa;
+    if(unlikely(!emex64_hot_paddr(core, ctx, frame + 8, 16, kE64MemoryActionTypeRead, &pa)))
+    {
+        return false;
+    }
+    memcpy(fp, core->ram + pa, 8);
+    memcpy(ret, core->ram + pa + 8, 8);
+    return true;
+}
+
+Boolean emex64_fast_reta(__E64Core core, UInt64 frame, UInt64 ret, UInt64 *pc);
+Boolean emex64_fast_pacret(__E64Core core, Boolean *touched);
 
 static inline UInt64 emex64_branch_pc(UInt64 pc,
                                       UInt64 v,

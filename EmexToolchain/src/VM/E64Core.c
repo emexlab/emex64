@@ -227,6 +227,9 @@ const emex64_opfunc_entry_t kE64OpfuncTable[] = {
     [kE64OpcodeDIVD] = { .func = emex64_op_divd, .minargs = 2, .maxargs = 3, .argmask = 0b10000000000000000000000000000000, .isa = 21 },
     [kE64OpcodeIDIVD] = { .func = emex64_op_idivd, .minargs = 2, .maxargs = 3, .argmask = 0b10000000000000000000000000000000, .isa = 21 },
     [kE64OpcodeMODD] = { .func = emex64_op_modd, .minargs = 2, .maxargs = 3, .argmask = 0b10000000000000000000000000000000, .isa = 21 },
+
+    /* ISA v22 (calls that carry their arguments) */
+    [kE64OpcodeBLA] = { .func = emex64_op_bla, .minargs = 1, .maxargs = 1 + EMEX64_CALL_ARGS, .argmask = 0b00000000000000000000000000000000, .isa = 22 },
 };
 
 static const UInt8 kImmBits[] = {
@@ -243,8 +246,11 @@ static void __E64CoreDeinit(EFObjectRef obj)
     __E64Core core = (__E64Core)obj;
     free(core->icache);
     free(core->icold);
+    free(core->ktext.runs);
     core->icache = NULL;
     core->icold = NULL;
+    core->ktext.runs = NULL;
+    core->ktext.size = 0;
     pthread_mutex_destroy(&core->wait_lock);
     pthread_cond_destroy(&core->wait_cond);
 }
@@ -305,13 +311,13 @@ E64CoreRef __E64CoreCreateWithID(EFAllocatorRef allocatorRef,
     core->machine = machine;    /* borrowed! (otherwise this causes a retain loop) */
 
     /*
-     * setting it up with secure monitor, because
-     * otherwise the core would sit in usermode
+     * setting it up with secure page table monitor,
+     * because otherwise the core would sit in usermode
      * at start and the firmware wouldn't be able
      * to write to control registers, ultimatively
      * rendering the entire state functionless.
      */
-    core->cr_state.crel.level = kE64ElevationLevelSecureMonitor;
+    core->cr_state.crel.level = kE64ElevationLevelSecurePageTableMonitor;
 
     /*
      * setting it to the latest ISA version the SoC
@@ -344,6 +350,7 @@ E64CoreRef __E64CoreCreateWithID(EFAllocatorRef allocatorRef,
     }
 
     /* nothing remembered about pages yet */
+    memset(core->pages, 0, sizeof(core->pages));
     core->tlb_seq = 0;
     emex64_core_tlb_changed(core);
 
@@ -431,7 +438,7 @@ static void __E64CoreReset(__E64Core core)
     memset(core->frl, 0, sizeof(core->frl));
     memset(&core->cr_state, 0, sizeof(core->cr_state));
     memset(&core->trap, 0, sizeof(core->trap));
-    core->cr_state.crel.level = kE64ElevationLevelSecureMonitor;
+    core->cr_state.crel.level = kE64ElevationLevelSecurePageTableMonitor;
     core->cr_state.crisa.activeIsa = E64VM_ISA_MAX_VERSION;
     core->halted = false;
     core->wfe = false;
@@ -449,6 +456,10 @@ static void __E64CoreReset(__E64Core core)
         core->tlb.roots[k].valid = false;
     }
     emex64_core_tlb_changed(core);
+    memset(core->pages, 0, sizeof(core->pages));
+    core->ktext.size = 0;
+    core->ktext.wait = 0;
+    core->ktext.flushed = false;
     core->lapic.timer.ctrl = 0;
     core->lapic.timer.min_elapsed = 0;
     __atomic_store_n(&core->lapic.pending, 0, __ATOMIC_RELEASE);
@@ -637,6 +648,16 @@ void __E64CoreWritePageTableBase(__E64Core core,
 
     /* another address space */
     emex64_core_tlb_changed(core);
+
+    if(core->ktext.size != 0)
+    {
+        UInt64 pte, top = 0;
+        E64MemoryCoreWatchPage(core->machine->memory, core, core->ktext.vbase, &pte, &top);
+        if(top != core->ktext.root)
+        {
+            core->ktext.size = 0;
+        }
+    }
 }
 
 UInt64 __E64CoreReadPageTableBase(__E64Core core)
@@ -938,6 +959,7 @@ static const UInt8 kE64ConstOperands[kE64OpcodeMAX + 1] = {
     [kE64OpcodeBBZ] = 2,
     [kE64OpcodeBBNZ] = 2,
     [kE64OpcodeBL] = 2,
+    [kE64OpcodeBLA] = 2,
     [kE64OpcodeCBLT] = 2,
     [kE64OpcodeCBEQ] = 2,
     [kE64OpcodeCBNE] = 2,
@@ -970,6 +992,7 @@ static const UInt16 kE64ImplicitWrites[kE64OpcodeMAX + 1] = {
     [kE64OpcodeCPYM] = E64_REG(PC),
     [kE64OpcodeSETM] = E64_REG(PC),
     [kE64OpcodeBL] = E64_REG(PC) | E64_REG(SP) | E64_REG(FP),
+    [kE64OpcodeBLA] = E64_REG(PC) | E64_REG(SP) | E64_REG(FP),
     [kE64OpcodeRET] = E64_REG(PC) | E64_REG(SP) | E64_REG(FP),
     [kE64OpcodeRETA] = E64_REG(PC) | E64_REG(SP) | E64_REG(FP),
     [kE64OpcodePACRET] = E64_REG(PC),
@@ -1020,6 +1043,57 @@ static void __E64CoreSpecialize(__E64Core core,
 
     UInt64 page_offset = ce->paddr & EMEX64_PAGE_MASK;
     ce->seq = page_offset + ce->ilen < EMEX64_PAGE_SIZE ? &core->icache[emex64_icache_index(ce->paddr + ce->ilen)] : NULL;
+
+    switch(cc->opcode)
+    {
+        case kE64OpcodeBL:
+        case kE64OpcodeBLA:
+        {
+            if(count < 1 || count > 1 + EMEX64_CALL_ARGS)
+            {
+                return;
+            }
+
+            for(UInt8 i = 0; i < count; i++)
+            {
+                if(__E64CoreOperandChangesRegister(rec[i].kind) ||
+                   (rec[i].kind == kE64OperandOffset && (__E64CoreOperandChangesRegister(rec[i].base_kind) || __E64CoreOperandChangesRegister(rec[i].off_kind))))
+                {
+                    return;
+                }
+            }
+
+            if(!__E64CoreIsRelative(cc, rec, 0))
+            {
+                if(cc->opcode == kE64OpcodeBL && cc->dyn_cnt == 0)
+                {
+                    ce->q[0] = cc->param[0];
+                    ce->fast = kE64FastCallIndirect;
+                }
+                return;
+            }
+
+            ce->rel = (SInt32)(SInt64)emex64_branch_pc(0, rec[0].imm, cc->param_coding[0]);
+            if((SInt64)page_offset + ce->rel >= 0 && (SInt64)page_offset + ce->rel < (SInt64)EMEX64_PAGE_SIZE)
+            {
+                ce->target = &core->icache[emex64_icache_index(ce->paddr + (UInt64)(SInt64)ce->rel)];
+            }
+            ce->fast = cc->opcode == kE64OpcodeBL ? kE64FastCall : kE64FastCallArgs;
+            return;
+        }
+        case kE64OpcodeRET:
+            ce->fast = kE64FastReturn;
+            return;
+        case kE64OpcodeRETA:
+            ce->fast = kE64FastReturnAuth;
+            return;
+        case kE64OpcodePACRET:
+            ce->fast = kE64FastSignReturn;
+            return;
+        default:
+            break;
+    }
+
     if(ce->rollback)
     {
         return;
@@ -1300,6 +1374,310 @@ static void __E64CoreFillCacheEntry(__E64Core core,
     __E64CoreSpecialize(core, ce, rec, count);
 }
 
+static inline UInt16 __E64CoreTextRegister(__E64Core core,
+                                           const UInt64 *p)
+{
+    const UInt8 *b = (const UInt8 *)p;
+    Boolean reg = (b >= (const UInt8 *)core->rl && b < (const UInt8 *)(core->rl + (kE64RegisterMAX + 1))) || (b >= (const UInt8 *)core->erl && b < (const UInt8 *)(core->erl + (kE64RegisterExtendedMAX + 1))) || (b >= (const UInt8 *)core->frl && b < (const UInt8 *)(core->frl + (kE64FloatingRegisterMAX + 1)));
+    UInt64 off = (UInt64)(b - (const UInt8 *)core);
+    return reg && off < 65536 ? (UInt16)off : 0;
+}
+
+static inline Boolean __E64CoreTextConstant(const emex64_icache_cold_t *cc,
+                                            const UInt64 *p)
+{
+    return (const UInt8 *)p >= (const UInt8 *)cc->operands && (const UInt8 *)p < (const UInt8 *)(cc->operands + EMEX64_ICACHE_ARGS);
+}
+
+static int __E64CoreTextSources(__E64Core core,
+                                const emex64_icache_cold_t *cc,
+                                emex64_ktext_entry_t *k,
+                                const UInt64 *a,
+                                const UInt64 *b)
+{
+    UInt16 ra = __E64CoreTextRegister(core, a);
+    UInt16 rb = __E64CoreTextRegister(core, b);
+    if(ra != 0 && rb != 0)
+    {
+        k->r[1] = ra;
+        k->r[2] = rb;
+        return 0;
+    }
+    if(ra != 0 && __E64CoreTextConstant(cc, b))
+    {
+        k->r[1] = ra;
+        k->imm = *b;
+        return 1;
+    }
+    if(rb != 0 && __E64CoreTextConstant(cc, a))
+    {
+        k->r[2] = rb;
+        k->imm = *a;
+        return 2;
+    }
+    return -1;
+}
+
+static Boolean __E64CoreTextConvert(__E64Core core,
+                                    const emex64_icache_entry_t *ce,
+                                    const emex64_icache_cold_t *cc,
+                                    emex64_ktext_entry_t *k,
+                                    emex64_ktext_arg_t *args)
+{
+    static const UInt8 two[] = {
+        [kE64FastAdd] = kE64TextAddRR, [kE64FastSub] = kE64TextSubRR, [kE64FastMul] = kE64TextMulRR,
+        [kE64FastAnd] = kE64TextAndRR, [kE64FastOr] = kE64TextOrRR, [kE64FastXor] = kE64TextXorRR,
+        [kE64FastShl] = kE64TextShlRR, [kE64FastShr] = kE64TextShrRR, [kE64FastCmp] = kE64TextCmpRR,
+        [kE64FastBranchEqual] = kE64TextBranchEqualRR, [kE64FastBranchNotEqual] = kE64TextBranchNotEqualRR,
+        [kE64FastBranchLess] = kE64TextBranchLessRR, [kE64FastBranchGreaterEqual] = kE64TextBranchGreaterEqualRR,
+        [kE64FastBranchLessUnsigned] = kE64TextBranchLessUnsignedRR,
+        [kE64FastBranchGreaterEqualUnsigned] = kE64TextBranchGreaterEqualUnsignedRR,
+    };
+    static const UInt8 one[] = {
+        [kE64FastBranch] = kE64TextBranch, [kE64FastBranchFlags] = kE64TextBranchFlags,
+        [kE64FastBranchFlagsNot] = kE64TextBranchFlagsNot,
+        [kE64FastBranchZero] = kE64TextBranchZero, [kE64FastBranchNotZero] = kE64TextBranchNotZero,
+        [kE64FastLoad8] = kE64TextLoad8, [kE64FastLoad16] = kE64TextLoad16, [kE64FastLoad32] = kE64TextLoad32,
+        [kE64FastLoad64] = kE64TextLoad64, [kE64FastLoadSigned8] = kE64TextLoadSigned8,
+        [kE64FastLoadSigned16] = kE64TextLoadSigned16, [kE64FastLoadSigned32] = kE64TextLoadSigned32,
+        [kE64FastStore8] = kE64TextStore8R, [kE64FastStore16] = kE64TextStore16R,
+        [kE64FastStore32] = kE64TextStore32R, [kE64FastStore64] = kE64TextStore64R,
+        [kE64FastCall] = kE64TextCall, [kE64FastCallArgs] = kE64TextCallArgs,
+        [kE64FastCallIndirect] = kE64TextCallIndirect, [kE64FastReturn] = kE64TextReturn,
+        [kE64FastReturnAuth] = kE64TextReturnAuth, [kE64FastSignReturn] = kE64TextSignReturn,
+    };
+    int v;
+
+    memset(k, 0, sizeof(*k));
+    k->ilen = ce->ilen;
+    k->rel = ce->rel;
+    k->cf_mask = ce->cf_mask;
+
+    switch(ce->fast)
+    {
+        case kE64FastMov:
+            k->r[0] = __E64CoreTextRegister(core, ce->q[0]);
+            k->r[1] = __E64CoreTextRegister(core, ce->q[1]);
+            if(k->r[0] == 0)
+            {
+                return false;
+            }
+            if(k->r[1] != 0)
+            {
+                k->fast = kE64TextMovRR;
+                return true;
+            }
+            if(!__E64CoreTextConstant(cc, ce->q[1]))
+            {
+                return false;
+            }
+            k->imm = *ce->q[1];
+            k->fast = kE64TextMovRI;
+            return true;
+        case kE64FastAdd:
+        case kE64FastSub:
+        case kE64FastMul:
+        case kE64FastAnd:
+        case kE64FastOr:
+        case kE64FastXor:
+        case kE64FastShl:
+        case kE64FastShr:
+            k->r[0] = __E64CoreTextRegister(core, ce->q[0]);
+            v = __E64CoreTextSources(core, cc, k, ce->q[1], ce->q[2]);
+            if(k->r[0] == 0 || v < 0)
+            {
+                return false;
+            }
+            k->fast = (UInt8)(two[ce->fast] + v);
+            return true;
+        case kE64FastCmp:
+        case kE64FastBranchEqual:
+        case kE64FastBranchNotEqual:
+        case kE64FastBranchLess:
+        case kE64FastBranchGreaterEqual:
+        case kE64FastBranchLessUnsigned:
+        case kE64FastBranchGreaterEqualUnsigned:
+            v = __E64CoreTextSources(core, cc, k, ce->q[0], ce->q[1]);
+            if(v < 0)
+            {
+                return false;
+            }
+            k->fast = (UInt8)(two[ce->fast] + v);
+            return true;
+        case kE64FastBranchZero:
+        case kE64FastBranchNotZero:
+        case kE64FastCallIndirect:
+            k->r[1] = __E64CoreTextRegister(core, ce->q[0]);
+            if(k->r[1] == 0)
+            {
+                return false;
+            }
+            k->fast = one[ce->fast];
+            return true;
+        case kE64FastLoad8:
+        case kE64FastLoad16:
+        case kE64FastLoad32:
+        case kE64FastLoad64:
+        case kE64FastLoadSigned8:
+        case kE64FastLoadSigned16:
+        case kE64FastLoadSigned32:
+            k->r[0] = __E64CoreTextRegister(core, ce->q[0]);
+            k->r[1] = __E64CoreTextRegister(core, ce->q[1]);
+            if(k->r[0] == 0 || k->r[1] == 0)
+            {
+                return false;
+            }
+            k->fast = one[ce->fast];
+            return true;
+        case kE64FastStore8:
+        case kE64FastStore16:
+        case kE64FastStore32:
+        case kE64FastStore64:
+            k->r[0] = __E64CoreTextRegister(core, ce->q[0]);
+            k->r[1] = __E64CoreTextRegister(core, ce->q[1]);
+            if(k->r[1] == 0)
+            {
+                return false;
+            }
+            k->fast = one[ce->fast];
+            if(k->r[0] == 0)
+            {
+                if(!__E64CoreTextConstant(cc, ce->q[0]))
+                {
+                    return false;
+                }
+                k->imm = *ce->q[0];
+                k->fast++;
+            }
+            return true;
+        case kE64FastCallArgs:
+            if(cc->param_cnt < 1 || cc->param_cnt > 1 + EMEX64_CALL_ARGS)
+            {
+                return false;
+            }
+            k->argc = cc->param_cnt - 1;
+            for(UInt8 i = 0; i < k->argc; i++)
+            {
+                const emex64_operand_recipe_t *r = &cc->operands[i + 1];
+                emex64_ktext_arg_t *a = &args[i];
+                a->imm = 0;
+                switch(r->kind)
+                {
+                    case kE64OperandReg:
+                        a->kind = kE64TextArgReg;
+                        a->reg = __E64CoreTextRegister(core, &core->rl[r->reg]);
+                        break;
+                    case kE64OperandRegExtended:
+                        a->kind = kE64TextArgReg;
+                        a->reg = __E64CoreTextRegister(core, &core->erl[r->reg]);
+                        break;
+                    case kE64OperandRegFloat:
+                        a->kind = kE64TextArgReg;
+                        a->reg = __E64CoreTextRegister(core, &core->frl[r->reg].u64);
+                        break;
+                    case kE64OperandImm:
+                        a->kind = kE64TextArgImm;
+                        a->reg = 0;
+                        a->imm = r->imm;
+                        break;
+                    case kE64OperandOffsetRegImm:
+                        a->kind = kE64TextArgRegImm;
+                        a->reg = __E64CoreTextRegister(core, &core->rl[r->base_reg]);
+                        a->imm = r->off_imm;
+                        break;
+                    default:
+                        return false;
+                }
+                if(a->kind != kE64TextArgImm && a->reg == 0)
+                {
+                    return false;
+                }
+            }
+            k->fast = kE64TextCallArgs;
+            return true;
+        case kE64FastBranch:
+        case kE64FastBranchFlags:
+        case kE64FastBranchFlagsNot:
+        case kE64FastCall:
+        case kE64FastReturn:
+        case kE64FastReturnAuth:
+        case kE64FastSignReturn:
+            k->fast = one[ce->fast];
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+static void __E64CoreTextPublish(__E64Core core,
+                                 emex64_icache_entry_t *ce)
+{
+    emex64_ktext_store_t *store = &core->snoop->text;
+    UInt64 off = ce->paddr - store->base;
+    if(off >= (__atomic_load_n(&store->pages, __ATOMIC_ACQUIRE) << 13) || ce->fast == kE64FastNone)
+    {
+        return;
+    }
+
+    emex64_ktext_entry_t k;
+    emex64_ktext_arg_t args[EMEX64_CALL_ARGS];
+    if(!__E64CoreTextConvert(core, ce, &core->icold[ce - core->icache], &k, args))
+    {
+        return;
+    }
+
+    /* a call's arguments lie in the entries behind it */
+    UInt32 slots = 1 + (UInt32)((k.argc * sizeof(emex64_ktext_arg_t) + sizeof(emex64_ktext_entry_t) - 1) / sizeof(emex64_ktext_entry_t));
+
+    pthread_mutex_lock(&store->lock);
+    UInt32 *page = store->index[off >> 13];
+    if(page == NULL)
+    {
+        page = calloc(EMEX64_PAGE_SIZE, sizeof(UInt32));
+        if(page != NULL)
+        {
+            __atomic_store_n(&store->index[off >> 13], page, __ATOMIC_RELEASE);
+        }
+    }
+    if(page != NULL && page[off & EMEX64_PAGE_MASK] == 0)
+    {
+        UInt32 n = store->count + 1;
+        if(n % EMEX64_KTEXT_SLAB + slots > EMEX64_KTEXT_SLAB)
+        {
+            n = (n / EMEX64_KTEXT_SLAB + 1) * EMEX64_KTEXT_SLAB;
+        }
+        UInt32 s = n / EMEX64_KTEXT_SLAB;
+        if(s < EMEX64_KTEXT_SLABS)
+        {
+            if(store->slab[s] == NULL)
+            {
+                store->slab[s] = calloc(EMEX64_KTEXT_SLAB, sizeof(emex64_ktext_entry_t));
+            }
+            if(store->slab[s] != NULL)
+            {
+                emex64_ktext_entry_t *e = &store->slab[s][n % EMEX64_KTEXT_SLAB];
+                if(k.argc != 0)
+                {
+                    memcpy(e + 1, args, k.argc * sizeof(emex64_ktext_arg_t));
+                    k.args = (const emex64_ktext_arg_t *)(e + 1);
+                }
+                *e = k;
+                store->count = n + slots - 1;
+                __atomic_store_n(&page[off & EMEX64_PAGE_MASK], n, __ATOMIC_RELEASE);
+            }
+        }
+    }
+    Boolean there = page != NULL && page[off & EMEX64_PAGE_MASK] != 0;
+    pthread_mutex_unlock(&store->lock);
+
+    if(there)
+    {
+        ce->seq = NULL;
+        ce->target = NULL;
+    }
+}
+
 static Boolean __E64CoreNeedsRollback(E64Opcode opcode,
                                       const emex64_operand_recipe_t *rec,
                                       UInt8 count)
@@ -1365,7 +1743,7 @@ static __attribute__((noinline)) void __E64CoreDecodeAndExecute(__E64Core core,
         }
     }
 
-    bitbolt_t bb = { core->op.inscache, 0 };
+    bitbolt_t bb = { core->op.inscache, 0, 0, 0 };
 
 #define EMEX64_BAD_INSTRUCTION()                                            \
     do                                                                      \
@@ -1551,6 +1929,10 @@ escape_from_la:
             memcpy(cc->param_coding, core->op.coding_store, sizeof(cc->param_coding));
             memcpy(cc->operands, rec, sizeof(emex64_operand_recipe_t) * i);
             __E64CoreFillCacheEntry(core, ce, rec, i);
+            if(EMEX64_KTEXT_SHARED)
+            {
+                __E64CoreTextPublish(core, ce);
+            }
         }
 
         core->op.opce->func(core);
@@ -1699,6 +2081,105 @@ static inline UInt64 __E64CoreFetchContext(__E64Core core)
     return (UInt64)core->cr_state.crel.level | ((UInt64)(core->cr_state.crptb.enabled != 0) << 8) | ((UInt64)(core->in_interrupt != 0) << 9) | ((UInt64)(core->snoop->ktrr_locked != 0) << 10) | (core->tlb_seq << 16);
 }
 
+#define EMEX64_KTEXT_MAX_PAGES 65536
+
+static __attribute__((noinline)) void __E64CoreTextSetup(__E64Core core,
+                                                         UInt64 pc,
+                                                         UInt64 fetch_pa)
+{
+    emex64_snoop_t *snoop = core->snoop;
+    UInt64 base = snoop->ktrr_base;
+    UInt64 pages = (snoop->ktrr_size + EMEX64_PAGE_MASK) >> 13;
+
+    core->ktext.size = 0;
+    if(pages == 0 || pages > EMEX64_KTEXT_MAX_PAGES || (base & EMEX64_PAGE_MASK) != 0)
+    {
+        return;
+    }
+    if(pages != core->ktext.pages)
+    {
+        free(core->ktext.runs);
+        core->ktext.runs = calloc((pages + 7) / 8, 1);
+        core->ktext.pages = core->ktext.runs != NULL ? pages : 0;
+        if(core->ktext.runs == NULL)
+        {
+            return;
+        }
+    }
+    else
+    {
+        memset(core->ktext.runs, 0, (pages + 7) / 8);
+    }
+
+    UInt64 seq = __atomic_load_n(&snoop->ktext_seq, __ATOMIC_ACQUIRE);
+    UInt64 vbase = (pc & ~(UInt64)EMEX64_PAGE_MASK) - ((fetch_pa & ~(UInt64)EMEX64_PAGE_MASK) - base);
+    UInt64 pte = 0, root = 0;
+    Boolean any = false;
+    E64MemoryCoreWatchPage(core->machine->memory, core, vbase, &pte, &root);
+    for(UInt64 i = 0; i < pages; i++)
+    {
+        if(E64MemoryCoreWatchPage(core->machine->memory, core, vbase + (i << 13), &pte, NULL) &&
+           (pte & kE64MMUPTExec) && ((pte & EMEX64_MEMORY_MMU_MASK_PFN) >> 8) << 13 == base + (i << 13))
+        {
+            core->ktext.runs[i >> 3] |= (UInt8)(1u << (i & 7));
+            any = true;
+        }
+    }
+    if(!any)
+    {
+        return;
+    }
+
+    if(EMEX64_KTEXT_SHARED && !core->ktext.flushed && core->icache != NULL)
+    {
+        for(UInt64 k = 0; k < EMEX64_ICACHE_ENTRIES; k++)
+        {
+            if(core->icache[k].paddr - base < (pages << 13))
+            {
+                core->icache[k].paddr = ~0ULL;
+            }
+        }
+        core->ktext.flushed = true;
+    }
+
+    core->ktext.vbase = vbase;
+    core->ktext.pbase = base;
+    core->ktext.seq = seq;
+    core->ktext.context = emex64_data_context(core) & 0xFFFF;
+    core->ktext.root = root;
+    core->ktext.size = pages << 13;
+}
+
+static inline Boolean __E64CoreTextLive(__E64Core core,
+                                        UInt64 context)
+{
+    return core->ktext.size != 0 && (context & 0xFFFF) == core->ktext.context && __atomic_load_n(&core->snoop->ktext_seq, __ATOMIC_ACQUIRE) == core->ktext.seq;
+}
+
+static inline __attribute__((always_inline)) Boolean __E64CoreTextFetch(__E64Core core,
+                                                                        UInt64 context,
+                                                                        UInt64 pc,
+                                                                        UInt64 *fetch_pa)
+{
+    UInt64 off = pc - core->ktext.vbase;
+    if(off >= core->ktext.size || unlikely(!__E64CoreTextLive(core, context)))
+    {
+        return false;
+    }
+    UInt64 page = off >> 13;
+    if(unlikely(!((core->ktext.runs[page >> 3] >> (page & 7)) & 1)))
+    {
+        return false;
+    }
+    *fetch_pa = core->ktext.pbase + off;
+    return true;
+}
+
+static inline UInt64 __E64CoreDataContext(__E64Core core)
+{
+    return likely(core->cr_state.crexc.exception == kE64ExceptionNone) ? emex64_data_context(core) : 0;
+}
+
 static inline __attribute__((always_inline)) Boolean __E64CoreCacheEntryIsGood(__E64Core core,
                                                                                emex64_icache_entry_t *ce,
                                                                                UInt64 fetch_pa)
@@ -1742,6 +2223,21 @@ static __attribute__((noinline)) emex64_icache_entry_t *__E64CoreFetchSlow(__E64
     if(unlikely(!*have_pa))
     {
         return NULL;
+    }
+
+    if(EMEX64_KTEXT && snoop->ktrr_locked && core->cr_state.crel.level >= kE64ElevationLevelKernel &&
+       core->cr_state.crptb.enabled && !core->in_interrupt &&
+       *fetch_pa - snoop->ktrr_base < snoop->ktrr_size && !__E64CoreTextLive(core, emex64_data_context(core)))
+    {
+        if(core->ktext.wait != 0)
+        {
+            core->ktext.wait--;
+        }
+        else
+        {
+            core->ktext.wait = 255;
+            __E64CoreTextSetup(core, pc, *fetch_pa);
+        }
     }
 
     UInt64 ppage = *fetch_pa & ~(UInt64)EMEX64_PAGE_MASK;
@@ -1825,13 +2321,32 @@ static UInt32 __E64CoreRunTrapModel(__E64Core core,
     emex64_icache_entry_t *ce;
     UInt64 pc = 0;
     UInt64 fetch_pa = 0;
+    UInt64 code_seq = 0;
+    UInt64 data_context = __E64CoreDataContext(core);
     Boolean have_pa;
+    Boolean quick = false;
     UInt32 ran = 0;
+
+    const emex64_ktext_store_t *text_store = &snoop->text;
+    emex64_ktext_entry_t *text = NULL;
+    emex64_ktext_entry_t *text_next = NULL;
+    Boolean text_skip = false;
     for(;;)
     {
         ran++;
 
-        if(likely(hint != NULL) && likely(__atomic_load_n(&snoop->map_seq, __ATOMIC_RELAXED) == core->fetch.map_seq))
+        if(text_next != NULL)
+        {
+            text = text_next;
+            goto text_dispatch;
+        }
+
+        if(likely(quick) && likely(hint->paddr == fetch_pa) && likely(hint->code_seq == code_seq))
+        {
+            have_pa = true;
+            ce = hint;
+        }
+        else if(likely(hint != NULL) && likely(__atomic_load_n(&snoop->map_seq, __ATOMIC_RELAXED) == core->fetch.map_seq))
         {
             have_pa = true;
             ce = hint;
@@ -1839,12 +2354,32 @@ static UInt32 __E64CoreRunTrapModel(__E64Core core,
             {
                 ce = NULL;
             }
+            else
+            {
+                code_seq = ce->code_seq;
+            }
         }
         else
         {
+            Boolean skip = text_skip;
+            text_skip = false;
+
             pc = core->rl[kE64RegisterPC];
-            if(likely((pc & ~(UInt64)EMEX64_PAGE_MASK) == core->fetch.vpage) &&
-               likely(__atomic_load_n(&snoop->map_seq, __ATOMIC_RELAXED) == core->fetch.map_seq))
+            if(EMEX64_KTEXT && __E64CoreTextFetch(core, data_context, pc, &fetch_pa))
+            {
+                have_pa = true;
+                if(EMEX64_KTEXT_SHARED && !skip && (text = emex64_ktext_find(text_store, fetch_pa)) != NULL)
+                {
+                    goto text_dispatch;
+                }
+                ce = &core->icache[emex64_icache_index(fetch_pa)];
+                if(unlikely(!__E64CoreCacheEntryIsGood(core, ce, fetch_pa)))
+                {
+                    ce = NULL;
+                }
+            }
+            else if(likely((pc & ~(UInt64)EMEX64_PAGE_MASK) == core->fetch.vpage) &&
+                    likely(__atomic_load_n(&snoop->map_seq, __ATOMIC_RELAXED) == core->fetch.map_seq))
             {
                 have_pa = true;
                 fetch_pa = core->fetch.ppage + (pc & EMEX64_PAGE_MASK);
@@ -1877,6 +2412,10 @@ static UInt32 __E64CoreRunTrapModel(__E64Core core,
                 {
                     ce = __E64CoreFetchSlow(core, pc, &have_pa, &fetch_pa);
                 }
+            }
+            if(ce != NULL)
+            {
+                code_seq = ce->code_seq;
             }
         }
 
@@ -1944,7 +2483,7 @@ static UInt32 __E64CoreRunTrapModel(__E64Core core,
                 case kind:                                              \
                 {                                                       \
                     UInt64 value;                                       \
-                    if(likely(emex64_fast_load(core, *q[1] + (UInt64)(SInt64)ce->rel, size, &value)))  \
+                    if(likely(emex64_hot_load(core, data_context, *q[1] + (UInt64)(SInt64)ce->rel, size, &value)))  \
                     {                                                   \
                         *q[0] = extend;                                 \
                         goto sequential;                                \
@@ -1962,17 +2501,93 @@ static UInt32 __E64CoreRunTrapModel(__E64Core core,
 
 #define E64_FAST_STORE(kind, size)                                      \
                 case kind:                                              \
-                    if(likely(emex64_fast_store(core, *q[1] + (UInt64)(SInt64)ce->rel, size, *q[0])))  \
+                {                                                       \
+                    Boolean touched;                                    \
+                    if(likely(emex64_hot_store(core, data_context, *q[1] + (UInt64)(SInt64)ce->rel, size, *q[0], &touched)))  \
                     {                                                   \
+                        if(unlikely(touched))                           \
+                        {                                               \
+                            goto stored;                                \
+                        }                                               \
                         goto sequential;                                \
                     }                                                   \
-                    break;
+                    break;                                              \
+                }
                 E64_FAST_STORE(kE64FastStore8, 1)
                 E64_FAST_STORE(kE64FastStore16, 2)
                 E64_FAST_STORE(kE64FastStore32, 4)
                 E64_FAST_STORE(kE64FastStore64, 8)
 #undef E64_FAST_STORE
 
+                case kE64FastCall:
+                {
+                    Boolean touched;
+                    if(likely(emex64_hot_call(core, data_context, pc + ce->ilen, &touched)))
+                    {
+                        goto branched;
+                    }
+                    break;
+                }
+                case kE64FastCallArgs:
+                {
+                    const emex64_icache_cold_t *cc = &core->icold[ce - core->icache];
+                    UInt64 arg[EMEX64_CALL_ARGS];
+                    UInt8 args = cc->param_cnt - 1;
+                    Boolean touched;
+                    __E64CoreReplay(core, ce);
+                    for(UInt8 i = 0; i < args; i++)
+                    {
+                        arg[i] = *cc->param[i + 1];
+                    }
+                    if(likely(emex64_hot_call(core, data_context, pc + ce->ilen, &touched)))
+                    {
+                        for(UInt8 i = 0; i < args; i++)
+                        {
+                            core->rl[kE64RegisterR0 + i] = arg[i];
+                        }
+                        goto branched;
+                    }
+                    break;
+                }
+                case kE64FastCallIndirect:
+                {
+                    UInt64 to = *q[0];
+                    Boolean touched;
+                    if(likely(emex64_hot_call(core, data_context, pc + ce->ilen, &touched)))
+                    {
+                        core->rl[kE64RegisterPC] = to;
+                        goto jumped;
+                    }
+                    break;
+                }
+                case kE64FastReturn:
+                case kE64FastReturnAuth:
+                {
+                    UInt64 frame = core->rl[kE64RegisterFP];
+                    UInt64 fp, to;
+                    if(likely(emex64_hot_frame(core, data_context, frame, &fp, &to)) &&
+                       (ce->fast == kE64FastReturn || likely(emex64_fast_reta(core, frame, to, &to))))
+                    {
+                        core->rl[kE64RegisterSP] = frame + 16;
+                        core->rl[kE64RegisterFP] = fp;
+                        core->rl[kE64RegisterPC] = to;
+                        goto jumped;
+                    }
+                    break;
+                }
+                case kE64FastSignReturn:
+                {
+                    Boolean touched;
+                    if(likely(data_context != 0) && likely(emex64_fast_pacret(core, &touched)))
+                    {
+                        if(unlikely(touched))
+                        {
+                            goto stored;
+                        }
+                        goto sequential;
+                    }
+                    break;
+                }
                 case kE64FastNone:
                     break;
                 default:
@@ -2006,8 +2621,20 @@ static UInt32 __E64CoreRunTrapModel(__E64Core core,
         }
 
         hint = NULL;
+        quick = false;
         if(ran >= budget || core->halted || core->run_break ||
            unlikely(__atomic_load_n(&core->request, __ATOMIC_RELAXED) != 0))
+        {
+            break;
+        }
+
+        data_context = __E64CoreDataContext(core);
+        continue;
+
+    jumped:
+        hint = NULL;
+        quick = false;
+        if(ran >= budget || unlikely(__atomic_load_n(&core->request, __ATOMIC_RELAXED) != 0))
         {
             break;
         }
@@ -2017,17 +2644,305 @@ static UInt32 __E64CoreRunTrapModel(__E64Core core,
         pc += ce->ilen;
         fetch_pa += ce->ilen;
         hint = ce->seq;
+        quick = hint != NULL;
+        goto moved;
+    stored:
+        pc += ce->ilen;
+        fetch_pa += ce->ilen;
+        hint = ce->seq;
+        quick = false;
         goto moved;
     branched:
         pc += (UInt64)(SInt64)ce->rel;
         fetch_pa += (UInt64)(SInt64)ce->rel;
         hint = ce->target;
+        quick = false;
     moved:
         core->rl[kE64RegisterPC] = pc;
+        if(ran >= budget || (unlikely(!quick) && unlikely(__atomic_load_n(&core->request, __ATOMIC_RELAXED) != 0)))
+        {
+            break;
+        }
+        continue;
+
+#define TR(i)   (*(UInt64 *)((UInt8 *)core + text->r[i]))
+#define TI      (text->imm)
+    text_dispatch:
+        hint = NULL;
+        quick = false;
+        switch(text->fast)
+        {
+            case kE64TextMovRR:
+                TR(0) = TR(1);
+                goto text_sequential;
+            case kE64TextMovRI:
+                TR(0) = TI;
+                goto text_sequential;
+
+#define E64_TEXT_ALU(name, op)                                          \
+            case kE64Text##name##RR:                                    \
+                TR(0) = TR(1) op TR(2);                                 \
+                goto text_sequential;                                   \
+            case kE64Text##name##RI:                                    \
+                TR(0) = TR(1) op TI;                                    \
+                goto text_sequential;                                   \
+            case kE64Text##name##IR:                                    \
+                TR(0) = TI op TR(2);                                    \
+                goto text_sequential;
+            E64_TEXT_ALU(Add, +)
+            E64_TEXT_ALU(Sub, -)
+            E64_TEXT_ALU(Mul, *)
+            E64_TEXT_ALU(And, &)
+            E64_TEXT_ALU(Or, |)
+            E64_TEXT_ALU(Xor, ^)
+            E64_TEXT_ALU(Shl, <<)
+            E64_TEXT_ALU(Shr, >>)
+#undef E64_TEXT_ALU
+
+#define E64_TEXT_CMP(variant, first, second)                            \
+            case kE64TextCmp##variant:                                  \
+            {                                                           \
+                SInt64 a = (SInt64)(first);                             \
+                SInt64 b = (SInt64)(second);                            \
+                core->rl[kE64RegisterCF] = (a == b) * kE64CompareFlagZ | (a <  b) * kE64CompareFlagL | (a >  b) * kE64CompareFlagG;  \
+                goto text_sequential;                                   \
+            }
+            E64_TEXT_CMP(RR, TR(1), TR(2))
+            E64_TEXT_CMP(RI, TR(1), TI)
+            E64_TEXT_CMP(IR, TI, TR(2))
+#undef E64_TEXT_CMP
+
+#define E64_TEXT_BRANCH(kind, taken)                                    \
+            case kind:                                                  \
+                if(taken)                                               \
+                {                                                       \
+                    goto text_branched;                                 \
+                }                                                       \
+                goto text_sequential;
+            E64_TEXT_BRANCH(kE64TextBranch, true)
+            E64_TEXT_BRANCH(kE64TextBranchFlags, (core->rl[kE64RegisterCF] & text->cf_mask) != 0)
+            E64_TEXT_BRANCH(kE64TextBranchFlagsNot, (core->rl[kE64RegisterCF] & text->cf_mask) == 0)
+            E64_TEXT_BRANCH(kE64TextBranchZero, TR(1) == 0)
+            E64_TEXT_BRANCH(kE64TextBranchNotZero, TR(1) != 0)
+#define E64_TEXT_COMPARE(name, cond)                                    \
+            case kE64TextBranch##name##RR:                              \
+            {                                                           \
+                UInt64 a = TR(1), b = TR(2);                            \
+                if(cond)                                                \
+                {                                                       \
+                    goto text_branched;                                 \
+                }                                                       \
+                goto text_sequential;                                   \
+            }                                                           \
+            case kE64TextBranch##name##RI:                              \
+            {                                                           \
+                UInt64 a = TR(1), b = TI;                               \
+                if(cond)                                                \
+                {                                                       \
+                    goto text_branched;                                 \
+                }                                                       \
+                goto text_sequential;                                   \
+            }                                                           \
+            case kE64TextBranch##name##IR:                              \
+            {                                                           \
+                UInt64 a = TI, b = TR(2);                               \
+                if(cond)                                                \
+                {                                                       \
+                    goto text_branched;                                 \
+                }                                                       \
+                goto text_sequential;                                   \
+            }
+            E64_TEXT_COMPARE(Equal, a == b)
+            E64_TEXT_COMPARE(NotEqual, a != b)
+            E64_TEXT_COMPARE(Less, (SInt64)a < (SInt64)b)
+            E64_TEXT_COMPARE(GreaterEqual, (SInt64)a >= (SInt64)b)
+            E64_TEXT_COMPARE(LessUnsigned, a < b)
+            E64_TEXT_COMPARE(GreaterEqualUnsigned, a >= b)
+#undef E64_TEXT_COMPARE
+#undef E64_TEXT_BRANCH
+
+#define E64_TEXT_LOAD(kind, size, extend)                               \
+            case kind:                                                  \
+            {                                                           \
+                UInt64 value;                                           \
+                if(likely(emex64_hot_load(core, data_context, TR(1) + (UInt64)(SInt64)text->rel, size, &value)))  \
+                {                                                       \
+                    TR(0) = extend;                                     \
+                    goto text_sequential;                               \
+                }                                                       \
+                goto text_fallback;                                     \
+            }
+            E64_TEXT_LOAD(kE64TextLoad8, 1, value)
+            E64_TEXT_LOAD(kE64TextLoad16, 2, value)
+            E64_TEXT_LOAD(kE64TextLoad32, 4, value)
+            E64_TEXT_LOAD(kE64TextLoad64, 8, value)
+            E64_TEXT_LOAD(kE64TextLoadSigned8, 1, (UInt64)(SInt64)(SInt8)value)
+            E64_TEXT_LOAD(kE64TextLoadSigned16, 2, (UInt64)(SInt64)(SInt16)value)
+            E64_TEXT_LOAD(kE64TextLoadSigned32, 4, (UInt64)(SInt64)(SInt32)value)
+#undef E64_TEXT_LOAD
+
+#define E64_TEXT_STORE(kind, size, what)                                \
+            case kind:                                                  \
+            {                                                           \
+                Boolean touched;                                        \
+                if(likely(emex64_hot_store(core, data_context, TR(1) + (UInt64)(SInt64)text->rel, size, what, &touched)))  \
+                {                                                       \
+                    if(unlikely(touched))                               \
+                    {                                                   \
+                        goto text_stored;                               \
+                    }                                                   \
+                    goto text_sequential;                               \
+                }                                                       \
+                goto text_fallback;                                     \
+            }
+            E64_TEXT_STORE(kE64TextStore8R, 1, TR(0))
+            E64_TEXT_STORE(kE64TextStore8I, 1, TI)
+            E64_TEXT_STORE(kE64TextStore16R, 2, TR(0))
+            E64_TEXT_STORE(kE64TextStore16I, 2, TI)
+            E64_TEXT_STORE(kE64TextStore32R, 4, TR(0))
+            E64_TEXT_STORE(kE64TextStore32I, 4, TI)
+            E64_TEXT_STORE(kE64TextStore64R, 8, TR(0))
+            E64_TEXT_STORE(kE64TextStore64I, 8, TI)
+#undef E64_TEXT_STORE
+
+            case kE64TextCall:
+            {
+                Boolean touched;
+                if(likely(emex64_hot_call(core, data_context, pc + text->ilen, &touched)))
+                {
+                    goto text_branched;
+                }
+                goto text_fallback;
+            }
+            case kE64TextCallArgs:
+            {
+                UInt64 arg[EMEX64_CALL_ARGS];
+                Boolean touched;
+                for(UInt8 i = 0; i < text->argc; i++)
+                {
+                    const emex64_ktext_arg_t *a = &text->args[i];
+                    arg[i] = a->kind == kE64TextArgImm ? a->imm : *(UInt64 *)((UInt8 *)core + a->reg) + a->imm;
+                }
+                if(likely(emex64_hot_call(core, data_context, pc + text->ilen, &touched)))
+                {
+                    for(UInt8 i = 0; i < text->argc; i++)
+                    {
+                        core->rl[kE64RegisterR0 + i] = arg[i];
+                    }
+                    goto text_branched;
+                }
+                goto text_fallback;
+            }
+            case kE64TextCallIndirect:
+            {
+                UInt64 to = TR(1);
+                Boolean touched;
+                if(likely(emex64_hot_call(core, data_context, pc + text->ilen, &touched)))
+                {
+                    core->rl[kE64RegisterPC] = to;
+                    goto text_jumped;
+                }
+                goto text_fallback;
+            }
+            case kE64TextReturn:
+            case kE64TextReturnAuth:
+            {
+                UInt64 frame = core->rl[kE64RegisterFP];
+                UInt64 fp, to;
+                if(likely(emex64_hot_frame(core, data_context, frame, &fp, &to)) &&
+                   (text->fast == kE64TextReturn || likely(emex64_fast_reta(core, frame, to, &to))))
+                {
+                    core->rl[kE64RegisterSP] = frame + 16;
+                    core->rl[kE64RegisterFP] = fp;
+                    core->rl[kE64RegisterPC] = to;
+                    goto text_jumped;
+                }
+                goto text_fallback;
+            }
+            case kE64TextSignReturn:
+            {
+                Boolean touched;
+                if(likely(data_context != 0) && likely(emex64_fast_pacret(core, &touched)))
+                {
+                    if(unlikely(touched))
+                    {
+                        goto text_stored;
+                    }
+                    goto text_sequential;
+                }
+                goto text_fallback;
+            }
+            default:
+                goto text_fallback;
+        }
+#undef TR
+#undef TI
+
+    text_sequential:
+        pc += text->ilen;
+        fetch_pa += text->ilen;
+        core->rl[kE64RegisterPC] = pc;
+        text_next = __atomic_load_n(&text->seq, __ATOMIC_RELAXED);
+        if(unlikely(text_next == NULL) && (fetch_pa & EMEX64_PAGE_MASK) != 0)
+        {
+            text_next = emex64_ktext_find(text_store, fetch_pa);
+            if(text_next != NULL)
+            {
+                __atomic_store_n(&text->seq, text_next, __ATOMIC_RELAXED);
+            }
+        }
+        if(ran >= budget)
+        {
+            break;
+        }
+        continue;
+    text_stored:
+        pc += text->ilen;
+        fetch_pa += text->ilen;
+        core->rl[kE64RegisterPC] = pc;
+        text_next = NULL;
         if(ran >= budget || unlikely(__atomic_load_n(&core->request, __ATOMIC_RELAXED) != 0))
         {
             break;
         }
+        continue;
+    text_branched:
+        pc += (UInt64)(SInt64)text->rel;
+        fetch_pa += (UInt64)(SInt64)text->rel;
+        core->rl[kE64RegisterPC] = pc;
+        text_next = NULL;
+        {
+            UInt64 at;
+            if(likely(__E64CoreTextFetch(core, data_context, pc, &at)) && likely(at == fetch_pa))
+            {
+                text_next = __atomic_load_n(&text->target, __ATOMIC_RELAXED);
+                if(unlikely(text_next == NULL))
+                {
+                    text_next = emex64_ktext_find(text_store, fetch_pa);
+                    if(text_next != NULL)
+                    {
+                        __atomic_store_n(&text->target, text_next, __ATOMIC_RELAXED);
+                    }
+                }
+            }
+        }
+        if(ran >= budget || unlikely(__atomic_load_n(&core->request, __ATOMIC_RELAXED) != 0))
+        {
+            break;
+        }
+        continue;
+    text_jumped:
+        text_next = NULL;
+        if(ran >= budget || unlikely(__atomic_load_n(&core->request, __ATOMIC_RELAXED) != 0))
+        {
+            break;
+        }
+        continue;
+    text_fallback:
+        text_next = NULL;
+        text_skip = true;
+        ran--;
+        continue;
     }
 
     return ran;

@@ -22,6 +22,7 @@
 #ifndef EMEX64VM_DEVICE_USB_H
 #define EMEX64VM_DEVICE_USB_H
 
+#include <pthread.h>
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/device/board/pcie/pcie.h>
 
@@ -167,10 +168,13 @@ typedef struct {
     emex64_pcie_function_t function;
     emex64_usb_port_t ports[USB_MAX_PORTS];
     UInt64 cmd, sts, tdlist, error;
+    pthread_mutex_t lock;
 } emex64_usb_t;
 
 emex64_usb_t *emex64_usb_alloc(emex64_pcie_t *pcie, UInt8 dev);
 Boolean emex64_usb_attach(emex64_usb_t *usb, UInt8 port, emex64_usb_device_t *device);  /* please hand me a sharp knife */
+SInt32 emex64_usb_plug(emex64_usb_t *usb, emex64_usb_device_t *device);
+Boolean emex64_usb_unplug(emex64_usb_t *usb, UInt8 port);
 void emex64_usb_dealloc(emex64_usb_t *usb);
 void emex64_usb_reset(emex64_usb_t *usb);
 

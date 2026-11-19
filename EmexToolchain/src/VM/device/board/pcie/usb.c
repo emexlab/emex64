@@ -594,9 +594,31 @@ static void usb_bar_write(emex64_pcie_function_t *function,
     }
 }
 
+static UInt64 usb_bar_read_locked(emex64_pcie_function_t *function,
+                                  UInt8 bar,
+                                  UInt64 offset)
+{
+    emex64_usb_t *usb = function->context;
+    pthread_mutex_lock(&usb->lock);
+    UInt64 value = usb_bar_read(function, bar, offset);
+    pthread_mutex_unlock(&usb->lock);
+    return value;
+}
+
+static void usb_bar_write_locked(emex64_pcie_function_t *function,
+                                 UInt8 bar,
+                                 UInt64 offset,
+                                 UInt64 value)
+{
+    emex64_usb_t *usb = function->context;
+    pthread_mutex_lock(&usb->lock);
+    usb_bar_write(function, bar, offset, value);
+    pthread_mutex_unlock(&usb->lock);
+}
+
 static const emex64_pcie_ops_t usb_ops = {
-    .bar_read = usb_bar_read,
-    .bar_write = usb_bar_write,
+    .bar_read = usb_bar_read_locked,
+    .bar_write = usb_bar_write_locked,
 };
 
 emex64_usb_t *emex64_usb_alloc(emex64_pcie_t *pcie,
@@ -608,6 +630,7 @@ emex64_usb_t *emex64_usb_alloc(emex64_pcie_t *pcie,
         return NULL;
     }
 
+    pthread_mutex_init(&usb->lock, NULL);
     usb->function.vendor = PCIE_VENDOR_EMEXLABS;
     usb->function.device = USB_PCI_DEVICE_ID;
     usb->function.class_code = USB_PCI_CLASS;
@@ -618,6 +641,7 @@ emex64_usb_t *emex64_usb_alloc(emex64_pcie_t *pcie,
 
     if(!emex64_pcie_attach(pcie, &usb->function, dev, 0))
     {
+        pthread_mutex_destroy(&usb->lock);
         free(usb);
         return NULL;
     }
@@ -635,6 +659,7 @@ Boolean emex64_usb_attach(emex64_usb_t *usb,
         return false;
     }
 
+    pthread_mutex_lock(&usb->lock);
     emex64_usb_port_t *port = &usb->ports[portIndex];
     port->device = device;
     port->enabled = false;
@@ -642,6 +667,68 @@ Boolean emex64_usb_attach(emex64_usb_t *usb,
     usb_device_reset(device);
     usb->sts |= USB_STS_PORT_CHANGE;
     usb_update_irq(usb);
+    pthread_mutex_unlock(&usb->lock);
+    return true;
+}
+
+SInt32 emex64_usb_plug(emex64_usb_t *usb,
+                       emex64_usb_device_t *device)
+{
+    if(usb == NULL || device == NULL)
+    {
+        return -1;
+    }
+
+    SInt32 found = -1;
+    pthread_mutex_lock(&usb->lock);
+    for(UInt8 p = 0; p < USB_MAX_PORTS; p++)
+    {
+        emex64_usb_port_t *port = &usb->ports[p];
+        if(port->device == NULL)
+        {
+            port->device = device;
+            port->enabled = false;
+            port->change = true;
+            usb_device_reset(device);
+            usb->sts |= USB_STS_PORT_CHANGE;
+            usb_update_irq(usb);
+            found = p;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&usb->lock);
+    return found;
+}
+
+Boolean emex64_usb_unplug(emex64_usb_t *usb,
+                          UInt8 portIndex)
+{
+    if(usb == NULL || portIndex >= USB_MAX_PORTS)
+    {
+        return false;
+    }
+
+    pthread_mutex_lock(&usb->lock);
+    emex64_usb_port_t *port = &usb->ports[portIndex];
+    emex64_usb_device_t *device = port->device;
+    if(device != NULL)
+    {
+        port->device = NULL;
+        port->enabled = false;
+        port->change = true;
+        usb->sts |= USB_STS_PORT_CHANGE;
+        usb_update_irq(usb);
+    }
+    pthread_mutex_unlock(&usb->lock);
+
+    if(device == NULL)
+    {
+        return false;
+    }
+    if(device->ops->free != NULL)
+    {
+        device->ops->free(device);
+    }
     return true;
 }
 
@@ -649,7 +736,9 @@ void emex64_usb_reset(emex64_usb_t *usb)
 {
     if(usb != NULL)
     {
+        pthread_mutex_lock(&usb->lock);
         usb_reset(usb);
+        pthread_mutex_unlock(&usb->lock);
     }
 }
 
@@ -668,5 +757,6 @@ void emex64_usb_dealloc(emex64_usb_t *usb)
             dev->ops->free(dev);
         }
     }
+    pthread_mutex_destroy(&usb->lock);
     free(usb);
 }
