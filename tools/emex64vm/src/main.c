@@ -63,6 +63,12 @@ SInt32 main(SInt32 argc, char *argv[])
             fprintf(stderr, "  --sound [on|off]       The sound card, a Sound Blaster 16 on PCIe (default: on).\n");
             fprintf(stderr, "  --sound:wav <file>     What the sound card plays goes into this WAV file\n");
             fprintf(stderr, "                         instead of the host's sound output.\n");
+            fprintf(stderr, "  --cores <n>            Number of cores, 1 to 16 (default 4); all but the first\n");
+            fprintf(stderr, "                         wait for a STARTUP IPI from their Local APIC.\n");
+            fprintf(stderr, "  --keyboard [off|8042]  Sets up keyboard, when 8042 chip mode is used the display\n");
+            fprintf(stderr, "                         is required.\n");
+            fprintf(stderr, "  --mouse [off|8042]     Sets up mouse, when 8042 chip mode is used the display\n");
+            fprintf(stderr, "                         is required.\n");
             if(machineSupport.network)
             {
                 fprintf(stderr, "  --net user             Plugs in the network controller: user mode NAT to the\n");
@@ -77,16 +83,10 @@ SInt32 main(SInt32 argc, char *argv[])
                 fprintf(stderr, "  --display [on|off|required]\n");
                 fprintf(stderr, "                         Sets up the display, if it is required, but not available\n");
                 fprintf(stderr, "                         on a certain distribution it will error.\n");
-                fprintf(stderr, "  --cores <n>            Number of cores, 1 to 16 (default 4); all but the first\n");
-                fprintf(stderr, "                         wait for a STARTUP IPI from their Local APIC.\n");
                 fprintf(stderr, "  --display:resolution <height> <width>\n");
                 fprintf(stderr, "                         Sets the display resolution.\n");
             }
             fprintf(stderr, "\n");
-            fprintf(stderr, "  --keyboard [off|8042]  Sets up keyboard, when 8042 chip mode is used the display\n");
-            fprintf(stderr, "                         is required.\n");
-            fprintf(stderr, "  --mouse [off|8042]     Sets up mouse, when 8042 chip mode is used the display\n");
-            fprintf(stderr, "                         is required.\n");
             return 1;
         }
         else if(strcmp(argv[i], "--nvram") == 0 && i + 1 < argc)
