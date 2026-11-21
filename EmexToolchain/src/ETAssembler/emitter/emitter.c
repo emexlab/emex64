@@ -313,6 +313,10 @@ Boolean assembler_emit_instruction(assembler_line_t *al)
         {
             assembler_emit_addr64(al->inv, (UInt64)value);
         }
+        else if(opcode == kE64OpcodeBRK)
+        {
+            assembler_emit_imm16(al->inv, (UInt16)value);
+        }
         else
         {
             assembler_emit_imm(al->inv, (UInt64)value);
