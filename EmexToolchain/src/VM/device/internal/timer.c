@@ -28,7 +28,9 @@
 #include <EmexToolchain/VM/device/internal/timer.h>
 #include <EmexToolchain/VM/device/internal/controller/E64IC.h>
 
-UInt64 emex64_get_host_cycles(void)
+static UInt64 host_freq_value;
+
+static inline UInt64 emex64_raw_host_cycles(void)
 {
 #if defined(__x86_64__) || defined(_M_X64)
     UInt32 lo, hi;
@@ -47,6 +49,62 @@ UInt64 emex64_get_host_cycles(void)
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return (UInt64)ts.tv_sec * 1000000000ULL + ts.tv_nsec;
 #endif
+}
+
+#define HOST_GAP_SECONDS    2
+
+static UInt64 host_gap_last;
+static UInt64 host_gap_offset;
+static UInt64 host_gap_seq;
+static pthread_mutex_t host_gap_lock = PTHREAD_MUTEX_INITIALIZER;
+
+static UInt64 emex64_host_gap(void)
+{
+    SInt64 limit = (SInt64)(emex64_host_freq() * HOST_GAP_SECONDS);
+
+    pthread_mutex_lock(&host_gap_lock);
+
+    UInt64 raw = emex64_raw_host_cycles();
+    UInt64 last = __atomic_load_n(&host_gap_last, __ATOMIC_RELAXED);
+    UInt64 offset = host_gap_offset;
+    SInt64 delta = (SInt64)(raw - last);
+    if(delta > limit || delta < -limit)
+    {
+        offset += (UInt64)delta - (emex64_host_freq() >> 8);
+        UInt64 seq = host_gap_seq;
+        __atomic_store_n(&host_gap_seq, seq + 1, __ATOMIC_RELAXED);
+        __atomic_thread_fence(__ATOMIC_RELEASE);
+        __atomic_store_n(&host_gap_offset, offset, __ATOMIC_RELAXED);
+        __atomic_store_n(&host_gap_last, raw, __ATOMIC_RELAXED);
+        __atomic_store_n(&host_gap_seq, seq + 2, __ATOMIC_RELEASE);
+    }
+    pthread_mutex_unlock(&host_gap_lock);
+
+    return raw - offset;
+}
+
+UInt64 emex64_get_host_cycles(void)
+{
+    UInt64 seq = __atomic_load_n(&host_gap_seq, __ATOMIC_ACQUIRE);
+    UInt64 last = __atomic_load_n(&host_gap_last, __ATOMIC_RELAXED);
+    UInt64 offset = __atomic_load_n(&host_gap_offset, __ATOMIC_RELAXED);
+    UInt64 raw = emex64_raw_host_cycles();
+    __atomic_thread_fence(__ATOMIC_ACQUIRE);
+    SInt64 delta = (SInt64)(raw - last);
+    SInt64 limit = (SInt64)(host_freq_value * HOST_GAP_SECONDS);
+
+    if(unlikely(delta > limit || delta < -limit || (seq & 1) ||
+                __atomic_load_n(&host_gap_seq, __ATOMIC_RELAXED) != seq))
+    {
+        return emex64_host_gap();
+    }
+
+    if(unlikely(delta > (SInt64)(host_freq_value >> 10)))
+    {
+        __atomic_compare_exchange_n(&host_gap_last, &last, raw, true, __ATOMIC_RELEASE, __ATOMIC_RELAXED);
+    }
+
+    return raw - offset;
 }
 
 static UInt64 detect_host_freq(void)
@@ -91,8 +149,6 @@ static UInt64 detect_host_freq(void)
     return 1000000000ULL;
 #endif
 }
-
-static UInt64 host_freq_value;
 
 static void host_freq_once(void)
 {

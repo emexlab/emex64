@@ -35,9 +35,9 @@
 #define RTC_REG_YEAR            0x28
 #define RTC_REG_WEEKDAY         0x30
 
-#define EMEX64_NVRAM_BYTES      0x1000
-#define NVRAM_REG_SIZE          0x1000
-#define EMEX64_NVRAM_SIZE       0x1008
+#define EMEX64_NVRAM_BYTES      0x10000
+#define NVRAM_REG_SIZE          EMEX64_NVRAM_BYTES
+#define EMEX64_NVRAM_SIZE       (EMEX64_NVRAM_BYTES + 8)
 
 typedef struct emex64_nvram {
     UInt8 data[EMEX64_NVRAM_BYTES];
