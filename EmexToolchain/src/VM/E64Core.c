@@ -230,6 +230,9 @@ const emex64_opfunc_entry_t kE64OpfuncTable[] = {
 
     /* ISA v22 (calls that carry their arguments) */
     [kE64OpcodeBLA] = { .func = emex64_op_bla, .minargs = 1, .maxargs = 1 + EMEX64_CALL_ARGS, .argmask = 0b00000000000000000000000000000000, .isa = 22 },
+
+    /* ISA v23 (debugging update) */
+    [kE64OpcodeBRK] = { .func = emex64_op_brk, .minargs = 1, .maxargs = 1, .argmask = 0b00000000000000000000000000000000, .isa = 23 },
 };
 
 static const UInt8 kImmBits[] = {

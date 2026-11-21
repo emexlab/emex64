@@ -136,6 +136,7 @@ typedef struct __E64Core {
 
         struct {
             E64Exception exception;
+            UInt16 comment;
         } crexc;
 
         /*

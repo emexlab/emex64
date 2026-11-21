@@ -31,3 +31,15 @@ void emex64_op_nop(__E64Core core)
 {
     /* doing nothing */
 }
+
+void emex64_op_brk(__E64Core core)
+{
+    if(core->op.param_coding[0] != kE64ParameterCodingImm16)
+    {
+        core->cr_state.crexc.exception = kE64ExceptionBadInstruction;
+        return;
+    }
+
+    core->cr_state.crexc.comment = (UInt16)*(core->op.param[0]);
+    core->cr_state.crexc.exception = kE64ExceptionBreakpoint;
+}

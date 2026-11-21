@@ -208,7 +208,10 @@ typedef enum: UInt8 {
     /* ISA v22 (calls that carry their arguments) */
     kE64OpcodeBLA =     0b10011000,
 
-    kE64OpcodeMAX = kE64OpcodeBLA,
+    /* ISA v23 (debugging update) */
+    kE64OpcodeBRK =     0b10011001,
+
+    kE64OpcodeMAX = kE64OpcodeBRK,
 
     kE64OpcodeInvalid =  0b11111111,
 } E64Opcode;
@@ -487,6 +490,11 @@ typedef enum: UInt8 {
      * signature is wrong.
      */
     kE64ExceptionPAC =               0b1000,
+
+    /*
+     * a breakpoint was hit
+     */
+    kE64ExceptionBreakpoint =        0b1001,
 } E64Exception;
 
 /* CRSTAT bits */
