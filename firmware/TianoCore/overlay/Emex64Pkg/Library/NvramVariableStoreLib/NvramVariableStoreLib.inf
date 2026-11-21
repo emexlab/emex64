@@ -1,0 +1,43 @@
+## @file
+#  Copyright (C) 2026 emexlab
+#  SPDX-License-Identifier: BSD-2-Clause-Patent
+##
+
+[Defines]
+    INF_VERSION     = 0x0001001B
+    BASE_NAME       = NvramVariableStoreLib
+    FILE_GUID       = 0E640017-7E64-4C64-8E64-00000000E640
+    MODULE_TYPE     = DXE_RUNTIME_DRIVER
+    VERSION_STRING  = 1.0
+    LIBRARY_CLASS   = NULL|DXE_RUNTIME_DRIVER
+    CONSTRUCTOR     = NvramVariableStoreLibConstructor
+
+[Sources]
+    NvramVariableStoreLib.c
+
+[Packages]
+    MdePkg/MdePkg.dec
+    MdeModulePkg/MdeModulePkg.dec
+    Emex64Pkg/Emex64Pkg.dec
+
+[LibraryClasses]
+    BaseLib
+    BaseMemoryLib
+    DebugLib
+    IoLib
+    MemoryAllocationLib
+    PcdLib
+    UefiBootServicesTableLib
+    UefiLib
+    UefiRuntimeLib
+
+[Protocols]
+    gEfiResetNotificationProtocolGuid
+
+[Guids]
+    gEfiEventExitBootServicesGuid
+
+[Pcd]
+    gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvModeEnable
+    gEfiMdeModulePkgTokenSpaceGuid.PcdVariableStoreSize
+    gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvStoreReserved

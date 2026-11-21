@@ -142,6 +142,8 @@
 
 [PcdsDynamicDefault]
     gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut|3
+    # where the variable store is: NvramVariableStoreLib sets it
+    gEfiMdeModulePkgTokenSpaceGuid.PcdEmuVariableNvStoreReserved|0
     gEfiMdeModulePkgTokenSpaceGuid.PcdVideoHorizontalResolution|0
     gEfiMdeModulePkgTokenSpaceGuid.PcdVideoVerticalResolution|0
     gEfiMdeModulePkgTokenSpaceGuid.PcdConOutColumn|0
@@ -175,6 +177,8 @@
     MdeModulePkg/Universal/Variable/RuntimeDxe/VariableRuntimeDxe.inf {
         <LibraryClasses>
             NULL|MdeModulePkg/Library/VarCheckUefiLib/VarCheckUefiLib.inf
+            # the store comes from the machine's NVRAM and goes back to it
+            NULL|Emex64Pkg/Library/NvramVariableStoreLib/NvramVariableStoreLib.inf
     }
 
     # devices

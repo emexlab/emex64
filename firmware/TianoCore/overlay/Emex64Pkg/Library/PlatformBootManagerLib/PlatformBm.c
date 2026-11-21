@@ -5,18 +5,21 @@
 
 #include <Uefi.h>
 #include <Guid/EventGroup.h>
+#include <Guid/GlobalVariable.h>
 #include <Guid/SerialPortLibVendor.h>
 #include <Guid/TtyTerm.h>
 #include <Library/BaseMemoryLib.h>
 #include <Library/BootLogoLib.h>
 #include <Library/DebugLib.h>
 #include <Library/DevicePathLib.h>
+#include <Library/MemoryAllocationLib.h>
 #include <Library/PcdLib.h>
 #include <Library/PlatformBootManagerLib.h>
 #include <Library/SortLib.h>
 #include <Library/UefiBootManagerLib.h>
 #include <Library/UefiBootServicesTableLib.h>
 #include <Library/UefiLib.h>
+#include <Library/UefiRuntimeServicesTableLib.h>
 #include <Protocol/DevicePath.h>
 #include <Protocol/GraphicsOutput.h>
 #include <Emex64Platform.h>
@@ -167,33 +170,94 @@ STATIC BOOLEAN IsUsbOption(IN CONST EFI_BOOT_MANAGER_LOAD_OPTION *Option)
     return FALSE;
 }
 
-STATIC INTN EFIAPI CompareUsbFirst(IN CONST VOID *Left,
-                                   IN CONST VOID *Right)
+STATIC BOOLEAN IsInOrder(IN CONST UINT16 *Order,
+                         IN UINTN Count,
+                         IN UINTN OptionNumber)
 {
-    CONST EFI_BOOT_MANAGER_LOAD_OPTION *A;
-    CONST EFI_BOOT_MANAGER_LOAD_OPTION *B;
-    BOOLEAN UsbA;
-    BOOLEAN UsbB;
+    UINTN Index;
 
-    A = Left;
-    B = Right;
-    UsbA = IsUsbOption(A);
-    UsbB = IsUsbOption(B);
-    if(UsbA != UsbB)
+    for(Index = 0; Index < Count; Index++)
     {
-        return UsbA ? -1 : 1;
+        if(Order[Index] == OptionNumber)
+        {
+            return TRUE;
+        }
     }
 
-    return (INTN)A->OptionNumber - (INTN)B->OptionNumber;
+    return FALSE;
 }
 
 VOID EFIAPI PlatformBootManagerAfterConsole(VOID)
 {
+    EFI_BOOT_MANAGER_LOAD_OPTION *Options;
+    UINT16 *Before;
+    UINT16 *Order;
+    UINTN BeforeSize;
+    UINTN Count;
+    UINTN Index;
+    UINTN To;
+    UINTN Pass;
+    BOOLEAN Changed;
+
     BootLogoEnableLogo();
 
     EfiBootManagerConnectAll();
+
+    Before = NULL;
+    BeforeSize = 0;
+    GetVariable2(L"BootOrder", &gEfiGlobalVariableGuid, (VOID **)&Before, &BeforeSize);
+    if(Before == NULL)
+    {
+        BeforeSize = 0;
+    }
     EfiBootManagerRefreshAllBootOption();
-    EfiBootManagerSortLoadOptionVariable(LoadOptionTypeBoot, CompareUsbFirst);
+
+    Count = 0;
+    Options = EfiBootManagerGetLoadOptions(&Count, LoadOptionTypeBoot);
+    Order = (Count != 0) ? AllocatePool(Count * sizeof(UINT16)) : NULL;
+    if(Options != NULL && Order != NULL)
+    {
+        To = 0;
+        for(Pass = 0; Pass < 3; Pass++)
+        {
+            for(Index = 0; Index < Count; Index++)
+            {
+                BOOLEAN Old = IsInOrder(Before, BeforeSize / sizeof(UINT16), Options[Index].OptionNumber);
+                BOOLEAN Usb = IsUsbOption(&Options[Index]);
+
+                if((Pass == 0 && Old) || (Pass == 1 && !Old && !Usb) || (Pass == 2 && !Old && Usb))
+                {
+                    Order[To++] = (UINT16)Options[Index].OptionNumber;
+                }
+            }
+        }
+
+        Changed = FALSE;
+        for(Index = 0; Index < Count; Index++)
+        {
+            if(Order[Index] != (UINT16)Options[Index].OptionNumber)
+            {
+                Changed = TRUE;
+            }
+        }
+        if(Changed)
+        {
+            gRT->SetVariable(L"BootOrder", &gEfiGlobalVariableGuid, EFI_VARIABLE_NON_VOLATILE | EFI_VARIABLE_BOOTSERVICE_ACCESS | EFI_VARIABLE_RUNTIME_ACCESS, Count * sizeof(UINT16), Order);
+        }
+    }
+
+    if(Order != NULL)
+    {
+        FreePool(Order);
+    }
+    if(Options != NULL)
+    {
+        EfiBootManagerFreeLoadOptions(Options, Count);
+    }
+    if(Before != NULL)
+    {
+        FreePool(Before);
+    }
 }
 
 VOID EFIAPI PlatformBootManagerWaitCallback(UINT16 TimeoutRemain)

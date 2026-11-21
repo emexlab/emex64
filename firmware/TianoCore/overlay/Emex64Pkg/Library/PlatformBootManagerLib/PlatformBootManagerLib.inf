@@ -24,11 +24,13 @@
     BootLogoLib
     DebugLib
     DevicePathLib
+    MemoryAllocationLib
     PcdLib
     SortLib
     UefiBootManagerLib
     UefiBootServicesTableLib
     UefiLib
+    UefiRuntimeServicesTableLib
 
 [Pcd]
     gEfiMdePkgTokenSpaceGuid.PcdPlatformBootTimeOut
@@ -46,5 +48,6 @@
 
 [Guids]
     gEfiEndOfDxeEventGroupGuid
+    gEfiGlobalVariableGuid
     gEmex64DisplayDevicePathGuid
     gEmex64KeyboardDevicePathGuid

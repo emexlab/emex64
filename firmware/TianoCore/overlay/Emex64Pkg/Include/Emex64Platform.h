@@ -171,6 +171,11 @@
 #define EMEX64_CPUID_FEATURES           (EMEX64_CPUID_BASE + 0x18)
 #define EMEX64_CPUID_BRAND              (EMEX64_CPUID_BASE + 0x40)
 
+/* Non Volatile Random Access Memory */
+#define EMEX64_NVRAM_BASE               EMEX64_MMIO_PAGE (11)
+#define EMEX64_NVRAM_BYTES              0x10000
+#define EMEX64_NVRAM_SIZE               (EMEX64_NVRAM_BASE + EMEX64_NVRAM_BYTES)
+
 /* Control Registers */
 #define EMEX64_CR_CREL                  0
 #define EMEX64_CR_CRKSP                 1
