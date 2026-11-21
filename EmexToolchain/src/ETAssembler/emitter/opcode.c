@@ -39,6 +39,7 @@ E64Opcode opcode_from_string(const char *name)
         case PACK('b','l','e'): return kE64OpcodeBLE;
         case PACK('b','l','t'): return kE64OpcodeBLT;
         case PACK('b','l','w'): return kE64OpcodeBLW;
+        case PACK('b','r','k'): return kE64OpcodeBRK;
         case PACK('b','n','e'): return kE64OpcodeBNE;
         case PACK('b','n','z'): return kE64OpcodeBNZ;
         case PACK('c','l','r'): return kE64OpcodeCLR;
