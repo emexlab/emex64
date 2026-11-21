@@ -40,6 +40,8 @@ void emex64_op_brk(__E64Core core)
         return;
     }
 
-    core->cr_state.crexc.comment = (UInt16)*(core->op.param[0]);
+    core->trap.fault_valid = true;
+    core->trap.fault_addr = (UInt16)*(core->op.param[0]);
+    core->trap.fault_access = 0;
     core->cr_state.crexc.exception = kE64ExceptionBreakpoint;
 }
