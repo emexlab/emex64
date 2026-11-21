@@ -32,7 +32,7 @@ typedef struct {
     UInt64 win;
 } bitbolt_t;
 
-__attribute__((always_inline)) UInt64 bb_load64(const UInt8 *p)
+static inline __attribute__((always_inline)) UInt64 bb_load64(const UInt8 *p)
 {
 #if defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
     UInt64 v;
@@ -43,13 +43,13 @@ __attribute__((always_inline)) UInt64 bb_load64(const UInt8 *p)
 #endif /* defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ */
 }
 
-__attribute__((always_inline)) UInt64 bb_mask(unsigned n)
+static inline __attribute__((always_inline)) UInt64 bb_mask(unsigned n)
 {
     return n >= 64 ? ~0ULL : ((1ULL << n) - 1ULL);
 }
 
-__attribute__((always_inline)) UInt64 bb_read(bitbolt_t *bb,
-                                              unsigned n)
+static inline __attribute__((always_inline)) UInt64 bb_read(bitbolt_t *bb,
+                                                            unsigned n)
 {
     if(__builtin_expect(n > bb->have, 0))
     {
@@ -76,7 +76,7 @@ __attribute__((always_inline)) UInt64 bb_read(bitbolt_t *bb,
     return v;
 }
 
-__attribute__((always_inline)) void bb_align(bitbolt_t *bb)
+static inline __attribute__((always_inline)) void bb_align(bitbolt_t *bb)
 {
     UInt32 skip = (0u - bb->pos) & 7u;
     if(skip <= bb->have)
