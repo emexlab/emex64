@@ -11,10 +11,13 @@ Outside the SoC, the emulated board additionally integrates support for UART, (R
 
 Besides that there is a proper polymorphic toolchain called `EmexToolchain` which can be used to assemble, link and execute emex64 code all in the same process with proper memory management lavering `EmexFoundation`. The assembler spits out ELF relocatable objects, which the linker can either link all of them together to a firmware image which is something like emex64's BIOS or to a merged ELF relocatable object. ELF is the only thing that I didn't do from scratch, I originally wanted to use the LO(LightweightObject) format made by me, but thought then that this will be nightmares to implement.
 
-## ToDo
+## ToDo (back to the quality)
 - [ ] Rewrite and clean a large portion of EmexToolchain into EmexFoundation
 - [ ] Optimize EnexFoundation and the rewritten parts of EmexToolchain
-- [ ] Research more of LA64
+- Research more of LA64
+  - [ ] Find out how the coding can become more efficient without breaking compatibility
+  - [ ] Compare against x86_64, aarch64, riscv64, etc
+  - [ ] Write a clean spec file by hand
 - [ ] FOSS the entire Linux port
 - emexOS from scratch rewrite (a new write by me(mach-port-t) without the millions of ways to allocate memory alone ;-;)
   - [ ] EFI application
