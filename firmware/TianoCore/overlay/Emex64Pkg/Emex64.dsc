@@ -6,7 +6,7 @@
 [Defines]
     PLATFORM_NAME           = Emex64
     PLATFORM_GUID           = 0E640000-7E64-4C64-8E64-0000000000E6
-    PLATFORM_VERSION        = 1.0.1
+    PLATFORM_VERSION        = 1.1
     DSC_SPECIFICATION       = 0x0001001C
     OUTPUT_DIRECTORY        = Build/Emex64
     SUPPORTED_ARCHITECTURES = EMEX64
@@ -131,7 +131,7 @@
     gEfiMdeModulePkgTokenSpaceGuid.PcdVariableStoreSize|0x10000
 
     gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVendor|L"emexLabs"
-    gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString|L"TianoCore for emex64 1.0.1"
+    gEfiMdeModulePkgTokenSpaceGuid.PcdFirmwareVersionString|L"TianoCore for emex64 1.1"
     gEfiMdeModulePkgTokenSpaceGuid.PcdSmbiosVersion|0x0307
     gEfiMdeModulePkgTokenSpaceGuid.PcdSmbiosDocRev|0x0
 
@@ -186,6 +186,7 @@
     MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
     Emex64Pkg/SmbiosPlatformDxe/SmbiosPlatformDxe.inf
     Emex64Pkg/KeyboardDxe/KeyboardDxe.inf
+    Emex64Pkg/NvmeDxe/NvmeDxe.inf
     Emex64Pkg/SataDxe/SataDxe.inf
     Emex64Pkg/UsbHcDxe/UsbHcDxe.inf
     MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf

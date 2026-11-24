@@ -88,6 +88,7 @@ STATIC UINT16 MeasureSpeedMhz(VOID)
     EFI_TPL OldTpl = gBS->RaiseTPL(TPL_HIGH_LEVEL);
     UINT64 Start = GetPerformanceCounter();
     __asm__ __volatile__(
+        ".balign 32\n\t"
         "1:\n\t"
         "sub %0, %0, 1\n\t"
         "cmp %0, 0\n\t"

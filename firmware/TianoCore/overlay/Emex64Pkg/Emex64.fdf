@@ -61,6 +61,7 @@ INF  Emex64Pkg/GopDxe/GopDxe.inf
 INF  MdeModulePkg/Universal/SmbiosDxe/SmbiosDxe.inf
 INF  Emex64Pkg/SmbiosPlatformDxe/SmbiosPlatformDxe.inf
 INF  Emex64Pkg/KeyboardDxe/KeyboardDxe.inf
+INF  Emex64Pkg/NvmeDxe/NvmeDxe.inf
 INF  Emex64Pkg/SataDxe/SataDxe.inf
 INF  Emex64Pkg/UsbHcDxe/UsbHcDxe.inf
 INF  MdeModulePkg/Bus/Usb/UsbBusDxe/UsbBusDxe.inf

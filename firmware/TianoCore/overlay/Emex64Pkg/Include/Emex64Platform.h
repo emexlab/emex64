@@ -13,7 +13,7 @@
 /* Interrupt Controller */
 #define EMEX64_IC_BASE                  EMEX64_MMIO_PAGE(0)
 
-/* Advanced Programmable Interrupt Controller*/
+/* Advanced Programmable Interrupt Controller */
 #define EMEX64_APIC_BASE                EMEX64_MMIO_PAGE(1)
 #define EMEX64_APIC_ID                  (EMEX64_APIC_BASE + 0x00)
 #define EMEX64_APIC_VERSION             (EMEX64_APIC_BASE + 0x08)
@@ -130,6 +130,22 @@
 #define EMEX64_SATA_IDENTIFY            0xEC
 #define EMEX64_SATA_STATUS_DONE         BIT0
 #define EMEX64_SATA_STATUS_ERROR        BIT1
+
+/* NVMe storage controller */
+#define EMEX64_NVME_DEVICE_ID           0x0006
+#define EMEX64_NVME_CAP                 0x00
+#define EMEX64_NVME_VS                  0x08
+#define EMEX64_NVME_INTMS               0x10
+#define EMEX64_NVME_INTMC               0x18
+#define EMEX64_NVME_CC                  0x20
+#define EMEX64_NVME_CSTS                0x28
+#define EMEX64_NVME_AQA                 0x30
+#define EMEX64_NVME_ASQ                 0x38
+#define EMEX64_NVME_ACQ                 0x40
+#define EMEX64_NVME_SQ_TAIL(q)          (0x1000 + (q) * 0x10)
+#define EMEX64_NVME_CQ_HEAD(q)          (0x1008 + (q) * 0x10)
+#define EMEX64_NVME_CSTS_RDY            BIT0
+#define EMEX64_NVME_CSTS_CFS            BIT1
 
 /* USB host controller */
 #define EMEX64_USB_DEVICE_ID            0x0002
