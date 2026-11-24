@@ -13,7 +13,7 @@ Besides that there is a proper polymorphic toolchain called `EmexToolchain` whic
 
 ## ToDo (back to the quality)
 - [ ] Rewrite and clean a large portion of EmexToolchain into EmexFoundation
-- [ ] Optimize EnexFoundation and the rewritten parts of EmexToolchain
+- [ ] Optimize EmexFoundation and the rewritten parts of EmexToolchain
 - Research more of LA64
   - [ ] Find out how the coding can become more efficient without breaking compatibility
   - [ ] Compare against x86_64, aarch64, riscv64, etc
