@@ -1,7 +1,16 @@
 {
-    "C_Cpp.errorSquiggles": "Disabled",
-    "C_Cpp.intelliSenseEngine": "Disabled",
+    "C_Cpp.errorSquiggles": "disabled",
+    "C_Cpp.intelliSenseEngine": "disabled",
     "files.associations": {
         "VERSIONS": "shellscript"
+    },
+    "C_Cpp.files.exclude": {
+        "**/llvm/llvm-project": true,
+        "**/llvm/build": true,
+        "**/gcc/gcc-src": true,
+        "**/gcc/build": true,
+        "**/linux/src": true,
+        "**/linux/build-gnu": true,
+        "**/firmware/TianoCore/edk2": true
     }
 }
