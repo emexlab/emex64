@@ -26,6 +26,7 @@
 
 #define E64_MACHINE_MAX_SATA_DISKS      8
 #define E64_MACHINE_MAX_USB_DISKS       8
+#define E64_MACHINE_MAX_NVME_DISKS      4
 #define E64_MACHINE_MAX_HOST_FORWARDS   8
 
 typedef enum: UInt8 {
@@ -80,6 +81,8 @@ typedef struct {
     UInt8 sataDiskCount;
     E64DiskOptions usbDisks[E64_MACHINE_MAX_USB_DISKS];
     UInt8 usbDiskCount;
+    E64DiskOptions nvmeDisks[E64_MACHINE_MAX_NVME_DISKS];
+    UInt8 nvmeDiskCount;
     E64NetworkOptions networkOptions;
     E64SoundOptions soundOptions;
     E64PeripheralMode keyboardPeripheralMode;

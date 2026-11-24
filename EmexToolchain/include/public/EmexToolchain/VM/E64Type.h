@@ -495,6 +495,12 @@ typedef enum: UInt8 {
      * a breakpoint was hit
      */
     kE64ExceptionBreakpoint =        0b1001,
+
+    /*
+     * one instruction ran with CRSTAT.STEP set, crepc
+     * points at the next one.
+     */
+    kE64ExceptionStep =              0b1010,
 } E64Exception;
 
 /* CRSTAT bits */
@@ -503,7 +509,8 @@ typedef enum: UInt8 {
 #define E64_CRSTAT_PEL_SHIFT        8                               /* elevation level before the last trap */
 #define E64_CRSTAT_PEL_MASK         (3ULL << E64_CRSTAT_PEL_SHIFT)
 #define E64_CRSTAT_TRAPS            (1ULL << 16)                    /* trap model enabled */
-#define E64_CRSTAT_WRITABLE         (E64_CRSTAT_IE | E64_CRSTAT_PIE | E64_CRSTAT_PEL_MASK | E64_CRSTAT_TRAPS)
+#define E64_CRSTAT_STEP             (1ULL << 17)                    /* user code runs one instruction, then traps (ISA v23) */
+#define E64_CRSTAT_WRITABLE         (E64_CRSTAT_IE | E64_CRSTAT_PIE | E64_CRSTAT_PEL_MASK | E64_CRSTAT_TRAPS | E64_CRSTAT_STEP)
 
 /* FPC bits */
 #define E64_FPC_RM_MASK             0x3ULL          /* rounding mode */

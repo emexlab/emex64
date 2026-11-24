@@ -87,6 +87,10 @@ static void __E64MachineDeinit(EFObjectRef machineRef)
     {
         emex64_sata_dealloc(machine->sata);
     }
+    if(machine->nvme != NULL)
+    {
+        emex64_nvme_dealloc(machine->nvme);
+    }
     if(machine->usb != NULL)
     {
         emex64_usb_dealloc(machine->usb);
@@ -275,6 +279,23 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
         }
     }
 
+    if(options.nvmeDiskCount > 0)
+    {
+        machine->nvme = emex64_nvme_alloc(machine->pcie, 6);
+        if(machine->nvme == NULL)
+        {
+            return NULL;
+        }
+
+        for(UInt8 i = 0; i < options.nvmeDiskCount && i < E64_MACHINE_MAX_NVME_DISKS; i++)
+        {
+            if(!emex64_nvme_attach_nand(machine->nvme, options.nvmeDisks[i].path, options.nvmeDisks[i].readOnly))
+            {
+                return NULL;
+            }
+        }
+    }
+
     if(options.networkOptions.enabled)
     {
         machine->net = emex64_net_alloc(machine->pcie, 4, &options);
@@ -343,6 +364,7 @@ void __E64MachineResetHardware(__E64Machine machine)
     emex64_uart_reset(machine->uart);
     emex64_8042_reset(machine->emex8042);
     emex64_sata_reset(machine->sata);
+    emex64_nvme_reset(machine->nvme);
     emex64_usb_reset(machine->usb);
     emex64_gpu_reset(machine->gpu);
 

@@ -1038,7 +1038,7 @@ static void __E64CoreSpecialize(__E64Core core,
                                 const emex64_operand_recipe_t *rec,
                                 UInt8 count)
 {
-    const emex64_icache_cold_t *cc = &core->icold[ce - core->icache];
+    emex64_icache_cold_t *cc = &core->icold[ce - core->icache];
     ce->fast = kE64FastNone;
     ce->rel = 0;
     ce->cf_mask = 0;
@@ -1139,8 +1139,48 @@ static void __E64CoreSpecialize(__E64Core core,
             ce->q[1] = cc->param[count - 2];
             ce->q[2] = cc->param[count - 1];
             goto writes_first;
-        
-        /* fast compare and move */
+        case kE64OpcodeINC:
+        case kE64OpcodeDEC:
+        case kE64OpcodeNEG:
+        case kE64OpcodeNOT:
+        case kE64OpcodeCLR:
+        {
+            if(cc->dyn_cnt != 0 || count != 1)
+            {
+                return;
+            }
+            UInt64 *constant = &cc->operands[1].imm;
+            ce->q[0] = cc->param[0];
+            ce->q[1] = cc->param[0];
+            ce->q[2] = constant;
+            switch(cc->opcode)
+            {
+                case kE64OpcodeINC:
+                    *constant = 1;
+                    fast = kE64FastAdd;
+                    break;
+                case kE64OpcodeDEC:
+                    *constant = 1;
+                    fast = kE64FastSub;
+                    break;
+                case kE64OpcodeNOT:
+                    *constant = ~(UInt64)0;
+                    fast = kE64FastXor;
+                    break;
+                case kE64OpcodeNEG:
+                    *constant = 0;
+                    ce->q[1] = constant;
+                    ce->q[2] = cc->param[0];
+                    fast = kE64FastSub;
+                    break;
+                default:
+                    *constant = 0;
+                    ce->q[1] = constant;
+                    fast = kE64FastMov;
+                    break;
+            }
+            goto writes_first;
+        }
         case kE64OpcodeMOV:
         case kE64OpcodeCMP:
             if(cc->dyn_cnt != 0 || count != 2)
@@ -3020,7 +3060,18 @@ static void *__E64CoreExecutionThread(void *arg)
 
         if(core->cr_state.crstat & E64_CRSTAT_TRAPS)
         {
-            tick_countdown -= __E64CoreRunTrapModel(core, tick_countdown);
+            if(unlikely(core->cr_state.crstat & E64_CRSTAT_STEP) && core->cr_state.crel.level == kE64ElevationLevelUser && !core->halted)
+            {
+                tick_countdown -= __E64CoreRunTrapModel(core, 1);
+                if(core->cr_state.crel.level == kE64ElevationLevelUser && !core->halted)
+                {
+                    __E64CoreTrapEnter(core, kE64ExceptionStep, core->rl[kE64RegisterPC], 0);
+                }
+            }
+            else
+            {
+                tick_countdown -= __E64CoreRunTrapModel(core, tick_countdown);
+            }
 
             if(unlikely(tick_countdown == 0) || unlikely(core->halted))
             {

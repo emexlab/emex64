@@ -122,6 +122,7 @@ add_library(EmexToolchain ${LIB_TYPE}
             ### PCIe devices
             src/VM/device/board/pcie/pcie.c
             src/VM/device/board/pcie/sata.c
+            src/VM/device/board/pcie/nvme.c
             src/VM/device/board/pcie/usb.c
             src/VM/device/board/pcie/usb_msc.c
             src/VM/device/board/pcie/gpu.c

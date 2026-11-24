@@ -34,6 +34,7 @@
 #include <EmexToolchain/VM/device/board/display.h>
 #include <EmexToolchain/VM/device/board/pcie/pcie.h>
 #include <EmexToolchain/VM/device/board/pcie/sata.h>
+#include <EmexToolchain/VM/device/board/pcie/nvme.h>
 #include <EmexToolchain/VM/device/board/pcie/usb.h>
 #include <EmexToolchain/VM/device/board/pcie/gpu.h>
 #include <EmexToolchain/VM/device/board/pcie/net.h>
@@ -62,6 +63,7 @@ typedef struct __E64Machine {
     emex64_8042_t *emex8042;
     emex64_pcie_t *pcie;
     emex64_sata_t *sata;
+    emex64_nvme_t *nvme;
     emex64_usb_t *usb;
     emex64_gpu_t *gpu;
     emex64_net_t *net;
