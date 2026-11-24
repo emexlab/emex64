@@ -1,7 +1,5 @@
 # emex64
 
-Status: emulated only (emex64vm), no silicon yet, but planned. The Linux, musl and LLVM ports live in this repository.
-
 <p align="left">
   <img src="fastfetch.png" width="720" alt="fastfetch on emex64">
 </p>
@@ -12,6 +10,35 @@ emex64 is a 64bit lightweight little endian architecture. It's a mix out of RISC
 Outside the SoC, the emulated board additionally integrates support for UART, (Re-Implementation pending (a vibecoder contributed audio before and was cought vibecoding which resulted in his code being removed)) Audio, and (implementation pending) Graphics.
 
 Besides that there is a proper polymorphic toolchain called `EmexToolchain` which can be used to assemble, link and execute emex64 code all in the same process with proper memory management lavering `EmexFoundation`. The assembler spits out ELF relocatable objects, which the linker can either link all of them together to a firmware image which is something like emex64's BIOS or to a merged ELF relocatable object. ELF is the only thing that I didn't do from scratch, I originally wanted to use the LO(LightweightObject) format made by me, but thought then that this will be nightmares to implement.
+
+## ToDo
+- [ ] Rewrite and clean a large portion of EmexToolchain into EmexFoundation
+- [ ] Optimize EnexFoundation and the rewritten parts of EmexToolchain
+- [ ] Research more of LA64
+- [ ] FOSS the entire Linux port
+- emexOS from scratch rewrite (a new write by me(mach-port-t) without the millions of ways to allocate memory alone ;-;)
+  - [ ] EFI application
+  - [ ] KASLR initilization
+  - [ ] KTRR initilization
+  - [ ] PAC initilization
+  - [ ] Physical Memory Management (PMM)
+  - [ ] ~~SPTM initilization~~ (will be introduced in the next ISA updates)
+  - [ ] Virtual Memory Management (VMM)
+  - [ ] Interrupt Controller Management (ICM)
+  - Drivers
+    - Output
+      - [ ] Display (Using passthrough PCIe device)
+    - Storage
+      - [ ] USB
+      - [ ] SATA
+      - [ ] NVMe
+    - Input
+      - [ ] PS/2 emex8042 (for mouse and keyboard)
+  - Syscalls
+    - [ ] Trap mechanism
+    - [ ] Some basic syscalls
+  - [ ] Userspace
+  - More once here...
 
 ## Setup and Installation of the minimal emex64 toolchain
 Bulding the toolchain and installing it is as simple as the following:
