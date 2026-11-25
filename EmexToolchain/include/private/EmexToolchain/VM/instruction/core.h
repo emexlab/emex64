@@ -25,8 +25,8 @@
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/E64Core.h>
 
-void emex64_op_hlt(__E64Core core);
-void emex64_op_nop(__E64Core core);
-void emex64_op_brk(__E64Core core);
+void E64HLT(__E64Core core);
+void E64NOP(__E64Core core);
+void E64BRK(__E64Core core);
 
 #endif /* EMEX64VM_INSTRUCTION_CORE_H */

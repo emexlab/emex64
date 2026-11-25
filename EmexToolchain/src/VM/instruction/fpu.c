@@ -93,7 +93,7 @@ static inline void put_s(UInt64 *p, float f)
 #define SRC_LAST    (core->op.param[core->op.param_cnt - 1])
 
 #define FPU_BINARY(name, T, get, put, expr)                                 \
-void emex64_op_##name(__E64Core core)                                       \
+void E64##name(__E64Core core)                                              \
 {                                                                           \
     unsigned rm = fpu_begin(core);                                          \
     volatile T a = get(SRC_A);                                              \
@@ -103,20 +103,20 @@ void emex64_op_##name(__E64Core core)                                       \
     put(DST, r);                                                            \
 }
 
-FPU_BINARY(fadd, double, get_d, put_d, a + b)
-FPU_BINARY(fsub, double, get_d, put_d, a - b)
-FPU_BINARY(fmul, double, get_d, put_d, a * b)
-FPU_BINARY(fdiv, double, get_d, put_d, a / b)
-FPU_BINARY(fmin, double, get_d, put_d, fmin(a, b))
-FPU_BINARY(fmax, double, get_d, put_d, fmax(a, b))
-FPU_BINARY(fadds, float, get_s, put_s, a + b)
-FPU_BINARY(fsubs, float, get_s, put_s, a - b)
-FPU_BINARY(fmuls, float, get_s, put_s, a * b)
-FPU_BINARY(fdivs, float, get_s, put_s, a / b)
-FPU_BINARY(fmins, float, get_s, put_s, fminf(a, b))
-FPU_BINARY(fmaxs, float, get_s, put_s, fmaxf(a, b))
+FPU_BINARY(FADD, double, get_d, put_d, a + b)
+FPU_BINARY(FSUB, double, get_d, put_d, a - b)
+FPU_BINARY(FMUL, double, get_d, put_d, a * b)
+FPU_BINARY(FDIV, double, get_d, put_d, a / b)
+FPU_BINARY(FMIN, double, get_d, put_d, fmin(a, b))
+FPU_BINARY(FMAX, double, get_d, put_d, fmax(a, b))
+FPU_BINARY(FADDS, float, get_s, put_s, a + b)
+FPU_BINARY(FSUBS, float, get_s, put_s, a - b)
+FPU_BINARY(FMULS, float, get_s, put_s, a * b)
+FPU_BINARY(FDIVS, float, get_s, put_s, a / b)
+FPU_BINARY(FMINS, float, get_s, put_s, fminf(a, b))
+FPU_BINARY(FMAXS, float, get_s, put_s, fmaxf(a, b))
 
-void emex64_op_fsqrt(__E64Core core)
+void E64FSQRT(__E64Core core)
 {
     unsigned rm = fpu_begin(core);
     volatile double a = get_d(SRC_LAST);
@@ -125,7 +125,7 @@ void emex64_op_fsqrt(__E64Core core)
     put_d(DST, r);
 }
 
-void emex64_op_fsqrts(__E64Core core)
+void E64FSQRTS(__E64Core core)
 {
     unsigned rm = fpu_begin(core);
     volatile float a = get_s(SRC_LAST);
@@ -134,7 +134,7 @@ void emex64_op_fsqrts(__E64Core core)
     put_s(DST, r);
 }
 
-void emex64_op_fmadd(__E64Core core)
+void E64FMADD(__E64Core core)
 {
     unsigned rm = fpu_begin(core);
     volatile double a = get_d(core->op.param[1]);
@@ -145,7 +145,7 @@ void emex64_op_fmadd(__E64Core core)
     put_d(DST, r);
 }
 
-void emex64_op_fmadds(__E64Core core)
+void E64FMADDS(__E64Core core)
 {
     unsigned rm = fpu_begin(core);
     volatile float a = get_s(core->op.param[1]);
@@ -156,28 +156,28 @@ void emex64_op_fmadds(__E64Core core)
     put_s(DST, r);
 }
 
-void emex64_op_fneg(__E64Core core)
+void E64FNEG(__E64Core core)
 {
     *DST = *SRC_LAST ^ (1ULL << 63);
 }
 
-void emex64_op_fabs(__E64Core core)
+void E64FABS(__E64Core core)
 {
     *DST = *SRC_LAST & ~(1ULL << 63);
 }
 
-void emex64_op_fnegs(__E64Core core)
+void E64FNEGS(__E64Core core)
 {
     *DST = (UInt32)(*SRC_LAST ^ (1ULL << 31));
 }
 
-void emex64_op_fabss(__E64Core core)
+void E64FABSS(__E64Core core)
 {
     *DST = (UInt32)(*SRC_LAST & ~(1ULL << 31));
 }
 
 #define FPU_COMPARE(name, T, get)                                           \
-void emex64_op_##name(__E64Core core)                                       \
+void E64##name(__E64Core core)                                              \
 {                                                                           \
     unsigned rm = fpu_begin(core);                                          \
     volatile T a = get(core->op.param[0]);                                  \
@@ -195,10 +195,10 @@ void emex64_op_##name(__E64Core core)                                       \
     core->rl[kE64RegisterCF] = cf;                                          \
 }
 
-FPU_COMPARE(fcmp, double, get_d)
-FPU_COMPARE(fcmps, float, get_s)
+FPU_COMPARE(FCMP, double, get_d)
+FPU_COMPARE(FCMPS, float, get_s)
 
-void emex64_op_fcvtds(__E64Core core)
+void E64FCVTDS(__E64Core core)
 {
     unsigned rm = fpu_begin(core);
     volatile float a = get_s(SRC_LAST);
@@ -207,7 +207,7 @@ void emex64_op_fcvtds(__E64Core core)
     put_d(DST, r);
 }
 
-void emex64_op_fcvtsd(__E64Core core)
+void E64FCVTSD(__E64Core core)
 {
     unsigned rm = fpu_begin(core);
     volatile double a = get_d(SRC_LAST);
@@ -217,7 +217,7 @@ void emex64_op_fcvtsd(__E64Core core)
 }
 
 #define FPU_FROM_INT(name, IT, T, put)                                      \
-void emex64_op_##name(__E64Core core)                                       \
+void E64##name(__E64Core core)                                              \
 {                                                                           \
     unsigned rm = fpu_begin(core);                                          \
     volatile IT a = (IT)*SRC_LAST;                                          \
@@ -226,13 +226,13 @@ void emex64_op_##name(__E64Core core)                                       \
     put(DST, r);                                                            \
 }
 
-FPU_FROM_INT(fcvtdi, SInt64, double, put_d)
-FPU_FROM_INT(fcvtdu, UInt64, double, put_d)
-FPU_FROM_INT(fcvtsi, SInt64, float, put_s)
-FPU_FROM_INT(fcvtsu, UInt64, float, put_s)
+FPU_FROM_INT(FCVTDI, SInt64, double, put_d)
+FPU_FROM_INT(FCVTDU, UInt64, double, put_d)
+FPU_FROM_INT(FCVTSI, SInt64, float, put_s)
+FPU_FROM_INT(FCVTSU, UInt64, float, put_s)
 
 #define FPU_TO_SIGNED(name, T, get)                                         \
-void emex64_op_##name(__E64Core core)                                       \
+void E64##name(__E64Core core)                                              \
 {                                                                           \
     unsigned rm = fpu_begin(core);                                          \
     volatile T a = get(SRC_LAST);                                           \
@@ -262,7 +262,7 @@ void emex64_op_##name(__E64Core core)                                       \
 }
 
 #define FPU_TO_UNSIGNED(name, T, get)                                       \
-void emex64_op_##name(__E64Core core)                                       \
+void E64##name(__E64Core core)                                              \
 {                                                                           \
     unsigned rm = fpu_begin(core);                                          \
     volatile T a = get(SRC_LAST);                                           \
@@ -291,7 +291,7 @@ void emex64_op_##name(__E64Core core)                                       \
     *DST = r;                                                               \
 }
 
-FPU_TO_SIGNED(fcvtid, double, get_d)
-FPU_TO_UNSIGNED(fcvtud, double, get_d)
-FPU_TO_SIGNED(fcvtis, float, get_s)
-FPU_TO_UNSIGNED(fcvtus, float, get_s)
+FPU_TO_SIGNED(FCVTID, double, get_d)
+FPU_TO_UNSIGNED(FCVTUD, double, get_d)
+FPU_TO_SIGNED(FCVTIS, float, get_s)
+FPU_TO_UNSIGNED(FCVTUS, float, get_s)

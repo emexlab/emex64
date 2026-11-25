@@ -30,24 +30,24 @@
 
 #define EMEX64_CALL_ARGS 6
 
-void emex64_op_b(__E64Core core);
-void emex64_op_cmp(__E64Core core);
-void emex64_op_be(__E64Core core);
-void emex64_op_bne(__E64Core core);
-void emex64_op_blt(__E64Core core);
-void emex64_op_bgt(__E64Core core);
-void emex64_op_ble(__E64Core core);
-void emex64_op_bge(__E64Core core);
-void emex64_op_bz(__E64Core core);
-void emex64_op_bnz(__E64Core core);
+void E64B(__E64Core core);
+void E64CMP(__E64Core core);
+void E64BE(__E64Core core);
+void E64BNE(__E64Core core);
+void E64BLT(__E64Core core);
+void E64BGT(__E64Core core);
+void E64BLE(__E64Core core);
+void E64BGE(__E64Core core);
+void E64BZ(__E64Core core);
+void E64BNZ(__E64Core core);
 
-void emex64_op_blw(__E64Core core);
-void emex64_op_wret(__E64Core core);
-void emex64_op_iret(__E64Core core);
+void E64BLW(__E64Core core);
+void E64WRET(__E64Core core);
+void E64IRET(__E64Core core);
 
-void emex64_op_bl(__E64Core core);
-void emex64_op_ret(__E64Core core);
-void emex64_op_bla(__E64Core core);
+void E64BL(__E64Core core);
+void E64RET(__E64Core core);
+void E64BLA(__E64Core core);
 
 static inline __attribute__((always_inline)) Boolean emex64_hot_call(__E64Core core,
                                                                      UInt64 ctx,
@@ -128,30 +128,30 @@ static inline UInt64 emex64_pop_il(__E64Core core)
     return value;
 }
 
-void emex64_op_bbz(__E64Core core);
-void emex64_op_bbnz(__E64Core core);
-void emex64_op_cblt(__E64Core core);
+void E64BBZ(__E64Core core);
+void E64BBNZ(__E64Core core);
+void E64CBLT(__E64Core core);
 
-void emex64_op_cbeq(__E64Core core);
-void emex64_op_cbne(__E64Core core);
-void emex64_op_cbge(__E64Core core);
-void emex64_op_cbltu(__E64Core core);
-void emex64_op_cbgeu(__E64Core core);
-void emex64_op_wfe(__E64Core core);
-void emex64_op_sev(__E64Core core);
-void emex64_op_pause(__E64Core core);
-void emex64_op_tlbi(__E64Core core);
+void E64CBEQ(__E64Core core);
+void E64CBNE(__E64Core core);
+void E64CBGE(__E64Core core);
+void E64CBLTU(__E64Core core);
+void E64CBGEU(__E64Core core);
+void E64WFE(__E64Core core);
+void E64SEV(__E64Core core);
+void E64PAUSE(__E64Core core);
+void E64TLBI(__E64Core core);
 
 /* pointer authentication extension */
-void emex64_op_pacia(__E64Core core);
-void emex64_op_autia(__E64Core core);
-void emex64_op_pacda(__E64Core core);
-void emex64_op_autda(__E64Core core);
-void emex64_op_xpac(__E64Core core);
-void emex64_op_pacret(__E64Core core);
-void emex64_op_reta(__E64Core core);
+void E64PACIA(__E64Core core);
+void E64AUTIA(__E64Core core);
+void E64PACDA(__E64Core core);
+void E64AUTDA(__E64Core core);
+void E64XPAC(__E64Core core);
+void E64PACRET(__E64Core core);
+void E64RETA(__E64Core core);
 
-void emex64_op_svc(__E64Core core);
-void emex64_op_eret(__E64Core core);
+void E64SVC(__E64Core core);
+void E64ERET(__E64Core core);
 
 #endif /* EMEX64VM_INSTRUCTION_CTRL_H */

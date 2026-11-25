@@ -25,52 +25,52 @@
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/E64Core.h>
 
-void emex64_op_add(__E64Core core);
-void emex64_op_sub(__E64Core core);
-void emex64_op_mul(__E64Core core);
-void emex64_op_div(__E64Core core);
-void emex64_op_idiv(__E64Core core);
-void emex64_op_mod(__E64Core core);
-void emex64_op_not(__E64Core core);
-void emex64_op_neg(__E64Core core);
-void emex64_op_and(__E64Core core);
-void emex64_op_or(__E64Core core);
-void emex64_op_xor(__E64Core core);
-void emex64_op_shr(__E64Core core);
-void emex64_op_shl(__E64Core core);
-void emex64_op_sar(__E64Core core);
-void emex64_op_ror(__E64Core core);
-void emex64_op_rol(__E64Core core);
+void E64ADD(__E64Core core);
+void E64SUB(__E64Core core);
+void E64MUL(__E64Core core);
+void E64DIV(__E64Core core);
+void E64IDIV(__E64Core core);
+void E64MOD(__E64Core core);
+void E64NOT(__E64Core core);
+void E64NEG(__E64Core core);
+void E64AND(__E64Core core);
+void E64OR(__E64Core core);
+void E64XOR(__E64Core core);
+void E64SHR(__E64Core core);
+void E64SHL(__E64Core core);
+void E64SAR(__E64Core core);
+void E64ROR(__E64Core core);
+void E64ROL(__E64Core core);
 
-void emex64_op_pdep(__E64Core core);
-void emex64_op_pext(__E64Core core);
-void emex64_op_bswapw(__E64Core core);
-void emex64_op_bswapd(__E64Core core);
-void emex64_op_bswapq(__E64Core core);
-void emex64_op_inc(__E64Core core);
-void emex64_op_dec(__E64Core core);
+void E64PDEP(__E64Core core);
+void E64PEXT(__E64Core core);
+void E64BSWAPW(__E64Core core);
+void E64BSWAPD(__E64Core core);
+void E64BSWAPQ(__E64Core core);
+void E64INC(__E64Core core);
+void E64DEC(__E64Core core);
 
-void emex64_op_sext(__E64Core core);
-void emex64_op_clz(__E64Core core);
-void emex64_op_ctz(__E64Core core);
-void emex64_op_popcnt(__E64Core core);
-void emex64_op_mulh(__E64Core core);
-void emex64_op_umulh(__E64Core core);
-void emex64_op_adc(__E64Core core);
-void emex64_op_sbb(__E64Core core);
+void E64SEXT(__E64Core core);
+void E64CLZ(__E64Core core);
+void E64CTZ(__E64Core core);
+void E64POPCNT(__E64Core core);
+void E64MULH(__E64Core core);
+void E64UMULH(__E64Core core);
+void E64ADC(__E64Core core);
+void E64SBB(__E64Core core);
 
-void emex64_op_addd(__E64Core core);
-void emex64_op_iaddd(__E64Core core);
-void emex64_op_subd(__E64Core core);
-void emex64_op_isubd(__E64Core core);
-void emex64_op_muld(__E64Core core);
-void emex64_op_imuld(__E64Core core);
-void emex64_op_shld(__E64Core core);
-void emex64_op_ishld(__E64Core core);
-void emex64_op_shrd(__E64Core core);
-void emex64_op_sard(__E64Core core);
-void emex64_op_divd(__E64Core core);
-void emex64_op_idivd(__E64Core core);
-void emex64_op_modd(__E64Core core);
+void E64ADDD(__E64Core core);
+void E64IADDD(__E64Core core);
+void E64SUBD(__E64Core core);
+void E64ISUBD(__E64Core core);
+void E64MULD(__E64Core core);
+void E64IMULD(__E64Core core);
+void E64SHLD(__E64Core core);
+void E64ISHLD(__E64Core core);
+void E64SHRD(__E64Core core);
+void E64SARD(__E64Core core);
+void E64DIVD(__E64Core core);
+void E64IDIVD(__E64Core core);
+void E64MODD(__E64Core core);
 
 #endif /* EMEX64VM_INSTRUCTION_ALU_H */

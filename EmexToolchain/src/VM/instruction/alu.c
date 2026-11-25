@@ -50,37 +50,37 @@
     }                                                                                                                                   \
     *(core->op.param[0]) = (SInt64)*operand[0] act (SInt64)*operand[1];
 
-void emex64_op_add(__E64Core core)
+void E64ADD(__E64Core core)
 {
     DEFINE_EMEX64_ARITHMETIC_OP(+);
 }
 
-void emex64_op_sub(__E64Core core)
+void E64SUB(__E64Core core)
 {
     DEFINE_EMEX64_ARITHMETIC_OP(-);
 }
 
-void emex64_op_mul(__E64Core core)
+void E64MUL(__E64Core core)
 {
     DEFINE_EMEX64_ARITHMETIC_OP(*);
 }
 
-void emex64_op_div(__E64Core core)
+void E64DIV(__E64Core core)
 {
     DEFINE_EMEX64_ARITHMETIC_OP_ZERO_BAD(/);
 }
 
-void emex64_op_idiv(__E64Core core)
+void E64IDIV(__E64Core core)
 {
     DEFINE_EMEX64_SIGNED_ARITHMETIC_OP_ZERO_BAD(/);
 }
 
-void emex64_op_mod(__E64Core core)
+void E64MOD(__E64Core core)
 {
     DEFINE_EMEX64_ARITHMETIC_OP_ZERO_BAD(%);
 }
 
-void emex64_op_not(__E64Core core)
+void E64NOT(__E64Core core)
 {
     for(UInt8 i = 0; i < core->op.param_cnt; i++)
     {
@@ -88,7 +88,7 @@ void emex64_op_not(__E64Core core)
     }
 }
 
-void emex64_op_neg(__E64Core core)
+void E64NEG(__E64Core core)
 {
     for(UInt8 i = 0; i < core->op.param_cnt; i++)
     {
@@ -96,44 +96,44 @@ void emex64_op_neg(__E64Core core)
     }
 }
 
-void emex64_op_and(__E64Core core)
+void E64AND(__E64Core core)
 {
     DEFINE_EMEX64_ARITHMETIC_OP(&);
 }
 
-void emex64_op_or(__E64Core core)
+void E64OR(__E64Core core)
 {
     DEFINE_EMEX64_ARITHMETIC_OP(|);
 }
 
-void emex64_op_xor(__E64Core core)
+void E64XOR(__E64Core core)
 {
     DEFINE_EMEX64_ARITHMETIC_OP(^);
 }
 
-void emex64_op_shr(__E64Core core)
+void E64SHR(__E64Core core)
 {
     DEFINE_EMEX64_ARITHMETIC_OP(>>);
 }
 
-void emex64_op_shl(__E64Core core)
+void E64SHL(__E64Core core)
 {
     DEFINE_EMEX64_ARITHMETIC_OP(<<);
 }
 
-void emex64_op_sar(__E64Core core)
+void E64SAR(__E64Core core)
 {
     DEFINE_EMEX64_SIGNED_ARITHMETIC_OP(>>);
 }
 
-void emex64_op_ror(__E64Core core)
+void E64ROR(__E64Core core)
 {
     UInt64 v = *core->op.param[0];
     UInt64 n = (core->op.param_cnt == 2) ? (*core->op.param[1] & 63) : 1;
     *core->op.param[0] = (v >> n) | (v << (64 - n));
 }
 
-void emex64_op_rol(__E64Core core)
+void E64ROL(__E64Core core)
 {
     SInt64 v = *core->op.param[0];
     UInt64 n = (core->op.param_cnt == 2) ? (*core->op.param[1] & 63) : 1;
@@ -143,7 +143,7 @@ void emex64_op_rol(__E64Core core)
 #if defined(__x86_64__)
 __attribute__((target("bmi2")))
 #endif /*__x86_64__  */
-void emex64_op_pdep(__E64Core core)
+void E64PDEP(__E64Core core)
 {
     UInt64 *dest = core->op.param[0];
     UInt64 src = *core->op.param[core->op.param_cnt - 2];
@@ -182,7 +182,7 @@ void emex64_op_pdep(__E64Core core)
 #if defined(__x86_64__)
 __attribute__((target("bmi2")))
 #endif /*__x86_64__  */
-void emex64_op_pext(__E64Core core)
+void E64PEXT(__E64Core core)
 {
     UInt64 *dest = core->op.param[0];
     UInt64 src = *core->op.param[core->op.param_cnt - 2];
@@ -218,22 +218,22 @@ void emex64_op_pext(__E64Core core)
 #endif /*__x86_64__  */
 }
 
-void emex64_op_bswapw(__E64Core core)
+void E64BSWAPW(__E64Core core)
 {
     *core->op.param[0] = __builtin_bswap16((UInt16)*core->op.param[0]);
 }
 
-void emex64_op_bswapd(__E64Core core)
+void E64BSWAPD(__E64Core core)
 {
     *core->op.param[0] = __builtin_bswap32((UInt32)*core->op.param[0]);
 }
 
-void emex64_op_bswapq(__E64Core core)
+void E64BSWAPQ(__E64Core core)
 {
     *core->op.param[0] = __builtin_bswap64(*core->op.param[0]);
 }
 
-void emex64_op_sext(__E64Core core)
+void E64SEXT(__E64Core core)
 {
     UInt64 v = *core->op.param[core->op.param_cnt - 2];
     UInt64 n = *core->op.param[core->op.param_cnt - 1] & 63;
@@ -244,36 +244,36 @@ void emex64_op_sext(__E64Core core)
     *core->op.param[0] = v;
 }
 
-void emex64_op_clz(__E64Core core)
+void E64CLZ(__E64Core core)
 {
     UInt64 v = *core->op.param[core->op.param_cnt - 1];
     *core->op.param[0] = v ? (UInt64)__builtin_clzll(v) : 64;
 }
 
-void emex64_op_ctz(__E64Core core)
+void E64CTZ(__E64Core core)
 {
     UInt64 v = *core->op.param[core->op.param_cnt - 1];
     *core->op.param[0] = v ? (UInt64)__builtin_ctzll(v) : 64;
 }
 
-void emex64_op_popcnt(__E64Core core)
+void E64POPCNT(__E64Core core)
 {
     *core->op.param[0] = (UInt64)__builtin_popcountll(*core->op.param[core->op.param_cnt - 1]);
 }
 
-void emex64_op_mulh(__E64Core core)
+void E64MULH(__E64Core core)
 {
     __int128 p = (__int128)(SInt64)*core->op.param[core->op.param_cnt - 2] * (__int128)(SInt64)*core->op.param[core->op.param_cnt - 1];
     *core->op.param[0] = (UInt64)(p >> 64);
 }
 
-void emex64_op_umulh(__E64Core core)
+void E64UMULH(__E64Core core)
 {
     unsigned __int128 p = (unsigned __int128)*core->op.param[core->op.param_cnt - 2] * (unsigned __int128)*core->op.param[core->op.param_cnt - 1];
     *core->op.param[0] = (UInt64)(p >> 64);
 }
 
-void emex64_op_adc(__E64Core core)
+void E64ADC(__E64Core core)
 {
     UInt64 a = *core->op.param[core->op.param_cnt - 2];
     UInt64 b = *core->op.param[core->op.param_cnt - 1];
@@ -285,7 +285,7 @@ void emex64_op_adc(__E64Core core)
     *core->op.param[0] = sum;
 }
 
-void emex64_op_sbb(__E64Core core)
+void E64SBB(__E64Core core)
 {
     UInt64 a = *core->op.param[core->op.param_cnt - 2];
     UInt64 b = *core->op.param[core->op.param_cnt - 1];
@@ -297,7 +297,7 @@ void emex64_op_sbb(__E64Core core)
     *core->op.param[0] = diff;
 }
 
-void emex64_op_inc(__E64Core core)
+void E64INC(__E64Core core)
 {
     for(UInt8 i = 0; i < core->op.param_cnt; i++)
     {
@@ -305,7 +305,7 @@ void emex64_op_inc(__E64Core core)
     }
 }
 
-void emex64_op_dec(__E64Core core)
+void E64DEC(__E64Core core)
 {
     for(UInt8 i = 0; i < core->op.param_cnt; i++)
     {
@@ -318,57 +318,57 @@ void emex64_op_dec(__E64Core core)
 #define EMEX64_DW_ZEXT(v)   ((UInt64)(UInt32)(v))
 #define EMEX64_DW_SEXT(v)   ((UInt64)(SInt64)(SInt32)(UInt32)(v))
 
-void emex64_op_addd(__E64Core core)
+void E64ADDD(__E64Core core)
 {
     *(core->op.param[0]) = EMEX64_DW_ZEXT(EMEX64_DW_A + EMEX64_DW_B);
 }
 
-void emex64_op_iaddd(__E64Core core)
+void E64IADDD(__E64Core core)
 {
     *(core->op.param[0]) = EMEX64_DW_SEXT(EMEX64_DW_A + EMEX64_DW_B);
 }
 
-void emex64_op_subd(__E64Core core)
+void E64SUBD(__E64Core core)
 {
     *(core->op.param[0]) = EMEX64_DW_ZEXT(EMEX64_DW_A - EMEX64_DW_B);
 }
 
-void emex64_op_isubd(__E64Core core)
+void E64ISUBD(__E64Core core)
 {
     *(core->op.param[0]) = EMEX64_DW_SEXT(EMEX64_DW_A - EMEX64_DW_B);
 }
 
-void emex64_op_muld(__E64Core core)
+void E64MULD(__E64Core core)
 {
     *(core->op.param[0]) = EMEX64_DW_ZEXT(EMEX64_DW_A * EMEX64_DW_B);
 }
 
-void emex64_op_imuld(__E64Core core)
+void E64IMULD(__E64Core core)
 {
     *(core->op.param[0]) = EMEX64_DW_SEXT(EMEX64_DW_A * EMEX64_DW_B);
 }
 
-void emex64_op_shld(__E64Core core)
+void E64SHLD(__E64Core core)
 {
     *(core->op.param[0]) = EMEX64_DW_ZEXT((UInt64)EMEX64_DW_A << (*(core->op.param[core->op.param_cnt - 1]) & 63));
 }
 
-void emex64_op_ishld(__E64Core core)
+void E64ISHLD(__E64Core core)
 {
     *(core->op.param[0]) = EMEX64_DW_SEXT((UInt64)EMEX64_DW_A << (*(core->op.param[core->op.param_cnt - 1]) & 63));
 }
 
-void emex64_op_shrd(__E64Core core)
+void E64SHRD(__E64Core core)
 {
     *(core->op.param[0]) = EMEX64_DW_ZEXT((UInt64)EMEX64_DW_A >> (*(core->op.param[core->op.param_cnt - 1]) & 63));
 }
 
-void emex64_op_sard(__E64Core core)
+void E64SARD(__E64Core core)
 {
     *(core->op.param[0]) = EMEX64_DW_SEXT((SInt64)(SInt32)EMEX64_DW_A >> (*(core->op.param[core->op.param_cnt - 1]) & 63));
 }
 
-void emex64_op_divd(__E64Core core)
+void E64DIVD(__E64Core core)
 {
     UInt32 a = EMEX64_DW_A;
     UInt32 b = EMEX64_DW_B;
@@ -380,7 +380,7 @@ void emex64_op_divd(__E64Core core)
     *(core->op.param[0]) = EMEX64_DW_ZEXT(a / b);
 }
 
-void emex64_op_idivd(__E64Core core)
+void E64IDIVD(__E64Core core)
 {
     SInt64 a = (SInt32)EMEX64_DW_A;
     SInt64 b = (SInt32)EMEX64_DW_B;
@@ -392,7 +392,7 @@ void emex64_op_idivd(__E64Core core)
     *(core->op.param[0]) = EMEX64_DW_SEXT(a / b);
 }
 
-void emex64_op_modd(__E64Core core)
+void E64MODD(__E64Core core)
 {
     UInt32 a = EMEX64_DW_A;
     UInt32 b = EMEX64_DW_B;

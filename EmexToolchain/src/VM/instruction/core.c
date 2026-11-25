@@ -22,17 +22,17 @@
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/VM/instruction/core.h>
 
-void emex64_op_hlt(__E64Core core)
+void E64HLT(__E64Core core)
 {
     core->halted = true;
 }
 
-void emex64_op_nop(__E64Core core)
+void E64NOP(__E64Core core)
 {
     /* doing nothing */
 }
 
-void emex64_op_brk(__E64Core core)
+void E64BRK(__E64Core core)
 {
     if(core->op.param_coding[0] != kE64ParameterCodingImm16)
     {

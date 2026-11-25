@@ -24,13 +24,13 @@
 #include <EmexToolchain/VM/E64Machine.h>
 #include <EmexToolchain/Support/likely.h>
 
-void emex64_op_b(__E64Core core)
+void E64B(__E64Core core)
 {
     core->op.ilen = 0;
     core->rl[kE64RegisterPC] = emex64_branch_pc(core->rl[kE64RegisterPC], *(core->op.param[0]), core->op.param_coding[0]);
 }
 
-void emex64_op_cmp(__E64Core core)
+void E64CMP(__E64Core core)
 {
     SInt64 a = (SInt64)*(core->op.param[0]);
     SInt64 b = (SInt64)*(core->op.param[1]);
@@ -38,55 +38,55 @@ void emex64_op_cmp(__E64Core core)
     core->rl[kE64RegisterCF] = (a == b) * kE64CompareFlagZ | (a <  b) * kE64CompareFlagL | (a >  b) * kE64CompareFlagG;
 }
 
-void emex64_op_be(__E64Core core)
+void E64BE(__E64Core core)
 {
     if(core->rl[kE64RegisterCF] & kE64CompareFlagZ)
     {
-        emex64_op_b(core);
+        E64B(core);
     }
 }
 
-void emex64_op_bne(__E64Core core)
+void E64BNE(__E64Core core)
 {
     if(!(core->rl[kE64RegisterCF] & kE64CompareFlagZ))
     {
-        emex64_op_b(core);
+        E64B(core);
     }
 }
 
-void emex64_op_blt(__E64Core core)
+void E64BLT(__E64Core core)
 {
     if(core->rl[kE64RegisterCF] & kE64CompareFlagL)
     {
-        emex64_op_b(core);
+        E64B(core);
     }
 }
 
-void emex64_op_bgt(__E64Core core)
+void E64BGT(__E64Core core)
 {
     if(core->rl[kE64RegisterCF] & kE64CompareFlagG)
     {
-        emex64_op_b(core);
+        E64B(core);
     }
 }
 
-void emex64_op_ble(__E64Core core)
+void E64BLE(__E64Core core)
 {
     if(core->rl[kE64RegisterCF] & (kE64CompareFlagL | kE64CompareFlagZ))
     {
-        emex64_op_b(core);
+        E64B(core);
     }
 }
 
-void emex64_op_bge(__E64Core core)
+void E64BGE(__E64Core core)
 {
     if(core->rl[kE64RegisterCF] & (kE64CompareFlagG | kE64CompareFlagZ))
     {
-        emex64_op_b(core);
+        E64B(core);
     }
 }
 
-void emex64_op_bz(__E64Core core)
+void E64BZ(__E64Core core)
 {
     if(*(core->op.param[0]) == 0)
     {
@@ -95,7 +95,7 @@ void emex64_op_bz(__E64Core core)
     }
 }
 
-void emex64_op_bnz(__E64Core core)
+void E64BNZ(__E64Core core)
 {
     if(*(core->op.param[0]) != 0)
     {
@@ -105,7 +105,7 @@ void emex64_op_bnz(__E64Core core)
 }
 
 /* call convention not needed, emex64 supports arguments directly in bl (biggest L ever, we gotta make a call convention) */
-void emex64_op_blw(__E64Core core)
+void E64BLW(__E64Core core)
 {
     /* backup all parameters from pointer to not malform double passed registers for example */
     UInt64 param_imm[32] = {};
@@ -144,7 +144,7 @@ void emex64_op_blw(__E64Core core)
     core->rl[kE64RegisterPC] = emex64_branch_pc(core->rl[kE64RegisterPC], param_imm[0], core->op.param_coding[0]);
 }
 
-void emex64_op_wret(__E64Core core)
+void E64WRET(__E64Core core)
 {
     core->rl[kE64RegisterSP] = core->rl[kE64RegisterFP];
 
@@ -165,7 +165,7 @@ void emex64_op_wret(__E64Core core)
     core->op.ilen = 0;
 }
 
-void emex64_op_iret(__E64Core core)
+void E64IRET(__E64Core core)
 {
     if(!core->in_interrupt)
     {
@@ -201,7 +201,7 @@ void emex64_op_iret(__E64Core core)
     emex64_core_context_changed(core);
 }
 
-void emex64_op_bl(__E64Core core)
+void E64BL(__E64Core core)
 {
     /* pushing all relevant registers onto stack */
     emex64_push_il(core, core->rl[kE64RegisterPC] + core->op.ilen);
@@ -215,7 +215,7 @@ void emex64_op_bl(__E64Core core)
     core->rl[kE64RegisterPC] = emex64_branch_pc(core->rl[kE64RegisterPC], *(core->op.param[0]), core->op.param_coding[0]);
 }
 
-void emex64_op_bla(__E64Core core)
+void E64BLA(__E64Core core)
 {
     UInt64 arg[EMEX64_CALL_ARGS];
     UInt8 count = core->op.param_cnt - 1;
@@ -224,7 +224,7 @@ void emex64_op_bla(__E64Core core)
         arg[i] = *(core->op.param[i + 1]);
     }
 
-    emex64_op_bl(core);
+    E64BL(core);
     if(unlikely(core->cr_state.crexc.exception != kE64ExceptionNone))
     {
         return;
@@ -236,7 +236,7 @@ void emex64_op_bla(__E64Core core)
     }
 }
 
-void emex64_op_ret(__E64Core core)
+void E64RET(__E64Core core)
 {
     core->rl[kE64RegisterSP] = core->rl[kE64RegisterFP];
     core->rl[kE64RegisterFP] = emex64_pop_il(core);
@@ -244,7 +244,7 @@ void emex64_op_ret(__E64Core core)
     core->op.ilen = 0;
 }
 
-void emex64_op_bbz(__E64Core core)
+void E64BBZ(__E64Core core)
 {
     if((*(core->op.param[0]) & *(core->op.param[1])) == 0)
     {
@@ -253,7 +253,7 @@ void emex64_op_bbz(__E64Core core)
     }
 }
 
-void emex64_op_bbnz(__E64Core core)
+void E64BBNZ(__E64Core core)
 {
     if((*(core->op.param[0]) & *(core->op.param[1])) != 0)
     {
@@ -363,7 +363,7 @@ static inline UInt64 emex64_pac_modifier(__E64Core core)
     return core->op.param_cnt > 1 ? *core->op.param[1] : 0;
 }
 
-void emex64_op_pacia(__E64Core core)
+void E64PACIA(__E64Core core)
 {
     if(emex64_pac_enabled(core))
     {
@@ -371,7 +371,7 @@ void emex64_op_pacia(__E64Core core)
     }
 }
 
-void emex64_op_autia(__E64Core core)
+void E64AUTIA(__E64Core core)
 {
     UInt64 ptr;
     if(emex64_pac_enabled(core) &&
@@ -381,7 +381,7 @@ void emex64_op_autia(__E64Core core)
     }
 }
 
-void emex64_op_pacda(__E64Core core)
+void E64PACDA(__E64Core core)
 {
     if(emex64_pac_enabled(core))
     {
@@ -389,7 +389,7 @@ void emex64_op_pacda(__E64Core core)
     }
 }
 
-void emex64_op_autda(__E64Core core)
+void E64AUTDA(__E64Core core)
 {
     UInt64 ptr;
     if(emex64_pac_enabled(core) &&
@@ -399,12 +399,12 @@ void emex64_op_autda(__E64Core core)
     }
 }
 
-void emex64_op_xpac(__E64Core core)
+void E64XPAC(__E64Core core)
 {
     *core->op.param[0] = *core->op.param[core->op.param_cnt - 1] & ~E64_PAC_MASK;
 }
 
-void emex64_op_pacret(__E64Core core)
+void E64PACRET(__E64Core core)
 {
     if(!emex64_pac_enabled(core))
     {
@@ -465,7 +465,7 @@ Boolean emex64_fast_reta(__E64Core core,
     return true;
 }
 
-void emex64_op_reta(__E64Core core)
+void E64RETA(__E64Core core)
 {
     UInt64 frame = core->rl[kE64RegisterFP];
     core->rl[kE64RegisterSP] = frame;
@@ -480,7 +480,7 @@ void emex64_op_reta(__E64Core core)
     core->op.ilen = 0;
 }
 
-void emex64_op_cblt(__E64Core core)
+void E64CBLT(__E64Core core)
 {
     if((SInt64)*(core->op.param[0]) < (SInt64)*(core->op.param[1]))
     {
@@ -499,32 +499,32 @@ static inline void emex64_branch_if(__E64Core core,
     }
 }
 
-void emex64_op_cbeq(__E64Core core)
+void E64CBEQ(__E64Core core)
 {
     emex64_branch_if(core, *(core->op.param[0]) == *(core->op.param[1]));
 }
 
-void emex64_op_cbne(__E64Core core)
+void E64CBNE(__E64Core core)
 {
     emex64_branch_if(core, *(core->op.param[0]) != *(core->op.param[1]));
 }
 
-void emex64_op_cbge(__E64Core core)
+void E64CBGE(__E64Core core)
 {
     emex64_branch_if(core, (SInt64)*(core->op.param[0]) >= (SInt64)*(core->op.param[1]));
 }
 
-void emex64_op_cbltu(__E64Core core)
+void E64CBLTU(__E64Core core)
 {
     emex64_branch_if(core, *(core->op.param[0]) < *(core->op.param[1]));
 }
 
-void emex64_op_cbgeu(__E64Core core)
+void E64CBGEU(__E64Core core)
 {
     emex64_branch_if(core, *(core->op.param[0]) >= *(core->op.param[1]));
 }
 
-void emex64_op_wfe(__E64Core core)
+void E64WFE(__E64Core core)
 {
     if(__atomic_exchange_n(&core->event, false, __ATOMIC_ACQ_REL))
     {
@@ -537,7 +537,7 @@ void emex64_op_wfe(__E64Core core)
     }
 }
 
-void emex64_op_sev(__E64Core core)
+void E64SEV(__E64Core core)
 {
     __E64Machine machine = (__E64Machine)core->machine;
     for(UInt8 i = 0; i < machine->core_count; i++)
@@ -548,7 +548,7 @@ void emex64_op_sev(__E64Core core)
     }
 }
 
-void emex64_op_pause(__E64Core core)
+void E64PAUSE(__E64Core core)
 {
     /* fuck it, let's make it depend on host OS*/
 #if defined(__aarch64__)
@@ -558,7 +558,7 @@ void emex64_op_pause(__E64Core core)
 #endif
 }
 
-void emex64_op_tlbi(__E64Core core)
+void E64TLBI(__E64Core core)
 {
     if(core->cr_state.crel.level < kE64ElevationLevelKernel)
     {
@@ -590,7 +590,7 @@ void emex64_op_tlbi(__E64Core core)
 
 Boolean E64EnterInterruptPrivate(__E64IC ic, __E64Core core, EFIndex irq, UInt64 return_pc);
 
-void emex64_op_svc(__E64Core core)
+void E64SVC(__E64Core core)
 {
     if(core->cr_state.crstat & E64_CRSTAT_TRAPS)
     {
@@ -606,7 +606,7 @@ void emex64_op_svc(__E64Core core)
     core->op.ilen = 0;
 }
 
-void emex64_op_eret(__E64Core core)
+void E64ERET(__E64Core core)
 {
     if(!(core->cr_state.crstat & E64_CRSTAT_TRAPS))
     {
