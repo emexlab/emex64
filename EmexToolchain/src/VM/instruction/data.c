@@ -837,3 +837,95 @@ void emex64_op_swpaddd(E64CoreRef core)
 {
     emex64_atomic_rmw(core, kE64AtomicAdd, 0, sizeof(UInt32));
 }
+
+void emex64_op_phldb(E64CoreRef core)
+{
+    UInt64 **param = core->op.param;
+    UInt64 value;
+    if(unlikely(core->cr_state.crel.level < kE64ElevationLevelKernel))
+    {
+        core->cr_state.crexc.exception = kE64ExceptionPermission;
+        return;
+    }
+    E64MemoryAction(core->machine->memory, *(param[1]), sizeof(UInt8), param[0], kE64MemoryActionTypeRead);
+}
+
+void emex64_op_phldw(E64CoreRef core)
+{
+    UInt64 **param = core->op.param;
+    UInt64 value;
+    if(unlikely(core->cr_state.crel.level < kE64ElevationLevelKernel))
+    {
+        core->cr_state.crexc.exception = kE64ExceptionPermission;
+        return;
+    }
+    E64MemoryAction(core->machine->memory, *(param[1]), sizeof(UInt16), param[0], kE64MemoryActionTypeRead);
+}
+
+void emex64_op_phldd(E64CoreRef core)
+{
+    UInt64 **param = core->op.param;
+    UInt64 value;
+    if(unlikely(core->cr_state.crel.level < kE64ElevationLevelKernel))
+    {
+        core->cr_state.crexc.exception = kE64ExceptionPermission;
+        return;
+    }
+    E64MemoryAction(core->machine->memory, *(param[1]), sizeof(UInt32), param[0], kE64MemoryActionTypeRead);
+}
+
+void emex64_op_phldq(E64CoreRef core)
+{
+    UInt64 **param = core->op.param;
+    UInt64 value;
+    if(unlikely(core->cr_state.crel.level < kE64ElevationLevelKernel))
+    {
+        core->cr_state.crexc.exception = kE64ExceptionPermission;
+        return;
+    }
+    E64MemoryAction(core->machine->memory, *(param[1]), sizeof(UInt64), param[0], kE64MemoryActionTypeRead);
+}
+
+void emex64_op_phstb(E64CoreRef core)
+{
+    UInt64 **param = core->op.param;
+    if(unlikely(core->cr_state.crel.level < kE64ElevationLevelKernel))
+    {
+        core->cr_state.crexc.exception = kE64ExceptionPermission;
+        return;
+    }
+    E64MemoryAction(core->machine->memory, *(param[0]), sizeof(UInt8), param[1], kE64MemoryActionTypeWrite);
+}
+
+void emex64_op_phstw(E64CoreRef core)
+{
+    UInt64 **param = core->op.param;
+    if(unlikely(core->cr_state.crel.level < kE64ElevationLevelKernel))
+    {
+        core->cr_state.crexc.exception = kE64ExceptionPermission;
+        return;
+    }
+    E64MemoryAction(core->machine->memory, *(param[0]), sizeof(UInt16), param[1], kE64MemoryActionTypeWrite);
+}
+
+void emex64_op_phstd(E64CoreRef core)
+{
+    UInt64 **param = core->op.param;
+    if(unlikely(core->cr_state.crel.level < kE64ElevationLevelKernel))
+    {
+        core->cr_state.crexc.exception = kE64ExceptionPermission;
+        return;
+    }
+    E64MemoryAction(core->machine->memory, *(param[0]), sizeof(UInt32), param[1], kE64MemoryActionTypeWrite);
+}
+
+void emex64_op_phstq(E64CoreRef core)
+{
+    UInt64 **param = core->op.param;
+    if(unlikely(core->cr_state.crel.level < kE64ElevationLevelKernel))
+    {
+        core->cr_state.crexc.exception = kE64ExceptionPermission;
+        return;
+    }
+    E64MemoryAction(core->machine->memory, *(param[0]), sizeof(UInt64), param[1], kE64MemoryActionTypeWrite);
+}

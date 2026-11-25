@@ -30,8 +30,8 @@
 #endif /* ET_PRIVATE */
 
 #define E64VM_ISA_MIN_VERSION   17
-#define E64VM_ISA_MAX_VERSION   23
-#define E64VM_CPU_MODEL         2300
+#define E64VM_ISA_MAX_VERSION   24
+#define E64VM_CPU_MODEL         2400
 
 typedef struct __E64Core *E64CoreRef;
 typedef struct __E64Machine *E64MachineRef;

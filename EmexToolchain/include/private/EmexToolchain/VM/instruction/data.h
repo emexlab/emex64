@@ -68,4 +68,13 @@ void emex64_op_ldord(__E64Core core);
 void emex64_op_ldxord(__E64Core core);
 void emex64_op_swpaddd(__E64Core core);
 
+void emex64_op_phldb(__E64Core core);
+void emex64_op_phldw(__E64Core core);
+void emex64_op_phldd(__E64Core core);
+void emex64_op_phldq(__E64Core core);
+void emex64_op_phstb(__E64Core core);
+void emex64_op_phstw(__E64Core core);
+void emex64_op_phstd(__E64Core core);
+void emex64_op_phstq(__E64Core core);
+
 #endif /* EMEX64VM_INSTRUCTION_DATA_H */
