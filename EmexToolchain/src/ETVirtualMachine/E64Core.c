@@ -665,7 +665,7 @@ void __E64CoreWritePageTableBase(__E64Core core,
     if(core->ktext.size != 0)
     {
         UInt64 pte, top = 0;
-        E64MemoryCoreWatchPage(core->machine->memory, core, core->ktext.vbase, &pte, &top);
+        __E64MemoryCoreWatchPage(core->machine->memory, core, core->ktext.vbase, &pte, &top);
         if(top != core->ktext.root)
         {
             core->ktext.size = 0;
@@ -701,7 +701,7 @@ static inline Boolean __E64CoreFetchAddress(__E64Core core,
                 return true;
             }
         }
-        return E64MemoryCoreTranslate(core->machine->memory, core, pc, kE64MemoryActionTypeExecute, paddr);
+        return __E64MemoryCoreTranslate(core->machine->memory, core, pc, kE64MemoryActionTypeExecute, paddr);
     }
 
     /* this also keeps MMIO out */
@@ -2168,10 +2168,10 @@ static __attribute__((noinline)) void __E64CoreTextSetup(__E64Core core,
     UInt64 vbase = (pc & ~(UInt64)EMEX64_PAGE_MASK) - ((fetch_pa & ~(UInt64)EMEX64_PAGE_MASK) - base);
     UInt64 pte = 0, root = 0;
     Boolean any = false;
-    E64MemoryCoreWatchPage(core->machine->memory, core, vbase, &pte, &root);
+    __E64MemoryCoreWatchPage(core->machine->memory, core, vbase, &pte, &root);
     for(UInt64 i = 0; i < pages; i++)
     {
-        if(E64MemoryCoreWatchPage(core->machine->memory, core, vbase + (i << 13), &pte, NULL) &&
+        if(__E64MemoryCoreWatchPage(core->machine->memory, core, vbase + (i << 13), &pte, NULL) &&
            (pte & kE64MMUPTExec) && ((pte & EMEX64_MEMORY_MMU_MASK_PFN) >> 8) << 13 == base + (i << 13))
         {
             core->ktext.runs[i >> 3] |= (UInt8)(1u << (i & 7));

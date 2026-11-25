@@ -373,7 +373,7 @@ static inline UInt64 *emex64_atomic_word(E64CoreRef core,
     {
         return NULL;
     }
-    return (UInt64 *)E64MemoryCoreMap(core->machine->memory, core, addr, sizeof(UInt64), kE64MemoryActionTypeWrite);
+    return (UInt64 *)__E64MemoryCoreMap(core->machine->memory, core, addr, sizeof(UInt64), kE64MemoryActionTypeWrite);
 }
 
 static inline void emex64_atomic_written(E64CoreRef core,
@@ -476,7 +476,7 @@ static inline Boolean emex64_block_probe(__E64Core core,
                                          UInt64 len,
                                          Boolean copies)
 {
-    return E64MemoryCoreProbe(core->machine->memory, core, dst, len, kE64MemoryActionTypeWrite) && (!copies || E64MemoryCoreProbe(core->machine->memory, core, src, len, kE64MemoryActionTypeRead));
+    return __E64MemoryCoreProbe(core->machine->memory, core, dst, len, kE64MemoryActionTypeWrite) && (!copies || __E64MemoryCoreProbe(core->machine->memory, core, src, len, kE64MemoryActionTypeRead));
 }
 
 static inline UInt64 emex64_block_piece(UInt64 addr,
@@ -499,8 +499,8 @@ static inline Boolean emex64_block_copy(__E64Core core,
                                         UInt64 n,
                                         Boolean down)
 {
-    void *dptr = E64MemoryCoreMap(core->machine->memory, core, dst, n, kE64MemoryActionTypeWrite);
-    void *sptr = dptr != NULL ? E64MemoryCoreMap(core->machine->memory, core, src, n, kE64MemoryActionTypeRead) : NULL;
+    void *dptr = __E64MemoryCoreMap(core->machine->memory, core, dst, n, kE64MemoryActionTypeWrite);
+    void *sptr = dptr != NULL ? __E64MemoryCoreMap(core->machine->memory, core, src, n, kE64MemoryActionTypeRead) : NULL;
     if(likely(sptr != NULL))
     {
         memmove(dptr, sptr, n);
@@ -598,7 +598,7 @@ void E64SETM(__E64Core core)
     while(len != 0)
     {
         UInt64 n = emex64_block_piece(dst, len);
-        void *ptr = E64MemoryCoreMap(core->machine->memory, core, dst, n, kE64MemoryActionTypeWrite);
+        void *ptr = __E64MemoryCoreMap(core->machine->memory, core, dst, n, kE64MemoryActionTypeWrite);
         if(likely(ptr != NULL))
         {
             memset(ptr, (int)value, n);
@@ -692,7 +692,7 @@ static inline UInt32 *emex64_atomic_word32(E64CoreRef core,
     {
         return NULL;
     }
-    return (UInt32 *)E64MemoryCoreMap(core->machine->memory, core, addr, sizeof(UInt32), kE64MemoryActionTypeWrite);
+    return (UInt32 *)__E64MemoryCoreMap(core->machine->memory, core, addr, sizeof(UInt32), kE64MemoryActionTypeWrite);
 }
 
 static void emex64_atomic_rmw(E64CoreRef core,

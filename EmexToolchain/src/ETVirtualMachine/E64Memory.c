@@ -471,11 +471,11 @@ UInt8 *E64MemoryGetRAM(E64MemoryRef memoryRef)
     return memory != NULL ? memory->memory : NULL;
 }
 
-Boolean E64MemoryCoreTranslate(E64MemoryRef memoryRef,
-                               E64CoreRef core,
-                               UInt64 vaddr,
-                               E64MemoryActionType actionType,
-                               UInt64 *paddr)
+EF_HIDDEN Boolean __E64MemoryCoreTranslate(E64MemoryRef memoryRef,
+                                           E64CoreRef core,
+                                           UInt64 vaddr,
+                                           E64MemoryActionType actionType,
+                                           UInt64 *paddr)
 {
     E64Memory memory = (E64MemoryRef)memoryRef;
     if(memory == NULL || (vaddr >> 53))
@@ -1044,11 +1044,11 @@ EF_HIDDEN Boolean __E64MemoryCoreCopyIn(E64MemoryRef memoryRef,
     return true;
 }
 
-Boolean E64MemoryCoreProbe(E64MemoryRef memoryRef,
-                           E64CoreRef core,
-                           UInt64 addr,
-                           UInt64 len,
-                           E64MemoryActionType actionType)
+EF_HIDDEN Boolean __E64MemoryCoreProbe(E64MemoryRef memoryRef,
+                                       E64CoreRef core,
+                                       UInt64 addr,
+                                       UInt64 len,
+                                       E64MemoryActionType actionType)
 {
     E64Memory memory = (E64Memory)memoryRef;
     if(memory == NULL || core == NULL || len == 0 || !core->cr_state.crptb.enabled || core->in_interrupt)
@@ -1080,11 +1080,11 @@ Boolean E64MemoryCoreProbe(E64MemoryRef memoryRef,
     }
 }
 
-Boolean E64MemoryCoreWatchPage(E64MemoryRef memoryRef,
-                               E64CoreRef core,
-                               UInt64 vaddr,
-                               UInt64 *pte,
-                               UInt64 *root)
+EF_HIDDEN Boolean __E64MemoryCoreWatchPage(E64MemoryRef memoryRef,
+                                           E64CoreRef core,
+                                           UInt64 vaddr,
+                                           UInt64 *pte,
+                                           UInt64 *root)
 {
     static const UInt8 shift[4] = { 43, 33, 23, 13 };
     E64Memory memory = (E64Memory)memoryRef;
@@ -1121,11 +1121,11 @@ Boolean E64MemoryCoreWatchPage(E64MemoryRef memoryRef,
     return true;
 }
 
-void *E64MemoryCoreMap(E64MemoryRef memoryRef,
-                       E64CoreRef core,
-                       UInt64 addr,
-                       EFSize size,
-                       E64MemoryActionType actionType)
+EF_HIDDEN void *__E64MemoryCoreMap(E64MemoryRef memoryRef,
+                                   E64CoreRef core,
+                                   UInt64 addr,
+                                   EFSize size,
+                                   E64MemoryActionType actionType)
 {
     E64Memory memory = (E64Memory)memoryRef;
     if(memory == NULL || core == NULL || size == 0)

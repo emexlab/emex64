@@ -48,6 +48,7 @@ UInt64 E64MemoryGetKTRRSize(E64MemoryRef memoryRef);
 Boolean E64MemorySetKTRRSize(E64MemoryRef memoryRef, UInt64 size);
 
 UInt64 E64MemoryGetSize(E64MemoryRef memoryRef);
+struct emex64_snoop *E64MemoryGetSnoop(E64MemoryRef memoryRef);
 Boolean E64MemoryAccessIsWithinBounds(E64MemoryRef memoryRef, UInt64 address, UInt64 size);
 
 Boolean E64MemoryLoadImage(E64MemoryRef memoryRef, EFFileRef fileRef);
@@ -55,11 +56,6 @@ Boolean E64MemoryLoadImage(E64MemoryRef memoryRef, EFFileRef fileRef);
 void *E64MemoryMapPhysical(E64MemoryRef memoryRef, UInt64 paddr, UInt64 len, Boolean forWrite);
 Boolean E64MemoryAction(E64MemoryRef memoryRef, UInt64 addr, EFSize size, UInt64 *value, E64MemoryActionType actionType);
 
-void *E64MemoryCoreMap(E64MemoryRef memoryRef, E64CoreRef core, UInt64 addr, EFSize size, E64MemoryActionType actionType);
-Boolean E64MemoryCoreProbe(E64MemoryRef memoryRef, E64CoreRef core, UInt64 addr, UInt64 len, E64MemoryActionType actionType);
-Boolean E64MemoryCoreWatchPage(E64MemoryRef memoryRef, E64CoreRef core, UInt64 vaddr, UInt64 *pte, UInt64 *root);
-struct emex64_snoop *E64MemoryGetSnoop(E64MemoryRef memoryRef);
 UInt8 *E64MemoryGetRAM(E64MemoryRef memoryRef);
-Boolean E64MemoryCoreTranslate(E64MemoryRef memoryRef, E64CoreRef core, UInt64 vaddr, E64MemoryActionType actionType, UInt64 *paddr);
 
 #endif /* E64MEMORY_H */
