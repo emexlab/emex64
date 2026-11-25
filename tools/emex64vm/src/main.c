@@ -24,11 +24,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <pthread.h>
-
 #include <EmexToolchain/Support/diagnostic/log.h>
 #include <EmexToolchain/Support/parser.h>
-
-#include <EmexToolchain/VM/E64Machine.h>
+#include <EmexToolchain/ETVirtualMachine/E64Machine.h>
 
 SInt32 main(SInt32 argc, char *argv[])
 {
@@ -54,6 +52,10 @@ SInt32 main(SInt32 argc, char *argv[])
             fprintf(stderr, "  --sata <image path>    Attaches a disk image to the next free port of the SATA\n");
             fprintf(stderr, "                         host controller on PCIe (up to %d disks).\n", E64_MACHINE_MAX_SATA_DISKS);
             fprintf(stderr, "  --sata:ro <image path> Same as --sata, but the disk is read only.\n");
+            fprintf(stderr, "  --nvme <image path>    Gives the machine NAND storage with this image, behind\n");
+            fprintf(stderr, "                         the NVMe storage controller on PCIe (up to %d, each a\n", E64_MACHINE_MAX_NVME_DISKS);
+            fprintf(stderr, "                         namespace of the controller).\n");
+            fprintf(stderr, "  --nvme:ro <image path> Same as --nvme, but the NAND is read only.\n");
             fprintf(stderr, "  --usb <image path>     Plugs a USB flash drive with this disk image into the\n");
             fprintf(stderr, "                         next free port of the USB host controller on PCIe\n");
             fprintf(stderr, "                         (up to %d drives).\n", E64_MACHINE_MAX_USB_DISKS);
@@ -179,6 +181,18 @@ SInt32 main(SInt32 argc, char *argv[])
             machineOptions.sataDisks[machineOptions.sataDiskCount].path = argv[i + 1];
             machineOptions.sataDisks[machineOptions.sataDiskCount].readOnly = strcmp(argv[i], "--sata:ro") == 0;
             machineOptions.sataDiskCount++;
+            i++;
+        }
+        else if((strcmp(argv[i], "--nvme") == 0 || strcmp(argv[i], "--nvme:ro") == 0) && i + 1 < argc)
+        {
+            if(machineOptions.nvmeDiskCount >= E64_MACHINE_MAX_NVME_DISKS)
+            {
+                diag_error(NULL, "too many NVMe NAND images, at most %d are supported", E64_MACHINE_MAX_NVME_DISKS);
+                return 1;
+            }
+            machineOptions.nvmeDisks[machineOptions.nvmeDiskCount].path = argv[i + 1];
+            machineOptions.nvmeDisks[machineOptions.nvmeDiskCount].readOnly = strcmp(argv[i], "--nvme:ro") == 0;
+            machineOptions.nvmeDiskCount++;
             i++;
         }
         else if((strcmp(argv[i], "--usb") == 0 || strcmp(argv[i], "--usb:ro") == 0) && i + 1 < argc)
