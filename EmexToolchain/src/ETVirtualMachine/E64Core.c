@@ -791,7 +791,7 @@ static void __E64CoreFetchFaultAt(__E64Core core,
                                   UInt64 missing)
 {
     core->cr_state.crexc.exception = kE64ExceptionNone;
-    E64MemoryCoreCopyIn(core->machine->memory, core, core->op.inscache + EMEX64_MAX_ILEN - 1, missing, 1, kE64MemoryActionTypeExecute);
+    __E64MemoryCoreCopyIn(core->machine->memory, core, core->op.inscache + EMEX64_MAX_ILEN - 1, missing, 1, kE64MemoryActionTypeExecute);
 }
 
 static const Boolean kE64RegistersOnly[kE64OpcodeMAX + 1] = {
@@ -1773,7 +1773,7 @@ static __attribute__((noinline)) void __E64CoreDecodeAndExecute(__E64Core core,
 
     if(likely(first >= EMEX64_MAX_ILEN))
     {
-        if(unlikely(!E64MemoryCoreCopyIn(core->machine->memory, core, core->op.inscache, pc, EMEX64_MAX_ILEN, kE64MemoryActionTypeExecute)))
+        if(unlikely(!__E64MemoryCoreCopyIn(core->machine->memory, core, core->op.inscache, pc, EMEX64_MAX_ILEN, kE64MemoryActionTypeExecute)))
         {
             /* callee wrote exception already */
             return;
@@ -1781,13 +1781,13 @@ static __attribute__((noinline)) void __E64CoreDecodeAndExecute(__E64Core core,
     }
     else
     {
-        if(unlikely(!E64MemoryCoreCopyIn(core->machine->memory, core, core->op.inscache, pc, first, kE64MemoryActionTypeExecute)))
+        if(unlikely(!__E64MemoryCoreCopyIn(core->machine->memory, core, core->op.inscache, pc, first, kE64MemoryActionTypeExecute)))
         {
             return;
         }
         E64Exception exc = core->cr_state.crexc.exception;
         Boolean fault_valid = core->trap.fault_valid;
-        if(!E64MemoryCoreCopyIn(core->machine->memory, core, core->op.inscache + first, pc + first, EMEX64_MAX_ILEN - first, kE64MemoryActionTypeExecute))
+        if(!__E64MemoryCoreCopyIn(core->machine->memory, core, core->op.inscache + first, pc + first, EMEX64_MAX_ILEN - first, kE64MemoryActionTypeExecute))
         {
             core->cr_state.crexc.exception = exc;
             core->trap.fault_valid = fault_valid;

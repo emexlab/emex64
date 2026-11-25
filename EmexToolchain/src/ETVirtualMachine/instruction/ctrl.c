@@ -412,13 +412,13 @@ void E64PACRET(__E64Core core)
     }
     UInt64 frame = core->rl[kE64RegisterFP];
     UInt64 ret = 0;
-    E64MemoryCoreAction(core->machine->memory, core, frame + 16, sizeof(UInt64), &ret, kE64MemoryActionTypeRead);
+    __E64MemoryCoreAction(core->machine->memory, core, frame + 16, sizeof(UInt64), &ret, kE64MemoryActionTypeRead);
     if(core->cr_state.crexc.exception != kE64ExceptionNone)
     {
         return;
     }
     ret = emex64_pac_sign(core, core->cr_state.criakey, ret, frame);
-    E64MemoryCoreAction(core->machine->memory, core, frame + 16, sizeof(UInt64), &ret, kE64MemoryActionTypeWrite);
+    __E64MemoryCoreAction(core->machine->memory, core, frame + 16, sizeof(UInt64), &ret, kE64MemoryActionTypeWrite);
 }
 
 Boolean emex64_fast_pacret(__E64Core core,

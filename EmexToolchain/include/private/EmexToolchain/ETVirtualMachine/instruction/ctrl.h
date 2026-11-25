@@ -111,7 +111,7 @@ static inline void emex64_push_il(__E64Core core, UInt64 value)
 {
     if(unlikely(!emex64_fast_store(core, core->rl[kE64RegisterSP], sizeof(UInt64), value)))
     {
-        E64MemoryCoreAction(core->machine->memory, core, core->rl[kE64RegisterSP], sizeof(UInt64), &value, kE64MemoryActionTypeWrite);
+        __E64MemoryCoreAction(core->machine->memory, core, core->rl[kE64RegisterSP], sizeof(UInt64), &value, kE64MemoryActionTypeWrite);
     }
     core->rl[kE64RegisterSP] -= 8;
 }
@@ -123,7 +123,7 @@ static inline UInt64 emex64_pop_il(__E64Core core)
     UInt64 value = 0;
     if(unlikely(!emex64_fast_load(core, core->rl[kE64RegisterSP], sizeof(UInt64), &value)))
     {
-        E64MemoryCoreAction(core->machine->memory, core, core->rl[kE64RegisterSP], sizeof(UInt64), &value, kE64MemoryActionTypeRead);
+        __E64MemoryCoreAction(core->machine->memory, core, core->rl[kE64RegisterSP], sizeof(UInt64), &value, kE64MemoryActionTypeRead);
     }
     return value;
 }

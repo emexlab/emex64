@@ -706,12 +706,12 @@ Boolean E64MemoryAction(E64MemoryRef memoryRef,
     }
 }
 
-void E64MemoryCoreAction(E64MemoryRef memoryRef,
-                         E64CoreRef core,
-                         UInt64 addr,
-                         EFSize size,
-                         UInt64 *value,
-                         E64MemoryActionType actionType)
+EF_HIDDEN void __E64MemoryCoreAction(E64MemoryRef memoryRef,
+                                     E64CoreRef core,
+                                     UInt64 addr,
+                                     EFSize size,
+                                     UInt64 *value,
+                                     E64MemoryActionType actionType)
 {
     E64Memory memory = (E64MemoryRef)memoryRef;
     if(memory == NULL || unlikely((core->cr_state.crexc.exception == kE64ExceptionBadAccess || core->cr_state.crexc.exception == kE64ExceptionKTRRViolation) && !core->in_interrupt))
@@ -848,8 +848,8 @@ void E64MemoryCoreAction(E64MemoryRef memoryRef,
             case kE64MemoryActionTypeRead:
                 lo_val = 0;
                 hi_val = 0;
-                E64MemoryCoreAction(memoryRef, core, addr, lo_size, &lo_val, actionType);
-                E64MemoryCoreAction(memoryRef, core, page_end, hi_size, &hi_val, actionType);
+                __E64MemoryCoreAction(memoryRef, core, addr, lo_size, &lo_val, actionType);
+                __E64MemoryCoreAction(memoryRef, core, page_end, hi_size, &hi_val, actionType);
                 if(unlikely(core->cr_state.crexc.exception != kE64ExceptionNone && emex64_traps_enabled(core)))
                 {
                     return;
@@ -860,8 +860,8 @@ void E64MemoryCoreAction(E64MemoryRef memoryRef,
                 lo_mask = (lo_size == 8) ? ~0ULL : (1ULL << hi_shift) - 1;
                 lo_val = *value & lo_mask;
                 hi_val = *value >> hi_shift;
-                E64MemoryCoreAction(memoryRef, core, addr, lo_size, &lo_val, actionType);
-                E64MemoryCoreAction(memoryRef, core, page_end, hi_size, &hi_val, actionType);
+                __E64MemoryCoreAction(memoryRef, core, addr, lo_size, &lo_val, actionType);
+                __E64MemoryCoreAction(memoryRef, core, page_end, hi_size, &hi_val, actionType);
                 return;
         }
         return;
@@ -968,12 +968,12 @@ rw_fastpath:
     }
 }
 
-Boolean E64MemoryCoreCopyIn(E64MemoryRef memoryRef,
-                            E64CoreRef core,
-                            UInt8 *dst,
-                            UInt64 addr,
-                            EFSize len,
-                            E64MemoryActionType actionType)
+EF_HIDDEN Boolean __E64MemoryCoreCopyIn(E64MemoryRef memoryRef,
+                                        E64CoreRef core,
+                                        UInt8 *dst,
+                                        UInt64 addr,
+                                        EFSize len,
+                                        E64MemoryActionType actionType)
 {
     E64Memory memory = (E64MemoryRef)memoryRef;
     if(memory == NULL)

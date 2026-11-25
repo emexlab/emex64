@@ -23,6 +23,7 @@
 #define __E64MEMORY_H
 
 #include <EmexFoundation/EmexFoundation.h>
+#include <EmexToolchain/ETVirtualMachine/E64Type.h>
 
 typedef struct E64Memory {
     EFObject header;
@@ -39,6 +40,9 @@ typedef struct E64Memory {
 } *E64Memory;
 
 typedef EFObjectRef E64MemoryRef;
+
+void __E64MemoryCoreAction(E64MemoryRef memoryRef, E64CoreRef core, UInt64 addr, EFSize size, UInt64 *value, E64MemoryActionType actionType);
+Boolean __E64MemoryCoreCopyIn(E64MemoryRef memoryRef, E64CoreRef core, UInt8 *dst, UInt64 addr, EFSize len, E64MemoryActionType actionType);
 
 void __E64MemoryReset(E64MemoryRef memoryRef);
 
