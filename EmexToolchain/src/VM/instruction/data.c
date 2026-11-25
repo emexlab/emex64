@@ -868,42 +868,42 @@ static inline void emex64_phys_mmio_action(E64CoreRef core,
     E64MemoryAction(core->machine->memory, paddr, size, value, action);
 }
 
-void emex64_op_phldb(E64CoreRef core)
+void emex64_op_ioldb(E64CoreRef core)
 {
     emex64_phys_mmio_action(core, *(core->op.param[1]), sizeof(UInt8), core->op.param[0], kE64MemoryActionTypeRead);
 }
 
-void emex64_op_phldw(E64CoreRef core)
+void emex64_op_ioldw(E64CoreRef core)
 {
     emex64_phys_mmio_action(core, *(core->op.param[1]), sizeof(UInt16), core->op.param[0], kE64MemoryActionTypeRead);
 }
 
-void emex64_op_phldd(E64CoreRef core)
+void emex64_op_ioldd(E64CoreRef core)
 {
     emex64_phys_mmio_action(core, *(core->op.param[1]), sizeof(UInt32), core->op.param[0], kE64MemoryActionTypeRead);
 }
 
-void emex64_op_phldq(E64CoreRef core)
+void emex64_op_ioldq(E64CoreRef core)
 {
     emex64_phys_mmio_action(core, *(core->op.param[1]), sizeof(UInt64), core->op.param[0], kE64MemoryActionTypeRead);
 }
 
-void emex64_op_phstb(E64CoreRef core)
+void emex64_op_iostb(E64CoreRef core)
 {
     emex64_phys_mmio_action(core, *(core->op.param[0]), sizeof(UInt8), core->op.param[1], kE64MemoryActionTypeWrite);
 }
 
-void emex64_op_phstw(E64CoreRef core)
+void emex64_op_iostw(E64CoreRef core)
 {
     emex64_phys_mmio_action(core, *(core->op.param[0]), sizeof(UInt16), core->op.param[1], kE64MemoryActionTypeWrite);
 }
 
-void emex64_op_phstd(E64CoreRef core)
+void emex64_op_iostd(E64CoreRef core)
 {
     emex64_phys_mmio_action(core, *(core->op.param[0]), sizeof(UInt32), core->op.param[1], kE64MemoryActionTypeWrite);
 }
 
-void emex64_op_phstq(E64CoreRef core)
+void emex64_op_iostq(E64CoreRef core)
 {
     emex64_phys_mmio_action(core, *(core->op.param[0]), sizeof(UInt64), core->op.param[1], kE64MemoryActionTypeWrite);
 }

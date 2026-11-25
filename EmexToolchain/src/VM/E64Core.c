@@ -235,14 +235,14 @@ const emex64_opfunc_entry_t kE64OpfuncTable[] = {
     [kE64OpcodeBRK] = { .func = emex64_op_brk, .minargs = 1, .maxargs = 1, .argmask = 0b00000000000000000000000000000000, .isa = 23 },
 
     /* ISA v24 (secure page table monitor update) */
-    [kE64OpcodePHLDB] = { .func = emex64_op_phldb, .minargs = 2, .maxargs = 2, .argmask = 0b10000000000000000000000000000000, .isa = 24 },
-    [kE64OpcodePHLDW] = { .func = emex64_op_phldw, .minargs = 2, .maxargs = 2, .argmask = 0b10000000000000000000000000000000, .isa = 24 },
-    [kE64OpcodePHLDD] = { .func = emex64_op_phldd, .minargs = 2, .maxargs = 2, .argmask = 0b10000000000000000000000000000000, .isa = 24 },
-    [kE64OpcodePHLDQ] = { .func = emex64_op_phldq, .minargs = 2, .maxargs = 2, .argmask = 0b10000000000000000000000000000000, .isa = 24 },
-    [kE64OpcodePHSTB] = { .func = emex64_op_phstb, .minargs = 2, .maxargs = 2, .argmask = 0b00000000000000000000000000000000, .isa = 24 },
-    [kE64OpcodePHSTW] = { .func = emex64_op_phstw, .minargs = 2, .maxargs = 2, .argmask = 0b00000000000000000000000000000000, .isa = 24 },
-    [kE64OpcodePHSTD] = { .func = emex64_op_phstd, .minargs = 2, .maxargs = 2, .argmask = 0b00000000000000000000000000000000, .isa = 24 },
-    [kE64OpcodePHSTQ] = { .func = emex64_op_phstq, .minargs = 2, .maxargs = 2, .argmask = 0b00000000000000000000000000000000, .isa = 24 },
+    [kE64OpcodeIOLDB] = { .func = emex64_op_ioldb, .minargs = 2, .maxargs = 2, .argmask = 0b10000000000000000000000000000000, .isa = 24 },
+    [kE64OpcodeIOLDW] = { .func = emex64_op_ioldw, .minargs = 2, .maxargs = 2, .argmask = 0b10000000000000000000000000000000, .isa = 24 },
+    [kE64OpcodeIOLDD] = { .func = emex64_op_ioldd, .minargs = 2, .maxargs = 2, .argmask = 0b10000000000000000000000000000000, .isa = 24 },
+    [kE64OpcodeIOLDQ] = { .func = emex64_op_ioldq, .minargs = 2, .maxargs = 2, .argmask = 0b10000000000000000000000000000000, .isa = 24 },
+    [kE64OpcodeIOSTB] = { .func = emex64_op_iostb, .minargs = 2, .maxargs = 2, .argmask = 0b00000000000000000000000000000000, .isa = 24 },
+    [kE64OpcodeIOSTW] = { .func = emex64_op_iostw, .minargs = 2, .maxargs = 2, .argmask = 0b00000000000000000000000000000000, .isa = 24 },
+    [kE64OpcodeIOSTD] = { .func = emex64_op_iostd, .minargs = 2, .maxargs = 2, .argmask = 0b00000000000000000000000000000000, .isa = 24 },
+    [kE64OpcodeIOSTQ] = { .func = emex64_op_iostq, .minargs = 2, .maxargs = 2, .argmask = 0b00000000000000000000000000000000, .isa = 24 },
 };
 
 static const UInt8 kImmBits[] = {
