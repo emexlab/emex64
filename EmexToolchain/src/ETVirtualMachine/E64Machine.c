@@ -368,7 +368,7 @@ void __E64MachineResetHardware(__E64Machine machine)
     emex64_gpu_reset(machine->gpu);
 
     /* resetting memory */
-    E64MMIOBusReset(machine->mmio_bus);
+    __E64MMIOBusReset(machine->mmio_bus);
     E64MemoryReset(machine->memory);
 
     /* resetting all cores */

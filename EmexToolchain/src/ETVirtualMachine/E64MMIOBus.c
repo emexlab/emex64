@@ -131,7 +131,7 @@ E64MMIORegionRef E64MMIOBusGetRegionForAddress(E64MMIOBusRef MMIOBusRef,
     return NULL;
 }
 
-Boolean E64MMIOBusReset(__E64MMIOBus MMIOBus)
+EF_HIDDEN Boolean __E64MMIOBusReset(__E64MMIOBus MMIOBus)
 {
     if(MMIOBus == NULL)
     {
