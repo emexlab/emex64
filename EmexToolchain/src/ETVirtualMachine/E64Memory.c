@@ -37,20 +37,6 @@
 #include <EmexToolchain/ETVirtualMachine/E64MMIOBus.h>
 #include <EmexToolchain/ETVirtualMachine/device/internal/controller/apic.h>
 
-typedef struct E64Memory {
-    EFObject header;
-    UInt8 *memory;
-    UInt64 memory_size;
-
-    /* KTRR is in the memory controller it self */
-    UInt64 ktrr_base;
-    UInt64 ktrr_size;
-    Boolean ktrr_locked;
-
-    emex64_snoop_t snoop;
-    EFFileRef image;
-} *E64Memory;
-
 static void emex64_ktext_clear(emex64_ktext_store_t *store)
 {
     for(UInt64 i = 0; store->index != NULL && i < store->pages; i++)
@@ -583,7 +569,7 @@ Boolean E64MemoryLoadImage(E64MemoryRef memoryRef,
     return true;
 }
 
-void E64MemoryReset(E64MemoryRef memoryRef)
+EF_HIDDEN void __E64MemoryReset(E64MemoryRef memoryRef)
 {
     E64Memory memory = (E64Memory)memoryRef;
     if(memory == NULL)

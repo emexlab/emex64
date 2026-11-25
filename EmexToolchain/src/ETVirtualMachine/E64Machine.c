@@ -369,7 +369,7 @@ void __E64MachineResetHardware(__E64Machine machine)
 
     /* resetting memory */
     __E64MMIOBusReset(machine->mmio_bus);
-    E64MemoryReset(machine->memory);
+    __E64MemoryReset(machine->memory);
 
     /* resetting all cores */
     for(UInt8 i = 0; i < machine->core_count; i++)

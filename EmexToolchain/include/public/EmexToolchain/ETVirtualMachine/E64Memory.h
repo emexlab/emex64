@@ -27,6 +27,9 @@
 #include <string.h>
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETVirtualMachine/E64Core.h>
+#ifdef ET_PRIVATE
+#include <EmexToolchain/ETVirtualMachine/__E64Memory.h>
+#endif /* ET_PRIVATE */
 
 #define EMEX64_PAGE_SIZE 0x2000
 #define EMEX64_PAGE_MASK (EMEX64_PAGE_SIZE - 1)
@@ -97,7 +100,6 @@ UInt64 E64MemoryGetSize(E64MemoryRef memoryRef);
 Boolean E64MemoryAccessIsWithinBounds(E64MemoryRef memoryRef, UInt64 address, UInt64 size);
 
 Boolean E64MemoryLoadImage(E64MemoryRef memoryRef, EFFileRef fileRef);
-void E64MemoryReset(E64MemoryRef memoryRef);
 
 void *E64MemoryMapPhysical(E64MemoryRef memoryRef, UInt64 paddr, UInt64 len, Boolean forWrite);
 Boolean E64MemoryAction(E64MemoryRef memoryRef, UInt64 addr, EFSize size, UInt64 *value, E64MemoryActionType actionType);
