@@ -19,6 +19,10 @@
  * along with emex64. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#ifndef EMEX64VM_NET
+#define EMEX64VM_NET 0
+#endif /* EMEX64VM_NET */
+
 #if EMEX64VM_NET
 
 #include <EmexToolchain/ETVirtualMachine/device/board/pcie/net.h>
