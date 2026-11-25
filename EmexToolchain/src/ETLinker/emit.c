@@ -26,8 +26,8 @@
 #include <string.h>
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/Support/diagnostic/log.h>
-#include <EmexToolchain/VM/E64Core.h>
-#include <EmexToolchain/VM/E64Memory.h>
+#include <EmexToolchain/ETVirtualMachine/E64Core.h>
+#include <EmexToolchain/ETVirtualMachine/E64Memory.h>
 #include <EmexToolchain/ETLinker/emit.h>
 #include <EmexToolchain/ETLinker/linker.h>
 

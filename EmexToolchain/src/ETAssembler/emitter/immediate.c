@@ -21,7 +21,7 @@
 
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETAssembler/emitter/immediate.h>
-#include <EmexToolchain/VM/E64Core.h>
+#include <EmexToolchain/ETVirtualMachine/E64Core.h>
 
 static void assembler_emit_imm_low(ETAssemblerInvocationRef inv,
                                    E64ParameterCoding coding,

@@ -28,7 +28,7 @@
 #include <EmexToolchain/Support/diagnostic/log.h>
 #include <EmexToolchain/ETLinker/linker.h>
 #include <EmexToolchain/ETLinker/driver.h>
-#include <EmexToolchain/VM/E64Memory.h>
+#include <EmexToolchain/ETVirtualMachine/E64Memory.h>
 #include <EmexToolchain/ETLinker/emit.h>
 
 linker_driver_t *linker_driver_alloc(SInt32 argc,

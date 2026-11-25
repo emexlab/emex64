@@ -87,50 +87,50 @@ add_library(EmexToolchain ${LIB_TYPE}
         src/Support/hashmap/hashmap.c
 
     # Virtual Machine API
-    src/VM/E64MachineOptions.c
-    src/VM/E64Machine.c
-    src/VM/E64Memory.c
-    src/VM/E64MMIORegion.c
-    src/VM/E64MMIOBus.c
-    src/VM/E64Core.c
+    src/ETVirtualMachine/E64MachineOptions.c
+    src/ETVirtualMachine/E64Machine.c
+    src/ETVirtualMachine/E64Memory.c
+    src/ETVirtualMachine/E64MMIORegion.c
+    src/ETVirtualMachine/E64MMIOBus.c
+    src/ETVirtualMachine/E64Core.c
 
         ## Instruction Handlers
-        src/VM/instruction/core.c
-        src/VM/instruction/data.c
-        src/VM/instruction/alu.c
-        src/VM/instruction/ctrl.c
-        src/VM/instruction/fpu.c
+        src/ETVirtualMachine/instruction/core.c
+        src/ETVirtualMachine/instruction/data.c
+        src/ETVirtualMachine/instruction/alu.c
+        src/ETVirtualMachine/instruction/ctrl.c
+        src/ETVirtualMachine/instruction/fpu.c
 
         ## Devices
 
             ### SoC internal devices
-            src/VM/device/internal/controller/E64IC.c
-            src/VM/device/internal/controller/mem.c
-            src/VM/device/internal/timer.c
-            src/VM/device/internal/cpuid.c
-            src/VM/device/internal/controller/apic.c
+            src/ETVirtualMachine/device/internal/controller/E64IC.c
+            src/ETVirtualMachine/device/internal/controller/mem.c
+            src/ETVirtualMachine/device/internal/timer.c
+            src/ETVirtualMachine/device/internal/cpuid.c
+            src/ETVirtualMachine/device/internal/controller/apic.c
 
             ### Board devices
-            src/VM/device/board/controller/power.c
-            src/VM/device/board/controller/8042.c
-            #src/vm/device/board/controller/gfx.c
-            #src/vm/device/board/gfx/vimmio.c
-            src/VM/device/board/display.c
-            src/VM/device/board/uart.c
-            src/VM/device/board/rtc.c
+            src/ETVirtualMachine/device/board/controller/power.c
+            src/ETVirtualMachine/device/board/controller/8042.c
+            #src/ETVirtualMachine/device/board/controller/gfx.c
+            #src/ETVirtualMachine/device/board/gfx/vimmio.c
+            src/ETVirtualMachine/device/board/display.c
+            src/ETVirtualMachine/device/board/uart.c
+            src/ETVirtualMachine/device/board/rtc.c
 
             ### PCIe devices
-            src/VM/device/board/pcie/pcie.c
-            src/VM/device/board/pcie/sata.c
-            src/VM/device/board/pcie/nvme.c
-            src/VM/device/board/pcie/usb.c
-            src/VM/device/board/pcie/usb_msc.c
-            src/VM/device/board/pcie/gpu.c
-            src/VM/device/board/pcie/net.c
-            src/VM/device/board/pcie/sb16.c
-            src/VM/device/board/pcie/virtio.c
-            src/VM/device/board/sound.c
-            src/VM/device/board/opl3/opl3.c
+            src/ETVirtualMachine/device/board/pcie/pcie.c
+            src/ETVirtualMachine/device/board/pcie/sata.c
+            src/ETVirtualMachine/device/board/pcie/nvme.c
+            src/ETVirtualMachine/device/board/pcie/usb.c
+            src/ETVirtualMachine/device/board/pcie/usb_msc.c
+            src/ETVirtualMachine/device/board/pcie/gpu.c
+            src/ETVirtualMachine/device/board/pcie/net.c
+            src/ETVirtualMachine/device/board/pcie/sb16.c
+            src/ETVirtualMachine/device/board/pcie/virtio.c
+            src/ETVirtualMachine/device/board/sound.c
+            src/ETVirtualMachine/device/board/opl3/opl3.c
 
     # Assembler API
     src/ETAssembler/ETAssemblerOptions.c
@@ -240,7 +240,7 @@ if(UNIX AND NOT APPLE)
 endif()
 
 if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
-    set_source_files_properties(src/VM/instruction/fpu.c PROPERTIES COMPILE_OPTIONS "-fno-fast-math;-frounding-math")
+    set_source_files_properties(src/ETVirtualMachine/instruction/fpu.c PROPERTIES COMPILE_OPTIONS "-fno-fast-math;-frounding-math")
 endif()
 
 if(EMEX64VM_NET)
@@ -262,7 +262,7 @@ if(EMEX64VM_DEVICE_DISPLAY)
     elseif(APPLE)
         target_sources(EmexToolchain
             PRIVATE
-                src/vm/device/board/display.m
+                src/ETVirtualMachine/device/board/display.m
         )
 
         target_link_libraries(EmexToolchain
@@ -273,7 +273,7 @@ if(EMEX64VM_DEVICE_DISPLAY)
                 ${QUARTZCORE_FRAMEWORK}
         )
 
-        set_source_files_properties(src/vm/device/board/display.m PROPERTIES
+        set_source_files_properties(src/ETVirtualMachine/device/board/display.m PROPERTIES
             COMPILE_FLAGS "-fobjc-arc"
         )
     endif()

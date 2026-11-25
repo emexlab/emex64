@@ -1,0 +1,47 @@
+/*
+ * SPDX-License-Identifier: AGPL-3.0-or-later
+ *
+ * Copyright (C) 2026 emexlab
+ *
+ * This file is part of emex64.
+ *
+ * emex64 is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * emex64 is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with emex64. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#include <EmexFoundation/EmexFoundation.h>
+#include <EmexToolchain/ETVirtualMachine/instruction/core.h>
+
+void E64HLT(__E64Core core)
+{
+    core->halted = true;
+}
+
+void E64NOP(__E64Core core)
+{
+    /* doing nothing */
+}
+
+void E64BRK(__E64Core core)
+{
+    if(core->op.param_coding[0] != kE64ParameterCodingImm16)
+    {
+        core->cr_state.crexc.exception = kE64ExceptionBadInstruction;
+        return;
+    }
+
+    core->trap.fault_valid = true;
+    core->trap.fault_addr = (UInt16)*(core->op.param[0]);
+    core->trap.fault_access = 0;
+    core->cr_state.crexc.exception = kE64ExceptionBreakpoint;
+}

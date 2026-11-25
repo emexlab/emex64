@@ -24,7 +24,7 @@
 
 #include <stdlib.h>
 #include <EmexFoundation/EmexFoundation.h>
-#include <EmexToolchain/VM/E64Core.h>
+#include <EmexToolchain/ETVirtualMachine/E64Core.h>
 
 typedef struct __ETAssemblerInvocation *ETAssemblerInvocationRef;
 
