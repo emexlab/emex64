@@ -13,7 +13,9 @@ Besides that there is a proper polymorphic toolchain called `EmexToolchain` whic
 
 ## ToDo (back to the quality)
 - [ ] Implement Secure Page Table Monitor (SPTM)
-- [ ] Rewrite and clean a large portion of EmexToolchain into EmexFoundation
+- Rewrite and clean a large portion of EmexToolchain into EmexFoundation
+  - [x] Renamed `VM` to `ETVirtualMachine`
+  - [ ] Add new modular component system
 - [ ] Optimize EmexFoundation and the rewritten parts of EmexToolchain
 - Research more of LA64
   - [ ] Find out how the coding can become more efficient without breaking compatibility
