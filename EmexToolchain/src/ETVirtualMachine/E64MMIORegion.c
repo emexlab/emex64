@@ -70,9 +70,9 @@ E64MMIORegionRef E64MMIORegionCreate(EFAllocatorRef allocatorRef,
                                      UInt64 base,
                                      UInt64 size,
                                      void *device,
-                                     mmio_read_fn read,
-                                     mmio_write_fn write,
-                                     mmio_reset_fn reset)
+                                     E64MMIOReadFn read,
+                                     E64MMIOWriteFn write,
+                                     E64MMIOResetFn reset)
 {
     __E64MMIORegion MMIORegion = (__E64MMIORegion)EFObjectCreate(allocatorRef, E64MMIORegionGetTypeID(), (EFIndex)sizeof(struct __E64MMIORegion));
     if(MMIORegion == NULL)
@@ -102,20 +102,26 @@ UInt64 E64MMIORegionGetSize(E64MMIORegionRef MMIORegionRef)
     return MMIORegion != NULL ? MMIORegion->size : 0;
 }
 
-void *E64MMIORegionGetDevice(E64MMIORegionRef MMIORegionRef)
+EFObjectRef E64MMIORegionGetDevice(E64MMIORegionRef MMIORegionRef)
 {
     __E64MMIORegion MMIORegion = (__E64MMIORegion)MMIORegionRef;
     return MMIORegion != NULL ? MMIORegion->device : NULL;
 }
 
-mmio_read_fn E64MMIORegionGetReadSymbol(E64MMIORegionRef MMIORegionRef)
+E64MMIOReadFn E64MMIORegionGetReadFunction(E64MMIORegionRef MMIORegionRef)
 {
     __E64MMIORegion MMIORegion = (__E64MMIORegion)MMIORegionRef;
     return MMIORegion != NULL ? MMIORegion->read : emex64_mmio_fallback_read;
 }
 
-mmio_write_fn E64MMIORegionGetWriteSymbol(E64MMIORegionRef MMIORegionRef)
+E64MMIOWriteFn E64MMIORegionGetWriteFunction(E64MMIORegionRef MMIORegionRef)
 {
     __E64MMIORegion MMIORegion = (__E64MMIORegion)MMIORegionRef;
     return MMIORegion != NULL ? MMIORegion->write : emex64_mmio_fallback_write;
+}
+
+E64MMIOResetFn E64MMIORegionGetResetFunction(E64MMIORegionRef MMIORegionRef)
+{
+    __E64MMIORegion MMIORegion = (__E64MMIORegion)MMIORegionRef;
+    return MMIORegion != NULL ? MMIORegion->reset : NULL;
 }

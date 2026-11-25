@@ -25,9 +25,9 @@
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETVirtualMachine/__E64Core.h>
 
-typedef UInt64 (*mmio_read_fn)(__E64Core core, void *device, UInt64 offset, EFSize size);
-typedef void (*mmio_write_fn)(__E64Core core, void *device, UInt64 offset, UInt64 value, EFSize size);
-typedef void (*mmio_reset_fn)(EFObjectRef ref);
+typedef UInt64 (*E64MMIOReadFn)(__E64Core core, EFObjectRef DeviceRef, UInt64 offset, EFSize size);
+typedef void (*E64MMIOWriteFn)(__E64Core core, EFObjectRef DeviceRef, UInt64 offset, UInt64 value, EFSize size);
+typedef void (*E64MMIOResetFn)(EFObjectRef DeviceRef);
 
 typedef struct __E64MMIORegion {
     EFObject header;
@@ -38,9 +38,9 @@ typedef struct __E64MMIORegion {
     void *device;
 
     /* functions */
-    mmio_read_fn read;
-    mmio_write_fn write;
-    mmio_reset_fn reset;
+    E64MMIOReadFn read;
+    E64MMIOWriteFn write;
+    E64MMIOResetFn reset;
 } *__E64MMIORegion;
 
 #endif /* __E64MMIOREGION_H */

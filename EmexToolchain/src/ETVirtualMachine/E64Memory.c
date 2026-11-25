@@ -800,11 +800,11 @@ void E64MemoryCoreAction(E64MemoryRef memoryRef,
             switch(actionType)
             {
                 case kE64MemoryActionTypeRead:
-                    mmio_read_fn read = E64MMIORegionGetReadSymbol(mmio_region);
+                    E64MMIOReadFn read = E64MMIORegionGetReadFunction(mmio_region);
                     *value = read(core, device, offset, size);
                     break;
                 case kE64MemoryActionTypeWrite:
-                    mmio_write_fn write = E64MMIORegionGetWriteSymbol(mmio_region);
+                    E64MMIOWriteFn write = E64MMIORegionGetWriteFunction(mmio_region);
                     if(write != NULL)
                     {
                         write(core, device, offset, *value, size);

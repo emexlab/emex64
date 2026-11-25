@@ -213,7 +213,7 @@ E64MMIORegionRef E64ICCopyMMIORegion(EFAllocatorRef allocatorRef,
         allocatorRef = EFGetAllocator(icRef);
     }
 
-    return E64MMIORegionCreate(allocatorRef, EMEX64_IC_BASE, EMEX64_INTC_SIZE, icRef, __E64ICMMIORead, __E64ICMMIOWrite, (mmio_reset_fn)__E64ICReset);
+    return E64MMIORegionCreate(allocatorRef, EMEX64_IC_BASE, EMEX64_INTC_SIZE, icRef, __E64ICMMIORead, __E64ICMMIOWrite, (E64MMIOResetFn)__E64ICReset);
 }
 
 Boolean E64ICRegisterOnMMIOBus(E64ICRef icRef,
