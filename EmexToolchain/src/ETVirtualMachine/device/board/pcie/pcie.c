@@ -382,10 +382,10 @@ emex64_pcie_t *emex64_pcie_alloc(E64MachineRef machine)
 
     pcie->machine = machine;
 
-    EFAUTOREL E64MMIORegionRef rc = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_PCIE_BASE, EMEX64_PCIE_SIZE, pcie, pcie_rc_read, pcie_rc_write);
-    EFAUTOREL E64MMIORegionRef ecam = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_PCIE_ECAM_BASE, EMEX64_PCIE_ECAM_SIZE, pcie, pcie_cfg_read, pcie_cfg_write);
-    EFAUTOREL E64MMIORegionRef mmio = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_PCIE_MMIO_BASE, EMEX64_PCIE_MMIO_SIZE, pcie, pcie_mmio_read, pcie_mmio_write);
-    EFAUTOREL E64MMIORegionRef pci = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_PCIE_PCI_ECAM_BASE, EMEX64_PCIE_PCI_ECAM_SIZE, pcie, pcie_pci_read, pcie_pci_write);
+    EFAUTOREL E64MMIORegionRef rc = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_PCIE_BASE, EMEX64_PCIE_SIZE, pcie, pcie_rc_read, pcie_rc_write, NULL);
+    EFAUTOREL E64MMIORegionRef ecam = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_PCIE_ECAM_BASE, EMEX64_PCIE_ECAM_SIZE, pcie, pcie_cfg_read, pcie_cfg_write, NULL);
+    EFAUTOREL E64MMIORegionRef mmio = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_PCIE_MMIO_BASE, EMEX64_PCIE_MMIO_SIZE, pcie, pcie_mmio_read, pcie_mmio_write, NULL);
+    EFAUTOREL E64MMIORegionRef pci = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_PCIE_PCI_ECAM_BASE, EMEX64_PCIE_PCI_ECAM_SIZE, pcie, pcie_pci_read, pcie_pci_write, NULL);
     if(rc == NULL || ecam == NULL || mmio == NULL || pci == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, rc) || !E64MMIOBusRegisterRegion(machine->mmio_bus, ecam) || !E64MMIOBusRegisterRegion(machine->mmio_bus, mmio) || !E64MMIOBusRegisterRegion(machine->mmio_bus, pci))
     {
         free(pcie);

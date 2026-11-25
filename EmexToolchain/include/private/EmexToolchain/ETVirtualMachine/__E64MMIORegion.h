@@ -27,14 +27,20 @@
 
 typedef UInt64 (*mmio_read_fn)(__E64Core core, void *device, UInt64 offset, EFSize size);
 typedef void (*mmio_write_fn)(__E64Core core, void *device, UInt64 offset, UInt64 value, EFSize size);
+typedef void (*mmio_reset_fn)(EFObjectRef ref);
 
 typedef struct __E64MMIORegion {
     EFObject header;
     UInt64 base_addr;
     UInt64 size;
+
+    /* points back to device object */
     void *device;
+
+    /* functions */
     mmio_read_fn read;
     mmio_write_fn write;
+    mmio_reset_fn reset;
 } *__E64MMIORegion;
 
 #endif /* __E64MMIOREGION_H */

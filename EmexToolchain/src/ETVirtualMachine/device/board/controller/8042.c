@@ -163,7 +163,7 @@ emex64_8042_t *emex64_8042_alloc(E64MachineRef machine,
     dev->mouse_enabled = true;
     dev->status = 0x10;
 
-    E64MMIORegionRef MMIO8042Region = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_8042_BASE, EMEX64_8042_SIZE, dev, emex64_8042_read, emex64_8042_write);
+    E64MMIORegionRef MMIO8042Region = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_8042_BASE, EMEX64_8042_SIZE, dev, emex64_8042_read, emex64_8042_write, NULL);
     if(MMIO8042Region == NULL)
     {
         free(dev);

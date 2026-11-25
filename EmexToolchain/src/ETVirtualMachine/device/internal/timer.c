@@ -324,7 +324,7 @@ emex64_timer_t *emex64_timer_alloc(E64MachineRef machine)
     }
 
     /* register timer MMIO */
-    EFAUTOREL E64MMIORegionRef TimerRegion = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_TIMER_BASE, EMEX64_TIMER_SIZE, timer, emex64_timer_read, emex64_timer_write);
+    EFAUTOREL E64MMIORegionRef TimerRegion = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_TIMER_BASE, EMEX64_TIMER_SIZE, timer, emex64_timer_read, emex64_timer_write, NULL);
     if(TimerRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, TimerRegion))
     {
         free(timer);

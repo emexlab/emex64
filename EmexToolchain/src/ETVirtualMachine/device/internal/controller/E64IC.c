@@ -213,7 +213,7 @@ E64MMIORegionRef E64ICCopyMMIORegion(EFAllocatorRef allocatorRef,
         allocatorRef = EFGetAllocator(icRef);
     }
 
-    return E64MMIORegionCreate(allocatorRef, EMEX64_IC_BASE, EMEX64_INTC_SIZE, icRef, __E64ICMMIORead, __E64ICMMIOWrite);
+    return E64MMIORegionCreate(allocatorRef, EMEX64_IC_BASE, EMEX64_INTC_SIZE, icRef, __E64ICMMIORead, __E64ICMMIOWrite, (mmio_reset_fn)__E64ICReset);
 }
 
 Boolean E64ICRegisterOnMMIOBus(E64ICRef icRef,
@@ -237,7 +237,7 @@ Boolean E64ICRegisterOnMMIOBus(E64ICRef icRef,
         return false;
     }
 
-    E64MMIORegionRef IOAPICRegionRef = E64MMIORegionCreate(EFGetAllocator(icRef), EMEX64_IOAPIC_BASE, EMEX64_IOAPIC_SIZE, icRef, __E64IOAPICMMIORead, __E64IOAPICMMIOWrite);
+    E64MMIORegionRef IOAPICRegionRef = E64MMIORegionCreate(EFGetAllocator(icRef), EMEX64_IOAPIC_BASE, EMEX64_IOAPIC_SIZE, icRef, __E64IOAPICMMIORead, __E64IOAPICMMIOWrite, NULL);
     if(IOAPICRegionRef == NULL)
     {
         return false;

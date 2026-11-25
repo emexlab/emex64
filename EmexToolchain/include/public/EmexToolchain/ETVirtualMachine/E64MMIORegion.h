@@ -25,18 +25,19 @@
 #include <EmexFoundation/EmexFoundation.h>
 #if ET_PRIVATE
 #include <EmexToolchain/ETVirtualMachine/__E64MMIORegion.h>
-#endif /* ET_PRIVATE */
-
+#else
 typedef struct __E64Core *E64CoreRef;
 
 typedef UInt64 (*mmio_read_fn)(E64CoreRef core, void *device, UInt64 offset, EFSize size);
 typedef void (*mmio_write_fn)(E64CoreRef core, void *device, UInt64 offset, UInt64 value, EFSize size);
+typedef void (*mmio_reset_fn)(EFObjectRef ref);
+#endif /* ET_PRIVATE */
 
 typedef struct __E64MMIORegion *E64MMIORegionRef;
 
 EFTypeID E64MMIORegionGetTypeID(void);
 
-E64MMIORegionRef E64MMIORegionCreate(EFAllocatorRef allocatorRef, UInt64 base, UInt64 size, void *device, mmio_read_fn read, mmio_write_fn write);
+E64MMIORegionRef E64MMIORegionCreate(EFAllocatorRef allocatorRef, UInt64 base, UInt64 size, void *device, mmio_read_fn read, mmio_write_fn write, mmio_reset_fn);
 
 UInt64 E64MMIORegionGetBaseAddress(E64MMIORegionRef MMIORegionRef);
 UInt64 E64MMIORegionGetSize(E64MMIORegionRef MMIORegionRef);

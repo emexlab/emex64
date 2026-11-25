@@ -314,13 +314,13 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
         }
     }
 
-    EFAUTOREL E64MMIORegionRef CPUIDRegion = E64MMIORegionCreate(NULL, EMEX64_CPUID_BASE, EMEX64_CPUID_SIZE, NULL, emex64_cpuid_read, NULL);
+    EFAUTOREL E64MMIORegionRef CPUIDRegion = E64MMIORegionCreate(NULL, EMEX64_CPUID_BASE, EMEX64_CPUID_SIZE, NULL, emex64_cpuid_read, NULL, NULL);
     if(CPUIDRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, CPUIDRegion))
     {
         return NULL;
     }
 
-    EFAUTOREL E64MMIORegionRef RTCMMIORegion = E64MMIORegionCreate(NULL, EMEX64_RTC_BASE, EMEX64_RTC_SIZE, NULL, emex64_rtc_read, NULL);
+    EFAUTOREL E64MMIORegionRef RTCMMIORegion = E64MMIORegionCreate(NULL, EMEX64_RTC_BASE, EMEX64_RTC_SIZE, NULL, emex64_rtc_read, NULL, NULL);
     if(RTCMMIORegion == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, RTCMMIORegion))
     {
         return NULL;
@@ -332,19 +332,19 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
         return NULL;
     }
 
-    EFAUTOREL E64MMIORegionRef NVRAMRegion = E64MMIORegionCreate(NULL, EMEX64_NVRAM_BASE, EMEX64_NVRAM_SIZE, machine->nvram, emex64_nvram_read, emex64_nvram_write);
+    EFAUTOREL E64MMIORegionRef NVRAMRegion = E64MMIORegionCreate(NULL, EMEX64_NVRAM_BASE, EMEX64_NVRAM_SIZE, machine->nvram, emex64_nvram_read, emex64_nvram_write, NULL);
     if(NVRAMRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, NVRAMRegion))
     {
         return NULL;
     }
 
-    EFAUTOREL E64MMIORegionRef MCRegion = E64MMIORegionCreate(NULL, EMEX64_MC_BASE, EMEX64_MC_SIZE, NULL, emex64_mc_read, emex64_mc_write);
+    EFAUTOREL E64MMIORegionRef MCRegion = E64MMIORegionCreate(NULL, EMEX64_MC_BASE, EMEX64_MC_SIZE, NULL, emex64_mc_read, emex64_mc_write, NULL);
     if(MCRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, MCRegion))
     {
         return NULL;
     }
 
-    EFAUTOREL E64MMIORegionRef PlatformRegion = E64MMIORegionCreate(NULL, EMEX64_PLATFORM_BASE, EMEX64_PLATFORM_SIZE, NULL, emex64_platform_read, emex64_platform_write);
+    EFAUTOREL E64MMIORegionRef PlatformRegion = E64MMIORegionCreate(NULL, EMEX64_PLATFORM_BASE, EMEX64_PLATFORM_SIZE, NULL, emex64_platform_read, emex64_platform_write, NULL);
     if(PlatformRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, PlatformRegion))
     {
         return NULL;
@@ -359,7 +359,6 @@ void __E64MachineResetHardware(__E64Machine machine)
     emex64_net_reset(machine->net);
     emex64_sb16_reset(machine->sb16);
     emex64_pcie_reset(machine->pcie);
-    __E64ICReset(machine->intc);
     emex64_timer_reset(machine->timer);
     emex64_uart_reset(machine->uart);
     emex64_8042_reset(machine->emex8042);
@@ -369,6 +368,7 @@ void __E64MachineResetHardware(__E64Machine machine)
     emex64_gpu_reset(machine->gpu);
 
     /* resetting memory */
+    E64MMIOBusReset(machine->mmio_bus);
     E64MemoryReset(machine->memory);
 
     /* resetting all cores */

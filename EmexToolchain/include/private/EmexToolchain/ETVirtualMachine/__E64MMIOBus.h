@@ -30,4 +30,6 @@ typedef struct __E64MMIOBus {
     EFMutableArrayRef regions;
 } *__E64MMIOBus;
 
+Boolean E64MMIOBusReset(__E64MMIOBus MMIOBus);
+
 #endif /* __E64MMIOBUS_H */

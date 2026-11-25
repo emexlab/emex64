@@ -71,7 +71,8 @@ E64MMIORegionRef E64MMIORegionCreate(EFAllocatorRef allocatorRef,
                                      UInt64 size,
                                      void *device,
                                      mmio_read_fn read,
-                                     mmio_write_fn write)
+                                     mmio_write_fn write,
+                                     mmio_reset_fn reset)
 {
     __E64MMIORegion MMIORegion = (__E64MMIORegion)EFObjectCreate(allocatorRef, E64MMIORegionGetTypeID(), (EFIndex)sizeof(struct __E64MMIORegion));
     if(MMIORegion == NULL)
@@ -84,6 +85,7 @@ E64MMIORegionRef E64MMIORegionCreate(EFAllocatorRef allocatorRef,
     MMIORegion->device = device;
     MMIORegion->read = read;
     MMIORegion->write = write;
+    MMIORegion->reset = reset;
 
     return (E64MMIORegionRef)MMIORegion;
 }

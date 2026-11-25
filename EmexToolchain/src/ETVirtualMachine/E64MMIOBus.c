@@ -130,3 +130,24 @@ E64MMIORegionRef E64MMIOBusGetRegionForAddress(E64MMIOBusRef MMIOBusRef,
 
     return NULL;
 }
+
+Boolean E64MMIOBusReset(__E64MMIOBus MMIOBus)
+{
+    if(MMIOBus == NULL)
+    {
+        return false;
+    }
+
+    /* resets all regions */
+    EFIndex count = EFArrayGetCount(MMIOBus->regions);
+    for(EFIndex index = 0; index < count; index++)
+    {
+        __E64MMIORegion MMIORegion = (__E64MMIORegion)EFArrayGetValueAtIndex(MMIOBus->regions, index);
+        if(MMIORegion->reset != NULL)
+        {
+            MMIORegion->reset((EFObjectRef)MMIORegion->device);
+        }
+    }
+
+    return true;
+}
