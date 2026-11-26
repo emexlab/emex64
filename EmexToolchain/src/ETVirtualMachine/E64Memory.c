@@ -866,8 +866,8 @@ rw_fastpath:
                 return;
             }
 
-            pthread_mutex_lock(&machine->mmio_lock);
-            E64MMIORegionRef mmio_region = E64MMIOBusGetRegionForAddress(machine->mmio_bus, addr);
+            pthread_mutex_lock(&machine->mmioLock);
+            E64MMIORegionRef mmio_region = E64MMIOBusGetRegionForAddress(machine->mmioBus, addr);
             void *device = E64MMIORegionGetDevice(mmio_region);
             if(likely(mmio_region != NULL))
             {
@@ -889,10 +889,10 @@ rw_fastpath:
                         emex64_memory_fault(core, kE64ExceptionBadAccess, addr, actionType);
                         break;
                 }
-                pthread_mutex_unlock(&machine->mmio_lock);
+                pthread_mutex_unlock(&machine->mmioLock);
                 return;
             }
-            pthread_mutex_unlock(&machine->mmio_lock);
+            pthread_mutex_unlock(&machine->mmioLock);
 
             emex64_memory_fault(core, kE64ExceptionBadAccess, addr, actionType);
             return;

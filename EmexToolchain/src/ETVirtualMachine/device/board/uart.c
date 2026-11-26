@@ -53,11 +53,11 @@ static void uart_update_irq(emex64_uart_t *u)
     SInt32 level = ((u->control & UART_CTRL_RX_IRQ_EN) && (u->status & UART_STATUS_RX_READY)) || ((u->control & UART_CTRL_TX_IRQ_EN) && (u->status & UART_STATUS_TX_EMPTY));
     if(level)
     {
-        E64ICRaiseInterrupt(u->machine->intc, EMEX64_IRQ_UART);
+        E64ICRaiseInterrupt(u->machine->interruptController, EMEX64_IRQ_UART);
     }
     else
     {
-        E64ICClearInterrupt(u->machine->intc, EMEX64_IRQ_UART);
+        E64ICClearInterrupt(u->machine->interruptController, EMEX64_IRQ_UART);
     }
 }
 
@@ -164,7 +164,7 @@ emex64_uart_t *emex64_uart_alloc(E64MachineRef machine)
     }
 
     EFAUTOREL E64MMIORegionRef UARTRegion = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_UART_BASE, EMEX64_UART_SIZE, u, emex64_uart_read, emex64_uart_write, NULL);
-    if(UARTRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, UARTRegion))
+    if(UARTRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmioBus, UARTRegion))
     {
         free(u);
         return NULL;

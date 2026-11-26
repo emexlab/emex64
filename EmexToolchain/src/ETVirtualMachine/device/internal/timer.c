@@ -324,8 +324,8 @@ emex64_timer_t *emex64_timer_alloc(E64MachineRef machine)
     }
 
     /* register timer MMIO */
-    EFAUTOREL E64MMIORegionRef TimerRegion = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_TIMER_BASE, EMEX64_TIMER_SIZE, timer, emex64_timer_read, emex64_timer_write, NULL);
-    if(TimerRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, TimerRegion))
+    EFAUTOREL E64MMIORegionRef timerRegion = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_TIMER_BASE, EMEX64_TIMER_SIZE, timer, emex64_timer_read, emex64_timer_write, NULL);
+    if(timerRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmioBus, timerRegion))
     {
         free(timer);
         return NULL;
@@ -447,7 +447,7 @@ void emex64_timer_tick(emex64_timer_t *timer,
 
     if(fired)
     {
-        E64ICRaiseInterrupt(timer->machine->intc, EMEX64_IRQ_TIMER);
+        E64ICRaiseInterrupt(timer->machine->interruptController, EMEX64_IRQ_TIMER);
     }
 }
 

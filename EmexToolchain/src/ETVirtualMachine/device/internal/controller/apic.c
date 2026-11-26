@@ -42,7 +42,7 @@ UInt64 emex64_lapic_read(E64CoreRef core,
         case APIC_REG_ID:
             return core->id;
         case APIC_REG_VERSION:
-            return APIC_VERSION | (UInt64)machine->core_count << 8;
+            return APIC_VERSION | (UInt64)machine->coreCount << 8;
         case APIC_REG_IPI_STATUS:
             return __atomic_load_n(&core->lapic.ipi_status, __ATOMIC_ACQUIRE);
         case APIC_REG_START:
@@ -52,7 +52,7 @@ UInt64 emex64_lapic_read(E64CoreRef core,
         case APIC_REG_RUNNING:
         {
             UInt64 running = 0;
-            for(UInt8 i = 0; i < machine->core_count; i++)
+            for(UInt8 i = 0; i < machine->coreCount; i++)
             {
                 if(__atomic_load_n(&machine->cores[i]->run_state, __ATOMIC_ACQUIRE) == E64_CORE_RUNNING)
                 {
@@ -84,7 +84,7 @@ void emex64_lapic_write(E64CoreRef core,
         {
             UInt64 dest = value & APIC_ICR_DEST_MASK;
             UInt64 type = (value >> APIC_ICR_TYPE_SHIFT) & 0xF;
-            for(UInt8 i = 0; i < machine->core_count; i++)
+            for(UInt8 i = 0; i < machine->coreCount; i++)
             {
                 if(dest == APIC_DEST_OTHERS ? i != core->id : i == dest)
                 {

@@ -386,7 +386,7 @@ emex64_pcie_t *emex64_pcie_alloc(E64MachineRef machine)
     EFAUTOREL E64MMIORegionRef ecam = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_PCIE_ECAM_BASE, EMEX64_PCIE_ECAM_SIZE, pcie, pcie_cfg_read, pcie_cfg_write, NULL);
     EFAUTOREL E64MMIORegionRef mmio = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_PCIE_MMIO_BASE, EMEX64_PCIE_MMIO_SIZE, pcie, pcie_mmio_read, pcie_mmio_write, NULL);
     EFAUTOREL E64MMIORegionRef pci = E64MMIORegionCreate(kEFAllocatorDefault, EMEX64_PCIE_PCI_ECAM_BASE, EMEX64_PCIE_PCI_ECAM_SIZE, pcie, pcie_pci_read, pcie_pci_write, NULL);
-    if(rc == NULL || ecam == NULL || mmio == NULL || pci == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, rc) || !E64MMIOBusRegisterRegion(machine->mmio_bus, ecam) || !E64MMIOBusRegisterRegion(machine->mmio_bus, mmio) || !E64MMIOBusRegisterRegion(machine->mmio_bus, pci))
+    if(rc == NULL || ecam == NULL || mmio == NULL || pci == NULL || !E64MMIOBusRegisterRegion(machine->mmioBus, rc) || !E64MMIOBusRegisterRegion(machine->mmioBus, ecam) || !E64MMIOBusRegisterRegion(machine->mmioBus, mmio) || !E64MMIOBusRegisterRegion(machine->mmioBus, pci))
     {
         free(pcie);
         return NULL;
@@ -488,7 +488,7 @@ void emex64_pcie_raise_irq(emex64_pcie_function_t *function)
     function->status |= PCIE_STATUS_IRQ;
     if(function->control & PCIE_CONTROL_IRQ)
     {
-        E64ICRaiseInterrupt(function->pcie->machine->intc, function->irq);
+        E64ICRaiseInterrupt(function->pcie->machine->interruptController, function->irq);
     }
 }
 

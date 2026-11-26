@@ -195,7 +195,7 @@ void E64IRET(__E64Core core)
 
     core->rl[kE64RegisterSP] = oldsp;
 
-    core->machine->intc->current_irq = -1;
+    core->machine->interruptController->current_irq = -1;
     core->in_interrupt = false;
     core->halted = false;
     emex64_core_context_changed(core);
@@ -540,7 +540,7 @@ void E64WFE(__E64Core core)
 void E64SEV(__E64Core core)
 {
     __E64Machine machine = (__E64Machine)core->machine;
-    for(UInt8 i = 0; i < machine->core_count; i++)
+    for(UInt8 i = 0; i < machine->coreCount; i++)
     {
         __E64Core c = (__E64Core)machine->cores[i];
         __atomic_store_n(&c->event, true, __ATOMIC_RELEASE);
@@ -598,10 +598,8 @@ void E64SVC(__E64Core core)
         return;
     }
 
-    __E64IC ic = (__E64IC)core->machine->intc;
-
     UInt64 return_pc = core->rl[kE64RegisterPC] + core->op.ilen;
-    E64EnterInterruptPrivate(ic, core, EMEX64_IRQ_SOFTWARE, return_pc);
+    E64EnterInterruptPrivate((__E64IC)core->machine->interruptController, core, EMEX64_IRQ_SOFTWARE, return_pc);
 
     core->op.ilen = 0;
 }

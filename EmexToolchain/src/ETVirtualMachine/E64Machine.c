@@ -46,16 +46,16 @@ static void __E64MachineDeinit(EFObjectRef machineRef)
         emex64_sb16_dealloc(machine->sb16);
     }
 
-    for(UInt8 i = 0; i < machine->core_count; i++)
+    for(UInt8 i = 0; i < machine->coreCount; i++)
     {
         EFReleaseTry(machine->cores[i]);
     }
-    pthread_mutex_destroy(&machine->mmio_lock);
-    pthread_mutex_destroy(&machine->reset_lock);
-    pthread_cond_destroy(&machine->reset_cond);
+    pthread_mutex_destroy(&machine->mmioLock);
+    pthread_mutex_destroy(&machine->resetLock);
+    pthread_cond_destroy(&machine->resetCond);
     EFReleaseTry(machine->memory);
-    EFReleaseTry(machine->mmio_bus);
-    EFReleaseTry(machine->intc);
+    EFReleaseTry(machine->mmioBus);
+    EFReleaseTry(machine->interruptController);
     if(machine->timer != NULL)
     {
         emex64_timer_dealloc(machine->timer);
@@ -130,7 +130,7 @@ static void __E64MachineWakeCore(void *context,
                                  UInt8 core)
 {
     __E64Machine machine = (__E64Machine)context;
-    if(core < machine->core_count)
+    if(core < machine->coreCount)
     {
         __E64CoreKick((__E64Core)machine->cores[core]);
     }
@@ -162,8 +162,8 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
         return NULL;
     }
 
-    machine->mmio_bus = E64MMIOBusCreate(allocatorRef);
-    if(machine->mmio_bus == NULL)
+    machine->mmioBus = E64MMIOBusCreate(allocatorRef);
+    if(machine->mmioBus == NULL)
     {
         return NULL;
     }
@@ -171,10 +171,10 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
     pthread_mutexattr_t attr;
     pthread_mutexattr_init(&attr);
     pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
-    pthread_mutex_init(&machine->mmio_lock, &attr);
+    pthread_mutex_init(&machine->mmioLock, &attr);
     pthread_mutexattr_destroy(&attr);
-    pthread_mutex_init(&machine->reset_lock, NULL);
-    pthread_cond_init(&machine->reset_cond, NULL);
+    pthread_mutex_init(&machine->resetLock, NULL);
+    pthread_cond_init(&machine->resetCond, NULL);
 
     UInt8 cores = options.coreCount == 0 ? 1 : options.coreCount;
     if(cores > E64_MACHINE_MAX_CORES)
@@ -182,7 +182,7 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
         cores = E64_MACHINE_MAX_CORES;
     }
 
-    machine->core_count = 0;
+    machine->coreCount = 0;
     for(UInt8 index = 0; index < cores; index++)
     {
         machine->cores[index] = __E64CoreCreateWithID(allocatorRef, (E64MachineRef)machine, index);
@@ -190,15 +190,15 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
         {
             return NULL;
         }
-        machine->core_count++;
+        machine->coreCount++;
     }
 
-    machine->intc = E64ICCreate(allocatorRef);
-    if(machine->intc == NULL || !E64ICRegisterOnMMIOBus(machine->intc, machine->mmio_bus))
+    machine->interruptController = E64ICCreate(allocatorRef);
+    if(machine->interruptController == NULL || !E64ICRegisterOnMMIOBus(machine->interruptController, machine->mmioBus))
     {
         return NULL;
     }
-    E64ICSetWakeHandler(machine->intc, __E64MachineWakeCore, machine);
+    E64ICSetWakeHandler(machine->interruptController, __E64MachineWakeCore, machine);
 
     machine->timer = emex64_timer_alloc(machine);
     if(machine->timer == NULL)
@@ -309,13 +309,13 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
     }
 
     EFAUTOREL E64MMIORegionRef CPUIDRegion = E64MMIORegionCreate(NULL, EMEX64_CPUID_BASE, EMEX64_CPUID_SIZE, NULL, emex64_cpuid_read, NULL, NULL);
-    if(CPUIDRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, CPUIDRegion))
+    if(CPUIDRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmioBus, CPUIDRegion))
     {
         return NULL;
     }
 
     EFAUTOREL E64MMIORegionRef RTCMMIORegion = E64MMIORegionCreate(NULL, EMEX64_RTC_BASE, EMEX64_RTC_SIZE, NULL, emex64_rtc_read, NULL, NULL);
-    if(RTCMMIORegion == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, RTCMMIORegion))
+    if(RTCMMIORegion == NULL || !E64MMIOBusRegisterRegion(machine->mmioBus, RTCMMIORegion))
     {
         return NULL;
     }
@@ -327,19 +327,19 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
     }
 
     EFAUTOREL E64MMIORegionRef NVRAMRegion = E64MMIORegionCreate(NULL, EMEX64_NVRAM_BASE, EMEX64_NVRAM_SIZE, machine->nvram, emex64_nvram_read, emex64_nvram_write, NULL);
-    if(NVRAMRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, NVRAMRegion))
+    if(NVRAMRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmioBus, NVRAMRegion))
     {
         return NULL;
     }
 
     EFAUTOREL E64MMIORegionRef MCRegion = E64MMIORegionCreate(NULL, EMEX64_MC_BASE, EMEX64_MC_SIZE, NULL, emex64_mc_read, emex64_mc_write, NULL);
-    if(MCRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, MCRegion))
+    if(MCRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmioBus, MCRegion))
     {
         return NULL;
     }
 
     EFAUTOREL E64MMIORegionRef PlatformRegion = E64MMIORegionCreate(NULL, EMEX64_PLATFORM_BASE, EMEX64_PLATFORM_SIZE, NULL, emex64_platform_read, emex64_platform_write, NULL);
-    if(PlatformRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmio_bus, PlatformRegion))
+    if(PlatformRegion == NULL || !E64MMIOBusRegisterRegion(machine->mmioBus, PlatformRegion))
     {
         return NULL;
     }
@@ -362,11 +362,11 @@ void __E64MachineResetHardware(__E64Machine machine)
     emex64_gpu_reset(machine->gpu);
 
     /* resetting memory */
-    __E64MMIOBusReset(machine->mmio_bus);
+    __E64MMIOBusReset(machine->mmioBus);
     __E64MemoryReset(machine->memory);
 
     /* resetting all cores */
-    for(UInt8 i = 0; i < machine->core_count; i++)
+    for(UInt8 i = 0; i < machine->coreCount; i++)
     {
         __E64CoreResetForPowerOn((__E64Core)machine->cores[i]);
     }
@@ -385,7 +385,7 @@ UInt8 E64MachineGetMaxCoreCount(void)
 UInt8 E64MachineGetCoreCount(E64MachineRef machineRef)
 {
     __E64Machine machine = (__E64Machine)machineRef;
-    return machine != NULL ? machine->core_count : 0;
+    return machine != NULL ? machine->coreCount : 0;
 }
 
 E64CoreRef E64MachineGetCore(E64MachineRef machineRef)
@@ -398,7 +398,7 @@ E64CoreRef E64MachineGetCoreWithIdentifier(E64MachineRef machineRef,
                                            UInt8 identifier)
 {
     __E64Machine machine = (__E64Machine)machineRef;
-    if(machine == NULL || machine->core_count <= identifier)
+    if(machine == NULL || machine->coreCount <= identifier)
     {
         return NULL;
     }
@@ -414,13 +414,13 @@ E64MemoryRef E64MachineGetMemory(E64MachineRef machineRef)
 E64MMIOBusRef E64MachineGetMMIOBus(E64MachineRef machineRef)
 {
     __E64Machine machine = (__E64Machine)machineRef;
-    return machine != NULL ? machine->mmio_bus : NULL;
+    return machine != NULL ? machine->mmioBus : NULL;
 }
 
 E64ICRef E64MachineGetIC(E64MachineRef machineRef)
 {
     __E64Machine machine = (__E64Machine)machineRef;
-    return machine != NULL ? machine->intc : NULL;
+    return machine != NULL ? machine->interruptController : NULL;
 }
 
 E64Exception E64MachineExecute(E64MachineRef machineRef)

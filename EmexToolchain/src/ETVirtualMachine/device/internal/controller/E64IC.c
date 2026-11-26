@@ -363,7 +363,7 @@ Boolean __E64ServeInterruptIfNeeded(E64ICRef icRef,
     UInt64 handler_addr;
     if(!E64MemoryAction(machine->memory, vector_addr, 8, &handler_addr, kE64MemoryActionTypeRead))
     {
-        core->machine->intc->current_irq = -1;
+        core->machine->interruptController->current_irq = -1;
         return false;
     }
     handler_addr = TO_HOST64(handler_addr);

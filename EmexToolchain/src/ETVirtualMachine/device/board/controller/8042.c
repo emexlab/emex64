@@ -170,7 +170,7 @@ emex64_8042_t *emex64_8042_alloc(E64MachineRef machine,
         return NULL;
     }
 
-    Boolean success = E64MMIOBusRegisterRegion(machine->mmio_bus, MMIO8042Region);
+    Boolean success = E64MMIOBusRegisterRegion(machine->mmioBus, MMIO8042Region);
     EFRelease(MMIO8042Region);
     if(!success)
     {
@@ -219,7 +219,7 @@ static void update_8042_interrupt(emex64_8042_t *dev)
             dev->status &= ~STATUS_MOUSE_OBF;
         }
 
-        E64ICRaiseInterrupt(dev->machine->intc, EMEX64_IRQ_8042);
+        E64ICRaiseInterrupt(dev->machine->interruptController, EMEX64_IRQ_8042);
     }
     else
     {

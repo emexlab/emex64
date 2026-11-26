@@ -392,7 +392,7 @@ void __E64CoreRequestReset(__E64Core core)
     __E64Machine machine = (__E64Machine)core->machine;
     machine->resetting = true;
     __atomic_thread_fence(__ATOMIC_SEQ_CST);
-    for(UInt8 i = 0; i < machine->core_count; i++)
+    for(UInt8 i = 0; i < machine->coreCount; i++)
     {
         __E64CoreWake((__E64Core)machine->cores[i]);
     }
@@ -517,12 +517,12 @@ static Boolean __E64CoreHandleRequests(__E64Core core)
         }
 
         pthread_mutex_lock(&core->wait_lock);
-        while(__atomic_load_n(&core->request, __ATOMIC_ACQUIRE) == 0 && !machine->powered_off && !machine->resetting)
+        while(__atomic_load_n(&core->request, __ATOMIC_ACQUIRE) == 0 && !machine->poweredOff && !machine->resetting)
         {
             pthread_cond_wait(&core->wait_cond, &core->wait_lock);
         }
         pthread_mutex_unlock(&core->wait_lock);
-        if(machine->powered_off)
+        if(machine->poweredOff)
         {
             return false;
         }
@@ -544,12 +544,12 @@ static inline EFIndex __E64CoreTakeInterrupt(__E64Core core)
             return bit == APIC_PENDING_IPI ? EMEX64_IRQ_IPI : EMEX64_IRQ_LAPIC_TIMER;
         }
     }
-    return E64ICTakeInterrupt(core->machine->intc, core->id);
+    return E64ICTakeInterrupt(core->machine->interruptController, core->id);
 }
 
 static inline Boolean __E64CoreHasPendingInterrupt(__E64Core core)
 {
-    return __atomic_load_n(&core->lapic.pending, __ATOMIC_ACQUIRE) != 0 || E64ICHasPendingInterrupt(core->machine->intc, core->id);
+    return __atomic_load_n(&core->lapic.pending, __ATOMIC_ACQUIRE) != 0 || E64ICHasPendingInterrupt(core->machine->interruptController, core->id);
 }
 
 static inline UInt64 __E64CoreTimerDue(const emex64_vtimer_t *t,
@@ -590,7 +590,7 @@ static void __E64CoreIdle(__E64Core core)
     if(!__E64CoreHasPendingInterrupt(core) &&
        !(core->wfe && __atomic_load_n(&core->event, __ATOMIC_ACQUIRE)) &&
        __atomic_load_n(&core->request, __ATOMIC_ACQUIRE) == 0 &&
-       !machine->powered_off && !machine->resetting)
+       !machine->poweredOff && !machine->resetting)
     {
 #if defined(__APPLE__)
         struct timespec rel = { (time_t)(ns / 1000000000ULL), (long)(ns % 1000000000ULL) };
@@ -2994,33 +2994,33 @@ static UInt32 __E64CoreRunTrapModel(__E64Core core,
 static void __E64CoreParkForReset(__E64Core core)
 {
     __E64Machine machine = (__E64Machine)core->machine;
-    pthread_mutex_lock(&machine->reset_lock);
-    UInt64 generation = machine->reset_generation;
-    machine->reset_parked++;
-    pthread_cond_broadcast(&machine->reset_cond);
+    pthread_mutex_lock(&machine->resetLock);
+    UInt64 generation = machine->resetGeneration;
+    machine->resetParked++;
+    pthread_cond_broadcast(&machine->resetCond);
     if(core->id == 0)
     {
-        while(machine->reset_parked < machine->core_count && !machine->powered_off)
+        while(machine->resetParked < machine->coreCount && !machine->poweredOff)
         {
-            pthread_cond_wait(&machine->reset_cond, &machine->reset_lock);
+            pthread_cond_wait(&machine->resetCond, &machine->resetLock);
         }
-        if(!machine->powered_off)
+        if(!machine->poweredOff)
         {
             __E64MachineResetHardware(machine);
         }
-        machine->reset_parked = 0;
+        machine->resetParked = 0;
         machine->resetting = false;
-        machine->reset_generation++;
-        pthread_cond_broadcast(&machine->reset_cond);
+        machine->resetGeneration++;
+        pthread_cond_broadcast(&machine->resetCond);
     }
     else
     {
-        while(machine->reset_generation == generation && !machine->powered_off)
+        while(machine->resetGeneration == generation && !machine->poweredOff)
         {
-            pthread_cond_wait(&machine->reset_cond, &machine->reset_lock);
+            pthread_cond_wait(&machine->resetCond, &machine->resetLock);
         }
     }
-    pthread_mutex_unlock(&machine->reset_lock);
+    pthread_mutex_unlock(&machine->resetLock);
 }
 
 static void *__E64CoreExecutionThread(void *arg)
@@ -3037,9 +3037,9 @@ static void *__E64CoreExecutionThread(void *arg)
 #endif /* __APPLE__ */
     for(;;)
     {
-        if(unlikely(machine->powered_off || machine->resetting))
+        if(unlikely(machine->poweredOff || machine->resetting))
         {
-            if(machine->powered_off)
+            if(machine->poweredOff)
             {
                 break;
             }
@@ -3086,7 +3086,7 @@ static void *__E64CoreExecutionThread(void *arg)
 
         if(core->id == 0)
         {
-            __E64ServeInterruptIfNeeded(core->machine->intc, core);
+            __E64ServeInterruptIfNeeded(core->machine->interruptController, core);
         }
 
         /*
@@ -3100,7 +3100,7 @@ static void *__E64CoreExecutionThread(void *arg)
             if(unlikely(core->cr_state.crexc.exception != kE64ExceptionNone))
             {
                 core->halted = true;
-                E64ICRaiseInterrupt(core->machine->intc, EMEX64_IRQ_EXCEPTION);
+                E64ICRaiseInterrupt(core->machine->interruptController, EMEX64_IRQ_EXCEPTION);
             }
             else if(unlikely(core->halted))
             {
@@ -3125,7 +3125,7 @@ E64Exception E64CoreExecute(E64CoreRef coreRef)
     assert(core != NULL && core->pthread == 0);
     __E64Machine machine = (__E64Machine)core->machine;
 
-    for(UInt8 i = 0; i < machine->core_count; i++)
+    for(UInt8 i = 0; i < machine->coreCount; i++)
     {
         __E64Core c = (__E64Core)machine->cores[i];
         pthread_create(&(c->pthread), NULL, __E64CoreExecutionThread, (void*)c);
@@ -3140,8 +3140,8 @@ E64Exception E64CoreExecute(E64CoreRef coreRef)
 
     pthread_join(core->pthread, NULL);
 
-    machine->powered_off = true;
-    for(UInt8 i = 0; i < machine->core_count; i++)
+    machine->poweredOff = true;
+    for(UInt8 i = 0; i < machine->coreCount; i++)
     {
         __E64Core c = (__E64Core)machine->cores[i];
         if(c != core)
@@ -3171,14 +3171,14 @@ void E64CoreTerminate(E64CoreRef coreRef)
     #endif /* EMEX64VM_DISPLAY_WINDOW && __APPLE__ */
 
     __E64Machine machine = (__E64Machine)core->machine;
-    machine->powered_off = true;
-    for(UInt8 i = 0; i < machine->core_count; i++)
+    machine->poweredOff = true;
+    for(UInt8 i = 0; i < machine->coreCount; i++)
     {
         __E64CoreWake((__E64Core)machine->cores[i]);
     }
-    pthread_mutex_lock(&machine->reset_lock);
-    pthread_cond_broadcast(&machine->reset_cond);
-    pthread_mutex_unlock(&machine->reset_lock);
+    pthread_mutex_lock(&machine->resetLock);
+    pthread_cond_broadcast(&machine->resetCond);
+    pthread_mutex_unlock(&machine->resetLock);
 }
 
 UInt64 E64CoreGetValueFromRegister(E64CoreRef coreRef,

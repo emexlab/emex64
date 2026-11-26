@@ -44,18 +44,24 @@
 
 typedef struct __E64Machine {
     EFObject header;
+
+    /* multicore */
     E64CoreRef cores[E64_MACHINE_MAX_CORES];
-    UInt8 core_count;
-    pthread_mutex_t mmio_lock;
-    volatile Boolean powered_off;
+    UInt8 coreCount;
+    pthread_mutex_t mmioLock;
+
+    /* machine power state */
+    volatile Boolean poweredOff;
     volatile Boolean resetting;
-    UInt8 reset_parked;
-    UInt64 reset_generation;
-    pthread_mutex_t reset_lock;
-    pthread_cond_t reset_cond;
+    UInt8 resetParked;
+    UInt64 resetGeneration;
+    pthread_mutex_t resetLock;
+    pthread_cond_t resetCond;
+
+    /* devices */
     E64MemoryRef memory;
-    E64MMIOBusRef mmio_bus;
-    E64ICRef intc;
+    E64MMIOBusRef mmioBus;
+    E64ICRef interruptController;
     emex64_timer_t *timer;
     emex64_uart_t *uart;
     emex64_display_t *display;
@@ -69,6 +75,8 @@ typedef struct __E64Machine {
     emex64_sb16_t *sb16;
     struct emex64_nvram *nvram;
     Boolean embedded;
+
+    /* the host of this virtual machine */
     E64MachineHost host;
 } *__E64Machine;
 
