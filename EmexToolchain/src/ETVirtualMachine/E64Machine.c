@@ -412,7 +412,25 @@ E64ICRef E64MachineGetIC(E64MachineRef machineRef)
     return machine != NULL ? machine->intc : NULL;
 }
 
-void E64MachineStop(E64MachineRef machineRef)
+E64Exception E64MachineExecute(E64MachineRef machineRef)
+{
+    EFAUTOREL E64MachineRef retainedMachineRef = EFRetainTry(machineRef);
+    if(retainedMachineRef == NULL)
+    {
+        goto fail;
+    }
+
+    __E64Machine machine = (__E64Machine)retainedMachineRef;
+    if(machine != NULL && machine->core != NULL)
+    {
+        return E64CoreExecute(machine->core);
+    }
+
+fail:
+    return kE64ExceptionBadInstruction;
+}
+
+void E64MachineTerminate(E64MachineRef machineRef)
 {
     __E64Machine machine = (__E64Machine)machineRef;
     if(machine != NULL && machine->core != NULL)

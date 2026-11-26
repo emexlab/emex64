@@ -49,7 +49,8 @@ E64MMIOBusRef E64MachineGetMMIOBus(E64MachineRef machineRef);
 
 E64ICRef E64MachineGetIC(E64MachineRef machineRef);
 
-void E64MachineStop(E64MachineRef machineRef);
+E64Exception E64MachineExecute(E64MachineRef machineRef);
+void E64MachineTerminate(E64MachineRef machineRef);
 
 void E64MachineSendUARTInput(E64MachineRef machineRef, const UInt8 *bytes, EFSize length);
 

@@ -372,19 +372,19 @@ SInt32 main(SInt32 argc, char *argv[])
         }
     }
 
-    /* creating new emex64 virtual machine */
-    E64MachineRef machine = E64MachineCreateWithOptions(kEFAllocatorDefault, machineOptions);
+    /* creating new emex64 virtual machine instance */
+    EFAUTOREL E64MachineRef machine = E64MachineCreateWithOptions(kEFAllocatorDefault, machineOptions);
     if(machine == NULL)
     {
         diag_error(NULL, "failed to allocated machine");
         return 1;
     }
 
+    /* loading firmware from file */
     E64MemoryRef memory = E64MachineGetMemory(machine);
     if(memory == NULL)
     {
         diag_error(NULL, "failed to aquire memory from machine");
-        EFRelease(machine);
         return 1;
     }
 
@@ -395,20 +395,10 @@ SInt32 main(SInt32 argc, char *argv[])
         if(file == NULL || !E64MemoryLoadImage(memory, file))
         {
             diag_error(NULL, "failed to load firmware image");
-            EFRelease(machine);
             return 1;
         }
     }
 
-    /* running core 0 */
-    E64CoreRef core = E64MachineGetCore(machine);
-    if(core == NULL)
-    {
-        diag_error(NULL, "failed to aquire core from machine");
-        EFRelease(machine);
-        return 1;
-    }
-    E64Exception exception = E64CoreExecute(core);
-    EFRelease(machine);
-    return exception == kE64ExceptionNone ? 0 : 1;
+    /* executing machine finally */
+    return E64MachineExecute(machine) == kE64ExceptionNone ? 0 : 1;
 }
