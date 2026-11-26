@@ -579,13 +579,13 @@ typedef enum: UInt8 {
     kE64MMUPTWrite =     0b00010000, /* marks a PTE as writable (most MMU's don't have that, but this one does) */
     kE64MMUPTExec =      0b00100000, /* marks a PTE as executable (means the CPU core can fetch instructions from it and execute them) */
     kE64MMUPTAccessed =  0b01000000, /* marks a PTE as accessed (MMU sets this bit when this has been accessed) */
+    kE64MMUPTMMIO =      0b10000000, /* marks a PTE as MMIO based */
 } E64MMUPT;
 
 typedef enum: UInt8 {
     kE64MemoryActionTypeRead =          kE64MMUPTRead,
     kE64MemoryActionTypeWrite =         kE64MMUPTWrite,
     kE64MemoryActionTypeExecute =       kE64MMUPTExec,
-    kE64MemoryActionTypePageDirectory,
 } E64MemoryActionType;
 
 #endif /* E64TYPE_H */

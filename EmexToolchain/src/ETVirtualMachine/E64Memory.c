@@ -113,15 +113,6 @@ static inline void emex64_memory_fault(E64CoreRef core,
     }
 }
 
-static inline Boolean emex64_mmio_allowed(E64CoreRef core)
-{
-    if(core->cr_state.crel.level >= kE64ElevationLevelKernel)
-    {
-        return true;
-    }
-    return !emex64_traps_enabled(core) && !(core->cr_state.crptb.enabled && !core->in_interrupt);
-}
-
 static void E64MemoryRegisterClass(void)
 {
     EFClassRegister(&E64MemoryClass);
@@ -334,45 +325,20 @@ static inline emex64_mmu_entry_lookup_t emex64_mmu_lookup_pte(E64Memory memory,
     return (emex64_mmu_entry_lookup_t){ .fail = false, .pte = pte };
 }
 
-static inline Boolean emex64_mmu_access_pxd(E64Memory memory,
+static inline Boolean emex64_mmu_access_ptd(E64Memory memory,
                                             E64CoreRef core,
                                             UInt64 pt_addr,
                                             UInt16 pxd_idx,
-                                            E64MemoryActionType actionType,
                                             UInt64 *oaddr,
                                             UInt64 **pte_out,
                                             UInt32 *gen_out)
 {
-    UInt8 what = actionType == kE64MemoryActionTypePageDirectory ? EMEX64_CHUNK_PAGE_TABLE : EMEX64_CHUNK_PTE;
-    emex64_mmu_entry_lookup_t lookup = emex64_mmu_lookup_pte(memory, core, pt_addr, pxd_idx, what, gen_out);
+    emex64_mmu_entry_lookup_t lookup = emex64_mmu_lookup_pte(memory, core, pt_addr, pxd_idx, EMEX64_CHUNK_PAGE_TABLE, gen_out);
     if(unlikely(lookup.fail))
     {
         return false;
     }
     *pte_out = lookup.pte;
-
-    UInt64 mmu_flags = 0;
-    if(actionType != kE64MemoryActionTypePageDirectory)
-    {
-        UInt8 checkflg = actionType;
-
-        /*
-         * if CR0 is user then we need to add user
-         * check too, otherwise the user program will
-         * be able to access kernel memory.
-         */
-        if(core->cr_state.crel.level < kE64ElevationLevelKernel)
-        {
-            checkflg |= kE64MMUPTUser;
-        }
-
-        /* initial flag check */
-        mmu_flags = (*(lookup.pte) & EMEX64_MEMORY_MMU_MASK_FLAGS);
-        if(unlikely((mmu_flags & checkflg) != checkflg))
-        {
-            return false;
-        }
-    }
 
     UInt64 pfn = (*(lookup.pte) & EMEX64_MEMORY_MMU_MASK_PFN) >> 8;
     UInt64 physaddr = EMEX64_PAGE_ROUND_DOWN(pfn << 13);
@@ -381,11 +347,68 @@ static inline Boolean emex64_mmu_access_pxd(E64Memory memory,
         return false;
     }
 
+    *oaddr = physaddr;
+
+    return true;
+}
+
+static inline Boolean emex64_mmu_access_pte(E64Memory memory,
+                                            E64CoreRef core,
+                                            UInt64 pt_addr,
+                                            UInt16 pxd_idx,
+                                            E64MemoryActionType actionType,
+                                            UInt64 *oaddr,
+                                            UInt64 **pte_out,
+                                            UInt32 *gen_out,
+                                            Boolean *mmio_access)
+{
+    emex64_mmu_entry_lookup_t lookup = emex64_mmu_lookup_pte(memory, core, pt_addr, pxd_idx, EMEX64_CHUNK_PTE, gen_out);
+    if(unlikely(lookup.fail))
+    {
+        return false;
+    }
+    *pte_out = lookup.pte;
+
+    UInt8 checkflg = actionType;
+
+    /*
+     * if CREL is user then we need to add user
+     * check too, otherwise the user program will
+     * be able to access kernel memory.
+     */
+    if(core->cr_state.crel.level < kE64ElevationLevelKernel)
+    {
+        checkflg |= kE64MMUPTUser;
+    }
+
+    /* initial flag check */
+    UInt64 mmu_flags = (*(lookup.pte) & EMEX64_MEMORY_MMU_MASK_FLAGS);
+    if(unlikely((mmu_flags & checkflg) != checkflg))
+    {
+        return false;
+    }
+
+    UInt64 pfn = (*(lookup.pte) & EMEX64_MEMORY_MMU_MASK_PFN) >> 8;
+    UInt64 physaddr = EMEX64_PAGE_ROUND_DOWN(pfn << 13);
+    if(mmu_flags & kE64MMUPTMMIO)
+    {
+        if(unlikely(physaddr >> 53) || unlikely(actionType == kE64MemoryActionTypeExecute))
+        {
+            return false;
+        }
+
+        if(mmio_access != NULL)
+        {
+            *mmio_access = (mmu_flags & kE64MMUPTMMIO);
+        }
+    }
+    else if(unlikely(!EMEX64_IN_PHYS_MEMORY(physaddr, EMEX64_PAGE_SIZE, memory->memory, memory->memory_size)))
+    {
+        return false;
+    }
+
     switch(actionType)
     {
-        case kE64MemoryActionTypePageDirectory:
-            /* not a normal page access */
-            break;
         case kE64MemoryActionTypeWrite:
             mmu_flags |= kE64MMUPTDirty;
             /* fallthrough */
@@ -433,16 +456,26 @@ static inline Boolean emex64_mmu_translate(E64Memory memory,
     UInt64 pud_addr, pmd_addr, pte_addr, phys_page_base_addr;
     UInt64 *used[4];
     UInt32 pte_gen = 0;
+    Boolean mmio_access = false;
 
     /* now access each table */
-    if(!emex64_mmu_access_pxd(memory, core, pgd_addr, ((vaddr >> 43) & 0x3FF), kE64MemoryActionTypePageDirectory, &pud_addr, &used[0], NULL) ||   /* 10 bits for each level index  */
-       !emex64_mmu_access_pxd(memory, core, pud_addr, ((vaddr >> 33) & 0x3FF), kE64MemoryActionTypePageDirectory, &pmd_addr, &used[1], NULL) ||
-       !emex64_mmu_access_pxd(memory, core, pmd_addr, ((vaddr >> 23) & 0x3FF), kE64MemoryActionTypePageDirectory, &pte_addr, &used[2], NULL) ||
-       !emex64_mmu_access_pxd(memory, core, pte_addr, ((vaddr >> 13) & 0x3FF), actionType, &phys_page_base_addr, &used[3], &pte_gen))
+    if(!emex64_mmu_access_ptd(memory, core, pgd_addr, ((vaddr >> 43) & 0x3FF), &pud_addr, &used[0], NULL) ||
+       !emex64_mmu_access_ptd(memory, core, pud_addr, ((vaddr >> 33) & 0x3FF), &pmd_addr, &used[1], NULL) ||
+       !emex64_mmu_access_ptd(memory, core, pmd_addr, ((vaddr >> 23) & 0x3FF), &pte_addr, &used[2], NULL) ||
+       !emex64_mmu_access_pte(memory, core, pte_addr, ((vaddr >> 13) & 0x3FF), actionType, &phys_page_base_addr, &used[3], &pte_gen, &mmio_access))
     {
         return false;
     }
 
+    /*
+     * a device's page is in MMIO: the TLB keeps that address too, as
+     * a hit gives back what it keeps (without it, every access after
+     * the first to a device page would go to RAM)
+     */
+    if(mmio_access)
+    {
+        phys_page_base_addr += EMEX64_MMIO_BASE;
+    }
     *paddr = phys_page_base_addr + (vaddr & 0x1FFF); /* 13bit offset (addressing within a page) */
 
     UInt64 vpn = vaddr >> 13;
@@ -632,7 +665,6 @@ Boolean E64MemoryAction(E64MemoryRef memoryRef,
 
     switch(actionType)
     {
-        case kE64MemoryActionTypePageDirectory:
         case kE64MemoryActionTypeExecute:
         case kE64MemoryActionTypeRead:
             switch(size)
@@ -725,91 +757,6 @@ EF_HIDDEN void __E64MemoryCoreAction(E64MemoryRef memoryRef,
     }
 
     /*
-     * MMIO starts at 0x0020000000000000 while the physical
-     * maximum memory size is 0x001FFFFFFFFFFFFF, that is so
-     * MMIO doesnt sit in middle of the memory, which is better
-     * for page memory management on the OS side and faster cuz
-     * we don't have to look it up in MMIO on every memory
-     * access.
-     */
-    if(addr >> 53)
-    {
-        emex64_core_context_changed(core);
-
-        if(unlikely(addr >> 54))
-        {
-            emex64_memory_fault(core, kE64ExceptionBadAccess, addr, actionType);
-            return;
-        }
-
-        /*
-         * MMIO shall never be accessed when paging is enabled or when
-         * the access is not aligned to a quad word boundary, as
-         * the decoder later in actual emex64 hardware would explode
-         * in size otherwise. MMIO busses are complex!
-         */
-        if(unlikely(!emex64_mmio_allowed(core) || !EMEX64_IS_ALIGNED_64(addr) || size != 8))
-        {
-            emex64_memory_fault(core, kE64ExceptionBadAccess, addr, actionType);
-            return;
-        }
-
-        if(addr >= EMEX64_APIC_BASE && addr < EMEX64_APIC_BASE + EMEX64_APIC_SIZE)
-        {
-            switch(actionType)
-            {
-                case kE64MemoryActionTypeRead:
-                    *value = emex64_lapic_read(core, addr - EMEX64_APIC_BASE);
-                    return;
-                case kE64MemoryActionTypeWrite:
-                    emex64_lapic_write(core, addr - EMEX64_APIC_BASE, *value);
-                    return;
-                default:
-                    emex64_memory_fault(core, kE64ExceptionBadAccess, addr, actionType);
-                    return;
-            }
-        }
-
-        __E64Machine machine = (__E64Machine)core->machine;
-        if(addr == EMEX64_TIMER_BASE + TIMER_REG_COUNT && actionType == kE64MemoryActionTypeRead &&
-           likely(machine->timer != NULL) && likely(emex64_timer_read_count(machine->timer, value)))
-        {
-            return;
-        }
-
-        pthread_mutex_lock(&machine->mmio_lock);
-        E64MMIORegionRef mmio_region = E64MMIOBusGetRegionForAddress(machine->mmio_bus, addr);
-        void *device = E64MMIORegionGetDevice(mmio_region);
-        if(likely(mmio_region != NULL))
-        {
-            UInt64 offset = addr - E64MMIORegionGetBaseAddress(mmio_region);
-            switch(actionType)
-            {
-                case kE64MemoryActionTypeRead:
-                    E64MMIOReadFn read = E64MMIORegionGetReadFunction(mmio_region);
-                    *value = read(core, device, offset, size);
-                    break;
-                case kE64MemoryActionTypeWrite:
-                    E64MMIOWriteFn write = E64MMIORegionGetWriteFunction(mmio_region);
-                    if(write != NULL)
-                    {
-                        write(core, device, offset, *value, size);
-                    }
-                    break;
-                default:
-                    emex64_memory_fault(core, kE64ExceptionBadAccess, addr, actionType);
-                    break;
-            }
-            pthread_mutex_unlock(&machine->mmio_lock);
-            return;
-        }
-        pthread_mutex_unlock(&machine->mmio_lock);
-
-        emex64_memory_fault(core, kE64ExceptionBadAccess, addr, actionType);
-        return;
-    }
-
-    /*
      * find out if paging is enabled, if not write vaddr to paddr,
      * because that means paddr is vaddr because virtual addressing
      * is already off.
@@ -843,7 +790,6 @@ EF_HIDDEN void __E64MemoryCoreAction(E64MemoryRef memoryRef,
 
         switch(actionType)
         {
-            case kE64MemoryActionTypePageDirectory:
             case kE64MemoryActionTypeExecute:
             case kE64MemoryActionTypeRead:
                 lo_val = 0;
@@ -869,6 +815,89 @@ EF_HIDDEN void __E64MemoryCoreAction(E64MemoryRef memoryRef,
     else
 rw_fastpath:
     {
+        /*
+         * MMIO starts at 0x0020000000000000 while the physical
+         * maximum memory size is 0x001FFFFFFFFFFFFF, that is so
+         * MMIO doesnt sit in middle of the memory, which is better
+         * for page memory management on the OS side and faster cuz
+         * we don't have to look it up in MMIO on every memory
+         * access.
+         */
+        if(addr >> 53)
+        {
+            if(unlikely(addr >> 54))
+            {
+                emex64_memory_fault(core, kE64ExceptionBadAccess, addr, actionType);
+                return;
+            }
+
+            /*
+             * MMIO shall never be accessed when
+             * the access is not aligned to a quad word boundary, as
+             * the decoder later in actual emex64 hardware would explode
+             * in size otherwise. MMIO busses are complex!
+             */
+            if(unlikely(!EMEX64_IS_ALIGNED_64(addr) || size != 8))
+            {
+                emex64_memory_fault(core, kE64ExceptionBadAccess, addr, actionType);
+                return;
+            }
+
+            if(addr >= EMEX64_APIC_BASE && addr < EMEX64_APIC_BASE + EMEX64_APIC_SIZE)
+            {
+                switch(actionType)
+                {
+                    case kE64MemoryActionTypeRead:
+                        *value = emex64_lapic_read(core, addr - EMEX64_APIC_BASE);
+                        return;
+                    case kE64MemoryActionTypeWrite:
+                        emex64_lapic_write(core, addr - EMEX64_APIC_BASE, *value);
+                        return;
+                    default:
+                        emex64_memory_fault(core, kE64ExceptionBadAccess, addr, actionType);
+                        return;
+                }
+            }
+
+            __E64Machine machine = (__E64Machine)core->machine;
+            if(addr == EMEX64_TIMER_BASE + TIMER_REG_COUNT && actionType == kE64MemoryActionTypeRead &&
+               likely(machine->timer != NULL) && likely(emex64_timer_read_count(machine->timer, value)))
+            {
+                return;
+            }
+
+            pthread_mutex_lock(&machine->mmio_lock);
+            E64MMIORegionRef mmio_region = E64MMIOBusGetRegionForAddress(machine->mmio_bus, addr);
+            void *device = E64MMIORegionGetDevice(mmio_region);
+            if(likely(mmio_region != NULL))
+            {
+                UInt64 offset = addr - E64MMIORegionGetBaseAddress(mmio_region);
+                switch(actionType)
+                {
+                    case kE64MemoryActionTypeRead:
+                        E64MMIOReadFn read = E64MMIORegionGetReadFunction(mmio_region);
+                        *value = read(core, device, offset, size);
+                        break;
+                    case kE64MemoryActionTypeWrite:
+                        E64MMIOWriteFn write = E64MMIORegionGetWriteFunction(mmio_region);
+                        if(write != NULL)
+                        {
+                            write(core, device, offset, *value, size);
+                        }
+                        break;
+                    default:
+                        emex64_memory_fault(core, kE64ExceptionBadAccess, addr, actionType);
+                        break;
+                }
+                pthread_mutex_unlock(&machine->mmio_lock);
+                return;
+            }
+            pthread_mutex_unlock(&machine->mmio_lock);
+
+            emex64_memory_fault(core, kE64ExceptionBadAccess, addr, actionType);
+            return;
+        }
+
         if(unlikely(!E64MemoryAccessIsWithinBounds(memoryRef, addr, size)))
         {
             emex64_memory_fault(core, kE64ExceptionBadAccess, addr, actionType);
@@ -876,10 +905,8 @@ rw_fastpath:
         }
 
         UInt8 *mem_ptr = memory->memory + addr;
-
         switch(actionType)
         {
-            case kE64MemoryActionTypePageDirectory:
             case kE64MemoryActionTypeExecute:
             case kE64MemoryActionTypeRead:
                 switch(size)
