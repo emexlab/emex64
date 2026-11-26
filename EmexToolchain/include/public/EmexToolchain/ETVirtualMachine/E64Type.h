@@ -211,17 +211,7 @@ typedef enum: UInt8 {
     /* ISA v23 (debugging update) */
     kE64OpcodeBRK =     0b10011001,
 
-    /* ISA v24 (secure page table monitor update) */
-    kE64OpcodeIOLDB =   0b10011010,
-    kE64OpcodeIOLDW =   0b10011011,
-    kE64OpcodeIOLDD =   0b10011100,
-    kE64OpcodeIOLDQ =   0b10011101,
-    kE64OpcodeIOSTB =   0b10011110,
-    kE64OpcodeIOSTW =   0b10011111,
-    kE64OpcodeIOSTD =   0b10100000,
-    kE64OpcodeIOSTQ =   0b10100001,
-
-    kE64OpcodeMAX = kE64OpcodeIOSTQ,
+    kE64OpcodeMAX = kE64OpcodeBRK,
 
     kE64OpcodeInvalid =  0b11111111,
 } E64Opcode;
