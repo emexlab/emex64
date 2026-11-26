@@ -43,7 +43,9 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef, E64Machin
 
 UInt8 E64MachineGetMaxCoreCount(void);
 
+UInt8 E64MachineGetCoreCount(E64MachineRef machineRef);
 E64CoreRef E64MachineGetCore(E64MachineRef machineRef);
+E64CoreRef E64MachineGetCoreWithIdentifier(E64MachineRef machineRef, UInt8 identifier);
 E64MemoryRef E64MachineGetMemory(E64MachineRef machineRef);
 E64MMIOBusRef E64MachineGetMMIOBus(E64MachineRef machineRef);
 

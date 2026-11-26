@@ -50,7 +50,6 @@ static void __E64MachineDeinit(EFObjectRef machineRef)
     {
         EFReleaseTry(machine->cores[i]);
     }
-    machine->core = NULL;
     pthread_mutex_destroy(&machine->mmio_lock);
     pthread_mutex_destroy(&machine->reset_lock);
     pthread_cond_destroy(&machine->reset_cond);
@@ -182,17 +181,12 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
     {
         cores = E64_MACHINE_MAX_CORES;
     }
-    machine->core = E64CoreCreateWithMachine(allocatorRef, (E64MachineRef)machine);
-    if(machine->core == NULL)
+
+    machine->core_count = 0;
+    for(UInt8 index = 0; index < cores; index++)
     {
-        return NULL;
-    }
-    machine->cores[0] = machine->core;
-    machine->core_count = 1;
-    for(UInt8 i = 1; i < cores; i++)
-    {
-        machine->cores[i] = __E64CoreCreateWithID(allocatorRef, (E64MachineRef)machine, i);
-        if(machine->cores[i] == NULL)
+        machine->cores[index] = __E64CoreCreateWithID(allocatorRef, (E64MachineRef)machine, index);
+        if(machine->cores[index] == NULL)
         {
             return NULL;
         }
@@ -388,10 +382,27 @@ UInt8 E64MachineGetMaxCoreCount(void)
     return E64_MACHINE_MAX_CORES;
 }
 
+UInt8 E64MachineGetCoreCount(E64MachineRef machineRef)
+{
+    __E64Machine machine = (__E64Machine)machineRef;
+    return machine != NULL ? machine->core_count : 0;
+}
+
 E64CoreRef E64MachineGetCore(E64MachineRef machineRef)
 {
     __E64Machine machine = (__E64Machine)machineRef;
-    return machine != NULL ? machine->core : NULL;
+    return machine != NULL ? machine->cores[0] : NULL;
+}
+
+E64CoreRef E64MachineGetCoreWithIdentifier(E64MachineRef machineRef,
+                                           UInt8 identifier)
+{
+    __E64Machine machine = (__E64Machine)machineRef;
+    if(machine == NULL || machine->core_count <= identifier)
+    {
+        return NULL;
+    }
+    return machine->cores[identifier];
 }
 
 E64MemoryRef E64MachineGetMemory(E64MachineRef machineRef)
@@ -421,9 +432,9 @@ E64Exception E64MachineExecute(E64MachineRef machineRef)
     }
 
     __E64Machine machine = (__E64Machine)retainedMachineRef;
-    if(machine != NULL && machine->core != NULL)
+    if(machine != NULL && machine->cores[0] != NULL)
     {
-        return E64CoreExecute(machine->core);
+        return E64CoreExecute(machine->cores[0]);
     }
 
 fail:
@@ -433,9 +444,9 @@ fail:
 void E64MachineTerminate(E64MachineRef machineRef)
 {
     __E64Machine machine = (__E64Machine)machineRef;
-    if(machine != NULL && machine->core != NULL)
+    if(machine != NULL && machine->cores[0] != NULL)
     {
-        E64CoreTerminate(machine->core);
+        E64CoreTerminate(machine->cores[0]);
     }
 }
 

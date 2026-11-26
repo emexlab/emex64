@@ -288,7 +288,7 @@ E64CoreRef E64CoreCreateWithMachine(EFAllocatorRef allocatorRef,
                                     E64MachineRef machineRef)
 {
     __E64Machine machine = (__E64Machine)machineRef;
-    if(machine == NULL || machine->core != NULL)
+    if(machine == NULL || machine->cores[0] != NULL)
     {
         return NULL;
     }

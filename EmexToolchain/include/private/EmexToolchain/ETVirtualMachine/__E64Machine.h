@@ -44,7 +44,6 @@
 
 typedef struct __E64Machine {
     EFObject header;
-    E64CoreRef core;
     E64CoreRef cores[E64_MACHINE_MAX_CORES];
     UInt8 core_count;
     pthread_mutex_t mmio_lock;
