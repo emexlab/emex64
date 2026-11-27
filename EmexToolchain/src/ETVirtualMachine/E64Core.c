@@ -390,11 +390,12 @@ void __E64CoreKick(__E64Core core)
 void __E64CoreRequestReset(__E64Core core)
 {
     __E64Machine machine = (__E64Machine)core->machine;
-    machine->resetting = true;
-    __atomic_thread_fence(__ATOMIC_SEQ_CST);
+    __atomic_store_n(&machine->resetting, true, __ATOMIC_SEQ_CST);
     for(UInt8 i = 0; i < machine->coreCount; i++)
     {
-        __E64CoreWake((__E64Core)machine->cores[i]);
+        __E64Core core = (__E64Core)machine->cores[i];
+        __atomic_store_n(&core->run_break, true, __ATOMIC_RELEASE);
+        __E64CoreWake(core);
     }
 }
 

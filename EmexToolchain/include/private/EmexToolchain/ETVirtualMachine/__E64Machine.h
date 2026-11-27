@@ -58,10 +58,12 @@ typedef struct __E64Machine {
     pthread_mutex_t resetLock;
     pthread_cond_t resetCond;
 
-    /* devices */
+    /* internal devices */
     E64MemoryRef memory;
     E64MMIOBusRef mmioBus;
     E64ICRef interruptController;
+
+    /* board devices */
     emex64_timer_t *timer;
     emex64_uart_t *uart;
     emex64_display_t *display;
