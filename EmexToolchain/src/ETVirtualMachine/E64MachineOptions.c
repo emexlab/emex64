@@ -59,6 +59,7 @@ E64MachineOptions E64MachineOptionsDefault = {
     },
     .memoryLength = 100 * 1024 * 1024,
     .coreCount = 4,
+    .ecid = 0,
 };
 
 E64MachineOptions E64MachineOptionsMinimal = {

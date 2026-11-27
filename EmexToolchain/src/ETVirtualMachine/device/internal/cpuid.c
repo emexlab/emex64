@@ -22,6 +22,7 @@
 #include <string.h>
 #include <EmexFoundation/EmexFoundation.h>
 #include <EmexToolchain/ETVirtualMachine/device/internal/cpuid.h>
+#include <EmexToolchain/ETVirtualMachine/E64Machine.h>
 
 static UInt64 cpuid_string(const char *s,
                            UInt64 offset,
@@ -58,6 +59,8 @@ UInt64 emex64_cpuid_read(E64CoreRef core,
             return (UInt64)E64VM_ISA_MAX_VERSION | (UInt64)E64VM_ISA_MIN_VERSION << 16;
         case CPUID_REG_FEATURES:
             return CPUID_FEATURE_PAC;
+        case CPUID_REG_ECID:
+            return core->machine->ecid;
         default:
             return 0;
     }

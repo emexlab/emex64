@@ -33,6 +33,7 @@
 #define CPUID_REG_ISA           0x10
 #define CPUID_REG_FEATURES      0x18
 #define CPUID_FEATURE_PAC       (1ULL << 0)
+#define CPUID_REG_ECID          0x20
 #define CPUID_REG_BRAND         0x40
 #define CPUID_BRAND_SIZE        64
 

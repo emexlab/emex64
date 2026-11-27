@@ -74,6 +74,7 @@ typedef struct {
 } E64MachineHost;
 
 typedef struct {
+    UInt64 ecid;
     UInt64 memoryLength;
     UInt8 coreCount;
     E64DisplayOptions displayOptions;

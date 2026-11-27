@@ -150,6 +150,8 @@ E64MachineRef E64MachineCreateWithOptions(EFAllocatorRef allocatorRef,
         return NULL;
     }
 
+    machine->ecid = options.ecid;
+
     if(options.host != NULL)
     {
         machine->embedded = true;
