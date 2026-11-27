@@ -45,6 +45,7 @@ SInt32 main(SInt32 argc, char *argv[])
             fprintf(stderr, "\n");
             fprintf(stderr, "Options:\n");
             fprintf(stderr, "  --help                 Shows this help menu.\n");
+            fprintf(stderr, "  --ecid <value>         Sets the unique chip identifier of this machine.");
             fprintf(stderr, "  -f <image path>        Sets the firmware image path that will be loaded and\n");
             fprintf(stderr, "                         executed by the VM.\n");
             fprintf(stderr, "  -m:[kb|mb|gb] <size>   Providing memory size, this size will later be allocated\n");
@@ -90,6 +91,19 @@ SInt32 main(SInt32 argc, char *argv[])
             }
             fprintf(stderr, "\n");
             return 1;
+        }
+        else if(strcmp(argv[i], "--ecid") == 0 && i + 1 < argc)
+        {
+            parser_return_t pr = parse_value_from_string(argv[++i]);
+            if(pr.type == emexParserValueTypeNumber)
+            {
+                machineOptions.ecid = pr.value;
+            }
+            else
+            {
+                diag_error(NULL, "illegal value type used\n", argv[i]);
+                return 1;
+            }
         }
         else if(strcmp(argv[i], "--nvram") == 0 && i + 1 < argc)
         {
