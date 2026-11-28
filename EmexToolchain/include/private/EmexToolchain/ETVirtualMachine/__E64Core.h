@@ -183,6 +183,7 @@ typedef struct __E64Core {
         Boolean svc_pending;
         UInt64 rl[16];
         UInt64 erl[16];
+        E64Exception exception_at_start;
     } trap;
 
     /*

@@ -96,6 +96,11 @@ static inline Boolean emex64_traps_enabled(E64CoreRef core)
     return (core->cr_state.crstat & E64_CRSTAT_TRAPS) != 0;
 }
 
+static inline Boolean emex64_instruction_faulted(E64CoreRef core)
+{
+    return core->cr_state.crexc.exception != kE64ExceptionNone && core->trap.exception_at_start == kE64ExceptionNone;
+}
+
 static inline void emex64_memory_fault(E64CoreRef core,
                                        E64Exception exception,
                                        UInt64 addr,
@@ -746,12 +751,7 @@ EF_HIDDEN void __E64MemoryCoreAction(E64MemoryRef memoryRef,
                                      E64MemoryActionType actionType)
 {
     E64Memory memory = (E64MemoryRef)memoryRef;
-    if(memory == NULL || unlikely((core->cr_state.crexc.exception == kE64ExceptionBadAccess || core->cr_state.crexc.exception == kE64ExceptionKTRRViolation) && !core->in_interrupt))
-    {
-        return;
-    }
-
-    if(unlikely(core->cr_state.crexc.exception != kE64ExceptionNone && emex64_traps_enabled(core)))
+    if(memory == NULL || unlikely(emex64_instruction_faulted(core)))
     {
         return;
     }
@@ -1011,7 +1011,7 @@ EF_HIDDEN Boolean __E64MemoryCoreCopyIn(E64MemoryRef memoryRef,
     /* do not allow other actions than rx */
     assert(actionType != kE64MemoryActionTypeWrite);
 
-    if(unlikely((core->cr_state.crexc.exception == kE64ExceptionBadAccess || core->cr_state.crexc.exception == kE64ExceptionKTRRViolation) && !core->in_interrupt))
+    if(unlikely(emex64_instruction_faulted(core)))
     {
         return false;
     }

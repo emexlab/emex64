@@ -3083,6 +3083,7 @@ static void *__E64CoreExecutionThread(void *arg)
             continue;
         }
 
+        core->trap.exception_at_start = core->cr_state.crexc.exception;
         __E64CoreExecuteInstructionAtPC(core);
 
         if(core->id == 0)
