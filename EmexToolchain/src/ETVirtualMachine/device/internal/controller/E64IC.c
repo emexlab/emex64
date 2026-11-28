@@ -369,6 +369,7 @@ Boolean __E64ServeInterruptIfNeeded(E64ICRef icRef,
     handler_addr = TO_HOST64(handler_addr);
 
     /* jump to handler */
+    core->trap.exception_at_start = core->cr_state.crexc.exception;
     UInt64 oldsp = core->rl[kE64RegisterSP];
     UInt64 oldel = core->cr_state.crel.level;
 
@@ -435,6 +436,7 @@ EF_HIDDEN Boolean E64EnterInterruptPrivate(__E64IC ic,
     }
 
     handler_addr = TO_HOST64(handler_addr);
+    core->trap.exception_at_start = core->cr_state.crexc.exception;
     UInt64 oldsp = core->rl[kE64RegisterSP];
     UInt64 oldel = core->cr_state.crel.level;
 

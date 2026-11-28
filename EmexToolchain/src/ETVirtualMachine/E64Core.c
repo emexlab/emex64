@@ -2639,6 +2639,7 @@ static UInt32 __E64CoreRunTrapModel(__E64Core core,
             }
 
             core->trap.fault_valid = false;
+            core->trap.exception_at_start = core->cr_state.crexc.exception;
             if(unlikely(ce->rollback))
             {
                 __E64CoreSaveForRollback(core, ce);
@@ -2650,6 +2651,7 @@ static UInt32 __E64CoreRunTrapModel(__E64Core core,
         else
         {
             core->trap.fault_valid = false;
+            core->trap.exception_at_start = core->cr_state.crexc.exception;
             __E64CoreSaveForRollback(core, NULL);
             __E64CoreDecodeAndExecute(core, pc, have_pa, fetch_pa);
         }
