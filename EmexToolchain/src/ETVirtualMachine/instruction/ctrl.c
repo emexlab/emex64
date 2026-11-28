@@ -225,7 +225,7 @@ void E64BLA(__E64Core core)
     }
 
     E64BL(core);
-    if(unlikely(core->cr_state.crexc.exception != kE64ExceptionNone))
+    if(unlikely(emex64_instruction_faulted(core)))
     {
         return;
     }
@@ -413,7 +413,7 @@ void E64PACRET(__E64Core core)
     UInt64 frame = core->rl[kE64RegisterFP];
     UInt64 ret = 0;
     __E64MemoryCoreAction(core->machine->memory, core, frame + 16, sizeof(UInt64), &ret, kE64MemoryActionTypeRead);
-    if(core->cr_state.crexc.exception != kE64ExceptionNone)
+    if(emex64_instruction_faulted(core))
     {
         return;
     }

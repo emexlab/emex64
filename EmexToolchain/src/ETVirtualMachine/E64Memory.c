@@ -96,11 +96,6 @@ static inline Boolean emex64_traps_enabled(E64CoreRef core)
     return (core->cr_state.crstat & E64_CRSTAT_TRAPS) != 0;
 }
 
-static inline Boolean emex64_instruction_faulted(E64CoreRef core)
-{
-    return core->cr_state.crexc.exception != kE64ExceptionNone && core->trap.exception_at_start == kE64ExceptionNone;
-}
-
 static inline void emex64_memory_fault(E64CoreRef core,
                                        E64Exception exception,
                                        UInt64 addr,
@@ -796,7 +791,7 @@ EF_HIDDEN void __E64MemoryCoreAction(E64MemoryRef memoryRef,
                 hi_val = 0;
                 __E64MemoryCoreAction(memoryRef, core, addr, lo_size, &lo_val, actionType);
                 __E64MemoryCoreAction(memoryRef, core, page_end, hi_size, &hi_val, actionType);
-                if(unlikely(core->cr_state.crexc.exception != kE64ExceptionNone && emex64_traps_enabled(core)))
+                if(unlikely(emex64_instruction_faulted(core) && emex64_traps_enabled(core)))
                 {
                     return;
                 }

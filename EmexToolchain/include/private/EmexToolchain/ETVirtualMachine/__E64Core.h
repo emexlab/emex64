@@ -63,6 +63,9 @@ static inline UInt64 emex64_pac_cache_index(UInt64 ptr, UInt64 modifier)
     return (ptr ^ (ptr >> 7) ^ modifier ^ (modifier >> 4)) & (EMEX64_PAC_CACHE_ENTRIES - 1);
 }
 
+#define emex64_instruction_faulted(core) \
+    ((core)->cr_state.crexc.exception != kE64ExceptionNone && (core)->trap.exception_at_start == kE64ExceptionNone)
+
 #define EMEX64_FETCH_PAGES 64
 
 typedef struct __E64Core {

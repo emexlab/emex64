@@ -398,13 +398,13 @@ void E64XCHG(E64CoreRef core)
     }
 
     __E64MemoryCoreAction(core->machine->memory, core, addr, sizeof(UInt64), &old, kE64MemoryActionTypeRead);
-    if(core->cr_state.crexc.exception != kE64ExceptionNone)
+    if(emex64_instruction_faulted(core))
     {
         return;
     }
 
     __E64MemoryCoreAction(core->machine->memory, core, addr, sizeof(UInt64), &value, kE64MemoryActionTypeWrite);
-    if(core->cr_state.crexc.exception != kE64ExceptionNone)
+    if(emex64_instruction_faulted(core))
     {
         return;
     }
@@ -434,14 +434,14 @@ void E64CAS(E64CoreRef core)
     }
 
     __E64MemoryCoreAction(core->machine->memory, core, addr, sizeof(UInt64), &old, kE64MemoryActionTypeRead);
-    if(core->cr_state.crexc.exception != kE64ExceptionNone)
+    if(emex64_instruction_faulted(core))
     {
         return;
     }
     if(old == expected)
     {
         __E64MemoryCoreAction(core->machine->memory, core, addr, sizeof(UInt64), &value, kE64MemoryActionTypeWrite);
-        if(core->cr_state.crexc.exception != kE64ExceptionNone)
+        if(emex64_instruction_faulted(core))
         {
             return;
         }
@@ -513,7 +513,7 @@ static inline Boolean emex64_block_copy(__E64Core core,
         UInt64 value = 0;
         __E64MemoryCoreAction(core->machine->memory, core, src + at, 1, &value, kE64MemoryActionTypeRead);
         __E64MemoryCoreAction(core->machine->memory, core, dst + at, 1, &value, kE64MemoryActionTypeWrite);
-        if(core->cr_state.crexc.exception != kE64ExceptionNone)
+        if(emex64_instruction_faulted(core))
         {
             return false;
         }
@@ -609,7 +609,7 @@ void E64SETM(__E64Core core)
             {
                 UInt64 byte = value;
                 __E64MemoryCoreAction(core->machine->memory, core, dst + i, 1, &byte, kE64MemoryActionTypeWrite);
-                if(core->cr_state.crexc.exception != kE64ExceptionNone)
+                if(emex64_instruction_faulted(core))
                 {
                     return;
                 }
@@ -639,7 +639,7 @@ static inline __attribute__((always_inline)) void emex64_load_signed(E64CoreRef 
     {
         __E64MemoryCoreAction(core->machine->memory, core, *(core->op.param[1]), size, &value, kE64MemoryActionTypeRead);
     }
-    if(likely(core->cr_state.crexc.exception == kE64ExceptionNone))
+    if(likely(!emex64_instruction_faulted(core)))
     {
         unsigned shift = 64 - (unsigned)size * 8;
         *(core->op.param[0]) = (UInt64)((SInt64)(value << shift) >> shift);
@@ -775,13 +775,13 @@ static void emex64_atomic_rmw(E64CoreRef core,
 
     old = 0;
     __E64MemoryCoreAction(core->machine->memory, core, addr, size, &old, kE64MemoryActionTypeRead);
-    if(core->cr_state.crexc.exception != kE64ExceptionNone)
+    if(emex64_instruction_faulted(core))
     {
         return;
     }
     UInt64 value = emex64_atomic_apply(op, old, v);
     __E64MemoryCoreAction(core->machine->memory, core, addr, size, &value, kE64MemoryActionTypeWrite);
-    if(core->cr_state.crexc.exception != kE64ExceptionNone)
+    if(emex64_instruction_faulted(core))
     {
         return;
     }

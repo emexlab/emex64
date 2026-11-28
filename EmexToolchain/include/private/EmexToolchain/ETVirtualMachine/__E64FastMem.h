@@ -141,7 +141,7 @@ static inline Boolean emex64_fast_paddr(__E64Core core,
                                         UInt64 *paddr)
 {
 #if EMEX64_FASTMEM
-    if(unlikely(core->cr_state.crexc.exception != kE64ExceptionNone))
+    if(unlikely(emex64_instruction_faulted(core)))
     {
         return false;
     }
